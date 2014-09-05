@@ -1,0 +1,7 @@
+*.sqlite3
+*.pyc
+*~
+*.xcodeproj
+.DS_Store
+.timestamp
+pages/migrations/

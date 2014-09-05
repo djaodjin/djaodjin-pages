@@ -1,0 +1,4 @@
+Django>=1.7
+Markdown>=2.4.1
+beautifulsoup4>=4.3.2
+djangorestframework>=2.4.1

@@ -1,0 +1,66 @@
+.edit-hover:hover{
+	background: #AAA;
+	border-radius: 4px;
+}
+
+.toggle-div{
+	padding:10px;
+	position: fixed;
+	top:50px;
+	right:-2px;
+	z-index:10000;
+	background: #FFF;
+	color: #000;
+	opacity:0.2;
+	border-radius:4px;
+	webkit-transition: opacity .15s ease-in-out;
+    -moz-transition: opacity .15s ease-in-out;
+	-ms-transition: opacity .15s ease-in-out;
+	-o-transition: opacity .15s ease-in-out;
+	transition: opacity .15s ease-in-out;
+}
+
+.toggle-div:hover{
+	opacity: 1;
+}
+
+#input_editor{
+   display: block;
+   /*width: 100%;*/
+   overflow: visible !important;
+   margin-top:0px;
+   margin-bottom: 0px;
+   padding: 0px;
+   vertical-align: middle;
+   background-color: transparent;
+   border: 0px solid #cccccc;
+   border-radius: 0px;
+   -webkit-box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0);
+   box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0);
+   -webkit-transition: border-color ease-in-out .15s, box-shadow ease-in-out .15s;
+   transition: border-color ease-in-out .15s, box-shadow ease-in-out .15s;
+}
+
+#input_editor:focus{
+	outline-offset: 0px;
+}
+
+#tool_markdown{
+	position: absolute;
+}
+
+.btn_tool{
+	border:1px solid #974040;
+	min-width:50px;
+	border-radius: 3px;
+	background: #D95C5C;
+	color:white;
+}
+
+.btn_tool:hover{
+	background: #E75859;
+}
+
+.btn_tool:active{
+	background: #E75859;
+}
