@@ -13,7 +13,7 @@
         <!-- Bootstrap core CSS -->
         <link href="/static/vendor/css/bootstrap.min.css" rel="stylesheet">
          <!-- Custom styles for this template -->
-         <link href="/static/css/djaodjin-editor.css" rel="stylesheet">
+         <link href="/static/vendor/css/djaodjin-editor.css" rel="stylesheet">
           <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
           <!--[if lt IE 9]>
       <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
@@ -68,7 +68,7 @@
   <!-- Main jumbotron for a primary marketing message or call to action -->
   <div class="jumbotron">
    <div class="container">
-    <h1 class="editable" id="ohbmvtmtfb">
+    <h1 class="editable">
      Hello, world!
     </h1>
     <p class="editable edit-markdown">
@@ -141,7 +141,7 @@
   <!-- Placed at the end of the document so the pages load faster -->
   <script src="/static/vendor/js/jquery.js">
   </script>
-  <script src="/static/vendor/js/jquery.autosize.min.js">
+  <script src="/static/vendor/js/jquery.autosize.js">
   </script>
   <script src="/static/vendor/js/jquery.selection.js">
   </script>
@@ -154,9 +154,9 @@
   <script>
    $(document).ready(function(){
         $('body').editor({
-          url: '/editables/',
+          base_url: '/editables/',
           autotag: false,
-          template_name:'{{template_name}}'
+          template_name:'index.html'
         });
       });
   </script>

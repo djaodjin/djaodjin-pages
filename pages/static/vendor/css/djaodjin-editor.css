@@ -64,3 +64,13 @@
 .btn_tool:active{
 	background: #E75859;
 }
+
+.error-label{
+	padding:10px;
+	text-align: center;
+	background: #ff7f7f;
+	font-size: 20px;
+	width:100%;
+	border:1px solid #7f0000;
+	color: #7f0000;
+}

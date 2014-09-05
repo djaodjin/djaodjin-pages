@@ -224,10 +224,17 @@ jQuery plugin allowing to edit html online.
 
 		saveEdition: function(){
 			if (_this.debug == false){//jshint ignore:line
+				if (!_this.options.base_url){
+					if ($('.error-label').length > 0){
+						$('.error-label').remove();
+					}
+					$('body').prepend('<div class="error-label">No base_url option provided. Please update your script to use save edition.</div>');
+					return false;
+				}
 				if (id_element){
 					$.ajax({
 					method:'PUT',
-					url: _this.options.url + id_element +'/',
+					url: _this.options.base_url + id_element +'/',
 					data:{text:new_text},
 					success: function(){
 						console.log('saved');
@@ -237,7 +244,7 @@ jQuery plugin allowing to edit html online.
 					$.ajax({
 					method:'PUT',
 					async:false,
-					url: _this.options.url + id_element +'/',
+					url: _this.options.base_url + id_element +'/',
 					data:{text:new_text, old_text:orig_text, template_name:_this.options.template_name, tag: clicked_element.prop("tagName")},
 					success: function(data){
 						new_id = data.slug;
@@ -253,9 +260,12 @@ jQuery plugin allowing to edit html online.
 				$.ajax({
 					method:'GET',
 					async:false,
-					url: _this.options.url + id_element +'/',
+					url: _this.options.base_url + id_element +'/',
 					success: function(data){
 						orig_text = data.text;
+					},
+					error: function(){
+						orig_text = $.trim(clicked_element.text());
 					}
 				});
 			}
@@ -314,7 +324,7 @@ jQuery plugin allowing to edit html online.
 	};
 
 	$.fn.editor.defaults = {
-		base_url: "/", // Url to send request to server
+		base_url: null, // Url to send request to server
 		unique_identifier: 'id',
 		autotag:false,
 		enable_markdown: true,
@@ -323,6 +333,3 @@ jQuery plugin allowing to edit html online.
 	};
 
 })(jQuery);
-
-
-
