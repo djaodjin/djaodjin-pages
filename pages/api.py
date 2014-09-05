@@ -87,7 +87,6 @@ class PageElementDetail(generics.RetrieveUpdateDestroyAPIView):
                                 # Crite html to save new id
                                 with open(os.path.join(dirpath, filename), "w") as myfile:
                                     myfile.write(html)
-
             self.post_save(self.object, created=True)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         self.object = serializer.save(force_update=True)
