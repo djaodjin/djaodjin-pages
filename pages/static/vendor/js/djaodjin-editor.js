@@ -5,10 +5,8 @@ jQuery plugin allowing to edit html online.
 /* jshint multistr: true */
 (function ($) {
 	var _this = null;
-	var edit_mode = false;
 
 	var tags = ['p','h1','h2','h3','h4','h5','h6', 'a'];
-	var toggle_button = '<div class="toggle-div">Edit mode <input type="checkbox" class="toggle-button"></input> <span id="toogle-mode">Off</span></div>';
 
 	var clicked_element = null;
 	var orig_element = null;
@@ -30,39 +28,6 @@ jQuery plugin allowing to edit html online.
 	var new_id = null;
 
 	var markdown_tool = false;
-
-	function getCookie(name) {
-    var cookieValue = null;
-    if (document.cookie && document.cookie != '') {
-        var cookies = document.cookie.split(';');
-        for (var i = 0; i < cookies.length; i++) {
-            var cookie = jQuery.trim(cookies[i]);
-            // Does this cookie string begin with the name we want?
-            if (cookie.substring(0, name.length + 1) == (name + '=')) {
-                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                break;
-            }
-        }
-    }
-    return cookieValue;
-}
-
-	var csrftoken = getCookie('csrftoken');
-
-	function csrfSafeMethod(method) {
-		// these HTTP methods do not require CSRF protection
-		return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
-	}
-
-	$.ajaxSetup({
-		crossDomain: false, // obviates need for sameOrigin test
-		beforeSend: function(xhr, settings) {
-			if (!csrfSafeMethod(settings.type)) {
-				xhr.setRequestHeader("X-CSRFToken", csrftoken);
-			}
-		}
-	});
-
 
 	function Editor(el, options){
 		this.$el = el;
@@ -90,8 +55,11 @@ jQuery plugin allowing to edit html online.
 			}	
 
 			// add toggle edit mode
-			_this.$el.append(toggle_button);
-			$(document).on('change','.toggle-button', _this._toggleEditable);
+			/* XXX toggle_button creates an unnecessary ugly checkbox
+			   and should be moved to the test page.
+			   In general, if a developper runs $("body").editor(),
+			   it is because editing functionality is required.
+			*/
 			$(document).on('click', _this.documentClick);
 			$(document).on('click, keydown','#input_editor', _this.removeAlert);
 			$(document).on('click', '.btn_tool',_this.addMarkdowntag);
@@ -121,20 +89,21 @@ jQuery plugin allowing to edit html online.
 			color = clicked_element.css('color');
 			width = clicked_element.css('width');
 
-			_this.inputEdit();
-		},
-
-		_toggleEditable: function(){
-			if ($(this).is(':checked')){
-				edit_mode = true;
-				$('#toogle-mode').text('On');
-				$('.editable').addClass('edit-hover');
-			}else{
-				_this.checkInput();
-				edit_mode = false;
-				$('#toogle-mode').text('Off');
-				$('.editable').removeClass('edit-hover');
+			
+			if (clicked_element.prop('tagName') == 'DIV'){
+				font_size = parseInt(clicked_element.children('p').css('font-size').split("px"));
+				line_height = parseInt(clicked_element.children('p').css('line-height').split("px"));
+				height = clicked_element.children('p').css('height');
+				margin_bottom = clicked_element.children('p').css('margin-bottom');
+				margin_top = clicked_element.children('p').css('margin-top');
+				font_family = clicked_element.children('p').css('font-family');
+				font_weight = clicked_element.children('p').css('font-weight');
+				text_align =clicked_element.children('p').css('text-align');
+				padding = clicked_element.children('p').css('padding');
+				color = clicked_element.children('p').css('color');
+				width = clicked_element.children('p').css('width');
 			}
+			_this.inputEdit();
 		},
 
 		inputEdit: function(){
@@ -280,7 +249,6 @@ jQuery plugin allowing to edit html online.
 
 		documentClick: function(event){
 			if ($(event.target).hasClass('editable') || $(event.target).parents('.editable').length > 0){
-				if (!edit_mode){return false;}
 				_this.checkInput();
 				if ($('#input_editor').length == 0){//jshint ignore:line
 					if (!$(event.target).hasClass('editable')){
