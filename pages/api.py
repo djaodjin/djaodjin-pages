@@ -22,19 +22,32 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#pylint: disable=no-init,no-member,unused-variable
+#pylint: disable=old-style-class,line-too-long
+
 import os, random, string, re
 
 from rest_framework.response import Response
 from rest_framework import generics
 from rest_framework import status
-from pages.models import PageElement
-from pages.serializers import PageElementSerializer
+from pages.models import PageElement, UploadedImage
+from pages.serializers import PageElementSerializer, UploadedImageSerializer
 from bs4 import BeautifulSoup
 from django.conf import settings
 from .mixins import AccountMixin
 
-#pylint: disable=no-init
-#pylint: disable=old-style-class
+from .settings import IMG_DIR, IMG_URL
+
+from rest_framework.response import Response
+from rest_framework import status
+
+from django.core.exceptions import ImproperlyConfigured
+
+
+if not IMG_DIR:
+    raise ImproperlyConfigured(
+        "djaodjin-pages requires a PAGES_IMG_DIR settings. "
+        "PAGES_IMG_DIR is the directory where images will be uploaded")
 
 class PageElementDetail(AccountMixin, generics.RetrieveUpdateDestroyAPIView):
     """
@@ -51,7 +64,6 @@ class PageElementDetail(AccountMixin, generics.RetrieveUpdateDestroyAPIView):
         if formatted_text.endswith('\n'):
             formatted_text = formatted_text[:len(formatted_text)-1]
         return formatted_text
-
 
     def update_or_create_pagelement(self, request, *args, **kwargs):
     	"""
@@ -94,7 +106,7 @@ class PageElementDetail(AccountMixin, generics.RetrieveUpdateDestroyAPIView):
             changed = False
 
             for directory in settings.TEMPLATE_DIRS:
-                for (dirpath, dirnames, filenames) in os.walk(directory): #pylint: disable=unused-variable
+                for (dirpath, dirnames, filenames) in os.walk(directory): 
                     for filename in filenames:
                         if filename == request.DATA['template_name']:
                             with open(os.path.join(dirpath, filename), "r") as myfile:
@@ -117,7 +129,7 @@ class PageElementDetail(AccountMixin, generics.RetrieveUpdateDestroyAPIView):
                                 html = soup.prettify("utf-8")
                                 changed = True
                             if changed:
-                                # Crite html to save new id
+                                # write html to save new id
                                 with open(os.path.join(dirpath, filename), "w") as myfile:
                                     myfile.write(html)
             self.post_save(self.object, created=True)
@@ -129,3 +141,21 @@ class PageElementDetail(AccountMixin, generics.RetrieveUpdateDestroyAPIView):
     def put(self, request, *args, **kwargs):
         return self.update_or_create_pagelement(request, *args, **kwargs)
 
+
+class FileUploadView(AccountMixin, generics.CreateAPIView):
+
+    model = UploadedImage
+    serializer_class = UploadedImageSerializer
+
+    def create(self, request, *args, **kwargs):
+        img = request.FILES['img']
+        # img_name = 'qgshfjgqyfuqgsf.png'
+        img_obj = UploadedImage(
+            img=IMG_URL+img.name,
+            account=self.get_account()
+            ) 
+        img_obj.save()
+        with open(os.path.join(IMG_DIR, img.name), 'w') as file:
+                file.write(img.read())
+        serializer = UploadedImageSerializer(img_obj)
+        return Response(serializer.data, status=200)

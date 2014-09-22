@@ -63,6 +63,7 @@ jQuery plugin allowing to edit html online.
 			$(document).on('click', _this.documentClick);
 			$(document).on('click, keydown','#input_editor', _this.removeAlert);
 			$(document).on('click', '.btn_tool',_this.addMarkdowntag);
+			// $(document).on('drop', '#input_editor', _this.DropImage);
 		},
 
 		_clickEditable: function(){
@@ -112,6 +113,7 @@ jQuery plugin allowing to edit html online.
 		},
 
 		toggleInput: function(){
+			var upload_enable = false;
 			markdown_tool = false;
 			if (clicked_element.hasClass('edit-markdown')){
 				markdown_tool = true;
@@ -122,10 +124,37 @@ jQuery plugin allowing to edit html online.
 		             <button type="button" class="btn_tool" id="italic"><em>I</em></button>\
 		             <button type="button" class="btn_tool" id="list_ul">List</button>\
 		             <button type="button" class="btn_tool" id="link">Link</button></div>';
-		    var textarea_html = '<div class="input-group" id="editable_section"><textarea class="form-control editor" id="input_editor" value="" spellcheck="false"></textarea></div>';
-
+		    var upload_form = '<form action="/file-upload" class="dropzone" id="uploadzone" style="display:none;height:50px;position:absolute;bottom:0px;width:100%;border:1px solid #AAA;border-radius:5px;color:#AAA;padding:5px"></form>';
+      	    var textarea_html = '<div class="input-group" id="editable_section"><textarea class="form-control editor" id="input_editor" value="" spellcheck="false"></textarea>'+upload_form+'</div>';
+      	    if (clicked_element.hasClass('edit-markdown')){
+      	    	upload_enable = true;
+      	    }
 		    clicked_element.replaceWith(textarea_html);
-			
+
+
+			if (upload_enable){
+				$("#uploadzone").dropzone({
+	                paramName: 'img',
+	                url: _this.options.img_upload_url,
+	                dictDefaultMessage: "To add an image in this part place the cursor where you want it and drag an image from your desktop to this zone.",
+	                clickable: true,
+	                enqueueForUpload: true,
+	                createImageThumbnails:false,
+	                maxFilesize: 1,
+	                uploadMultiple: false,
+	                addRemoveLinks: true,
+	                sending: function(file, xhr, formData){
+	                	formData.append('csrfmiddlewaretoken', _this.options.csrf_token)
+	                },
+	                success: function(data, response){
+	                	console.log(response);
+	                	$('#input_editor').focus()
+	                	$('#input_editor').selection('insert',{text:'![Alt text]('+ response.img +')' ,mode:'before'})
+	                }
+            	});
+				$('#uploadzone').show();
+				$('#input_editor').css({'margin-bottom':"50px"});
+			}
 			$('#editable_section').css({
 				'margin-bottom':parseInt(margin_bottom.split("px"))-(line_height-font_size)+'px',
 				'margin-top':parseInt(margin_top.split("px"))+'px',
@@ -133,7 +162,7 @@ jQuery plugin allowing to edit html online.
 
 			$('#editable_section').addClass(class_element);
 			$('#editable_section').removeClass('edit-hover editable');
-			$('#input_editor').val(orig_text).focus();
+			$('#input_editor').val($.trim(orig_text)).focus();
 			
 			$('#input_editor').css({
 				'position':'relative',
@@ -207,7 +236,7 @@ jQuery plugin allowing to edit html online.
 					method:'PUT',
 					async:false,
 					url: _this.options.base_url + id_element +'/',
-					data:{text:new_text, old_text:orig_text, template_name:_this.options.template_name, tag: clicked_element.prop("tagName")},
+					data:{text:$.trim(new_text), old_text:$.trim(orig_text), template_name:_this.options.template_name, tag: clicked_element.prop("tagName")},
 					success: function(data){
 						new_id = data.slug;
 					}
@@ -290,7 +319,9 @@ jQuery plugin allowing to edit html online.
 		autotag:false,
 		enable_markdown: true,
 		markdown_identifier: 'p',
-		template_name:''
+		template_name:'',
+		csrf_token:'',
+		img_upload_url:'',
 	};
 
 })(jQuery);

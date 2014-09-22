@@ -27,10 +27,16 @@ import os
 from django.conf import settings
 
 ACCOUNT_MODEL = getattr(settings,
-	'PAGES_ACCOUNT_MODEL', settings.AUTH_USER_MODEL)
+    'PAGES_ACCOUNT_MODEL', settings.AUTH_USER_MODEL)
 
 ACCOUNT_URL_KWARG = getattr(settings,
-	'PAGES_ACCOUNT_URL_KWARG', 'organization')
+    'PAGES_ACCOUNT_URL_KWARG', 'organization')
 
 SLUG_RE = r'[a-zA-Z0-9_\-]+'
+
+IMG_DIR = getattr(settings, 'PAGES_IMG_DIR', None)
+
+IMG_URL = getattr(settings,
+    'PAGES_IMG_URL', '/static/img/')
+
 

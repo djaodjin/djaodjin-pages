@@ -23,7 +23,7 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from rest_framework import serializers
-from pages.models import PageElement
+from pages.models import PageElement, UploadedImage
 
 #pylint: disable=no-init
 #pylint: disable=old-style-class
@@ -34,3 +34,10 @@ class PageElementSerializer(serializers.ModelSerializer):
         model = PageElement
         fields = ('slug', 'text')
         read_only_fields = ('slug',)
+
+class UploadedImageSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = UploadedImage
+        fields = ('img', 'account')
+

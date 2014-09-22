@@ -40,3 +40,15 @@ class PageElement(models.Model):
 
     def __unicode__(self):
         return unicode(self.slug)
+
+class UploadedImage(models.Model):
+    """
+   	Image uploaded
+    """
+
+    img = models.CharField(max_length=50)
+    account = models.ForeignKey(
+        settings.ACCOUNT_MODEL, related_name='account_image', null=True)
+
+    def __unicode__(self):
+        return unicode(self.img)

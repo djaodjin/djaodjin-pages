@@ -73,9 +73,11 @@ TEMPLATE_DIRS = (
     # Don't forget to use absolute paths, not relative paths.
 )
 
-PAGES_ACCOUNT_MODEL = 'testsite.Organization'
+PAGES_ACCOUNT_MODEL = 'testsite.ExampleAccount'
 
-PAGES_ACCOUNT_URL_KWARG = 'organization'
+PAGES_ACCOUNT_URL_KWARG = 'account_slug'
+
+PAGES_IMG_DIR = os.path.join(BASE_DIR, 'testsite/static/img/')
 # Internationalization
 # https://docs.djangoproject.com/en/1.7/topics/i18n/
 

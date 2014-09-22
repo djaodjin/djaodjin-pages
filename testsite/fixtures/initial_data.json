@@ -1,0 +1,10 @@
+[
+	{
+		"fields":{
+			"slug": "example",
+			"name": "Example"
+		},
+		"model": "testsite.ExampleAccount",
+		"pk":1
+	}
+]

@@ -68,10 +68,10 @@
   <!-- Main jumbotron for a primary marketing message or call to action -->
   <div class="jumbotron">
    <div class="container">
-    <h1 class="editable" id="wawdtwheji">
+    <h1 class="editable">
      Hello, world!
     </h1>
-    <p class="editable edit-markdown" id="vtvzgpjstm">
+    <p class="editable edit-markdown">
      This is a template for a simple marketing or informational website. It includes a large callout called a jumbotron and three supporting pieces of content. Use it as a starting point to create something more unique.
     </p>
     <p>
@@ -98,14 +98,11 @@
      </p>
     </div>
     <div class="col-md-4">
-     <h2 class="editable" id="puozunovdf">
+     <h2 class="editable">
       Heading 2
      </h2>
      <p class="editable edit-markdown">
-      Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod
-      tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam,
-      quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo
-      consequat
+      Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat
      </p>
      <p>
       <a class="btn btn-default" href="#" role="button">
@@ -180,6 +177,8 @@
   });
   })
   </script>
+  <script src="/static/vendor/js/dropzone.js">
+  </script>
   <script src="/static/vendor/js/jquery.autosize.js">
   </script>
   <script src="/static/vendor/js/jquery.selection.js">
@@ -193,9 +192,11 @@
   <script>
    $(document).ready(function(){
         $('body').editor({
-          base_url: '/cham-box/editables/',
+          base_url: '/example/editables/',
           autotag: false,
-          template_name:'index.html'
+          template_name:'index.html',
+          csrf_token: "{{ csrf_token }}",
+          img_upload_url:"{% url 'upload_image_element' 'example' %}",
         });
       });
   </script>

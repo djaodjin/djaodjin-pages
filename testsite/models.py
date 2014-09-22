@@ -2,7 +2,7 @@
 
 from django.db import models
 
-class Organization(models.Model):
+class ExampleAccount(models.Model):
 
     slug = models.SlugField()
     name = models.CharField(max_length=50)
