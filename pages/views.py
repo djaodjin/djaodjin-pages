@@ -52,7 +52,7 @@ class PageView(AccountMixin, TemplateView):
             for editable in soup.find_all(class_="editable"):
                 try:
                     id_element = editable['id']
-                except:
+                except KeyError:
                     continue
                 try:
                     edit = PageElement.objects.get(slug=id_element)

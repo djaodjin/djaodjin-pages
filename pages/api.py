@@ -35,6 +35,7 @@ from pages.serializers import PageElementSerializer, UploadedImageSerializer
 from bs4 import BeautifulSoup
 from django.conf import settings
 from .mixins import AccountMixin
+from rest_framework.serializers import ValidationError
 
 from .settings import IMG_DIR, IMG_URL
 
@@ -110,11 +111,11 @@ class PageElementDetail(AccountMixin, generics.RetrieveUpdateDestroyAPIView):
                                 soup = BeautifulSoup(myfile)
                                 soup_elements = soup.find_all(request.DATA['tag'].lower())
                                 if len(soup_elements) > 1:
-                                    for el in soup_elements:
-                                        if el.string:
-                                            formatted_text = self.clean_text(el.string)
+                                    for element in soup_elements:
+                                        if element.string:
+                                            formatted_text = self.clean_text(element.string)
                                             if formatted_text == request.DATA['old_text']:
-                                                soup_element = el
+                                                soup_element = element
                                                 break
                                     if not soup_element:
                                         # XXX - raise an exception
