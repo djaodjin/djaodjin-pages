@@ -23,7 +23,7 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pylint: disable=no-init,no-member,unused-variable
-#pylint: disable=old-style-class,line-too-long
+#pylint: disable=old-style-class,line-too-long,maybe-no-member
 
 import os, random, string, re
 
@@ -62,7 +62,7 @@ class PageElementDetail(AccountMixin, generics.RetrieveUpdateDestroyAPIView):
             formatted_text = formatted_text[:len(formatted_text)-1]
         return formatted_text
 
-    def update_or_create_pagelement(self, request, *args, **kwargs):#pylint: disable=too-many-locals
+    def update_or_create_pagelement(self, request, *args, **kwargs):#pylint: disable=too-many-locals,unused-argument
         """
         Update an existing PageElement if id provided
         If no id provided create a pagelement with new id,
@@ -152,7 +152,7 @@ class FileUploadView(AccountMixin, generics.CreateAPIView):
             account=self.get_account()
             )
         img_obj.save()
-        with open(os.path.join(IMG_DIR, img.name), 'w') as file:
-                file.write(img.read())
+        with open(os.path.join(IMG_DIR, img.name), 'w') as open_file:
+            open_file.write(img.read())
         serializer = UploadedImageSerializer(img_obj)
         return Response(serializer.data, status=200)

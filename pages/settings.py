@@ -22,8 +22,6 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import os
-
 from django.conf import settings
 
 ACCOUNT_MODEL = getattr(settings,
@@ -38,5 +36,3 @@ IMG_DIR = getattr(settings, 'PAGES_IMG_DIR', None)
 
 IMG_URL = getattr(settings,
     'PAGES_IMG_URL', '/static/img/')
-
-
