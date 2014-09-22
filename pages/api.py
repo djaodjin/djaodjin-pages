@@ -38,9 +38,6 @@ from .mixins import AccountMixin
 
 from .settings import IMG_DIR, IMG_URL
 
-from rest_framework.response import Response
-from rest_framework import status
-
 from django.core.exceptions import ImproperlyConfigured
 
 
@@ -65,12 +62,12 @@ class PageElementDetail(AccountMixin, generics.RetrieveUpdateDestroyAPIView):
             formatted_text = formatted_text[:len(formatted_text)-1]
         return formatted_text
 
-    def update_or_create_pagelement(self, request, *args, **kwargs):
-    	"""
-    	Update an existing PageElement if id provided
-    	If no id provided create a pagelement with new id,
-    	write new html and return id to live template
-    	"""
+    def update_or_create_pagelement(self, request, *args, **kwargs):#pylint: disable=too-many-locals
+        """
+        Update an existing PageElement if id provided
+        If no id provided create a pagelement with new id,
+        write new html and return id to live template
+        """
         partial = kwargs.pop('partial', False)
         self.object = self.get_object_or_none()
         serializer = self.get_serializer(self.object, data=request.DATA,
@@ -92,7 +89,7 @@ class PageElementDetail(AccountMixin, generics.RetrieveUpdateDestroyAPIView):
             # Create a new id
                 new_id = ''.join(random.choice(string.lowercase) for i in range(10))
                 while PageElement.objects.filter(slug__exact=new_id).count() > 0:
-    				new_id = ''.join(random.choice(string.lowercase) for i in range(10))
+                    new_id = ''.join(random.choice(string.lowercase) for i in range(10))
 
             # Create a pageelement
             pagelement = PageElement(slug=new_id, text=request.DATA['text'])
@@ -106,7 +103,7 @@ class PageElementDetail(AccountMixin, generics.RetrieveUpdateDestroyAPIView):
             changed = False
 
             for directory in settings.TEMPLATE_DIRS:
-                for (dirpath, dirnames, filenames) in os.walk(directory): 
+                for (dirpath, dirnames, filenames) in os.walk(directory):
                     for filename in filenames:
                         if filename == request.DATA['template_name']:
                             with open(os.path.join(dirpath, filename), "r") as myfile:
@@ -153,7 +150,7 @@ class FileUploadView(AccountMixin, generics.CreateAPIView):
         img_obj = UploadedImage(
             img=IMG_URL+img.name,
             account=self.get_account()
-            ) 
+            )
         img_obj.save()
         with open(os.path.join(IMG_DIR, img.name), 'w') as file:
                 file.write(img.read())

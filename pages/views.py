@@ -58,7 +58,7 @@ class PageView(AccountMixin, TemplateView):
                     edit = PageElement.objects.get(slug=id_element)
                     account = self.get_account()
                     if account:
-                        edit = edit.get(account = account)
+                        edit = edit.get(account=account)
                     new_text = re.sub(r'[\ ]{2,}', '', edit.text)
                     if 'edit-markdown' in editable['class']:
                         new_text = markdown.markdown(new_text)
@@ -67,7 +67,8 @@ class PageView(AccountMixin, TemplateView):
                         editable.string = ''
                         children_done = []
                         for element in new_text.find_all():
-                            if element.name != 'html' and element.name != 'body':
+                            if element.name != 'html' and\
+                                element.name != 'body':
                                 if len(element.findChildren()) > 0:
                                     element.append(element.findChildren()[0])
                                     children_done += [element.findChildren()[0]]
