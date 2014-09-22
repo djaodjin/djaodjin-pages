@@ -28,15 +28,16 @@ from pages.models import PageElement
 from django.template.response import TemplateResponse
 import markdown, re
 
-from django.core.exceptions import ImproperlyConfigured
+from .mixins import AccountMixin
 
-class PageView(TemplateView):
+class PageView(AccountMixin, TemplateView):
     """
     Display or Edit a ``Page`` of a ``Project``.
 
     """
 
     http_method_names = ['get']
+
 
     def get_context_data(self, **kwargs):
         context = super(PageView, self).get_context_data(**kwargs)
@@ -45,7 +46,6 @@ class PageView(TemplateView):
 
     def get(self, request, *args, **kwargs):
         response = super(PageView, self).get(request, *args, **kwargs)
-
         if self.template_name and isinstance(response, TemplateResponse):
             response.render()
             soup = BeautifulSoup(response.content)
@@ -54,11 +54,11 @@ class PageView(TemplateView):
                     id_element = editable['id']
                 except:
                     continue
-                    # raise ImproperlyConfigured("Unable to find id for \n\n %s.\
-                    #     \n\nDon't forget to initialize templates.\
-                    #     \n $ python manage.py init_template" % editable)
                 try:
                     edit = PageElement.objects.get(slug=id_element)
+                    account = self.get_account()
+                    if account:
+                        edit = edit.get(account = account)
                     new_text = re.sub(r'[\ ]{2,}', '', edit.text)
                     if 'edit-markdown' in editable['class']:
                         new_text = markdown.markdown(new_text)

@@ -25,7 +25,8 @@
 
 from django.db import models
 from django.contrib import admin
-# Create your models here.
+
+from . import settings
 
 class PageElement(models.Model):
     """
@@ -34,8 +35,8 @@ class PageElement(models.Model):
 
     slug = models.CharField(max_length=50)
     text = models.TextField(blank=True)
+    account = models.ForeignKey(
+        settings.ACCOUNT_MODEL, related_name='account_page_element', null=True)
 
     def __unicode__(self):
         return unicode(self.slug)
-
-admin.site.register(PageElement)

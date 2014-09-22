@@ -26,21 +26,32 @@ import os, random, string, re
 
 from rest_framework.response import Response
 from rest_framework import generics
-from rest_framework import mixins
 from rest_framework import status
 from pages.models import PageElement
 from pages.serializers import PageElementSerializer
 from bs4 import BeautifulSoup
 from django.conf import settings
+from .mixins import AccountMixin
+
 #pylint: disable=no-init
 #pylint: disable=old-style-class
 
-class PageElementDetail(generics.RetrieveUpdateDestroyAPIView):
+class PageElementDetail(AccountMixin, generics.RetrieveUpdateDestroyAPIView):
     """
     Create or Update an editable element on a ``Page``.
     """
     model = PageElement
     serializer_class = PageElementSerializer
+
+    @staticmethod
+    def clean_text(text):
+        formatted_text = re.sub(r'[\ ]{2,}', '', text)
+        if formatted_text.startswith('\n'):
+            formatted_text = formatted_text[1:]
+        if formatted_text.endswith('\n'):
+            formatted_text = formatted_text[:len(formatted_text)-1]
+        return formatted_text
+
 
     def update_or_create_pagelement(self, request, *args, **kwargs):
     	"""
@@ -52,7 +63,6 @@ class PageElementDetail(generics.RetrieveUpdateDestroyAPIView):
         self.object = self.get_object_or_none()
         serializer = self.get_serializer(self.object, data=request.DATA,
                                          files=request.FILES, partial=partial)
-
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -64,18 +74,25 @@ class PageElementDetail(generics.RetrieveUpdateDestroyAPIView):
             return Response(err.message_dict, status=status.HTTP_400_BAD_REQUEST)
 
         if self.object is None:
+            if kwargs.get('slug') != 'undefined':
+                new_id = kwargs.get('slug')
+            else:
             # Create a new id
-            new_id = ''.join(random.choice(string.lowercase) for i in range(10))
-            while PageElement.objects.filter(slug__exact=new_id).count() > 0:
-				new_id = ''.join(random.choice(string.lowercase) for i in range(10))
+                new_id = ''.join(random.choice(string.lowercase) for i in range(10))
+                while PageElement.objects.filter(slug__exact=new_id).count() > 0:
+    				new_id = ''.join(random.choice(string.lowercase) for i in range(10))
 
             # Create a pageelement
             pagelement = PageElement(slug=new_id, text=request.DATA['text'])
+            account = self.get_account()
+            if account:
+                pagelement.account = account
             serializer = self.get_serializer(pagelement, data=request.DATA,
                 files=request.FILES, partial=partial)
             self.object = serializer.save(force_insert=True)
 
             changed = False
+
             for directory in settings.TEMPLATE_DIRS:
                 for (dirpath, dirnames, filenames) in os.walk(directory): #pylint: disable=unused-variable
                     for filename in filenames:
@@ -86,15 +103,10 @@ class PageElementDetail(generics.RetrieveUpdateDestroyAPIView):
                                 if len(soup_elements) > 1:
                                     for el in soup_elements:
                                         if el.string:
-                                            formatted_text = re.sub(r'[\ ]{2,}', '', el.string)
-                                            
-                                            if formatted_text.startswith('\n'):
-                                                formatted_text = formatted_text[1:]
-                                            if formatted_text.endswith('\n'):
-                                                formatted_text = formatted_text[:len(formatted_text)-1]
+                                            formatted_text = self.clean_text(el.string)
                                             if formatted_text == request.DATA['old_text']:
                                                 soup_element = el
-                                                break 
+                                                break
                                     if not soup_element:
                                         # XXX - raise an exception
                                         pass

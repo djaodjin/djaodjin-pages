@@ -73,7 +73,9 @@ TEMPLATE_DIRS = (
     # Don't forget to use absolute paths, not relative paths.
 )
 
+PAGES_ACCOUNT_MODEL = 'testsite.Organization'
 
+PAGES_ACCOUNT_URL_KWARG = 'organization'
 # Internationalization
 # https://docs.djangoproject.com/en/1.7/topics/i18n/
 
@@ -87,6 +89,7 @@ USE_L10N = True
 
 USE_TZ = True
 
+# PAGES_ACCOUNT_MODEL =
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.7/howto/static-files/

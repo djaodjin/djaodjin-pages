@@ -200,17 +200,10 @@ jQuery plugin allowing to edit html online.
 					$('body').prepend('<div class="error-label">No base_url option provided. Please update your script to use save edition.</div>');
 					return false;
 				}
-				if (id_element){
-					$.ajax({
-					method:'PUT',
-					url: _this.options.base_url + id_element +'/',
-					data:{text:new_text},
-					success: function(){
-						console.log('saved');
-					}
-				});
-				}else{
-					$.ajax({
+				if (!id_element){
+					id_element = 'undefined';
+				}
+				$.ajax({
 					method:'PUT',
 					async:false,
 					url: _this.options.base_url + id_element +'/',
@@ -219,7 +212,7 @@ jQuery plugin allowing to edit html online.
 						new_id = data.slug;
 					}
 				});
-				}
+				// }
 				
 			}
 		},
