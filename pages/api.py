@@ -137,7 +137,7 @@ class PageElementDetail(AccountMixin, generics.RetrieveUpdateDestroyAPIView):
 class FileUploadView(AccountMixin, APIView):
     parser_classes = (FileUploadParser,)
 
-    def post(self, request, account_slug=None, format=None):
+    def post(self, request, account_slug=None, format=None):#pylint: disable=unused-argument,redefined-builtin
         img = request.FILES['img']
         img_obj = UploadedImage(
             img=img,
