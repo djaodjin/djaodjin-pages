@@ -30,22 +30,16 @@ import os, random, string, re
 from rest_framework.response import Response
 from rest_framework import generics
 from rest_framework import status
+from rest_framework.parsers import FileUploadParser
 from pages.models import PageElement, UploadedImage
 from pages.serializers import PageElementSerializer, UploadedImageSerializer
 from bs4 import BeautifulSoup
 from django.conf import settings
-from .mixins import AccountMixin
+
 from rest_framework.serializers import ValidationError
+from rest_framework.views import APIView
 
-from .settings import IMG_DIR, IMG_URL
-
-from django.core.exceptions import ImproperlyConfigured
-
-
-if not IMG_DIR:
-    raise ImproperlyConfigured(
-        "djaodjin-pages requires a PAGES_IMG_DIR settings. "
-        "PAGES_IMG_DIR is the directory where images will be uploaded")
+from .mixins import AccountMixin
 
 class PageElementDetail(AccountMixin, generics.RetrieveUpdateDestroyAPIView):
     """
@@ -140,20 +134,19 @@ class PageElementDetail(AccountMixin, generics.RetrieveUpdateDestroyAPIView):
         return self.update_or_create_pagelement(request, *args, **kwargs)
 
 
-class FileUploadView(AccountMixin, generics.CreateAPIView):
+class FileUploadView(AccountMixin, APIView):
+    parser_classes = (FileUploadParser,)
 
-    model = UploadedImage
-    serializer_class = UploadedImageSerializer
-
-    def create(self, request, *args, **kwargs):
+    def post(self, request, account_slug=None, format=None):
         img = request.FILES['img']
-        # img_name = 'qgshfjgqyfuqgsf.png'
         img_obj = UploadedImage(
-            img=IMG_URL+img.name,
+            img=img,
             account=self.get_account()
             )
-        img_obj.save()
-        with open(os.path.join(IMG_DIR, img.name), 'w') as open_file:
-            open_file.write(img.read())
+
         serializer = UploadedImageSerializer(img_obj)
-        return Response(serializer.data, status=200)
+        serializer.save()
+        response = {
+            'img': os.path.join(settings.MEDIA_URL, serializer.data['img'])
+            }
+        return Response(response, status=status.HTTP_200_OK)

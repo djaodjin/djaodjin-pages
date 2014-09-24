@@ -38,6 +38,7 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
     'rest_framework',
     'pages',
+    'storages',
     'testsite',
 )
 
@@ -88,9 +89,27 @@ USE_L10N = True
 
 USE_TZ = True
 
-# PAGES_ACCOUNT_MODEL =
+# S3 settings
+USE_S3 = True
+
+AWS_ACCESS_KEY_ID = ''
+
+AWS_SECRET_ACCESS_KEY = ''
+
+AWS_STORAGE_BUCKET_NAME = ''
+
+S3_URL = 'https://%s.s3.amazonaws.com' % AWS_STORAGE_BUCKET_NAME
+
+MEDIA_URL = '/media/'
+
+if USE_S3:
+    DEFAULT_FILE_STORAGE = 'storages.backends.s3boto.S3BotoStorage'
+    MEDIA_URL = S3_URL + '/'
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.7/howto/static-files/
 STATIC_ROOT = BASE_DIR + '/testsite/static'
+
 STATIC_URL = '/static/'
+
+MEDIA_ROOT = BASE_DIR + '/testsite/media'

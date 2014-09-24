@@ -23,8 +23,18 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from django.db import models
-
+from datetime import datetime
 from . import settings
+
+def file_name(instance, filename):
+    path = settings.IMG_PATH
+    now = datetime.utcnow()
+    split = filename.split('.')
+    filename = split[0] + '_' + now.strftime("%m-%d-%Y") + '.' + split[1]
+    if instance.account:
+        return path + instance.account.slug + '/' + filename
+    else:
+        return path + filename
 
 class PageElement(models.Model):
     """
@@ -44,9 +54,11 @@ class UploadedImage(models.Model):
    	Image uploaded
     """
 
-    img = models.CharField(max_length=50)
+    img = models.ImageField(upload_to=file_name)
     account = models.ForeignKey(
         settings.ACCOUNT_MODEL, related_name='account_image', null=True)
 
     def __unicode__(self):
         return unicode(self.img)
+
+

@@ -9,7 +9,8 @@ urlpatterns = patterns('',
     # Examples:
     # url(r'^$', 'testsite.views.home', name='home'),
     # url(r'^blog/', include('blog.urls')),
-    url(r'^(?P<account_slug>%s)/' % SLUG_RE, include('pages.urls')),
+    url(r'^(?:(?P<account_slug>%s)/)?' % SLUG_RE, include('pages.urls')),
     url(r'^$', HomeView.as_view()),
     url(r'^admin/', include(admin.site.urls)),
-)+ static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+)+ static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)\
++ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

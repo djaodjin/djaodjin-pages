@@ -32,7 +32,8 @@ ACCOUNT_URL_KWARG = getattr(settings,
 
 SLUG_RE = r'[a-zA-Z0-9_\-]+'
 
-IMG_DIR = getattr(settings, 'PAGES_IMG_DIR', None)
+IMG_PATH = getattr(settings,
+    'PAGES_IMG_PATH', 'pages/images/')
 
-IMG_URL = getattr(settings,
-    'PAGES_IMG_URL', '/static/img/')
+USE_S3 = getattr(settings, 'USE_S3', False)
+S3_URL = getattr(settings, 'S3_URL', None)
