@@ -25,12 +25,12 @@
 from django.db import models
 from datetime import datetime
 from . import settings
+import hashlib
 
 def file_name(instance, filename):
-    path = settings.IMG_PATH
-    now = datetime.utcnow()
     split = filename.split('.')
-    filename = split[0] + '_' + now.strftime("%m-%d-%Y") + '.' + split[1]
+    filename = hashlib.sha1(instance.img.read()).hexdigest() + '.' + split[1]
+    path = settings.IMG_PATH
     if instance.account:
         return path + instance.account.slug + '/' + filename
     else:

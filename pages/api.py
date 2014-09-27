@@ -35,6 +35,8 @@ from pages.models import PageElement, UploadedImage
 from pages.serializers import PageElementSerializer, UploadedImageSerializer
 from bs4 import BeautifulSoup
 from django.conf import settings
+from .settings import IMG_PATH
+from django.core.files.storage import default_storage
 
 from rest_framework.serializers import ValidationError
 from rest_framework.views import APIView
@@ -133,19 +135,34 @@ class PageElementDetail(AccountMixin, generics.RetrieveUpdateDestroyAPIView):
     def put(self, request, *args, **kwargs):
         return self.update_or_create_pagelement(request, *args, **kwargs)
 
-
+import hashlib
 class FileUploadView(AccountMixin, APIView):
     parser_classes = (FileUploadParser,)
 
     def post(self, request, account_slug=None, format=None):#pylint: disable=unused-argument,redefined-builtin
         img = request.FILES['img']
-        img_obj = UploadedImage(
-            img=img,
-            account=self.get_account()
-            )
+        existing_file = False
+        sha1_filename = hashlib.sha1(img.read()).hexdigest() + '.' + str(img).split('.')[1]
+        if settings.USE_S3:
+            path = IMG_PATH
+            if self.get_account():
+                full_path = path + self.get_account().slug + '/' + sha1_filename
+            else:
+                full_path = path + sha1_filename
 
-        serializer = UploadedImageSerializer(img_obj)
-        serializer.save()
+            if default_storage.exists(full_path):
+                existing_file = True
+        if not existing_file:
+            img_obj = UploadedImage(
+                img=img,
+                account=self.get_account()
+                )
+            serializer = UploadedImageSerializer(img_obj)
+            serializer.save()
+        else:
+            img_obj = UploadedImage.objects.get(img=full_path)
+            serializer = UploadedImageSerializer(img_obj)
+
         response = {
             'img': os.path.join(settings.MEDIA_URL, serializer.data['img'])
             }
