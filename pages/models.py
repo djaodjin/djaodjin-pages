@@ -23,7 +23,6 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from django.db import models
-from datetime import datetime
 from . import settings
 import hashlib
 
