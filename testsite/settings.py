@@ -90,7 +90,7 @@ USE_L10N = True
 USE_TZ = True
 
 # S3 settings
-USE_S3 = True
+USE_S3 = False
 
 AWS_ACCESS_KEY_ID = ''
 
