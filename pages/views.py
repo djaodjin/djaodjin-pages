@@ -55,10 +55,12 @@ class PageView(AccountMixin, TemplateView):
                 except KeyError:
                     continue
                 try:
-                    edit = PageElement.objects.get(slug=id_element)
+                    edit = PageElement.objects.filter(slug=id_element)
                     account = self.get_account()
                     if account:
                         edit = edit.get(account=account)
+                    else:
+                        edit = edit[0]
                     new_text = re.sub(r'[\ ]{2,}', '', edit.text)
                     if 'edit-markdown' in editable['class']:
                         new_text = markdown.markdown(new_text)

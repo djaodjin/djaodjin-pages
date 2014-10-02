@@ -59,6 +59,31 @@ class PageElementDetail(AccountMixin, generics.RetrieveUpdateDestroyAPIView):
             formatted_text = formatted_text[:len(formatted_text)-1]
         return formatted_text
 
+    def write_html(self, path, new_id):
+        with open(path, "r") as myfile:
+            soup = BeautifulSoup(myfile, "html.parser")
+            soup_elements = soup.find_all(self.request.DATA['tag'].lower())
+            if len(soup_elements) > 1:
+                for element in soup_elements:
+                    if element.string:
+                        formatted_text = self.clean_text(element.string)
+                        if formatted_text == self.request.DATA['old_text']:
+                            soup_element = element
+                            break
+                if not soup_element:
+                    # XXX - raise an exception
+                    pass
+            else:
+                soup_element = soup_elements[0]
+
+            soup_element['id'] = new_id
+            html = soup.prettify("utf-8")
+            changed = True
+        if changed:
+            # write html to save new id
+            with open(path, "w") as myfile:
+                myfile.write(html)
+
     def update_or_create_pagelement(self, request, *args, **kwargs):#pylint: disable=too-many-locals,unused-argument
         """
         Update an existing PageElement if id provided
@@ -98,34 +123,17 @@ class PageElementDetail(AccountMixin, generics.RetrieveUpdateDestroyAPIView):
             self.object = serializer.save(force_insert=True)
 
             changed = False
-
-            for directory in settings.TEMPLATE_DIRS:
-                for (dirpath, dirnames, filenames) in os.walk(directory):
-                    for filename in filenames:
-                        if filename == request.DATA['template_name']:
-                            with open(os.path.join(dirpath, filename), "r") as myfile:
-                                soup = BeautifulSoup(myfile)
-                                soup_elements = soup.find_all(request.DATA['tag'].lower())
-                                if len(soup_elements) > 1:
-                                    for element in soup_elements:
-                                        if element.string:
-                                            formatted_text = self.clean_text(element.string)
-                                            if formatted_text == request.DATA['old_text']:
-                                                soup_element = element
-                                                break
-                                    if not soup_element:
-                                        # XXX - raise an exception
-                                        pass
-                                else:
-                                    soup_element = soup_elements[0]
-
-                                soup_element['id'] = new_id
-                                html = soup.prettify("utf-8")
-                                changed = True
-                            if changed:
-                                # write html to save new id
-                                with open(os.path.join(dirpath, filename), "w") as myfile:
-                                    myfile.write(html)
+            template_name = request.DATA['template_name']
+            template_path = request.DATA['template_path']
+            if template_name:
+                for directory in settings.TEMPLATE_DIRS:
+                    for (dirpath, dirnames, filenames) in os.walk(directory):
+                        for filename in filenames:
+                            if filename == request.DATA['template_name']:
+                                path = os.path.join(dirpath, filename)
+            elif template_path:
+                path = template_path
+            self.write_html(path, new_id)
             self.post_save(self.object, created=True)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         self.object = serializer.save(force_update=True)

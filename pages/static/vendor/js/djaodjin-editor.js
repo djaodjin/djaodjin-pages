@@ -124,7 +124,7 @@ jQuery plugin allowing to edit html online.
 		             <button type="button" class="btn_tool" id="italic"><em>I</em></button>\
 		             <button type="button" class="btn_tool" id="list_ul">List</button>\
 		             <button type="button" class="btn_tool" id="link">Link</button></div>';
-		    var upload_form = '<form action="/file-upload" class="dropzone" id="uploadzone" style="display:none;height:50px;position:absolute;bottom:0px;width:100%;border:1px solid #AAA;border-radius:5px;color:#AAA;padding:5px"></form>';
+		    var upload_form = '<form action="/file-upload" class="dropzone" id="uploadzone" style="display:none;height:50px;position:absolute;bottom:0px;width:100%;border:1px solid #AAA;border-radius:5px;color:#AAA;padding:5px;margin-bottom:0px"></form>';
       	    var textarea_html = '<div class="input-group" id="editable_section"><textarea class="form-control editor" id="input_editor" value="" spellcheck="false"></textarea>'+upload_form+'</div>';
       	    if (clicked_element.hasClass('edit-markdown')){
       	    	upload_enable = true;
@@ -236,7 +236,7 @@ jQuery plugin allowing to edit html online.
 					method:'PUT',
 					async:false,
 					url: _this.options.base_url + id_element +'/',
-					data:{text:$.trim(new_text), old_text:$.trim(orig_text), template_name:_this.options.template_name, tag: clicked_element.prop("tagName")},
+					data:{text:$.trim(new_text), old_text:$.trim(orig_text), template_name:_this.options.template_name, template_path:_this.options.template_path, tag: clicked_element.prop("tagName")},
 					success: function(data){
 						new_id = data.slug;
 					}
@@ -320,6 +320,7 @@ jQuery plugin allowing to edit html online.
 		enable_markdown: true,
 		markdown_identifier: 'p',
 		template_name:'',
+		template_path:'',
 		csrf_token:'',
 		img_upload_url:'',
 	};
