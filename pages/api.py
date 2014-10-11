@@ -315,7 +315,7 @@ class TemplateUploadView(AccountMixin, APIView):
 
         # delete temp directory
         shutil.rmtree(dir_temp)
-        
+
         if new_package:
             template_package = UploadedTemplate(account=account,
                 name=root_path.replace('/', ''))
