@@ -1,0 +1,19 @@
+{% load static %}
+
+<script src='{% static "vendor/js/dropzone.js" %}'></script>
+<script src='{% static "vendor/js/jquery.autosize.js" %}'></script>
+<script src='{% static "vendor/js/jquery.selection.js" %}'></script>
+<script src='{% static "vendor/js/Markdown.Converter.js" %}'></script>
+<script src='{% static "vendor/js/Markdown.Sanitiser.js" %}'></script>
+<script src='{% static "vendor/js/djaodjin-editor.js" %}'></script>
+<script>
+    $(document).ready(function(){
+        $('body').editor({
+            base_url: '/example/api/editables/',
+            autotag: false,
+            template_name:'index.html',
+            csrf_token: "{{ csrf_token }}",
+            img_upload_url:"{% url 'upload_image_element' 'example' %}",
+        });
+    });
+</script>

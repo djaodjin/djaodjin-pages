@@ -198,10 +198,6 @@ class UploadedTemplateListAPIView(AccountMixin, generics.ListCreateAPIView):
         return queryset
 
 
-
-
-
-
 class TemplateUploadView(AccountMixin, APIView):
     parser_classes = (FileUploadParser,)
 

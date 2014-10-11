@@ -1,0 +1,19 @@
+{% load static %}
+<script src='{% static "vendor/js/jquery.js" %}'></script>
+<script src='{% static "vendor/js/angular.js" %}'></script>
+<script src='{% static "vendor/js/uploadapp.js" %}'></script>
+<script src='{% static "vendor/js/dropzone.js" %}'></script>
+<script>
+    app.config(function($interpolateProvider,$locationProvider,$httpProvider) {
+        $interpolateProvider.startSymbol('[%');
+        $interpolateProvider.endSymbol('%]');
+        $httpProvider.defaults.headers.common['X-CSRFToken'] = '{{ csrf_token|escapejs }}';
+    });
+      app.constant('urls', {
+        get_uploaded_templates: "{% url 'get_uploadedtemplate_list' 'example' %}",
+        upload_template: "{% url 'upload_template' 'example' %}",
+    });
+      app.constant('csrf', {
+        csrf_token: "{{ csrf_token|escapejs }}",
+    });
+</script>
