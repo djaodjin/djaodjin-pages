@@ -23,12 +23,22 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from bs4 import BeautifulSoup
-from django.views.generic import TemplateView
-from pages.models import PageElement
+from django.views.generic import TemplateView, ListView
+from pages.models import PageElement, UploadedTemplate
 from django.template.response import TemplateResponse
 import markdown, re
 
-from .mixins import AccountMixin
+from .mixins import AccountMixin, TemplateChoiceMixin
+
+
+class TemplatesListView(AccountMixin, ListView):
+    template_name = "snaplines/uploadedtemplate_list.html"
+    context_object_name = "uploadedtemplate_list"
+
+    def get_queryset(self):
+        queryset = UploadedTemplate.objects.filter(
+            organization=self.get_account())
+        return queryset
 
 class PageView(AccountMixin, TemplateView):
     """
@@ -58,9 +68,10 @@ class PageView(AccountMixin, TemplateView):
                     edit = PageElement.objects.filter(slug=id_element)
                     account = self.get_account()
                     if account:
-                        edit = edit.get(account=account)
+                        edit = PageElement.objects.get(slug=id_element, account=account)
+                        # edit = edit.get(account=account)
                     else:
-                        edit = edit[0]
+                        edit = PageElement.objects.get(slug=id_element)
                     new_text = re.sub(r'[\ ]{2,}', '', edit.text)
                     if 'edit-markdown' in editable['class']:
                         new_text = markdown.markdown(new_text)

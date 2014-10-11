@@ -23,7 +23,7 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from rest_framework import serializers
-from pages.models import PageElement, UploadedImage
+from pages.models import PageElement, UploadedImage, UploadedTemplate
 
 #pylint: disable=no-init
 #pylint: disable=old-style-class
@@ -40,4 +40,9 @@ class UploadedImageSerializer(serializers.ModelSerializer):
     class Meta:
         model = UploadedImage
         fields = ('img', 'account')
+
+class UploadedTemplateSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = UploadedTemplate
 

@@ -71,11 +71,7 @@ TEMPLATE_DIRS = (
     BASE_DIR + '/testsite/templates',
 )
 
-PAGES_ACCOUNT_MODEL = 'testsite.ExampleAccount'
 
-PAGES_ACCOUNT_URL_KWARG = 'account_slug'
-
-PAGES_IMG_DIR = os.path.join(BASE_DIR, 'testsite/static/img/')
 # Internationalization
 # https://docs.djangoproject.com/en/1.7/topics/i18n/
 
@@ -113,3 +109,13 @@ STATIC_ROOT = BASE_DIR + '/testsite/static'
 STATIC_URL = '/static/'
 
 MEDIA_ROOT = BASE_DIR + '/testsite/media'
+
+PAGES_ACCOUNT_MODEL = 'testsite.ExampleAccount'
+
+PAGES_ACCOUNT_URL_KWARG = 'account_slug'
+
+PAGES_IMG_DIR = os.path.join(BASE_DIR, 'testsite/static/img/')
+
+PAGES_UPLOADED_TEMPLATE_DIR = BASE_DIR + '/testsite/templates'
+
+PAGES_UPLOADED_STATIC_DIR = STATIC_ROOT

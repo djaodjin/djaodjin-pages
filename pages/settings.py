@@ -35,5 +35,11 @@ SLUG_RE = r'[a-zA-Z0-9_\-]+'
 IMG_PATH = getattr(settings,
     'PAGES_IMG_PATH', 'pages/images/')
 
+UPLOADED_TEMPLATE_DIR = getattr(settings,
+    'PAGES_UPLOADED_TEMPLATE_DIR', None)
+
+UPLOADED_STATIC_DIR = getattr(settings,
+    'PAGES_UPLOADED_STATIC_DIR', None)
+
 USE_S3 = getattr(settings, 'USE_S3', False)
 S3_URL = getattr(settings, 'S3_URL', None)

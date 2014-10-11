@@ -23,7 +23,7 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from django.conf.urls import patterns, url
-from pages.api import PageElementDetail, FileUploadView
+from pages.api import PageElementDetail, FileUploadView, TemplateUploadView, UploadedTemplateListAPIView
 # Uncomment the next two lines to enable the admin:
 # from django.contrib import admin
 # admin.autodiscover()
@@ -33,4 +33,8 @@ urlpatterns = patterns('',
         FileUploadView.as_view(), name='upload_image_element'),
     url(r'^editables/(?P<slug>[\w-]+)/',
         PageElementDetail.as_view(), name='edit_page_element'),
+    url(r'^templates/upload-templates/',
+        TemplateUploadView.as_view(), name='upload_template'),
+    url(r'^uploaded-templates/list/', #pylint: disable=line-too-long
+        UploadedTemplateListAPIView.as_view(), name='get_uploadedtemplate_list'),
 )

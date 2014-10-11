@@ -60,4 +60,22 @@ class UploadedImage(models.Model):
     def __unicode__(self):
         return unicode(self.img)
 
+class UploadedTemplate(models.Model):
+    """
+    This model allow to record uploaded template.
+    """
+
+    account = models.ForeignKey(
+        settings.ACCOUNT_MODEL,
+        related_name='account_template', null=True)
+    name = models.CharField(max_length=150)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField()
+
+    def __unicode__(self):
+        if self.account:
+            return '%s-%s' % (self.account, self.name)
+        else:
+            return self.name
+
 
