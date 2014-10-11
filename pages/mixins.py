@@ -25,9 +25,13 @@
 import os
 from django.db.models.loading import get_model
 from django.shortcuts import get_object_or_404
+from django.conf import settings
+from django.core.exceptions import ImproperlyConfigured
+
 from pages.models import UploadedTemplate
 from .settings import ACCOUNT_URL_KWARG, ACCOUNT_MODEL
-from django.conf import settings
+
+
 class AccountMixin(object):
 
     account_url_kwarg = ACCOUNT_URL_KWARG
@@ -47,6 +51,7 @@ class AccountMixin(object):
 
 class TemplateChoiceMixin(AccountMixin):
 
+    #pylint: disable=unused-variable, line-too-long
     def get_template_names(self):
         """
         Returns a list of template names to be used for the request. Must return
@@ -61,7 +66,8 @@ class TemplateChoiceMixin(AccountMixin):
         else:
             if account:
                 template_name = None
-                uploaded_templates = UploadedTemplate.objects.filter(account=account).order_by("-created_at")[0]
+                uploaded_templates = UploadedTemplate.objects.filter(
+                    account=account).order_by("-created_at")[0]
                 root_account_path = account.slug +'/'+ uploaded_templates.name
                 for directory in settings.TEMPLATE_DIRS:
                     for (dirpath, dirnames, filenames) in os.walk(directory):
