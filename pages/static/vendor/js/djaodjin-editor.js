@@ -68,7 +68,7 @@ jQuery plugin allowing to edit html online.
 
 		_clickEditable: function(){
 			
-			id_element = clicked_element.attr('id');
+			id_element = clicked_element.attr(_this.options.unique_identifier);
 			orig_element = clicked_element;
 			if (clicked_element.hasClass('edit-markdown')){
 				_this.getTextElement();
@@ -114,6 +114,7 @@ jQuery plugin allowing to edit html online.
 
 		toggleInput: function(){
 			var upload_enable = false;
+			var upload_form = ''
 			markdown_tool = false;
 			if (clicked_element.hasClass('edit-markdown')){
 				markdown_tool = true;
@@ -124,37 +125,40 @@ jQuery plugin allowing to edit html online.
 		             <button type="button" class="btn_tool" id="italic"><em>I</em></button>\
 		             <button type="button" class="btn_tool" id="list_ul">List</button>\
 		             <button type="button" class="btn_tool" id="link">Link</button></div>';
-		    var upload_form = '<form action="/file-upload" class="dropzone" id="uploadzone" style="display:none;height:50px;position:absolute;bottom:0px;width:100%;border:1px solid #AAA;border-radius:5px;color:#AAA;padding:5px;margin-bottom:0px"></form>';
+		    if (_this.options.enable_upload){
+		    	upload_form = '<form action="/file-upload" class="dropzone" id="uploadzone" style="display:none;height:50px;position:absolute;bottom:0px;width:100%;border:1px solid #AAA;border-radius:5px;color:#AAA;padding:5px;margin-bottom:0px"></form>';
+		    }
       	    var textarea_html = '<div class="input-group" id="editable_section"><textarea class="form-control editor" id="input_editor" value="" spellcheck="false"></textarea>'+upload_form+'</div>';
       	    if (clicked_element.hasClass('edit-markdown')){
       	    	upload_enable = true;
       	    }
 		    clicked_element.replaceWith(textarea_html);
 
+		    if (_this.options.enable_upload){
+		    	if (upload_enable){
+					$("#uploadzone").dropzone({
+		                paramName: 'img',
+		                url: _this.options.img_upload_url,
+		                dictDefaultMessage: "To add an image in this part place the cursor where you want it and drag an image from your desktop to this zone.",
+		                clickable: true,
+		                enqueueForUpload: true,
+		                createImageThumbnails:false,
+		                maxFilesize: 1,
+		                uploadMultiple: false,
+		                addRemoveLinks: true,
+		                sending: function(file, xhr, formData){
+		                	formData.append('csrfmiddlewaretoken', _this.options.csrf_token)
+		                },
+		                success: function(data, response){
+		                	$('#input_editor').focus()
+		                	$('#input_editor').selection('insert',{text:'![Alt text]('+ response.img +')' ,mode:'before'})
+		                }
+	            	});
+					$('#uploadzone').show();
+					$('#input_editor').css({'margin-bottom':"50px"});
+				}
+		    }
 
-			if (upload_enable){
-				$("#uploadzone").dropzone({
-	                paramName: 'img',
-	                url: _this.options.img_upload_url,
-	                dictDefaultMessage: "To add an image in this part place the cursor where you want it and drag an image from your desktop to this zone.",
-	                clickable: true,
-	                enqueueForUpload: true,
-	                createImageThumbnails:false,
-	                maxFilesize: 1,
-	                uploadMultiple: false,
-	                addRemoveLinks: true,
-	                sending: function(file, xhr, formData){
-	                	formData.append('csrfmiddlewaretoken', _this.options.csrf_token)
-	                },
-	                success: function(data, response){
-	                	console.log(response);
-	                	$('#input_editor').focus()
-	                	$('#input_editor').selection('insert',{text:'![Alt text]('+ response.img +')' ,mode:'before'})
-	                }
-            	});
-				$('#uploadzone').show();
-				$('#input_editor').css({'margin-bottom':"50px"});
-			}
 			$('#editable_section').css({
 				'margin-bottom':parseInt(margin_bottom.split("px"))-(line_height-font_size)+'px',
 				'margin-top':parseInt(margin_top.split("px"))+'px',
@@ -198,7 +202,13 @@ jQuery plugin allowing to edit html online.
 				new_text = $('#input_editor').val();
 				if (new_text != "" && new_text != "Please enter text"){ //jshint ignore:line
 					if (new_text != orig_text){
+						if (clicked_element.attr('data-type') == 'currency_to_integer'){
+							new_text = (parseFloat(new_text.replace('$',''))*100).toFixed();
+						}
 						_this.saveEdition();
+						if (clicked_element.attr('data-type') == 'currency_to_integer'){
+							new_text = '$' + parseFloat(new_text)/100;
+						}
 					}
 					if (markdown_tool){
 						convert = new Markdown.getSanitizingConverter().makeHtml;
@@ -232,17 +242,21 @@ jQuery plugin allowing to edit html online.
 				if (!id_element){
 					id_element = 'undefined';
 				}
+				var data = {};
+				if (clicked_element.attr('data-key')){
+					data[clicked_element.attr('data-key')] = $.trim(new_text);
+				}else{
+					data = {text:$.trim(new_text), old_text:$.trim(orig_text), template_name:_this.options.template_name, template_path:_this.options.template_path, tag: clicked_element.prop("tagName")};
+				}
 				$.ajax({
 					method:'PUT',
 					async:false,
 					url: _this.options.base_url + id_element +'/',
-					data:{text:$.trim(new_text), old_text:$.trim(orig_text), template_name:_this.options.template_name, template_path:_this.options.template_path, tag: clicked_element.prop("tagName")},
+					data:data,
 					success: function(data){
 						new_id = data.slug;
 					}
 				});
-				// }
-				
 			}
 		},
 
@@ -253,7 +267,11 @@ jQuery plugin allowing to edit html online.
 					async:false,
 					url: _this.options.base_url + id_element +'/',
 					success: function(data){
-						orig_text = data.text;
+						if (clicked_element.attr('data-key')){
+							orig_text = data[clicked_element.attr('data-key')];
+						}else{
+							orig_text = data.text;
+						}
 					},
 					error: function(){
 						orig_text = $.trim(clicked_element.text());
@@ -311,6 +329,7 @@ jQuery plugin allowing to edit html online.
 	$.fn.editor = function(options) {
 		var opts = $.extend( {}, $.fn.editor.defaults, options );
 		editor = new Editor($(this), opts);
+		return editor;
 	};
 
 	$.fn.editor.defaults = {
@@ -322,6 +341,7 @@ jQuery plugin allowing to edit html online.
 		template_name:'',
 		template_path:'',
 		csrf_token:'',
+		enable_upload:false,
 		img_upload_url:'',
 	};
 
