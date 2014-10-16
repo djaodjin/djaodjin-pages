@@ -92,17 +92,32 @@ jQuery plugin allowing to edit html online.
 
 			
 			if (clicked_element.prop('tagName') == 'DIV'){
-				font_size = parseInt(clicked_element.children('p').css('font-size').split("px"));
-				line_height = parseInt(clicked_element.children('p').css('line-height').split("px"));
-				height = clicked_element.children('p').css('height');
-				margin_bottom = clicked_element.children('p').css('margin-bottom');
-				margin_top = clicked_element.children('p').css('margin-top');
-				font_family = clicked_element.children('p').css('font-family');
-				font_weight = clicked_element.children('p').css('font-weight');
-				text_align =clicked_element.children('p').css('text-align');
-				padding = clicked_element.children('p').css('padding');
-				color = clicked_element.children('p').css('color');
-				width = clicked_element.children('p').css('width');
+				if (clicked_element.children('p').length > 0){
+					font_size = parseInt(clicked_element.children('p').css('font-size').split("px"));
+					line_height = parseInt(clicked_element.children('p').css('line-height').split("px"));
+					height = clicked_element.children('p').css('height');
+					margin_bottom = clicked_element.children('p').css('margin-bottom');
+					margin_top = clicked_element.children('p').css('margin-top');
+					font_family = clicked_element.children('p').css('font-family');
+					font_weight = clicked_element.children('p').css('font-weight');
+					text_align =clicked_element.children('p').css('text-align');
+					padding = clicked_element.children('p').css('padding');
+					color = clicked_element.children('p').css('color');
+					width = clicked_element.children('p').css('width');
+				}else{
+					font_size = parseInt($('p').first().css('font-size').split("px"));
+					line_height = parseInt($('p').first().css('line-height').split("px"));
+					height = $('p').first().css('height');
+					margin_bottom = $('p').first().css('margin-bottom');
+					margin_top = $('p').first().css('margin-top');
+					font_family = $('p').first().css('font-family');
+					font_weight = $('p').first().css('font-weight');
+					text_align =$('p').first().css('text-align');
+					padding = $('p').first().css('padding');
+					color = $('p').first().css('color');
+					width = $('p').first().css('width');
+				}
+				
 			}
 			_this.inputEdit();
 		},
