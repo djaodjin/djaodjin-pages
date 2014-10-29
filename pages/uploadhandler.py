@@ -1,3 +1,5 @@
+#pylint:disable=too-many-arguments, line-too-long, unused-argument
+
 from django.core.cache import cache
 from django.core.files.uploadhandler import FileUploadHandler
 
@@ -11,20 +13,21 @@ class ProgressBarUploadHandler(FileUploadHandler):
         self.progress_id = None
         self.cache_key = None
 
-    def handle_raw_input(self, input_data, META, content_length, boundary, encoding=None):
+    def handle_raw_input(self, input_data, META, content_length, boundary, encoding=None):#pylint: disable=line-too-long
         self.content_length = content_length
         if 'X-Progress-ID' in self.request.GET:
             self.progress_id = self.request.GET['X-Progress-ID']
         elif 'X-Progress-ID' in self.request.META:
             self.progress_id = self.request.META['X-Progress-ID']
         if self.progress_id:
-            self.cache_key = "%s_%s" % (self.request.META['REMOTE_ADDR'], self.progress_id)
+            self.cache_key = "%s_%s" % (
+                self.request.META['REMOTE_ADDR'], self.progress_id)
             cache.set(self.cache_key, {
                 'length': self.content_length,
                 'uploaded': 0
             })
 
-    def new_file(self, field_name, file_name, content_type, content_length, charset=None, *args, **kwargs):
+    def new_file(self, field_name, file_name, content_type, content_length, charset=None, *args, **kwargs):#pylint: disable=line-too-long
         pass
 
     def receive_data_chunk(self, raw_data, start):
