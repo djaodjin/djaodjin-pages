@@ -1,7 +1,10 @@
+
 from celery import task
 from pages.models import UploadedImage
 from pages.settings import IMG_PATH
-@task()
+
+# XXX -  not callable on pylint!
+@task()#pylint: disable=not-callable
 def upload_to_s3(img, account, tags, filename):
     img_obj = UploadedImage(
                 img=img,
