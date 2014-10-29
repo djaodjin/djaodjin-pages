@@ -24,16 +24,15 @@
 
 from django.db import models
 from . import settings
-import hashlib
+
 
 def file_name(instance, filename):
-    split = filename.split('.')
-    filename = hashlib.sha1(instance.img.read()).hexdigest() + '.' + split[1]
     path = settings.IMG_PATH
     if instance.account:
         return path + instance.account.slug + '/' + filename
     else:
         return path + filename
+
 
 class PageElement(models.Model):
     """
@@ -48,17 +47,20 @@ class PageElement(models.Model):
     def __unicode__(self):
         return unicode(self.slug)
 
+
 class UploadedImage(models.Model):
     """
    	Image uploaded
     """
-
+    created_at = models.DateTimeField(auto_now_add=True)
     img = models.ImageField(upload_to=file_name)
     account = models.ForeignKey(
         settings.ACCOUNT_MODEL, related_name='account_image', null=True)
+    tags = models.CharField(max_length=200, blank=True)
 
     def __unicode__(self):
         return unicode(self.img)
+
 
 class UploadedTemplate(models.Model):
     """

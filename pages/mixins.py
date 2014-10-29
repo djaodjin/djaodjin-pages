@@ -37,12 +37,10 @@ class AccountMixin(object):
     account_url_kwarg = ACCOUNT_URL_KWARG
 
     def get_account(self):
-        print 'hrere'
         if isinstance(ACCOUNT_MODEL, str):
             account_model = get_model(*ACCOUNT_MODEL.rsplit('.', 1))
         else:
             account_model = ACCOUNT_MODEL
-        print self.kwargs.get(self.account_url_kwarg)
         if self.account_url_kwarg in self.kwargs and\
             self.kwargs.get(self.account_url_kwarg) is not None:
             return get_object_or_404(account_model,
@@ -58,7 +56,6 @@ class TemplateChoiceMixin(AccountMixin):
         a list. May not be called if render_to_response is overridden.
         """
         account = self.get_account()
-        print account
         if self.template_name is None:
             raise ImproperlyConfigured(
                 "TemplateResponseMixin requires either a definition of "

@@ -43,3 +43,5 @@ UPLOADED_STATIC_DIR = getattr(settings,
 
 USE_S3 = getattr(settings, 'USE_S3', False)
 S3_URL = getattr(settings, 'S3_URL', None)
+
+ENCRYPT_KEY = getattr(settings, 'PAGES_ENCRYPT_KEY', '0123456789abcdef')

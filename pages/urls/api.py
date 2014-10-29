@@ -27,12 +27,15 @@ from pages.api import (
     PageElementDetail,
     FileUploadView,
     TemplateUploadView,
-    UploadedTemplateListAPIView)
+    UploadedTemplateListAPIView,
+    ImageListAPIView)
 # Uncomment the next two lines to enable the admin:
 # from django.contrib import admin
 # admin.autodiscover()
 
 urlpatterns = patterns('',
+    url(r'^list/uploaded-images/',
+        ImageListAPIView.as_view(), name='upload_image_element'),
     url(r'^editables/upload-image/',
         FileUploadView.as_view(), name='upload_image_element'),
     url(r'^editables/(?P<slug>[\w-]+)/',

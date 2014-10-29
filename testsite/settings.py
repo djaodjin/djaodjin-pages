@@ -12,7 +12,8 @@ https://docs.djangoproject.com/en/1.7/ref/settings/
 import os
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 
-
+import djcelery
+djcelery.setup_loader()
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.7/howto/deployment/checklist/
 
@@ -39,7 +40,17 @@ INSTALLED_APPS = (
     'rest_framework',
     'pages',
     'storages',
+    'djcelery',
+    'kombu.transport.django',
     'testsite',
+)
+
+BROKER_URL = 'django://'
+
+FILE_UPLOAD_HANDLERS = (
+    "pages.uploadhandler.ProgressBarUploadHandler",
+    "django.core.files.uploadhandler.MemoryFileUploadHandler",
+    "django.core.files.uploadhandler.TemporaryFileUploadHandler",
 )
 
 MIDDLEWARE_CLASSES = (
@@ -86,7 +97,7 @@ USE_L10N = True
 USE_TZ = True
 
 # S3 settings
-USE_S3 = False
+USE_S3 = True
 
 AWS_ACCESS_KEY_ID = ''
 
@@ -119,3 +130,6 @@ PAGES_IMG_DIR = os.path.join(BASE_DIR, 'testsite/static/img/')
 PAGES_UPLOADED_TEMPLATE_DIR = BASE_DIR + '/testsite/templates'
 
 PAGES_UPLOADED_STATIC_DIR = STATIC_ROOT
+
+# XXX - to define
+FILE_UPLOAD_MAX_MEMORY_SIZE = 41943040

@@ -27,6 +27,20 @@
 
 import os, random, string, re
 import zipfile, tempfile, shutil
+import hashlib
+
+from PIL import Image
+from StringIO import StringIO
+
+from django.http import HttpResponse
+from django.core.cache import cache
+from django.core.files.uploadedfile import InMemoryUploadedFile
+
+try:
+    import json
+except ImportError:
+    # Django <1.7 packages simplejson for older Python versions
+    from django.utils import simplejson as json
 
 from bs4 import BeautifulSoup
 
@@ -47,12 +61,17 @@ from pages.serializers import (
     UploadedImageSerializer,
     UploadedTemplateSerializer)
 
-from .settings import (
+from pages.encrypt_path import decode
+
+from pages.settings import (
+    USE_S3,
     IMG_PATH,
     UPLOADED_TEMPLATE_DIR,
     UPLOADED_STATIC_DIR)
 
-from .mixins import AccountMixin
+from pages.mixins import AccountMixin
+
+from pages.tasks import upload_to_s3
 
 class PageElementDetail(AccountMixin, generics.RetrieveUpdateDestroyAPIView):
     """
@@ -72,7 +91,7 @@ class PageElementDetail(AccountMixin, generics.RetrieveUpdateDestroyAPIView):
 
     def write_html(self, path, new_id):
         with open(path, "r") as myfile:
-            soup = BeautifulSoup(myfile, "html.parser")
+            soup = BeautifulSoup(myfile, "html5lib")
             soup_elements = soup.find_all(self.request.DATA['tag'].lower())
             if len(soup_elements) > 1:
                 for element in soup_elements:
@@ -115,6 +134,7 @@ class PageElementDetail(AccountMixin, generics.RetrieveUpdateDestroyAPIView):
             # so we have to handle eventual errors.
             return Response(err.message_dict, status=status.HTTP_400_BAD_REQUEST)
 
+
         if self.object is None:
             if kwargs.get('slug') != 'undefined':
                 new_id = kwargs.get('slug')
@@ -124,29 +144,39 @@ class PageElementDetail(AccountMixin, generics.RetrieveUpdateDestroyAPIView):
                 while PageElement.objects.filter(slug__exact=new_id).count() > 0:
                     new_id = ''.join(random.choice(string.lowercase) for i in range(10))
 
+            if not new_id.startswith('djimage'):
             # Create a pageelement
-            pagelement = PageElement(slug=new_id, text=request.DATA['text'])
-            account = self.get_account()
-            if account:
-                pagelement.account = account
-            serializer = self.get_serializer(pagelement, data=request.DATA,
-                files=request.FILES, partial=partial)
-            self.object = serializer.save(force_insert=True)
+                pagelement = PageElement(slug=new_id, text=request.DATA['text'])
+                account = self.get_account()
+                if account:
+                    pagelement.account = account
+                serializer = self.get_serializer(pagelement, data=request.DATA,
+                    files=request.FILES, partial=partial)
+                self.object = serializer.save(force_insert=True)
 
-            changed = False
-            template_name = request.DATA['template_name']
-            template_path = request.DATA['template_path']
-            if template_name:
-                for directory in settings.TEMPLATE_DIRS:
-                    for (dirpath, dirnames, filenames) in os.walk(directory):
-                        for filename in filenames:
-                            if filename == request.DATA['template_name']:
-                                path = os.path.join(dirpath, filename)
-            elif template_path:
-                path = template_path
-            self.write_html(path, new_id)
-            self.post_save(self.object, created=True)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+                changed = False
+                template_name = request.DATA['template_name']
+                template_path = decode(request.DATA['template_path'])
+                if template_name:
+                    for directory in settings.TEMPLATE_DIRS:
+                        for (dirpath, dirnames, filenames) in os.walk(directory):
+                            for filename in filenames:
+                                if filename == template_name:
+                                    path = os.path.join(dirpath, filename)
+                elif template_path:
+                    path = template_path
+                print path
+                self.write_html(path, new_id)
+                self.post_save(self.object, created=True)
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
+            else:
+                pagelement = PageElement(slug=new_id, text=request.DATA['text'])
+                account = self.get_account()
+                if account:
+                    pagelement.account = account
+                serializer = self.get_serializer(pagelement, data=request.DATA,
+                    files=request.FILES, partial=partial)
+                self.object = serializer.save(force_insert=True)
         self.object = serializer.save(force_update=True)
         self.post_save(self.object, created=False)
         return Response(serializer.data, status=status.HTTP_200_OK)
@@ -154,36 +184,60 @@ class PageElementDetail(AccountMixin, generics.RetrieveUpdateDestroyAPIView):
     def put(self, request, *args, **kwargs):
         return self.update_or_create_pagelement(request, *args, **kwargs)
 
-import hashlib
+#pylint: disable=too-many-locals
 class FileUploadView(AccountMixin, APIView):
     parser_classes = (FileUploadParser,)
 
-    def post(self, request, account_slug=None, format=None):#pylint: disable=unused-argument,redefined-builtin
+    def post(self, request, account_slug=None, format=None, *args, **kwargs):#pylint: disable=unused-argument,redefined-builtin
         img = request.FILES['img']
         existing_file = False
         sha1_filename = hashlib.sha1(img.read()).hexdigest() + '.' + str(img).split('.')[1]
-        if settings.USE_S3:
+        img.name = sha1_filename
+        print img
+        if USE_S3:
             path = IMG_PATH
             if self.get_account():
                 full_path = path + self.get_account().slug + '/' + sha1_filename
             else:
                 full_path = path + sha1_filename
-
             if default_storage.exists(full_path):
                 existing_file = True
+        tags = request.DATA.get('tags')
+        if not tags:
+            tags = ""
         if not existing_file:
+
+            # Create a miniature.
+            image = img
+            image.file.seek(0) # just in case
+            img_duplicate = Image.open(StringIO(image.file.read()))
+            img_duplicate.thumbnail((100, 100), Image.ANTIALIAS)
+            image_string = StringIO()
+            img_duplicate.save(image_string, img_duplicate.format)
+
+            # for some reason content_type is e.g. 'images/jpeg' instead of 'image/jpeg'
+            c_type = image.content_type.replace('images', 'image')
+            imf = InMemoryUploadedFile(image_string, None, image.name, c_type, image_string.len, None)
+            imf.seek(0)
+
+            # Save a miniature
             img_obj = UploadedImage(
-                img=img,
-                account=self.get_account()
+                img=imf,
+                account=self.get_account(),
+                tags=tags
                 )
+            img_obj.save()
             serializer = UploadedImageSerializer(img_obj)
-            serializer.save()
+
+            # Delay the upload of original image
+            upload_to_s3.delay(img, self.get_account(), tags, sha1_filename)
         else:
             img_obj = UploadedImage.objects.get(img=full_path)
             serializer = UploadedImageSerializer(img_obj)
 
         response = {
-            'img': os.path.join(settings.MEDIA_URL, serializer.data['img'])
+            'img': os.path.join(settings.MEDIA_URL, serializer.data['img']),
+            'exist': existing_file
             }
         return Response(response, status=status.HTTP_200_OK)
 
@@ -245,8 +299,6 @@ class TemplateUploadView(AccountMixin, APIView):
         static_to_extract = [m for m in members\
             if m.startswith(root_path_static) and m != root_path_static]
 
-        print static_to_extract
-        print templates_to_extract
         for name in zfile.namelist():
             # remove __MACOSX File and DS_Store
             if name.startswith('/'):
@@ -279,8 +331,6 @@ class TemplateUploadView(AccountMixin, APIView):
                                     contain only html or jinja2 file",
                                     status=status.HTTP_403_FORBIDDEN)
                         else:
-                            print name.endswith('.css')
-                            print name.endswith('.js')
                             if not name.endswith('.css') \
                                 and not name.endswith('.js'):
                                 shutil.rmtree(dir_temp)
@@ -329,3 +379,28 @@ class TemplateUploadView(AccountMixin, APIView):
         serializer = UploadedTemplateSerializer(template_package)
         return Response(serializer.data, status=200) #pylint: disable=no-member
 
+
+class ImageListAPIView(generics.ListCreateAPIView):
+    # queryset = UploadedImage.objects.all()
+    serializer_class = UploadedImageSerializer
+
+    def get_queryset(self):
+        search = self.request.GET.get('search')
+        queryset = UploadedImage.objects.filter(tags__contains=search)
+        return queryset
+
+
+def upload_progress(request):
+    """
+    Used by Ajax calls
+
+    Return the upload progress and total length values
+    """
+    if 'X-Progress-ID' in request.GET:
+        progress_id = request.GET['X-Progress-ID']
+    elif 'X-Progress-ID' in request.META:
+        progress_id = request.META['X-Progress-ID']
+    if progress_id:
+        cache_key = "%s_%s" % (request.META['REMOTE_ADDR'], progress_id)
+        data = cache.get(cache_key)
+        return HttpResponse(json.dumps(data))

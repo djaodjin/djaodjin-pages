@@ -13,10 +13,10 @@ install::
 	cd $(srcDir) && $(PYTHON) ./setup.py install --quiet
 
 initdb:
-	-rm -f saas_testsite.sqlite
-	cd $(srcDir) && $(PYTHON) ./manage.py syncdb --noinput
+	-rm -f db.sqlite3
+	cd $(srcDir) && $(PYTHON) ./manage.py migrate --noinput
 	cd $(srcDir) && $(PYTHON) ./manage.py loaddata \
-						testsite/fixtures/test_data.json
+						testsite/fixtures/initial_data.json
 
 doc:
 	$(installDirs) docs

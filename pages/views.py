@@ -27,25 +27,46 @@ from django.views.generic import TemplateView
 from pages.models import PageElement
 from django.template.response import TemplateResponse
 import markdown, re
-
+from django.template.loader import find_template_loader
+from django.template.base import TemplateDoesNotExist
 from .mixins import AccountMixin
 
+from .settings import USE_S3
+from django.conf import settings
+
+from pages.encrypt_path import encode
 
 class PageView(AccountMixin, TemplateView):
     """
     Display or Edit a ``Page`` of a ``Project``.
 
     """
-
     http_method_names = ['get']
 
+    def get_template_path(self):
+        #pylint: disable=unused-variable
+        loaders = []
+        for loader_name in settings.TEMPLATE_LOADERS:
+            loader = find_template_loader(loader_name)
+            if loader is not None:
+                loaders.append(loader)
+        for loader in loaders:
+            try:
+                source, display_name = loader.load_template_source(
+                    self.get_template_names()[0])
+                break
+            except TemplateDoesNotExist:
+                source = (
+                    "Template Does Not Exist: %s"\
+                    % (self.get_template_names()[0]))
+        return display_name
 
     def get_context_data(self, **kwargs):
         context = super(PageView, self).get_context_data(**kwargs)
-        context.update({'template_name': self.template_name})
+        context.update({'template_path': encode(self.get_template_path())})
         return context
 
-    def get(self, request, *args, **kwargs):
+    def get(self, request, *args, **kwargs):#pylint: disable=too-many-statements
         response = super(PageView, self).get(request, *args, **kwargs)
         if self.template_name and isinstance(response, TemplateResponse):
             response.render()
@@ -83,5 +104,25 @@ class PageView(AccountMixin, TemplateView):
                         editable.string = new_text
                 except PageElement.DoesNotExist:
                     pass
+            for image in soup.find_all(class_="droppable-image"):
+                try:
+                    id_element = image['id']
+                except KeyError:
+                    continue
+                try:
+                    db_image = PageElement.objects.filter(slug=id_element)
+                    account = self.get_account()
+                    if account:
+                        db_image = PageElement.objects.get(
+                            slug=id_element, account=account)
+                        # edit = edit.get(account=account)
+                    else:
+                        db_image = PageElement.objects.get(slug=id_element)
+                    if USE_S3:
+                        image['src'] = db_image.text
+                    else:
+                        image['src'] = db_image.text
+                except:#pylint: disable=bare-except
+                    continue
             response.content = soup.prettify()
         return response
