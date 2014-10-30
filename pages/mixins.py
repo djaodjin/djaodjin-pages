@@ -61,7 +61,8 @@ class TemplateChoiceMixin(AccountMixin):
                 "TemplateResponseMixin requires either a definition of "
                 "'template_name' or an implementation of 'get_template_names()'")
         else:
-            if account:
+            if account and UploadedTemplate.objects.filter(
+                    account=account).count() > 0:
                 template_name = None
                 uploaded_templates = UploadedTemplate.objects.filter(
                     account=account).order_by("-created_at")[0]
