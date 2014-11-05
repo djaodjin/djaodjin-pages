@@ -30,10 +30,7 @@ from rest_framework.parsers import FileUploadParser
 from rest_framework.response import Response
 
 from pages.models import UploadedImage
-from pages.serializers import (
-    PageElementSerializer,
-    UploadedImageSerializer,
-    UploadedTemplateSerializer)
+from pages.serializers import UploadedImageSerializer
 
 from pages.settings import USE_S3, IMG_PATH, FFMPEG_PATH
 
