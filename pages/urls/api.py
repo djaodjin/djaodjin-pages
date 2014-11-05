@@ -26,8 +26,14 @@ from django.conf.urls import patterns, url
 
 
 from pages.api.edition import PageElementDetail
-from pages.api.upload_media import FileUploadView, MediaDestroyAPIView, ImageListAPIView
-from pages.api.upload_template import TemplateUploadView, UploadedTemplateListAPIView
+from pages.api.upload_media import (
+    FileUploadView,
+    MediaDestroyAPIView,
+    ImageListAPIView)
+
+from pages.api.upload_template import (
+    TemplateUploadView,
+    UploadedTemplateListAPIView)
 # Uncomment the next two lines to enable the admin:
 # from django.contrib import admin
 # admin.autodiscover()
