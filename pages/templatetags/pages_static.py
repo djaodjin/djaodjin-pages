@@ -17,6 +17,7 @@ def pages_static_js():
         "vendor/js/djaodjin-editor.js",
         "vendor/js/jquery-ui.js",
         "vendor/js/jquery.ui.touch-punch.js",
+        "vendor/js/jquery.ui-contextmenu.js",
         "vendor/js/djaodjin-sidebar-gallery.js",
         "js/init_plugin.js"]
 
@@ -28,6 +29,7 @@ def pages_static_js():
 def pages_static_css():
     stylesheets = {
         'screen': ("vendor/css/bootstrap.min.css",
+                "vendor/css/jquery-ui.css",
                 "vendor/css/djaodjin-editor.css",
                 "vendor/css/djaodjin-sidebar-gallery.css")
         }

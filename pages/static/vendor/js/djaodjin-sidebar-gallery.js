@@ -3,7 +3,7 @@
 (function ($) {
 
     var toggle_button = '<button class="btn btn-primary" id="btn-toggle">Toggle</button>';
-    var sidebar = '<div id="sidebar-gallery"><h1 class="text-center" style="color:white;">Image gallery</h1><input placeholder="Search..." id="gallery-filter" type="text" class="form-control"><div id="list-images"></div><form action="/file-upload" class="dropzone" id="uploadzone-gallery" style="display:none"></form></div>';
+    var sidebar = '<div id="sidebar-gallery"><h1 class="text-center" style="color:white;">Media gallery</h1><input placeholder="Search..." id="gallery-filter" type="text" class="form-control"><div id="list-images"></div><form action="/file-upload" class="dropzone" id="uploadzone-gallery" style="display:none"></form></div>';
     var sidebar_size = 200;
     var loaded = false;
     var initialized = false;
@@ -15,11 +15,17 @@
         Dropzone.autoDiscover = false;
     }
 
+    function notify_user(descr, level){
+        console.log('notify')
+        $('body').prepend('<div class="notify-user-label '+ level +'-label">'+ descr + '</div>');
+        setTimeout(function(){
+            $('.notify-user-label').remove();
+        }, 5000);
+    }
 
     function update_progress_info() {
         $.getJSON("/get-progress/upload/", {'X-Progress-ID': id}, function(data, status){
             if(data){
-                NProgress.set(data.uploaded /data.lenght);
                 $('#progress-span').text((data.uploaded /data.lenght)*100)
             }
             else{
@@ -48,20 +54,38 @@
             $('.droppable-image').droppable({
                 drop: function( event, ui ) {
                     var droppable = $(this);
-                    droppable.attr('src', ui.draggable.attr('src'));
-                    $(ui.helper).remove();
-                    _this.saveImage(droppable);
+                    if (droppable.prop("tagName") == 'IMG'){
+
+                        if (ui.draggable.attr('src').indexOf(".png") > 0 ||ui.draggable.attr('src').indexOf(".jpg") > 0){
+                            droppable.attr('src', ui.draggable.attr('src'));
+                            $(ui.helper).remove();
+                            _this.saveImage(droppable);
+                        }else{
+                            notify_user("You can't put other file than image in this place", 'error');
+                        }
+                    }else if (droppable.prop("tagName") == 'VIDEO'){
+                        if (ui.draggable.attr('src').indexOf(".mp4") > 0){
+                            droppable.attr('src', ui.draggable.attr('src'));
+                            $(ui.helper).remove();
+                            _this.saveImage(droppable);
+                        }else{
+                            notify_user("You can't put other file than video in this place", 'error');
+                        }
+                    }
+                    
+                    
               }
             });
         
             $("#uploadzone-gallery").dropzone({
-                    paramName: 'img',
+                    paramName: 'file',
                     // url: _this.options.img_upload_url,
                     dictDefaultMessage: "Drag and drop your image here",
                     // clickable: true,
                     // enqueueForUpload: false,
                     // createImageThumbnails:false,
-                    maxFilesize: 20,
+                    maxFilesize: 50,
+                    // acceptedFiles: ".jpeg,.jpg,.png,.gif,.JPEG,.JPG,.PNG,.GIF,.mp4",
                     // autoProcessQueue: true,
                     parallelUploads: 2,
                     // uploadMultiple: false,
@@ -73,10 +97,8 @@
                     },
 
                     sending: function(file, xhr, formData){
-                        var tags = prompt("Please enter your tags","");
                         formData.append('csrfmiddlewaretoken', _this.options.csrf_token);
                         formData.append('csrfmiddlewaretoken', _this.options.csrf_token);
-                        formData.append('tags', tags);
                         $('#list-images').append('<div class="col-md-12 padding-top-img progress-text text-center">Upload in progress<br><p><span id="progress-span">0</span>%</p>Please wait...</div>');                      
                         $.event.trigger({
                           type:    "start_upload",
@@ -102,7 +124,7 @@
                             last_index = 0;
                         }
                         if (!response.exist){
-                            $('#list-images').append('<div class="col-md-6 padding-top-img"><img id="image_'+ last_index + '" class="image" src="'+ response.img +'" width="50px"></div>');
+                            $('#list-images').append('<div class="col-md-6 padding-top-img"><img id="image_'+ last_index + '" class="image" src="'+ response.uploaded_file +'" width="50px"></div>');
                         
                             $('#image_' + last_index).draggable({
                                 helper: 'clone',
@@ -114,11 +136,14 @@
                                     });
                                 },
                             });
+                            var descr = "We're processing your uploaded file. You can start use it by using the sample in your gallery.";
+                            notify_user(descr, 'info');
                         }else{
                             $('#list-images').append('<div class="col-md-12 padding-top-img alert">Image already in your gallery</div>');
                             setTimeout(function() {
                                 $('.alert').remove();
                             }, 3000);
+                            
                         }
                         
                     }
@@ -176,25 +201,68 @@
             }
             $('#list-images').empty();
             $.ajax({
-                    method:'GET',
-                    url:'/example/api/list/uploaded-images/?search='+search,
-                    success: function(data){
-                        $.each(data, function(index,element){
-                            $('#list-images').append('<div class="col-md-6 padding-top-img"><img id="image_'+ index + '" class="image" src="'+ element.img_src +'" width="50px"></div>');
-                            $('#image_' + index).draggable({
-                                helper: 'clone',
-                                revert: true,
-                                appendTo: "body",
-                                start: function() {
-                                    $(".ui-draggable").not(this).css({
-                                        // height: 50,
-                                        width: 50
-                                    });
-                                },
-                            });
+                method:'GET',
+                url:'/example/api/list/uploaded-images/?search='+search,
+                success: function(data){
+                    $.each(data, function(index,element){
+                        $('#list-images').append('<div class="col-md-6 padding-top-img"><img data-id="'+ element.id + '" id="image_'+ index + '" class="image clickable-menu" src="'+ element.file_src +'" width="50px"></div>');
+                        $('#image_' + index).draggable({
+                            helper: 'clone',
+                            revert: true,
+                            appendTo: "body",
+                            start: function() {
+                                $(".ui-draggable").not(this).css({
+                                    // height: 50,
+                                    width: 50
+                                });
+                            },
                         });
+                    });
+                }
+            });
+            $(document).contextmenu({
+                delegate: ".clickable-menu",
+                menu: [
+                    {title: "Delete", cmd: "delete_media"},
+                    
+                    {title: "Add tag", cmd: "add_tag"}
+                    ],
+                select: function(event, ui) {
+                    var id = $(ui.target).data('id');
+                    if (ui.cmd == 'delete_media'){
+                        $.ajax({
+                            method: 'delete',
+                            url:'/example/api/delete-image/'+id,
+                            success: function(){
+                                $(ui.target).parent('.col-md-6').remove();
+                            }
+                        });
+                    }else if (ui.cmd == 'add_tag'){
+                        var orginal_tags = null;
+                        $.ajax({
+                            method: 'get',
+                            async:false,
+                            url:'/example/api/delete-image/'+id,
+                            success: function(response){
+                                orginal_tags = response.tags
+                            }
+                        });
+                        
+                        var tags = prompt('Please enter tags', orginal_tags);
+                        if (tags !== null){
+                            $.ajax({
+                                method: 'patch',
+                                url:'/example/api/delete-image/'+id,
+                                data:{'tags': tags},
+                                success: function(){
+                                    console.log('updated');
+                                }
+                            });
+                        }
+                        
                     }
-                });
+                }
+            });
         }
 
     };

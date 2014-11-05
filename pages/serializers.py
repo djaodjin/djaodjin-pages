@@ -36,14 +36,14 @@ class PageElementSerializer(serializers.ModelSerializer):
         read_only_fields = ('slug',)
 
 class UploadedImageSerializer(serializers.ModelSerializer):
-    img_src = serializers.SerializerMethodField('get_img_url')
+    file_src = serializers.SerializerMethodField('get_file_url')
 
     class Meta:
         model = UploadedImage
-        fields = ('img_src', 'img', 'account')
+        fields = ('file_src', 'uploaded_file', 'account', 'id', 'tags')
 
-    def get_img_url(self, obj):#pylint: disable=no-self-use
-        return obj.img.url.split('?')[0]
+    def get_file_url(self, obj):#pylint: disable=no-self-use
+        return obj.uploaded_file.url.split('?')[0]
 
 class UploadedTemplateSerializer(serializers.ModelSerializer):
 

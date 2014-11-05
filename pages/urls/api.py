@@ -23,17 +23,18 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from django.conf.urls import patterns, url
-from pages.api import (
-    PageElementDetail,
-    FileUploadView,
-    TemplateUploadView,
-    UploadedTemplateListAPIView,
-    ImageListAPIView)
+
+
+from pages.api.edition import PageElementDetail
+from pages.api.upload_media import FileUploadView, MediaDestroyAPIView, ImageListAPIView
+from pages.api.upload_template import TemplateUploadView, UploadedTemplateListAPIView
 # Uncomment the next two lines to enable the admin:
 # from django.contrib import admin
 # admin.autodiscover()
 
 urlpatterns = patterns('',
+    url(r'^delete-image/(?P<pk>\d+)/',
+        MediaDestroyAPIView.as_view(), name='image_element'),
     url(r'^list/uploaded-images/',
         ImageListAPIView.as_view(), name='upload_image_element'),
     url(r'^editables/upload-image/',

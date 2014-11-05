@@ -46,3 +46,5 @@ USE_S3 = getattr(settings, 'USE_S3', False)
 S3_URL = getattr(settings, 'S3_URL', None)
 
 ENCRYPT_KEY = getattr(settings, 'PAGES_ENCRYPT_KEY', None)
+
+FFMPEG_PATH = getattr(settings, 'PAGES_FFMPEG_PATH', '/usr/local/bin/ffmpeg')

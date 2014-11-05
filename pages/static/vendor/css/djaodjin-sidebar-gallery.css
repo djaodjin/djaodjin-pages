@@ -53,7 +53,7 @@
 }
 
 .image{
-    z-index:10000;
+    z-index:1000;
 
 }
 
@@ -73,4 +73,47 @@
 
 #gallery-filter{
     margin-bottom: 10px;
+}
+
+.video-bordered{
+    border:1px solid #555;
+}
+
+.ui-menu{
+    width: 100px;
+    z-index: 10000;
+    background: white;
+}
+
+.ui-menu .ui-menu-item{
+    color: #777;
+}
+
+.ui-menu .ui-menu-item:hover{
+    color:#000;
+}
+.ui-menu .ui-state-focus{
+    margin:0px;
+}
+
+.notify-user-label{
+    position:fixed;
+    top:0;
+    padding:10px;
+    text-align: center;
+    font-size: 20px;
+    width:100%;
+    z-index: 1000000;
+}
+
+.error-label{
+    background: #ff7f7f;
+    border:1px solid #7f0000;
+    color: #7f0000;
+}
+
+.info-label{
+    background: #32add6;
+    border:1px solid #006b8e;
+    color: #006b8e;
 }

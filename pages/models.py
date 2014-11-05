@@ -53,13 +53,13 @@ class UploadedImage(models.Model):
    	Image uploaded
     """
     created_at = models.DateTimeField(auto_now_add=True)
-    img = models.ImageField(upload_to=file_name)
+    uploaded_file = models.FileField(upload_to=file_name)
     account = models.ForeignKey(
         settings.ACCOUNT_MODEL, related_name='account_image', null=True)
-    tags = models.CharField(max_length=200, blank=True)
+    tags = models.CharField(max_length=200, blank=True, null=True)
 
     def __unicode__(self):
-        return unicode(self.img)
+        return unicode(self.uploaded_file)
 
 
 class UploadedTemplate(models.Model):

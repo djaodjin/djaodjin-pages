@@ -12,7 +12,7 @@ urlpatterns = patterns('',
     url(r'^uploaded-templates/', UploadedTemplatesView.as_view()),
     url(r'^(?:(?P<account_slug>%s)/)?' % SLUG_RE, include('pages.urls')),
     url(r'^(?:(?P<account_slug>%s)/)?$' % SLUG_RE, HomeView.as_view()),
-    url(r'^get-progress/upload/', 'pages.api.upload_progress'),
+    url(r'^get-progress/upload/', 'pages.api.upload_media.upload_progress'),
 
     url(r'^admin/', include(admin.site.urls)),
 )+ static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)\
