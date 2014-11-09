@@ -118,6 +118,7 @@ class PageView(AccountMixin, TemplateView):
                         # edit = edit.get(account=account)
                     else:
                         db_image = PageElement.objects.get(slug=id_element)
+                    print db_image.text
                     if USE_S3:
                         image['src'] = db_image.text
                     else:

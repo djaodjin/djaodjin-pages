@@ -29,13 +29,10 @@ from rest_framework import generics
 from rest_framework.parsers import FileUploadParser
 from rest_framework.response import Response
 
-from pages.models import UploadedImage
+from pages.models import UploadedImage, PageElement
 from pages.serializers import UploadedImageSerializer
-
-from pages.settings import USE_S3, IMG_PATH, FFMPEG_PATH
-
+from pages.settings import USE_S3, IMG_PATH, FFMPEG_PATH, NO_LOCAL_STORAGE, S3_URL
 from pages.mixins import AccountMixin
-
 from pages.tasks import upload_to_s3
 
 
@@ -92,31 +89,51 @@ class FileUploadView(AccountMixin, APIView):
             if default_storage.exists(full_path):
                 existing_file = True
         if not existing_file:
-            # Image processing
-            if uploaded_file.name.endswith(('.jpg', '.bmp', '.gif', '.jpg', '.png')):
-                in_memory_file = self.resize_image(uploaded_file)
-            # Video processing
-            elif uploaded_file.name.endswith('.mp4'):
-                temp_path = self.cut_off_video(uploaded_file)
-                in_memory_file = self.video_as_memory_file(uploaded_file, temp_path)
-
-            file_obj = UploadedImage(
-                uploaded_file=in_memory_file,
-                account=self.get_account()
-            )
+            if USE_S3:
+                if NO_LOCAL_STORAGE:
+                    # Image processing
+                    if uploaded_file.name.endswith(('.jpg', '.bmp', '.gif', '.jpg', '.png')):
+                        in_memory_file = self.resize_image(uploaded_file)
+                    # Video processing
+                    elif uploaded_file.name.endswith('.mp4'):
+                        temp_path = self.cut_off_video(uploaded_file)
+                        in_memory_file = self.video_as_memory_file(uploaded_file, temp_path)
+                    file_obj = UploadedImage(
+                        uploaded_file=in_memory_file,
+                        account=self.get_account()
+                        )
+                else:
+                    file_obj = UploadedImage(
+                        uploaded_file_temp=uploaded_file,
+                        account=self.get_account()
+                        )
+                # Delay the upload to S3
+                upload_to_s3.delay(uploaded_file, self.get_account(), sha1_filename)
+            else:
+                file_obj = UploadedImage(
+                    uploaded_file=uploaded_file,
+                    account=self.get_account())
             file_obj.save()
-
             serializer = UploadedImageSerializer(file_obj)
-            # Delay the upload of original image
-            upload_to_s3.delay(uploaded_file, self.get_account(), sha1_filename)
         else:
             file_obj = UploadedImage.objects.get(uploaded_file=full_path)
             serializer = UploadedImageSerializer(file_obj)
 
-        response = {
-            'uploaded_file': os.path.join(settings.MEDIA_URL, serializer.data['uploaded_file']),
-            'exist': existing_file
-            }
+        if USE_S3 and not NO_LOCAL_STORAGE:
+            response = {
+                'uploaded_file_temp': os.path.join(settings.MEDIA_URL, serializer.data['uploaded_file_temp']),
+                'exist': existing_file
+                }
+        elif USE_S3 and NO_LOCAL_STORAGE:
+            response = {
+                'uploaded_file_temp': os.path.join(S3_URL, serializer.data['uploaded_file']),
+                'exist': existing_file
+                }
+        else:
+            response = {
+                'uploaded_file_temp': os.path.join(settings.MEDIA_URL, serializer.data['uploaded_file']),
+                'exist': existing_file
+                }
         return Response(response, status=status.HTTP_200_OK)
 
 class ImageListAPIView(generics.ListCreateAPIView):
@@ -125,10 +142,8 @@ class ImageListAPIView(generics.ListCreateAPIView):
 
     def get_queryset(self):
         search = self.request.GET.get('search')
-        print search
         if search != '':
             queryset = UploadedImage.objects.filter(tags__contains=search)
-            print queryset
         else:
             queryset = UploadedImage.objects.all()
         return queryset
@@ -141,8 +156,15 @@ class MediaDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
     def delete(self, request, *args, **kwargs):
         instance = self.get_object()
         if USE_S3:
+            # remove fil from S3 Bucket
             default_storage.delete(instance.uploaded_file.name)
+        else:
+            # remove file from server
+            os.remove(os.path.join(settings.MEDIA_ROOT, instance.uploaded_file.name))
         instance.delete()
+        page_elements = PageElement.objects.filter(text=instance.uploaded_file.url.split('?')[0])
+        for page_element in page_elements:
+            page_elements.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 

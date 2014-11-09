@@ -303,6 +303,7 @@ jQuery plugin allowing to edit html online.
 		},
 
 		documentClick: function(event){
+			console.log($(event.target))
 			if ($(event.target).hasClass('editable') || $(event.target).parents('.editable').length > 0){
 				_this.checkInput();
 				if ($('#input_editor').length == 0){//jshint ignore:line
@@ -313,7 +314,7 @@ jQuery plugin allowing to edit html online.
 					}
 					_this._clickEditable();
 				}
-			}else if ($(event.target).attr('id') != 'input_editor' && $(event.target).parents('#tool_markdown').length == 0){//jshint ignore:line
+			}else if ($(event.target).attr('id') != 'input_editor' && $(event.target).parents('#tool_markdown').length == 0 && !$(event.target).prop("tagName") == 'BODY' && !$(event.target).hasClass('image_media')){//jshint ignore:line
 				_this.checkInput();
 				clicked_element = null;
 			}

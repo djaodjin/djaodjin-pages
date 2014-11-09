@@ -14,6 +14,40 @@ BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 
 import djcelery
 djcelery.setup_loader()
+
+def load_config(confpath):
+    '''
+    Given a path to a file, parse its lines in ini-like format, and then
+    set them in the current namespace.
+    '''
+    # todo: consider using something like ConfigObj for this:
+    # http://www.voidspace.org.uk/python/configobj.html
+    import re, sys
+    if os.path.isfile(confpath):
+        sys.stderr.write('config loaded from %s\n' % confpath)
+        with open(confpath) as conffile:
+            line = conffile.readline()
+            while line != '':
+                if not line.startswith('#'):
+                    look = re.match(r'(\w+)\s*=\s*(.*)', line)
+                    if look:
+                        value = look.group(2) \
+                            % {'LOCALSTATEDIR': BASE_DIR + '/var'}
+                        try:
+                            # Once Django 1.5 introduced ALLOWED_HOSTS (a tuple
+                            # definitely in the site.conf set), we had no choice
+                            # other than using eval. The {} are here to restrict
+                            # the globals and locals context eval has access to.
+                            # pylint: disable=eval-used
+                            setattr(sys.modules[__name__],
+                                    look.group(1).upper(), eval(value, {}, {}))
+                        except StandardError:
+                            raise
+                line = conffile.readline()
+    else:
+        sys.stderr.write('warning: config file %s does not exist.\n' % confpath)
+
+load_config(os.path.join(BASE_DIR, 'credentials'))
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.7/howto/deployment/checklist/
 
@@ -73,8 +107,8 @@ WSGI_APPLICATION = 'testsite.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': 'djaodjin_pages'                     
     }
 }
 
@@ -97,13 +131,7 @@ USE_L10N = True
 USE_TZ = True
 
 # S3 settings
-USE_S3 = True
-
-AWS_ACCESS_KEY_ID = ''
-
-AWS_SECRET_ACCESS_KEY = ''
-
-AWS_STORAGE_BUCKET_NAME = ''
+USE_S3 = False
 
 S3_URL = 'https://%s.s3.amazonaws.com' % AWS_STORAGE_BUCKET_NAME
 
@@ -111,7 +139,8 @@ MEDIA_URL = '/media/'
 
 if USE_S3:
     DEFAULT_FILE_STORAGE = 'storages.backends.s3boto.S3BotoStorage'
-    MEDIA_URL = S3_URL + '/'
+    # MEDIA_URL = S3_URL + '/'
+    # MEDIA_TEMP_URL = '/media/'
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.7/howto/static-files/
@@ -133,3 +162,44 @@ PAGES_UPLOADED_STATIC_DIR = STATIC_ROOT
 
 # XXX - to define
 FILE_UPLOAD_MAX_MEMORY_SIZE = 41943040
+
+PAGES_NO_LOCAL_STORAGE = False
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'filters': {
+        'require_debug_false': {
+            '()': 'django.utils.log.RequireDebugFalse'
+        }
+    },
+    'handlers': {
+        'logfile':{
+            'level':'DEBUG',
+            'class':'logging.StreamHandler',
+        },
+        'mail_admins': {
+            'level': 'ERROR',
+            'filters': ['require_debug_false'],
+            'class': 'django.utils.log.AdminEmailHandler'
+        }
+    },
+    'loggers': {
+        'saas': {
+            'handlers': ['logfile'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'django.request': {
+            'handlers': ['mail_admins'],
+            'level': 'ERROR',
+            'propagate': True,
+        },
+#        'django.db.backends': {
+#             'handlers': ['logfile'],
+#             'level': 'DEBUG',
+#             'propagate': True,
+#        },
+    }
+}
+

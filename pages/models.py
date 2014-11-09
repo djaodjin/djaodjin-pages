@@ -23,11 +23,13 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from django.db import models
-from . import settings
+from pages.settings import IMG_PATH, ACCOUNT_MODEL
+
+from django.conf import settings
 
 
 def file_name(instance, filename):
-    path = settings.IMG_PATH
+    path = IMG_PATH
     if instance.account:
         return path + instance.account.slug + '/' + filename
     else:
@@ -42,20 +44,25 @@ class PageElement(models.Model):
     slug = models.CharField(max_length=50)
     text = models.TextField(blank=True)
     account = models.ForeignKey(
-        settings.ACCOUNT_MODEL, related_name='account_page_element', null=True)
+        ACCOUNT_MODEL, related_name='account_page_element', null=True)
 
     def __unicode__(self):
         return unicode(self.slug)
 
+
+from django.core.files.storage import FileSystemStorage
+
+file_system = FileSystemStorage(location=settings.MEDIA_ROOT)
 
 class UploadedImage(models.Model):
     """
    	Image uploaded
     """
     created_at = models.DateTimeField(auto_now_add=True)
-    uploaded_file = models.FileField(upload_to=file_name)
+    uploaded_file = models.FileField(upload_to=file_name, null=True, blank=True)
+    uploaded_file_temp = models.FileField(upload_to=file_name, storage=file_system, null=True, blank=True)
     account = models.ForeignKey(
-        settings.ACCOUNT_MODEL, related_name='account_image', null=True)
+        ACCOUNT_MODEL, related_name='account_image', null=True)
     tags = models.CharField(max_length=200, blank=True, null=True)
 
     def __unicode__(self):
@@ -68,7 +75,7 @@ class UploadedTemplate(models.Model):
     """
 
     account = models.ForeignKey(
-        settings.ACCOUNT_MODEL,
+        ACCOUNT_MODEL,
         related_name='account_template', null=True)
     name = models.CharField(max_length=150)
     created_at = models.DateTimeField(auto_now_add=True)

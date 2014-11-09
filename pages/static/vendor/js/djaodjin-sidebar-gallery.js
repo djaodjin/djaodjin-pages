@@ -76,6 +76,33 @@
                     
               }
             });
+    
+            $('#input_editor').droppable({
+                    drop: function( event, ui ) {
+                        var droppable = $(this);
+                        console.log(droppable);
+                        // if (droppable.prop("tagName") == 'IMG'){
+
+                        //     if (ui.draggable.attr('src').indexOf(".png") > 0 ||ui.draggable.attr('src').indexOf(".jpg") > 0){
+                        //         droppable.attr('src', ui.draggable.attr('src'));
+                        //         $(ui.helper).remove();
+                        //         _this.saveImage(droppable);
+                        //     }else{
+                        //         notify_user("You can't put other file than image in this place", 'error');
+                        //     }
+                        // }else if (droppable.prop("tagName") == 'VIDEO'){
+                        //     if (ui.draggable.attr('src').indexOf(".mp4") > 0){
+                        //         droppable.attr('src', ui.draggable.attr('src'));
+                        //         $(ui.helper).remove();
+                        //         _this.saveImage(droppable);
+                        //     }else{
+                        //         notify_user("You can't put other file than video in this place", 'error');
+                        //     }
+                        // }
+                        
+                        
+                  }
+                });
         
             $("#uploadzone-gallery").dropzone({
                     paramName: 'file',
@@ -124,7 +151,7 @@
                             last_index = 0;
                         }
                         if (!response.exist){
-                            $('#list-images').append('<div class="col-md-6 padding-top-img"><img id="image_'+ last_index + '" class="image" src="'+ response.uploaded_file +'" width="50px"></div>');
+                            $('#list-images').append('<div class="col-md-6 padding-top-img"><img id="image_'+ last_index + '" class="image image_media" src="'+ response.uploaded_file_temp +'" width="50px"></div>');
                         
                             $('#image_' + last_index).draggable({
                                 helper: 'clone',
@@ -205,7 +232,14 @@
                 url:'/example/api/list/uploaded-images/?search='+search,
                 success: function(data){
                     $.each(data, function(index,element){
-                        $('#list-images').append('<div class="col-md-6 padding-top-img"><img data-id="'+ element.id + '" id="image_'+ index + '" class="image clickable-menu" src="'+ element.file_src +'" width="50px"></div>');
+                        var src_file = null;
+                        console.log(element);
+                        if (element.file_src){
+                            src_file = element.file_src;
+                        }else{
+                            src_file = element.file_src_temp;
+                        }
+                        $('#list-images').append('<div class="col-md-6 padding-top-img"><img data-id="'+ element.id + '" id="image_'+ index + '" class="image clickable-menu padding-top-img image_media" src="'+ src_file+'" width="50px"></div>');
                         $('#image_' + index).draggable({
                             helper: 'clone',
                             revert: true,

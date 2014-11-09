@@ -12,12 +12,13 @@ from rest_framework import generics
 from rest_framework.response import Response
 from rest_framework.serializers import ValidationError
 
-from pages.models import PageElement
+from pages.models import PageElement, UploadedImage
 from pages.serializers import PageElementSerializer
 
 from pages.encrypt_path import decode
 
 from pages.mixins import AccountMixin
+
 
 class PageElementDetail(AccountMixin, generics.RetrieveUpdateDestroyAPIView):
     """
@@ -115,8 +116,18 @@ class PageElementDetail(AccountMixin, generics.RetrieveUpdateDestroyAPIView):
                 self.post_save(self.object, created=True)
                 return Response(serializer.data, status=status.HTTP_201_CREATED)
             else:
-                pagelement = PageElement(slug=new_id, text=request.DATA['text'])
                 account = self.get_account()
+                text = request.DATA['text']
+                #check S3 version exists
+                if not 's3.amazon' in text:
+                    try:
+                        upload_image = UploadedImage.objects.get(
+                            uploaded_file_temp=text.replace('/media/', ''))
+                        if upload_image.uploaded_file:
+                            text = settings.S3_URL + '/' + text.replace('/media/', '')
+                    except:
+                        pass
+                pagelement = PageElement(slug=new_id, text=text)
                 if account:
                     pagelement.account = account
                 serializer = self.get_serializer(pagelement, data=request.DATA,

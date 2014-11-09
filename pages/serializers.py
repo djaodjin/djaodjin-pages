@@ -22,9 +22,12 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import os
+
+from pages.settings import USE_S3, S3_URL
 from rest_framework import serializers
 from pages.models import PageElement, UploadedImage, UploadedTemplate
-
+from django.conf import settings
 #pylint: disable=no-init
 #pylint: disable=old-style-class
 
@@ -37,13 +40,26 @@ class PageElementSerializer(serializers.ModelSerializer):
 
 class UploadedImageSerializer(serializers.ModelSerializer):
     file_src = serializers.SerializerMethodField('get_file_url')
+    file_src_temp = serializers.SerializerMethodField('get_file_temp_url')
 
     class Meta:
         model = UploadedImage
-        fields = ('file_src', 'uploaded_file', 'account', 'id', 'tags')
+        fields = ('file_src', 'uploaded_file','file_src_temp', 'uploaded_file_temp', 'account', 'id', 'tags')
 
     def get_file_url(self, obj):#pylint: disable=no-self-use
-        return obj.uploaded_file.url.split('?')[0]
+        if obj.uploaded_file:
+            if USE_S3:
+                return obj.uploaded_file.url.split('?')[0].replace('/media/',S3_URL)
+            else:
+                return obj.uploaded_file.url.split('?')[0]
+        else:
+            return None
+
+    def get_file_temp_url(self, obj):#pylint: disable=no-self-use
+        if obj.uploaded_file_temp:
+            return '/media/' + obj.uploaded_file_temp.name
+        else:
+            return None
 
 class UploadedTemplateSerializer(serializers.ModelSerializer):
 

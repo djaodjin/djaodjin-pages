@@ -41,6 +41,11 @@ UPLOADED_TEMPLATE_DIR = getattr(settings,
 UPLOADED_STATIC_DIR = getattr(settings,
     'PAGES_UPLOADED_STATIC_DIR', None)
 
+
+# If False upload only to S3. 
+NO_LOCAL_STORAGE = getattr(settings,
+    'PAGES_NO_LOCAL_STORAGE', False)
+
 USE_S3 = getattr(settings, 'USE_S3', False)
 
 S3_URL = getattr(settings, 'S3_URL', None)
