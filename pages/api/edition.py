@@ -125,7 +125,7 @@ class PageElementDetail(AccountMixin, generics.RetrieveUpdateDestroyAPIView):
                             uploaded_file_temp=text.replace('/media/', ''))
                         if upload_image.uploaded_file:
                             text = settings.S3_URL + '/' + text.replace('/media/', '')
-                    except:
+                    except: #pylint: disable=bare-except
                         pass
                 pagelement = PageElement(slug=new_id, text=text)
                 if account:

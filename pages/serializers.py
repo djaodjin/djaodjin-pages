@@ -50,7 +50,7 @@ class UploadedImageSerializer(serializers.ModelSerializer):
             'id',
             'tags')
 
-    def get_file_url(self, obj):#pylint: disable=no-self-use 
+    def get_file_url(self, obj):#pylint: disable=no-self-use
         if obj.uploaded_file:
             if USE_S3:
                 return obj.uploaded_file.url.split('?')[0].replace('/media/', S3_URL)#pylint: disable=line-too-long
