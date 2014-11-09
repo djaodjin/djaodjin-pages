@@ -108,7 +108,7 @@ WSGI_APPLICATION = 'testsite.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'djaodjin_pages'                     
+        'NAME': 'djaodjin_pages'
     }
 }
 
@@ -133,7 +133,7 @@ USE_TZ = True
 # S3 settings
 USE_S3 = False
 
-S3_URL = 'https://%s.s3.amazonaws.com' % AWS_STORAGE_BUCKET_NAME
+S3_URL = 'https://%s.s3.amazonaws.com' % AWS_STORAGE_BUCKET_NAME #pylint: disable=undefined-variable
 
 MEDIA_URL = '/media/'
 

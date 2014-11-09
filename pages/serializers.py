@@ -22,12 +22,9 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import os
-
 from pages.settings import USE_S3, S3_URL
 from rest_framework import serializers
 from pages.models import PageElement, UploadedImage, UploadedTemplate
-from django.conf import settings
 #pylint: disable=no-init
 #pylint: disable=old-style-class
 
@@ -44,12 +41,19 @@ class UploadedImageSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = UploadedImage
-        fields = ('file_src', 'uploaded_file','file_src_temp', 'uploaded_file_temp', 'account', 'id', 'tags')
+        fields = (
+            'file_src',
+            'uploaded_file',
+            'file_src_temp',
+            'uploaded_file_temp',
+            'account',
+            'id',
+            'tags')
 
-    def get_file_url(self, obj):#pylint: disable=no-self-use
+    def get_file_url(self, obj):#pylint: disable=no-self-use 
         if obj.uploaded_file:
             if USE_S3:
-                return obj.uploaded_file.url.split('?')[0].replace('/media/',S3_URL)
+                return obj.uploaded_file.url.split('?')[0].replace('/media/', S3_URL)#pylint: disable=line-too-long
             else:
                 return obj.uploaded_file.url.split('?')[0]
         else:

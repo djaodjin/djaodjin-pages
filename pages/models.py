@@ -52,7 +52,7 @@ class PageElement(models.Model):
 
 from django.core.files.storage import FileSystemStorage
 
-file_system = FileSystemStorage(location=settings.MEDIA_ROOT)
+FILE_SYSTEM = FileSystemStorage(location=settings.MEDIA_ROOT)
 
 class UploadedImage(models.Model):
     """
@@ -60,7 +60,8 @@ class UploadedImage(models.Model):
     """
     created_at = models.DateTimeField(auto_now_add=True)
     uploaded_file = models.FileField(upload_to=file_name, null=True, blank=True)
-    uploaded_file_temp = models.FileField(upload_to=file_name, storage=file_system, null=True, blank=True)
+    uploaded_file_temp = models.FileField(
+        upload_to=file_name, storage=FILE_SYSTEM, null=True, blank=True)
     account = models.ForeignKey(
         ACCOUNT_MODEL, related_name='account_image', null=True)
     tags = models.CharField(max_length=200, blank=True, null=True)

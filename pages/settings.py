@@ -42,7 +42,7 @@ UPLOADED_STATIC_DIR = getattr(settings,
     'PAGES_UPLOADED_STATIC_DIR', None)
 
 
-# If False upload only to S3. 
+# If False upload only to S3.
 NO_LOCAL_STORAGE = getattr(settings,
     'PAGES_NO_LOCAL_STORAGE', False)
 

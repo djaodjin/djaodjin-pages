@@ -10,12 +10,11 @@ from django.conf import settings
 def upload_to_s3(uploaded_file, account, filename):
     full_path = IMG_PATH + account.slug + '/' + filename
     if not NO_LOCAL_STORAGE:
-        
+
         uploaded_temp = UploadedImage.objects.get(
             uploaded_file_temp=full_path)
 
         uploaded_temp.uploaded_file = uploaded_file
-        # uploaded_temp.uploaded_file_temp = None
         uploaded_temp.save()
 
         page_elements = PageElement.objects.filter(text='/media/' + full_path)
@@ -26,20 +25,9 @@ def upload_to_s3(uploaded_file, account, filename):
         os.remove(os.path.join(settings.MEDIA_ROOT, full_path))
     else:
         img_obj = UploadedImage(
-                    uploaded_file=uploaded_file,
-                    account=account
-                    )
+            uploaded_file=uploaded_file,
+            account=account
+            )
         img_obj.save()
         UploadedImage.objects.filter(
             uploaded_file=full_path).order_by('-created_at')[0].delete()
-
-
-
-    # img_obj = UploadedImage(
-    #             uploaded_file=uploaded_file,
-    #             account=account
-    #             )
-    # img_obj.save()
-    
-    # UploadedImage.objects.filter(
-    #     uploaded_file=full_path).order_by('-created_at')[0].delete()
