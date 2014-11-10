@@ -1,9 +1,9 @@
 
-
+ 
 (function ($) {
 
-    var toggle_button = '<button class="btn btn-primary" id="btn-toggle">Toggle</button>';
-    var sidebar = '<div id="sidebar-gallery"><h1 class="text-center" style="color:white;">Media gallery</h1><input placeholder="Search..." id="gallery-filter" type="text" class="form-control"><div id="list-images"></div><form action="/file-upload" class="dropzone" id="uploadzone-gallery" style="display:none"></form></div>';
+    var toggle_button = '<button class="btn btn-default" id="btn-toggle">Gallery</button>';
+    var sidebar = '<div id="sidebar-gallery"><h1 class="text-center" style="color:white;">Media gallery</h1><input placeholder="Search..." id="gallery-filter" type="text" class="form-control"><div id="list-images"></div><div class="" id="uploadzone-gallery" style="display:none"></div></div>';
     var sidebar_size = 200;
     var loaded = false;
     var initialized = false;
@@ -16,7 +16,6 @@
     }
 
     function notify_user(descr, level){
-        console.log('notify')
         $('body').prepend('<div class="notify-user-label '+ level +'-label">'+ descr + '</div>');
         setTimeout(function(){
             $('.notify-user-label').remove();
@@ -29,7 +28,6 @@
                 $('#progress-span').text((data.uploaded /data.lenght)*100)
             }
             else{
-                console.log('upload finish');
                 $('#progress-span').text(100);
                 return false;
             }
@@ -103,79 +101,77 @@
                         
                   }
                 });
-        
-            $("#uploadzone-gallery").dropzone({
-                    paramName: 'file',
-                    // url: _this.options.img_upload_url,
-                    dictDefaultMessage: "Drag and drop your image here",
-                    // clickable: true,
-                    // enqueueForUpload: false,
-                    // createImageThumbnails:false,
-                    maxFilesize: 50,
-                    // acceptedFiles: ".jpeg,.jpg,.png,.gif,.JPEG,.JPG,.PNG,.GIF,.mp4",
-                    // autoProcessQueue: true,
-                    parallelUploads: 2,
-                    // uploadMultiple: false,
-                    // addRemoveLinks: true,
-                    processing: function(file){
-                        id = (new Date).getTime();
-                        this.options.url = _this.options.img_upload_url + '?X-Progress-ID=' +id;
 
-                    },
+            var DocDropzone = new Dropzone(document.body, { // Make the whole body a dropzone
+                paramName: 'file',
+                url: _this.options.img_upload_url,
+                maxFilesize: 50,
+                parallelUploads: 2,
+                thumbnailWidth: 80,
+                thumbnailHeight: 80,
+                previewsContainer: "#uploadzone-gallery",
+                // previewTemplate: previewTemplate,
+            });
 
-                    sending: function(file, xhr, formData){
-                        formData.append('csrfmiddlewaretoken', _this.options.csrf_token);
-                        formData.append('csrfmiddlewaretoken', _this.options.csrf_token);
-                        $('#list-images').append('<div class="col-md-12 padding-top-img progress-text text-center">Upload in progress<br><p><span id="progress-span">0</span>%</p>Please wait...</div>');                      
-                        $.event.trigger({
-                          type:    "start_upload",
-                          message: "myTrigger fired.",
-                          time:    new Date()
-                        });
-                    },
+            DocDropzone.on("processing", function(file){
+                id = (new Date).getTime();
+                this.options.url = _this.options.img_upload_url + '?X-Progress-ID=' +id;
+            });
 
-                    uploadprogress: function(file, progress, bytesent){
-                        
-                    },
+            DocDropzone.on("processing", function(file){
+                id = (new Date).getTime();
+                this.options.url = _this.options.img_upload_url + '?X-Progress-ID=' +id;
+            });
 
-                    canceled: function(file){
-                        $('.progress-text').remove();
-                    },
+            DocDropzone.on("cancel", function(file){
+                $('.progress-text').remove();
+            });
 
-                    success: function(data, response){
-                        $('.progress-text').remove();
-                        var last_index = $('#list-images').children().last().children().attr('id');
-                        if (last_index){
-                            last_index = parseInt(last_index.split('image_')[1]) + 1;
-                        }else{
-                            last_index = 0;
-                        }
-                        if (!response.exist){
-                            $('#list-images').append('<div class="col-md-6 padding-top-img"><img id="image_'+ last_index + '" class="image image_media" src="'+ response.uploaded_file_temp +'" width="50px"></div>');
-                        
-                            $('#image_' + last_index).draggable({
-                                helper: 'clone',
-                                revert: true,
-                                appendTo: "body",
-                                start: function() {
-                                    $(".ui-draggable").not(this).css({
-                                        width: 50
-                                    });
-                                },
-                            });
-                            var descr = "We're processing your uploaded file. You can start use it by using the sample in your gallery.";
-                            notify_user(descr, 'info');
-                        }else{
-                            $('#list-images').append('<div class="col-md-12 padding-top-img alert">Image already in your gallery</div>');
-                            setTimeout(function() {
-                                $('.alert').remove();
-                            }, 3000);
-                            
-                        }
-                        
-                    }
+            DocDropzone.on("sending", function(file, xhr, formData){
+                formData.append('csrfmiddlewaretoken', _this.options.csrf_token);
+                formData.append('csrfmiddlewaretoken', _this.options.csrf_token);
+                $('#list-images').append('<div class="col-md-12 padding-top-img progress-text text-center">Upload in progress<br><p><span id="progress-span">0</span>%</p>Please wait...</div>');                      
+                $.event.trigger({
+                  type:    "start_upload",
+                  message: "myTrigger fired.",
+                  time:    new Date()
                 });
-                $("#uploadzone-gallery").show();
+            });
+
+            DocDropzone.on("success", function(data, response){
+                $('.progress-text').remove();
+                var last_index = $('#list-images').children().last().children().attr('id');
+                if (last_index){
+                    last_index = parseInt(last_index.split('image_')[1]) + 1;
+                }else{
+                    last_index = 0;
+                }
+                if (!response.exist){
+                    $('#list-images').append('<div class="col-md-6 padding-top-img"><img id="image_'+ last_index + '" class="image image_media" src="'+ response.uploaded_file_temp +'" width="50px"></div>');
+                
+                    $('#image_' + last_index).draggable({
+                        helper: 'clone',
+                        revert: true,
+                        appendTo: "body",
+                        start: function() {
+                            $(".ui-draggable").not(this).css({
+                                width: 50
+                            });
+                        },
+                    });
+                    var descr = "We're processing your uploaded file. You can start use it by using the sample in your gallery.";
+                    notify_user(descr, 'info');
+                }else{
+                    $('#list-images').append('<div class="col-md-12 padding-top-img alert">Image already in your gallery</div>');
+                    setTimeout(function() {
+                        $('.alert').remove();
+                    }, 3000);
+                    
+                }
+                if (!$('#sidebar-gallery').hasClass('active')){
+                    _this._open_sidebar();
+                }
+            });
         },
 
         saveImage: function(element){
@@ -193,28 +189,35 @@
         },
 
         _toggle_sidebar: function(){
-            var width_wrap = $('#gallery-wrapper').css('width').split('px')[0];
+            
             if ($('#sidebar-gallery').hasClass('active')){
-                $('#sidebar-gallery').removeClass('active');
-                $('#btn-toggle').removeClass('active');
-                $('#gallery-wrapper').css({'max-width': '100%'});
-                $('.row').css({'padding-right':'0px'});
-                $('.row').css({'padding-left':'0px'});
-                $('.row').css({'margin-right':'0px'});
-                $('.row').css({'margin-left':'0px'});
-                $('.image-gallery').remove();
+                _this._close_sidebar();
             }else{
-                $('#sidebar-gallery').addClass('active');
-                $('#btn-toggle').addClass('active');
-                $('#gallery-wrapper').css({'max-width':width_wrap - sidebar_size});
-                $('.row').css({'padding-right':'30px'});
-                $('.row').css({'padding-left':'30px'});
-                $('.row').css({'margin-right':'30px'});
-                _this.loadImage();
-                
-                
-                // $('.row').css({'margin-left':'30px'});
+                _this._open_sidebar();
             }
+        },
+
+        _open_sidebar: function(){
+            var width_wrap = $('#gallery-wrapper').css('width').split('px')[0];
+            $('#btn-toggle').addClass('active');
+            $('#sidebar-gallery').addClass('active');
+            $('#gallery-wrapper').css({'max-width':width_wrap - sidebar_size});
+            $('.row').css({'padding-right':'30px'});
+            $('.row').css({'padding-left':'30px'});
+            $('.row').css({'margin-right':'30px'});
+            _this.loadImage();
+        },
+
+        _close_sidebar: function(){
+            var width_wrap = $('#gallery-wrapper').css('width').split('px')[0];
+            $('#sidebar-gallery').removeClass('active');
+            $('#btn-toggle').removeClass('active');
+            $('#gallery-wrapper').css({'max-width': '100%'});
+            $('.row').css({'padding-right':'0px'});
+            $('.row').css({'padding-left':'0px'});
+            $('.row').css({'margin-right':'0px'});
+            $('.row').css({'margin-left':'0px'});
+            $('.image-gallery').remove();
         },
 
         filterImage: function(){
@@ -233,7 +236,6 @@
                 success: function(data){
                     $.each(data, function(index,element){
                         var src_file = null;
-                        console.log(element);
                         if (element.file_src){
                             src_file = element.file_src;
                         }else{

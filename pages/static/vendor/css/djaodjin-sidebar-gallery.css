@@ -3,7 +3,7 @@
 #btn-toggle{
     position: fixed;
     top:150px;
-    right:20px;
+    right:-3px;
     /*right:220px;*/
     /*-webkit-transition: all 0.5s ease-in-out;
     -moz-transition:    all 0.5s ease-in-out;
@@ -19,21 +19,23 @@
 }
 
 #sidebar-gallery{
-    padding:5px;
+    padding:3px;
     padding-top:0px;
+    padding-bottom:20px;
     position:fixed;
     top:0px;
     right: -200px;
-    min-height: 100%;
+    height: 100%;
     width:200px;
     background: #333;
     z-index:10000;    
 }
 #list-images{
-    padding:5px;
+    padding:3px;
     background: #CCC;
-    border-radius: 5px;
-    height:350px;
+    border-radius: 2px;
+    min-height:100%;
+    margin-bottom:20px;
     overflow: scroll;
 }
 
@@ -57,19 +59,18 @@
 
 }
 
-#uploadzone-gallery{
+/*#uploadzone-gallery{
     height:100px;
     background:#CCC; 
     position:absolute;
     bottom:0px;
-    /*width:100%;*/
     border:1px solid #AAA;
     border-radius:5px;
     color:#555;
     padding:5px;
     margin-right:5px;
     max-width: 100%;
-}
+}*/
 
 #gallery-filter{
     margin-bottom: 10px;
