@@ -15,11 +15,9 @@ $(document).ready(function(){
     });
 
     $.sidebargallery({
-        base_url:'/example/api/editables/',
+        base_url:'/api/editables/',
         img_upload_url:url_gallery,
         csrf_token: csrf_token,
 
     });
-
-    
 });

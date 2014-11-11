@@ -39,7 +39,7 @@ from pages.api.upload_template import (
 # admin.autodiscover()
 
 urlpatterns = patterns('',
-    url(r'^delete-image/(?P<pk>\d+)/',
+    url(r'^media-detail/(?P<pk>\d+)/',
         MediaDestroyAPIView.as_view(), name='image_element'),
     url(r'^list/uploaded-images/',
         ImageListAPIView.as_view(), name='upload_image_element'),

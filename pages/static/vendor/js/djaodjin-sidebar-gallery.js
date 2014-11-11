@@ -1,5 +1,5 @@
 
- 
+ /* jshint multistr: true */
 (function ($) {
 
     var toggle_button = '<button class="btn btn-default" id="btn-toggle">Gallery</button>';
@@ -8,6 +8,25 @@
     var loaded = false;
     var initialized = false;
     var id= null;
+    var count = 0;
+
+    var modal = '<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">\
+  <div class="modal-dialog">\
+    <div class="modal-content">\
+      <div class="modal-header">\
+        <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>\
+        <h4 class="modal-title" id="myModalLabel">Modal title</h4>\
+      </div>\
+      <div class="modal-body">\
+        <video src="" id="modal-video" controls style="width:100%" preload="auto"></video>\
+      </div>\
+      <div class="modal-footer">\
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>\
+        <button type="button" class="btn btn-primary">Save changes</button>\
+      </div>\
+    </div>\
+  </div>\
+</div>';
 
     function SidebarGallery(options){
         this.options = options;
@@ -74,52 +93,22 @@
                     
               }
             });
-    
-            $('#input_editor').droppable({
-                    drop: function( event, ui ) {
-                        var droppable = $(this);
-                        console.log(droppable);
-                        // if (droppable.prop("tagName") == 'IMG'){
-
-                        //     if (ui.draggable.attr('src').indexOf(".png") > 0 ||ui.draggable.attr('src').indexOf(".jpg") > 0){
-                        //         droppable.attr('src', ui.draggable.attr('src'));
-                        //         $(ui.helper).remove();
-                        //         _this.saveImage(droppable);
-                        //     }else{
-                        //         notify_user("You can't put other file than image in this place", 'error');
-                        //     }
-                        // }else if (droppable.prop("tagName") == 'VIDEO'){
-                        //     if (ui.draggable.attr('src').indexOf(".mp4") > 0){
-                        //         droppable.attr('src', ui.draggable.attr('src'));
-                        //         $(ui.helper).remove();
-                        //         _this.saveImage(droppable);
-                        //     }else{
-                        //         notify_user("You can't put other file than video in this place", 'error');
-                        //     }
-                        // }
-                        
-                        
-                  }
-                });
 
             var DocDropzone = new Dropzone(document.body, { // Make the whole body a dropzone
                 paramName: 'file',
                 url: _this.options.img_upload_url,
                 maxFilesize: 50,
                 parallelUploads: 2,
-                thumbnailWidth: 80,
-                thumbnailHeight: 80,
-                previewsContainer: "#uploadzone-gallery",
-                // previewTemplate: previewTemplate,
+                clickable: false
             });
 
             DocDropzone.on("processing", function(file){
-                id = (new Date).getTime();
+                id = (new Date()).getTime();
                 this.options.url = _this.options.img_upload_url + '?X-Progress-ID=' +id;
             });
 
             DocDropzone.on("processing", function(file){
-                id = (new Date).getTime();
+                id = (new Date()).getTime();
                 this.options.url = _this.options.img_upload_url + '?X-Progress-ID=' +id;
             });
 
@@ -138,6 +127,18 @@
                 });
             });
 
+            DocDropzone.on("dragover", function(event){
+                if (count == 0){
+                    $('body').prepend('<div class="notify-user-label info-label">Release your file to upload it</div>');
+                    count = 1;
+                }
+            });
+
+            DocDropzone.on("dragleave", function(event){
+                $('.notify-user-label').remove();
+                count = 0;
+            });
+
             DocDropzone.on("success", function(data, response){
                 $('.progress-text').remove();
                 var last_index = $('#list-images').children().last().children().attr('id');
@@ -147,7 +148,12 @@
                     last_index = 0;
                 }
                 if (!response.exist){
-                    $('#list-images').append('<div class="col-md-6 padding-top-img"><img id="image_'+ last_index + '" class="image image_media" src="'+ response.uploaded_file_temp +'" width="50px"></div>');
+                    if (response.uploaded_file_temp.indexOf('.mp4') > 0){
+                        $('#list-images').append('<div class="col-md-6 padding-top-img"><video id="image_'+ last_index + '" class="image image_media" src="'+ response.uploaded_file_temp +'" width="50px"></video></div>');
+                    }else{
+                        $('#list-images').append('<div class="col-md-6 padding-top-img"><img id="image_'+ last_index + '" class="image image_media" src="'+ response.uploaded_file_temp +'" width="50px"></div>');
+                    }
+                    
                 
                     $('#image_' + last_index).draggable({
                         helper: 'clone',
@@ -232,7 +238,7 @@
             $('#list-images').empty();
             $.ajax({
                 method:'GET',
-                url:'/example/api/list/uploaded-images/?search='+search,
+                url:'/api/list/uploaded-images/?search='+search,
                 success: function(data){
                     $.each(data, function(index,element){
                         var src_file = null;
@@ -241,7 +247,12 @@
                         }else{
                             src_file = element.file_src_temp;
                         }
-                        $('#list-images').append('<div class="col-md-6 padding-top-img"><img data-id="'+ element.id + '" id="image_'+ index + '" class="image clickable-menu padding-top-img image_media" src="'+ src_file+'" width="50px"></div>');
+                        if (src_file.indexOf('.mp4') > 0){
+                            $('#list-images').append('<div class="col-md-6 padding-top-img"><video data-id="'+ element.id + '" id="image_'+ index + '" class="image clickable-menu padding-top-img image_media" src="'+ src_file +'" width="50px"></video></div>');
+                        }else{
+                            $('#list-images').append('<div class="col-md-6 padding-top-img"><img data-id="'+ element.id + '" id="image_'+ index + '" class="image clickable-menu padding-top-img image_media" src="'+ src_file +'" width="50px"></div>');
+                        }
+                        // $('#list-images').append('<div class="col-md-6 padding-top-img"><img data-id="'+ element.id + '" id="image_'+ index + '" class="image clickable-menu padding-top-img image_media" src="'+ src_file+'" width="50px"></div>');
                         $('#image_' + index).draggable({
                             helper: 'clone',
                             revert: true,
@@ -256,19 +267,20 @@
                     });
                 }
             });
+            var itemsDisabled = {}; 
             $(document).contextmenu({
                 delegate: ".clickable-menu",
                 menu: [
                     {title: "Delete", cmd: "delete_media"},
-                    
-                    {title: "Add tag", cmd: "add_tag"}
+                    {title: "Add tag", cmd: "add_tag"},
+                    {title: "Preview Video", cmd: "preview_video" }
                     ],
                 select: function(event, ui) {
                     var id = $(ui.target).data('id');
                     if (ui.cmd == 'delete_media'){
                         $.ajax({
                             method: 'delete',
-                            url:'/example/api/delete-image/'+id,
+                            url:'/api/media-detail/'+id,
                             success: function(){
                                 $(ui.target).parent('.col-md-6').remove();
                             }
@@ -278,7 +290,7 @@
                         $.ajax({
                             method: 'get',
                             async:false,
-                            url:'/example/api/delete-image/'+id,
+                            url:'/api/media-detail/'+id,
                             success: function(response){
                                 orginal_tags = response.tags
                             }
@@ -288,7 +300,7 @@
                         if (tags !== null){
                             $.ajax({
                                 method: 'patch',
-                                url:'/example/api/delete-image/'+id,
+                                url:'/api/media-detail/'+id,
                                 data:{'tags': tags},
                                 success: function(){
                                     console.log('updated');
@@ -296,9 +308,14 @@
                             });
                         }
                         
+                    }else if (ui.cmd == 'preview_video'){
+                        $('body').append(modal);
+                        $('#modal-video').attr('src',$(ui.target).attr('src'));
+                        $('#myModal').modal('show');
                     }
                 }
             });
+            itemsDisabled["cut"] = true;
         }
 
     };

@@ -97,6 +97,13 @@
     margin:0px;
 }
 
+.ui-state-disabled.ui-menu-item{
+    color: #777;
+}
+.ui-state-disabled.ui-menu-item:hover{
+    color: #777;
+}
+
 .notify-user-label{
     position:fixed;
     top:0;

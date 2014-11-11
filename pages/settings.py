@@ -28,7 +28,7 @@ ACCOUNT_MODEL = getattr(settings,
     'PAGES_ACCOUNT_MODEL', settings.AUTH_USER_MODEL)
 
 ACCOUNT_URL_KWARG = getattr(settings,
-    'PAGES_ACCOUNT_URL_KWARG', 'organization')
+    'PAGES_ACCOUNT_URL_KWARG', None)
 
 SLUG_RE = r'[a-zA-Z0-9_\-]+'
 

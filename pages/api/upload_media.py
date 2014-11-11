@@ -107,13 +107,16 @@ class FileUploadView(AccountMixin, APIView):
                         uploaded_file_temp=uploaded_file,
                         account=self.get_account()
                         )
-                # Delay the upload to S3
-                upload_to_s3.delay(uploaded_file, self.get_account(), sha1_filename)
             else:
                 file_obj = UploadedImage(
                     uploaded_file=uploaded_file,
                     account=self.get_account())
+
             file_obj.save()
+            print file_obj.uploaded_file_temp
+            if USE_S3:
+                # Delay the upload to S3
+                upload_to_s3.delay(uploaded_file, self.get_account(), sha1_filename)
             serializer = UploadedImageSerializer(file_obj)
         else:
             file_obj = UploadedImage.objects.get(uploaded_file=full_path)
@@ -137,15 +140,14 @@ class FileUploadView(AccountMixin, APIView):
         return Response(response, status=status.HTTP_200_OK)
 
 class ImageListAPIView(generics.ListCreateAPIView):
-    # queryset = UploadedImage.objects.all()
     serializer_class = UploadedImageSerializer
 
     def get_queryset(self):
         search = self.request.GET.get('search')
         if search != '':
-            queryset = UploadedImage.objects.filter(tags__contains=search)
+            queryset = UploadedImage.objects.filter(tags__contains=search).order_by("-created_at")
         else:
-            queryset = UploadedImage.objects.all()
+            queryset = UploadedImage.objects.all().order_by("-created_at")
         return queryset
 
 

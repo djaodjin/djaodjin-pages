@@ -8,6 +8,7 @@ register = template.Library()
 def pages_static_js():
     javascript = [
         "vendor/js/jquery.js",
+        "vendor/js/bootstrap.js",
         "js/ajax_setup.js",
         "vendor/js/dropzone.js",
         "vendor/js/jquery.autosize.js",
