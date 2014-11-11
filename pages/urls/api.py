@@ -32,7 +32,6 @@ from pages.api.upload_media import (
     ImageListAPIView)
 
 from pages.api.upload_template import (
-    TemplateUploadView,
     UploadedTemplateListAPIView,
     UploadedTemplateAPIView)
 # Uncomment the next two lines to enable the admin:
@@ -40,7 +39,6 @@ from pages.api.upload_template import (
 # admin.autodiscover()
 
 urlpatterns = patterns('',
-    
     url(r'^media-detail/(?P<pk>\d+)/',
         MediaDestroyAPIView.as_view(), name='image_element'),
     url(r'^list/uploaded-images/',
@@ -55,5 +53,4 @@ urlpatterns = patterns('',
     url(r'^uploaded-templates/', #pylint: disable=line-too-long
         UploadedTemplateListAPIView.as_view(),
         name='get_uploadedtemplate_list'),
-    
 )
