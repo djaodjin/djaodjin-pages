@@ -61,12 +61,15 @@ class TemplateChoiceMixin(AccountMixin):
                 "TemplateResponseMixin requires either a definition of "
                 "'template_name' or an implementation of 'get_template_names()'")
         else:
-            if account and UploadedTemplate.objects.filter(
-                    account=account).count() > 0:
+            if UploadedTemplate.objects.filter(
+                    account=account, is_active=True).count() > 0:
                 template_name = None
                 uploaded_templates = UploadedTemplate.objects.filter(
-                    account=account).order_by("-created_at")[0]
-                root_account_path = account.slug +'/'+ uploaded_templates.name
+                    account=account, is_active=True).order_by("-created_at")[0]
+                if account:
+                    root_account_path = account.slug +'/'+ uploaded_templates.name
+                else:
+                    root_account_path = uploaded_templates.name
                 for directory in settings.TEMPLATE_DIRS:
                     for (dirpath, dirnames, filenames) in os.walk(directory):
                         if root_account_path in dirpath:

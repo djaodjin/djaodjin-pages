@@ -33,12 +33,14 @@ from pages.api.upload_media import (
 
 from pages.api.upload_template import (
     TemplateUploadView,
-    UploadedTemplateListAPIView)
+    UploadedTemplateListAPIView,
+    UploadedTemplateAPIView)
 # Uncomment the next two lines to enable the admin:
 # from django.contrib import admin
 # admin.autodiscover()
 
 urlpatterns = patterns('',
+    
     url(r'^media-detail/(?P<pk>\d+)/',
         MediaDestroyAPIView.as_view(), name='image_element'),
     url(r'^list/uploaded-images/',
@@ -47,9 +49,11 @@ urlpatterns = patterns('',
         FileUploadView.as_view(), name='upload_image_element'),
     url(r'^editables/(?P<slug>[\w-]+)/',
         PageElementDetail.as_view(), name='edit_page_element'),
-    url(r'^templates/upload-templates/',
-        TemplateUploadView.as_view(), name='upload_template'),
-    url(r'^uploaded-templates/list/', #pylint: disable=line-too-long
+    url(r'^uploaded-templates/(?P<pk>\d+)/', #pylint: disable=line-too-long
+        UploadedTemplateAPIView.as_view(),
+        name='update_uploaded_template'),
+    url(r'^uploaded-templates/', #pylint: disable=line-too-long
         UploadedTemplateListAPIView.as_view(),
         name='get_uploadedtemplate_list'),
+    
 )

@@ -82,7 +82,7 @@
                         <td>[% template.name %]</td>
                         <td>[% template.created_at|date %]</td>
                         <td>[% template.updated_at|date %]</td>
-                        <td><button class="btn btn-link btn-sm"></button></td>
+                        <td><button class="btn btn-link btn-sm" ng-click="TogglePublication($index)"><span ng-show="template.is_active">Unpublish</span><span ng-hide="template.is_active">Publish</span></button></td>
                         <td><button class="btn btn-link btn-sm"></button></td>
                     </tr>
                 </tbody>

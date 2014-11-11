@@ -1,5 +1,5 @@
 var app = angular.module('UploaderApp',[]);
-var url = null
+var url = null;
 
 // app.config(function($interpolateProvider,$locationProvider,$httpProvider) {
 //    $interpolateProvider.startSymbol('[%');
@@ -20,7 +20,7 @@ app.directive('dropzone', function (csrf) {
 
       // bind the given event handlers
       dropzone.on('sending', function (file, xhr, formData) {
-         formData.append('csrfmiddlewaretoken', csrf.csrf_token)
+         formData.append('csrfmiddlewaretoken', csrf.csrf_token);
       });
 
       dropzone.on('drop', function (event) {
@@ -31,7 +31,7 @@ app.directive('dropzone', function (csrf) {
       });
       
       dropzone.on('error', function (file, response) {
-         console.log(response.info)
+         console.log(response.info);
       });
 
       dropzone.on('success', function (file, response) {
@@ -45,9 +45,9 @@ app.directive('dropzone', function (csrf) {
             }else{
                scope.uploadedtemplate_list.push(response);
             }
-         })
+         });
       });
-   }
+   };
 });
 
 app.controller('UploaderCtrl',function($scope, UploadedTemplateFactory, urls, csrf, $timeout){
@@ -56,27 +56,43 @@ app.controller('UploaderCtrl',function($scope, UploadedTemplateFactory, urls, cs
        'options': { // passed into the Dropzone constructor
          'url': urls.upload_template,
          'addRemoveLinks':true
-       }}
+       }};
    
    $scope.init = function(){
       
       UploadedTemplateFactory.getUploadedTemplates(urls.get_uploaded_templates).success(function(data){
          $scope.uploadedtemplate_list = data;
       });
-   }
+   };
    
    $scope.init();
    // $scope.uploadedtemplate_list[0].updated_at = "nullqsdfqsd";
    
+   $scope.TogglePublication = function(idx){
+      var template = $scope.uploadedtemplate_list[idx];
+      var data = {};
+      if (template.is_active){
+         data = {'is_active': false};
+      }else{
+         data = {'is_active': true};
+      }
+      UploadedTemplateFactory.UpdateUploadedTemplates(urls.get_uploaded_templates, template.id, data).success(function(response){
+         $scope.uploadedtemplate_list[idx] = response;
+      });
+   };
 
-})
+});
 
 app.factory('UploadedTemplateFactory', function($http){
    var factory = {};
    
    factory.getUploadedTemplates = function(url) {
       return $http.get(url);
-   }
+   };
+
+   factory.UpdateUploadedTemplates = function(url, id, data){
+      return $http.patch(url + id +'/',data);
+   };
    
    return factory;
 });

@@ -77,10 +77,11 @@ class UploadedTemplate(models.Model):
 
     account = models.ForeignKey(
         ACCOUNT_MODEL,
-        related_name='account_template', null=True)
+        related_name='account_template', null=True, blank=True)
     name = models.CharField(max_length=150)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField()
+    is_active = models.BooleanField(default=False)
 
     def __unicode__(self):
         if self.account:
