@@ -7,7 +7,6 @@ import zipfile, tempfile, shutil
 from django.utils import timezone
 
 from rest_framework import status
-from rest_framework.views import APIView
 from rest_framework import generics
 from rest_framework.parsers import FileUploadParser
 from rest_framework.response import Response
