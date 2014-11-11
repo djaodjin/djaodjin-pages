@@ -73,7 +73,7 @@
                     var droppable = $(this);
                     if (droppable.prop("tagName") == 'IMG'){
 
-                        if (ui.draggable.attr('src').indexOf(".png") > 0 ||ui.draggable.attr('src').indexOf(".jpg") > 0){
+                        if (ui.draggable.attr('src').indexOf(".png") > 0 || ui.draggable.attr('src').indexOf(".jpg") > 0){
                             droppable.attr('src', ui.draggable.attr('src'));
                             $(ui.helper).remove();
                             _this.saveImage(droppable);
@@ -280,7 +280,7 @@
                     if (ui.cmd == 'delete_media'){
                         $.ajax({
                             method: 'delete',
-                            url:'/api/media-detail/'+id,
+                            url:'/api/media-detail/'+id +'/',
                             success: function(){
                                 $(ui.target).parent('.col-md-6').remove();
                             }
@@ -290,9 +290,9 @@
                         $.ajax({
                             method: 'get',
                             async:false,
-                            url:'/api/media-detail/'+id,
+                            url:'/api/media-detail/'+id+'/',
                             success: function(response){
-                                orginal_tags = response.tags
+                                orginal_tags = response.tags;
                             }
                         });
                         
@@ -300,7 +300,7 @@
                         if (tags !== null){
                             $.ajax({
                                 method: 'patch',
-                                url:'/api/media-detail/'+id,
+                                url:'/api/media-detail/'+id+'/',
                                 data:{'tags': tags},
                                 success: function(){
                                     console.log('updated');
