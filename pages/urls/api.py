@@ -29,7 +29,7 @@ from pages.api.edition import PageElementDetail
 from pages.api.upload_media import (
     FileUploadView,
     MediaUpdateDestroyAPIView,
-    ImageListAPIView)
+    MediaListAPIView)
 
 from pages.api.upload_template import (
     UploadedTemplateListAPIView,
@@ -41,8 +41,8 @@ from pages.api.upload_template import (
 urlpatterns = patterns('',
     url(r'^media-detail/(?P<pk>\d+)/',
         MediaUpdateDestroyAPIView.as_view(), name='image_element'),
-    url(r'^list/uploaded-images/',
-        ImageListAPIView.as_view(), name='upload_image_element'),
+    url(r'^list/uploaded-media/',
+        MediaListAPIView.as_view(), name='upload_image_element'),
     url(r'^editables/upload-image/',
         FileUploadView.as_view(), name='upload_image_element'),
     url(r'^editables/(?P<slug>[\w-]+)/',

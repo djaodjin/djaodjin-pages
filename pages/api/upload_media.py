@@ -140,7 +140,7 @@ class FileUploadView(AccountMixin, APIView):
                 }
         return Response(response, status=status.HTTP_200_OK)
 
-class ImageListAPIView(AccountMixin, generics.ListCreateAPIView):
+class MediaListAPIView(AccountMixin, generics.ListCreateAPIView):
     serializer_class = UploadedImageSerializer
 
     def get_queryset(self):

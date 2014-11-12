@@ -110,12 +110,8 @@
                 url: _this.options.media_upload_url,
                 maxFilesize: 50,
                 parallelUploads: 2,
-                clickable: false
-            });
-
-            DocDropzone.on("processing", function(file){
-                id = (new Date()).getTime();
-                this.options.url = _this.options.media_upload_url + '?X-Progress-ID=' +id;
+                clickable: false,
+                createImageThumbnails:false,
             });
 
             DocDropzone.on("processing", function(file){
@@ -145,6 +141,11 @@
                 }
             });
 
+            DocDropzone.on("drop", function(event){
+                $('.notify-user-label').remove();
+                count = 0;
+            });
+
             DocDropzone.on("dragleave", function(event){
                 $('.notify-user-label').remove();
                 count = 0;
@@ -152,6 +153,7 @@
 
             DocDropzone.on("success", function(data, response){
                 $('.progress-text').remove();
+                $('.dz-preview').remove();
                 var last_index = $('#list-images').children().last().children().attr('id');
                 if (last_index){
                     last_index = parseInt(last_index.split('image_')[1]) + 1;
@@ -278,7 +280,6 @@
                     });
                 }
             });
-            var itemsDisabled = {}; 
             $(document).contextmenu({
                 delegate: ".clickable-menu",
                 menu: [
@@ -326,7 +327,6 @@
                     }
                 }
             });
-            itemsDisabled["cut"] = true;
         }
 
     };

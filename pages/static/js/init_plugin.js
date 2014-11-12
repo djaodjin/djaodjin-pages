@@ -16,8 +16,11 @@ $(document).ready(function(){
 
     $.sidebargallery({
         base_url:'/api/editables/',
-        img_upload_url:url_gallery,
+        media_upload_url:url_gallery,
         csrf_token: csrf_token,
+        list_media_url:'/api/list/uploaded-media/',
+        base_update_media_url:'/api/media-detail/'
+
 
     });
 });
