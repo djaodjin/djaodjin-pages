@@ -30,7 +30,9 @@ setup(
     version=pages.__version__,
     author='The DjaoDjin Team',
     author_email='support@djaodjin.com',
-    packages=['pages'],
+    packages=[
+        'pages',
+        'pages.api'],
     package_data={'pages': [
         'static/vendor/css/*', 'static/vendor/js/*']},
     license='BSD',

@@ -249,7 +249,7 @@
             $('#list-images').empty();
             $.ajax({
                 method:'GET',
-                url:'/api/list/uploaded-images/?search='+search,
+                url:_this.options.list_image_url + '?search='+search,
                 success: function(data){
                     $.each(data, function(index,element){
                         var src_file = null;
@@ -340,5 +340,6 @@
         base_url: null, // Url to send request to server
         csrf_token:'',
         img_upload_url:'',
+        list_image_url:'',
     };
 })(jQuery);
