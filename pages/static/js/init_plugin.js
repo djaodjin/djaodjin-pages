@@ -10,7 +10,7 @@ $(document).ready(function(){
         autotag: false,
         template_path: template_path,
         csrf_token: csrf_token,
-        enable_upload: true,
+        enable_upload: false,
         img_upload_url:url_gallery,
     });
 

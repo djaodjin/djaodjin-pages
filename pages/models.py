@@ -63,7 +63,7 @@ class UploadedImage(models.Model):
     uploaded_file_temp = models.FileField(
         upload_to=file_name, storage=FILE_SYSTEM, null=True, blank=True)
     account = models.ForeignKey(
-        ACCOUNT_MODEL, related_name='account_image', null=True)
+        ACCOUNT_MODEL, related_name='account_image', null=True, blank=True)
     tags = models.CharField(max_length=200, blank=True, null=True)
 
     def __unicode__(self):

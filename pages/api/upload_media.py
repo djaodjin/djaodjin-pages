@@ -78,7 +78,8 @@ class FileUploadView(AccountMixin, APIView):
     def post(self, request, account_slug=None, format=None, *args, **kwargs):#pylint: disable=unused-argument,redefined-builtin
         uploaded_file = request.FILES['file']
         existing_file = False
-        sha1_filename = hashlib.sha1(uploaded_file.read()).hexdigest() + '.' + str(uploaded_file).split('.')[1]
+        sha1_filename = hashlib.sha1(uploaded_file.read()).hexdigest() + '.' +\
+            str(uploaded_file).split('.')[1].lower()
         uploaded_file.name = sha1_filename
         if USE_S3:
             path = IMG_PATH

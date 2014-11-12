@@ -66,6 +66,19 @@
                 
                 setTimeout(update_progress_info, 20);
             });
+
+            $(document).on('editInputVisible', function(){
+                $('#input_editor').droppable({
+                    drop: function(event, ui){
+                        var droppable = $(this);
+                        var draggable = ui.draggable;
+                        droppable.focus();
+                        droppable.selection('insert',{text:'![Alt text]('+ draggable.attr('src') +')' ,mode:'before'});
+                        $(ui.helper).remove();
+                        $('#input_editor').trigger('autosize.resize');
+                    }
+                });
+            });
             
             
             $('.droppable-image').droppable({
@@ -89,12 +102,10 @@
                             notify_user("You can't put other file than video in this place", 'error');
                         }
                     }
-                    
-                    
               }
             });
 
-            var DocDropzone = new Dropzone(document.body, { // Make the whole body a dropzone
+            var DocDropzone = new Dropzone('#list-images', { // Make the whole body a dropzone
                 paramName: 'file',
                 url: _this.options.img_upload_url,
                 maxFilesize: 50,
