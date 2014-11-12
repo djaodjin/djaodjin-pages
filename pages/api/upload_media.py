@@ -140,19 +140,18 @@ class FileUploadView(AccountMixin, APIView):
                 }
         return Response(response, status=status.HTTP_200_OK)
 
-class ImageListAPIView(generics.ListCreateAPIView):
+class ImageListAPIView(AccountMixin, generics.ListCreateAPIView):
     serializer_class = UploadedImageSerializer
 
     def get_queryset(self):
         search = self.request.GET.get('search')
+        queryset = UploadedImage.objects.filter(account=self.get_account()).order_by("-created_at")
         if search != '':
             queryset = UploadedImage.objects.filter(tags__contains=search).order_by("-created_at")
-        else:
-            queryset = UploadedImage.objects.all().order_by("-created_at")
         return queryset
 
 
-class MediaDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
+class MediaUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
     model = UploadedImage
     serializer_class = UploadedImageSerializer
 

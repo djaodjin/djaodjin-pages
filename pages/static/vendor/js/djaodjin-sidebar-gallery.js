@@ -107,7 +107,7 @@
 
             var DocDropzone = new Dropzone('#list-images', { // Make the whole body a dropzone
                 paramName: 'file',
-                url: _this.options.img_upload_url,
+                url: _this.options.media_upload_url,
                 maxFilesize: 50,
                 parallelUploads: 2,
                 clickable: false
@@ -115,12 +115,12 @@
 
             DocDropzone.on("processing", function(file){
                 id = (new Date()).getTime();
-                this.options.url = _this.options.img_upload_url + '?X-Progress-ID=' +id;
+                this.options.url = _this.options.media_upload_url + '?X-Progress-ID=' +id;
             });
 
             DocDropzone.on("processing", function(file){
                 id = (new Date()).getTime();
-                this.options.url = _this.options.img_upload_url + '?X-Progress-ID=' +id;
+                this.options.url = _this.options.media_upload_url + '?X-Progress-ID=' +id;
             });
 
             DocDropzone.on("cancel", function(file){
@@ -249,7 +249,7 @@
             $('#list-images').empty();
             $.ajax({
                 method:'GET',
-                url:_this.options.list_image_url + '?search='+search,
+                url:_this.options.list_media_url + '?search='+search,
                 success: function(data){
                     $.each(data, function(index,element){
                         var src_file = null;
@@ -291,7 +291,7 @@
                     if (ui.cmd == 'delete_media'){
                         $.ajax({
                             method: 'delete',
-                            url:'/api/media-detail/'+id +'/',
+                            url:_this.options.base_update_media_url +id +'/',
                             success: function(){
                                 $(ui.target).parent('.col-md-6').remove();
                             }
@@ -301,7 +301,7 @@
                         $.ajax({
                             method: 'get',
                             async:false,
-                            url:'/api/media-detail/'+id+'/',
+                            url:_this.options.base_update_media_url+id+'/',
                             success: function(response){
                                 orginal_tags = response.tags;
                             }
@@ -311,7 +311,7 @@
                         if (tags !== null){
                             $.ajax({
                                 method: 'patch',
-                                url:'/api/media-detail/'+id+'/',
+                                url:_this.options.base_update_media_url+id+'/',
                                 data:{'tags': tags},
                                 success: function(){
                                     console.log('updated');
@@ -339,7 +339,8 @@
     $.sidebargallery.defaults = {
         base_url: null, // Url to send request to server
         csrf_token:'',
-        img_upload_url:'',
-        list_image_url:'',
+        media_upload_url:'',
+        list_media_url:'',
+        base_update_media_url:''
     };
 })(jQuery);

@@ -28,7 +28,7 @@ from django.conf.urls import patterns, url
 from pages.api.edition import PageElementDetail
 from pages.api.upload_media import (
     FileUploadView,
-    MediaDestroyAPIView,
+    MediaUpdateDestroyAPIView,
     ImageListAPIView)
 
 from pages.api.upload_template import (
@@ -40,7 +40,7 @@ from pages.api.upload_template import (
 
 urlpatterns = patterns('',
     url(r'^media-detail/(?P<pk>\d+)/',
-        MediaDestroyAPIView.as_view(), name='image_element'),
+        MediaUpdateDestroyAPIView.as_view(), name='image_element'),
     url(r'^list/uploaded-images/',
         ImageListAPIView.as_view(), name='upload_image_element'),
     url(r'^editables/upload-image/',
