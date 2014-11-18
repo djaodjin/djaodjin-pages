@@ -150,7 +150,7 @@ STATIC_URL = '/static/'
 
 MEDIA_ROOT = BASE_DIR + '/testsite/media'
 
-PAGES_IMG_DIR = os.path.join(BASE_DIR, 'testsite/static/img/')
+PAGES_MEDIA_PATH = ''
 
 PAGES_UPLOADED_TEMPLATE_DIR = BASE_DIR + '/testsite/templates'
 

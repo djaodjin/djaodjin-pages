@@ -23,13 +23,13 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from django.db import models
-from pages.settings import IMG_PATH, ACCOUNT_MODEL
+from pages.settings import MEDIA_PATH, ACCOUNT_MODEL
 
 from django.conf import settings
 
 
 def file_name(instance, filename):
-    path = IMG_PATH
+    path = MEDIA_PATH
     if instance.account:
         return path + instance.account.slug + '/' + filename
     else:

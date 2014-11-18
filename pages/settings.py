@@ -32,8 +32,8 @@ ACCOUNT_URL_KWARG = getattr(settings,
 
 SLUG_RE = r'[a-zA-Z0-9_\-]+'
 
-IMG_PATH = getattr(settings,
-    'PAGES_IMG_PATH', 'pages/images/')
+MEDIA_PATH = getattr(settings,
+    'PAGES_MEDIA_PATH', 'pages/images/')
 
 UPLOADED_TEMPLATE_DIR = getattr(settings,
     'PAGES_UPLOADED_TEMPLATE_DIR', None)

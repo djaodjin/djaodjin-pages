@@ -31,7 +31,7 @@ from rest_framework.response import Response
 
 from pages.models import UploadedImage, PageElement
 from pages.serializers import UploadedImageSerializer
-from pages.settings import USE_S3, IMG_PATH, FFMPEG_PATH, NO_LOCAL_STORAGE, S3_URL
+from pages.settings import USE_S3, MEDIA_PATH, FFMPEG_PATH, NO_LOCAL_STORAGE, S3_URL
 from pages.mixins import AccountMixin
 from pages.tasks import upload_to_s3
 
@@ -82,7 +82,7 @@ class FileUploadView(AccountMixin, APIView):
             str(uploaded_file).split('.')[1].lower()
         uploaded_file.name = sha1_filename
         if USE_S3:
-            path = IMG_PATH
+            path = MEDIA_PATH
             if self.get_account():
                 full_path = path + self.get_account().slug + '/' + sha1_filename
             else:

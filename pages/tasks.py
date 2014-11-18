@@ -2,13 +2,13 @@ import os
 
 from celery import task
 from pages.models import UploadedImage, PageElement
-from pages.settings import IMG_PATH, NO_LOCAL_STORAGE
+from pages.settings import MEDIA_PATH, NO_LOCAL_STORAGE
 from django.conf import settings
 
 # XXX -  not callable on pylint!
 @task()#pylint: disable=not-callable
 def upload_to_s3(uploaded_file, account, filename):
-    full_path = IMG_PATH + account.slug + '/' + filename
+    full_path = MEDIA_PATH + account.slug + '/' + filename
     if not NO_LOCAL_STORAGE:
 
         uploaded_temp = UploadedImage.objects.get(
