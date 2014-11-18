@@ -114,7 +114,6 @@ class FileUploadView(AccountMixin, APIView):
                     account=self.get_account())
 
             file_obj.save()
-            print file_obj.uploaded_file_temp
             if USE_S3:
                 # Delay the upload to S3
                 upload_to_s3.delay(uploaded_file, self.get_account(), sha1_filename)

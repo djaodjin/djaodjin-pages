@@ -76,6 +76,7 @@ INSTALLED_APPS = (
     'storages',
     'djcelery',
     'kombu.transport.django',
+    'debug_toolbar',
     'testsite',
 )
 

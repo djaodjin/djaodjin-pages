@@ -91,7 +91,7 @@ class PageElementDetail(AccountMixin, generics.RetrieveUpdateDestroyAPIView):
                 while PageElement.objects.filter(slug__exact=new_id).count() > 0:
                     new_id = ''.join(random.choice(string.lowercase) for i in range(10))
 
-            if not new_id.startswith('djimage'):
+            if not new_id.startswith('djmedia-'):
             # Create a pageelement
                 pagelement = PageElement(slug=new_id, text=request.DATA['text'])
                 account = self.get_account()

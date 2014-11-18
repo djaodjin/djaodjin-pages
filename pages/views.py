@@ -71,20 +71,23 @@ class PageView(AccountMixin, TemplateView):
         if self.template_name and isinstance(response, TemplateResponse):
             response.render()
             soup = BeautifulSoup(response.content)
+            account = self.get_account()
+            if account:
+                page_elements = PageElement.objects.filter(account=account)
+            else:
+                page_elements = PageElement.objects.all()
             for editable in soup.find_all(class_="editable"):
                 try:
                     id_element = editable['id']
                 except KeyError:
                     continue
                 try:
-                    edit = PageElement.objects.filter(slug=id_element)
-                    account = self.get_account()
                     if account:
-                        edit = PageElement.objects.get(
+                        edit = page_elements.get(
                             slug=id_element, account=account)
                         # edit = edit.get(account=account)
                     else:
-                        edit = PageElement.objects.get(slug=id_element)
+                        edit = page_elements.get(slug=id_element)
                     new_text = re.sub(r'[\ ]{2,}', '', edit.text)
                     if 'edit-markdown' in editable['class']:
                         new_text = markdown.markdown(new_text)
@@ -104,25 +107,26 @@ class PageView(AccountMixin, TemplateView):
                         editable.string = new_text
                 except PageElement.DoesNotExist:
                     pass
-            for image in soup.find_all(class_="droppable-image"):
+
+            #load all media pageelemeny
+            db_medias = page_elements.filter(slug__startswith='djmedia-')
+            for media in soup.find_all(class_="droppable-image"):
                 try:
-                    id_element = image['id']
+                    id_element = media['id']
                 except KeyError:
                     continue
                 try:
-                    db_image = PageElement.objects.filter(slug=id_element)
+                    # db_image = PageElement.objects.filter(slug=id_element)
                     account = self.get_account()
                     if account:
-                        db_image = PageElement.objects.get(
+                        db_media = db_medias.get(
                             slug=id_element, account=account)
-                        # edit = edit.get(account=account)
                     else:
-                        db_image = PageElement.objects.get(slug=id_element)
-                    print db_image.text
+                        db_media = db_medias.get(slug=id_element)
                     if USE_S3:
-                        image['src'] = db_image.text
+                        media['src'] = db_media.text
                     else:
-                        image['src'] = db_image.text
+                        media['src'] = db_media.text
                 except:#pylint: disable=bare-except
                     continue
             response.content = soup.prettify()
