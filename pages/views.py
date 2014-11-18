@@ -66,7 +66,7 @@ class PageView(AccountMixin, TemplateView):
         context.update({'template_path': encode(self.get_template_path())})
         return context
 
-    def get(self, request, *args, **kwargs):#pylint: disable=too-many-statements
+    def get(self, request, *args, **kwargs):#pylint: disable=too-many-statements, too-many-locals
         response = super(PageView, self).get(request, *args, **kwargs)
         if self.template_name and isinstance(response, TemplateResponse):
             response.render()
