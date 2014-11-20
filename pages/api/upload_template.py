@@ -15,7 +15,7 @@ from pages.models import UploadedTemplate
 from pages.serializers import UploadedTemplateSerializer
 
 
-from pages.settings import UPLOADED_TEMPLATE_DIR, UPLOADED_STATIC_DIR
+from pages.settings import UPLOADED_TEMPLATE_DIR, UPLOADED_STATIC_DIR, DISABLE_ACCOUNT_TEMPLATE_PATH
 
 from pages.mixins import AccountMixin
 
@@ -32,7 +32,7 @@ class UploadedTemplateListAPIView(AccountMixin, generics.ListCreateAPIView):
 
         new_package = True
         account = self.get_account()
-        if account:
+        if account and not DISABLE_ACCOUNT_TEMPLATE_PATH:
             uploaded_template_dir = os.path.join(UPLOADED_TEMPLATE_DIR, account.slug)
             uploaded_static_dir = os.path.join(UPLOADED_STATIC_DIR, account.slug)
         else:

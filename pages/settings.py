@@ -38,6 +38,9 @@ MEDIA_PATH = getattr(settings,
 UPLOADED_TEMPLATE_DIR = getattr(settings,
     'PAGES_UPLOADED_TEMPLATE_DIR', None)
 
+DISABLE_ACCOUNT_TEMPLATE_PATH = getattr(settings,
+    'PAGES_DISABLE_ACCOUNT_TEMPLATE_PATH', False)
+
 UPLOADED_STATIC_DIR = getattr(settings,
     'PAGES_UPLOADED_STATIC_DIR', None)
 
