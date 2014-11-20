@@ -107,7 +107,8 @@ class UploadedTemplateListAPIView(AccountMixin, generics.ListCreateAPIView):
                         else:
                             if not name.endswith('.css') \
                                 and not name.endswith('.js')\
-                                and not name.endswith('.css.map'):
+                                and not name.endswith('.css.map')\
+                                and not name.endswith('.png'):
                                 shutil.rmtree(dir_temp)
                                 return Response(
                                     "Static directory has to \
