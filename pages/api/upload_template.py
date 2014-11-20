@@ -106,7 +106,8 @@ class UploadedTemplateListAPIView(AccountMixin, generics.ListCreateAPIView):
                                     status=status.HTTP_403_FORBIDDEN)
                         else:
                             if not name.endswith('.css') \
-                                and not name.endswith('.js'):
+                                and not name.endswith('.js')\
+                                and not name.endswith('.css.map'):
                                 shutil.rmtree(dir_temp)
                                 return Response(
                                     "Static directory has to \

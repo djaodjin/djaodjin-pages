@@ -263,13 +263,15 @@ jQuery plugin allowing to edit html online.
 					id_element = 'undefined';
 				}
 				var data = {};
+				var method = 'PUT';
 				if (clicked_element.attr('data-key')){
 					data[clicked_element.attr('data-key')] = $.trim(new_text);
+					method = 'PATCH';
 				}else{
 					data = {text:$.trim(new_text), old_text:$.trim(orig_text), template_name:_this.options.template_name, template_path:_this.options.template_path, tag: clicked_element.prop("tagName")};
 				}
 				$.ajax({
-					method:'PUT',
+					method:method,
 					async:false,
 					url: _this.options.base_url + id_element +'/',
 					data:data,
