@@ -2,12 +2,13 @@
  /* jshint multistr: true */
 (function ($) {
 
-    var toggle_button = '<button class="btn btn-default" id="btn-toggle">Gallery</button>';
+    
     var sidebar = '<div id="sidebar-gallery"><h1 class="text-center" style="color:white;">Media gallery</h1><input placeholder="Search..." id="gallery-filter" type="text" class="form-control"><div id="list-images"></div><div class="" id="uploadzone-gallery" style="display:none"></div></div>';
     var sidebar_size = 200;
     var loaded = false;
     var initialized = false;
     var id= null;
+    var toggle_button = null;
     var count = 0;
 
     var modal = '<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">\
@@ -44,7 +45,7 @@
     function update_progress_info() {
         $.getJSON("/get-progress/upload/", {'X-Progress-ID': id}, function(data, status){
             if(data){
-                $('#progress-span').text((data.uploaded /data.lenght)*100)
+                $('#progress-span').text((data.uploaded /data.lenght)*100);
             }
             else{
                 $('#progress-span').text(100);
@@ -58,6 +59,13 @@
 
         _init: function(){
             _this = this;
+
+            if (_this.options.toggle){
+                toggle_button = _this.options.toggle;
+            }else{
+                toggle_button = '<button class="btn btn-default" id="btn-toggle">Gallery</button>';
+            }
+            
             $('body').append(toggle_button).append(sidebar);
             $('body').wrapInner('<div id="gallery-wrapper"></div>');
             $(document).on('click','#btn-toggle', _this._toggle_sidebar);
@@ -341,6 +349,7 @@
         csrf_token:'',
         media_upload_url:'',
         list_media_url:'',
-        base_update_media_url:''
+        base_update_media_url:'',
+        toggle: null
     };
 })(jQuery);
