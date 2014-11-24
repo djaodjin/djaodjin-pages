@@ -3,7 +3,7 @@
 (function ($) {
 
     
-    var sidebar = '<div id="sidebar-gallery"><h1 class="text-center" style="color:white;">Media gallery</h1><input placeholder="Search..." id="gallery-filter" type="text" class="form-control"><div id="list-images"></div><div class="" id="uploadzone-gallery" style="display:none"></div></div>';
+    var sidebar = '<div id="sidebar-gallery"><h1 class="text-center" style="color:white;">Media gallery</h1><input placeholder="Search..." id="gallery-filter" type="text" class="form-control"><div id="media-container"><div id="list-media"></div>Drag and drop or click to upload Media</div></div';
     var sidebar_size = 200;
     var loaded = false;
     var initialized = false;
@@ -113,12 +113,12 @@
               }
             });
 
-            var DocDropzone = new Dropzone('#list-images', { // Make the whole body a dropzone
+            var DocDropzone = new Dropzone('#media-container', { // Make the whole body a dropzone
                 paramName: 'file',
                 url: _this.options.media_upload_url,
                 maxFilesize: 50,
                 parallelUploads: 2,
-                clickable: false,
+                clickable: true,
                 createImageThumbnails:false,
             });
 
@@ -134,7 +134,7 @@
             DocDropzone.on("sending", function(file, xhr, formData){
                 formData.append('csrfmiddlewaretoken', _this.options.csrf_token);
                 formData.append('csrfmiddlewaretoken', _this.options.csrf_token);
-                $('#list-images').append('<div class="col-md-12 padding-top-img progress-text text-center">Upload in progress<br><p><span id="progress-span">0</span>%</p>Please wait...</div>');                      
+                $('#media-container').append('<div class="col-md-12 padding-top-img progress-text text-center">Upload in progress<br><p><span id="progress-span">0</span>%</p>Please wait...</div>');                      
                 $.event.trigger({
                   type:    "start_upload",
                   message: "myTrigger fired.",
@@ -162,7 +162,7 @@
             DocDropzone.on("success", function(data, response){
                 $('.progress-text').remove();
                 $('.dz-preview').remove();
-                var last_index = $('#list-images').children().last().children().attr('id');
+                var last_index = $('#list-media').children().last().children().attr('id');
                 if (last_index){
                     last_index = parseInt(last_index.split('image_')[1]) + 1;
                 }else{
@@ -170,9 +170,9 @@
                 }
                 if (!response.exist){
                     if (response.uploaded_file_temp.indexOf('.mp4') > 0){
-                        $('#list-images').append('<div class="col-md-6 padding-top-img"><video id="image_'+ last_index + '" class="image image_media" src="'+ response.uploaded_file_temp +'" width="50px"></video></div>');
+                        $('#list-media').append('<div class="col-md-6 padding-top-img"><video id="image_'+ last_index + '" class="image image_media" src="'+ response.uploaded_file_temp +'" width="50px"></video></div>');
                     }else{
-                        $('#list-images').append('<div class="col-md-6 padding-top-img"><img id="image_'+ last_index + '" class="image image_media" src="'+ response.uploaded_file_temp +'" width="50px"></div>');
+                        $('#list-media').append('<div class="col-md-6 padding-top-img"><img id="image_'+ last_index + '" class="image image_media" src="'+ response.uploaded_file_temp +'" width="50px"></div>');
                     }
                     
                 
@@ -189,7 +189,7 @@
                     var descr = "We're processing your uploaded file. You can start use it by using the sample in your gallery.";
                     notify_user(descr, 'info');
                 }else{
-                    $('#list-images').append('<div class="col-md-12 padding-top-img alert">Image already in your gallery</div>');
+                    $('#media-container').append('<div class="col-md-12 padding-top-img alert">Image already in your gallery</div>');
                     setTimeout(function() {
                         $('.alert').remove();
                     }, 3000);
@@ -256,7 +256,7 @@
             if (!search){
                 search = "";
             }
-            $('#list-images').empty();
+            $('#list-media').empty();
             $.ajax({
                 method:'GET',
                 url:_this.options.list_media_url + '?search='+search,
@@ -269,9 +269,9 @@
                             src_file = element.file_src_temp;
                         }
                         if (src_file.indexOf('.mp4') > 0){
-                            $('#list-images').append('<div class="col-md-6 padding-top-img"><video data-id="'+ element.id + '" id="image_'+ index + '" class="image clickable-menu padding-top-img image_media" src="'+ src_file +'" width="50px"></video></div>');
+                            $('#list-media').append('<div class="col-md-6 padding-top-img"><video data-id="'+ element.id + '" id="image_'+ index + '" class="image clickable-menu padding-top-img image_media" src="'+ src_file +'" width="50px"></video></div>');
                         }else{
-                            $('#list-images').append('<div class="col-md-6 padding-top-img"><img data-id="'+ element.id + '" id="image_'+ index + '" class="image clickable-menu padding-top-img image_media" src="'+ src_file +'" width="50px"></div>');
+                            $('#list-media').append('<div class="col-md-6 padding-top-img"><img data-id="'+ element.id + '" id="image_'+ index + '" class="image clickable-menu padding-top-img image_media" src="'+ src_file +'" width="50px"></div>');
                         }
                         // $('#list-images').append('<div class="col-md-6 padding-top-img"><img data-id="'+ element.id + '" id="image_'+ index + '" class="image clickable-menu padding-top-img image_media" src="'+ src_file+'" width="50px"></div>');
                         $('#image_' + index).draggable({

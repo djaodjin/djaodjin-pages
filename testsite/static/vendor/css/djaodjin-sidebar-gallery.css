@@ -30,7 +30,7 @@
     background: #333;
     z-index:10000;    
 }
-#list-images{
+#media-container{
     padding:3px;
     background: #CCC;
     border-radius: 2px;
