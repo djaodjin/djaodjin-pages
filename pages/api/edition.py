@@ -38,7 +38,7 @@ class PageElementDetail(AccountMixin, generics.RetrieveUpdateDestroyAPIView):
 
     def write_html(self, path, new_id):
         with open(path, "r") as myfile:
-            soup = BeautifulSoup(myfile, "html5lib")
+            soup = BeautifulSoup(myfile, "html.parser")
             soup_elements = soup.find_all(self.request.DATA['tag'].lower())
             if len(soup_elements) > 1:
                 for element in soup_elements:
