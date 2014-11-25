@@ -24,35 +24,34 @@
 
 from django.conf import settings
 
-ACCOUNT_MODEL = getattr(settings,
-    'PAGES_ACCOUNT_MODEL', settings.AUTH_USER_MODEL)
 
-ACCOUNT_URL_KWARG = getattr(settings,
-    'PAGES_ACCOUNT_URL_KWARG', None)
+_SETTINGS = {
+    'ACCOUNT_MODEL': settings.AUTH_USER_MODEL,
+    'ACCOUNT_URL_KWARG': None,
+    'MEDIA_PATH': 'pages/images/',
+    'UPLOADED_TEMPLATE_DIR': None,
+    'DISABLE_ACCOUNT_TEMPLATE_PATH': False,
+    'UPLOADED_STATIC_DIR': None,
+    'NO_LOCAL_STORAGE': False,
+    'USE_S3': False,
+    'S3_URL': None,
+    'ENCRYPT_KEY': None,
+    'FFMPEG_PATH': '/usr/local/bin/ffmpeg',
+
+}
 
 SLUG_RE = r'[a-zA-Z0-9_\-]+'
 
-MEDIA_PATH = getattr(settings,
-    'PAGES_MEDIA_PATH', 'pages/images/')
+_SETTINGS.update(getattr(settings, 'PAGES', {}))
 
-UPLOADED_TEMPLATE_DIR = getattr(settings,
-    'PAGES_UPLOADED_TEMPLATE_DIR', None)
-
-DISABLE_ACCOUNT_TEMPLATE_PATH = getattr(settings,
-    'PAGES_DISABLE_ACCOUNT_TEMPLATE_PATH', False)
-
-UPLOADED_STATIC_DIR = getattr(settings,
-    'PAGES_UPLOADED_STATIC_DIR', None)
-
-
-# If False upload only to S3.
-NO_LOCAL_STORAGE = getattr(settings,
-    'PAGES_NO_LOCAL_STORAGE', False)
-
-USE_S3 = getattr(settings, 'USE_S3', False)
-
-S3_URL = getattr(settings, 'S3_URL', None)
-
-ENCRYPT_KEY = getattr(settings, 'PAGES_ENCRYPT_KEY', None)
-
-FFMPEG_PATH = getattr(settings, 'PAGES_FFMPEG_PATH', '/usr/local/bin/ffmpeg')
+ACCOUNT_MODEL = _SETTINGS.get('ACCOUNT_MODEL')
+ACCOUNT_URL_KWARG = _SETTINGS.get('ACCOUNT_URL_KWARG')
+MEDIA_PATH = _SETTINGS.get('MEDIA_PATH')
+UPLOADED_TEMPLATE_DIR = _SETTINGS.get('UPLOADED_TEMPLATE_DIR')
+DISABLE_ACCOUNT_TEMPLATE_PATH = _SETTINGS.get('DISABLE_ACCOUNT_TEMPLATE_PATH')
+UPLOADED_STATIC_DIR = _SETTINGS.get('UPLOADED_STATIC_DIR')
+NO_LOCAL_STORAGE = _SETTINGS.get('NO_LOCAL_STORAGE')
+USE_S3 = _SETTINGS.get('USE_S3')
+S3_URL = _SETTINGS.get('S3_URL')
+ENCRYPT_KEY = _SETTINGS.get('ENCRYPT_KEY')
+FFMPEG_PATH = _SETTINGS.get('FFMPEG_PATH')
