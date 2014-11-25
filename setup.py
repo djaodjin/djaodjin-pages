@@ -34,7 +34,8 @@ setup(
         'pages',
         'pages.api'],
     package_data={'pages': [
-        'static/vendor/css/*', 'static/vendor/js/*']},
+        'static/vendor/css/*', 'static/vendor/js/*',
+        'templates/pages/*.html']},
     license='BSD',
     description='Pages Django app',
 )
