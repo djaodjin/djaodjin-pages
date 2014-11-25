@@ -24,7 +24,6 @@
 
 from django.conf.urls import patterns, url
 
-
 from pages.api.edition import PageElementDetail
 from pages.api.upload_media import (
     FileUploadView,
@@ -34,9 +33,6 @@ from pages.api.upload_media import (
 from pages.api.upload_template import (
     UploadedTemplateListAPIView,
     UploadedTemplateAPIView)
-# Uncomment the next two lines to enable the admin:
-# from django.contrib import admin
-# admin.autodiscover()
 
 urlpatterns = patterns('',
     url(r'^media-detail/(?P<pk>\d+)/',

@@ -131,3 +131,6 @@ class PageView(AccountMixin, TemplateView):
                     continue
             response.content = soup.prettify()
         return response
+
+class UploadedTemplatesView(TemplateView):
+    template_name = "pages/uploaded_template_list.html"

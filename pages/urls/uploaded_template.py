@@ -22,9 +22,10 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from django.conf.urls import patterns, url, include
+from django.conf.urls import patterns, url
+from pages.views import UploadedTemplatesView
 
 urlpatterns = patterns('',
-    url(r'^api/', include('pages.urls.api')),
-    url(r'^', include('pages.urls.uploaded_template')),
+    url(r'^uploaded-templates/', UploadedTemplatesView.as_view()),
+    url(r'^get-progress/upload/', 'pages.api.upload_media.upload_progress'),
 )
