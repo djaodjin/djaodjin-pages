@@ -92,6 +92,8 @@ class PageView(AccountMixin, TemplateView):
                     if 'edit-markdown' in editable['class']:
                         new_text = markdown.markdown(new_text)
                         new_text = BeautifulSoup(new_text)
+                        for image in new_text.find_all('img'):
+                            image['style'] = "max-width:100%"
                         editable.name = 'div'
                         editable.string = ''
                         children_done = []

@@ -232,7 +232,8 @@ jQuery plugin allowing to edit html online.
 					}
 					if (markdown_tool){
 						convert = new Markdown.getSanitizingConverter().makeHtml;
-            			clicked_element.html(convert(new_text));
+						new_text = convert(new_text).replace(/<img /g, '<img style="max-width:100%"');
+            			clicked_element.html(new_text);
 					}else{
 						clicked_element.text(new_text);
 					}
