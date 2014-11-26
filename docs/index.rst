@@ -13,7 +13,6 @@ Major Features:
 - Live template edition
 - Markdown syntax
 - Upload image
-- Upload your template
 
 Contents:
 
@@ -23,7 +22,6 @@ Contents:
    introduction
    pages_edition
    pages_upload_media
-   pages_upload_template
 
 
 

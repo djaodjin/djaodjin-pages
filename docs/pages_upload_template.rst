@@ -18,11 +18,3 @@ Configuration
 
 If you want to use djaodjin-pages features on your own templates you have to load some static.
 
-{% pages_static_css %}
-
-<link href="{% static 'example/test/css/custom.css' %}" rel="stylesheet"/>
-
-
-
-{% include 'pages_edition.html' %}
-{% pages_static_js %}
