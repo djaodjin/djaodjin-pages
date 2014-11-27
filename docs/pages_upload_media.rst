@@ -1,5 +1,5 @@
-Pages upload medias
-======================
+Pages Upload Media
+==================
 
 Djaodjin-pages integrate also a Media gallery. You will be able to upload media file like images or videos.
 
@@ -87,7 +87,7 @@ In this case it's necessary to install FFMEPG library to process the video file,
 Usage
 -----
 
-By Using djaodjin-sidebar-gallery jquery plugin, you will be able to drag and drop media and use them into yoour HTML.
+By Using djaodjin-sidebar-gallery jquery plugin, you will be able to drag and drop media and use them into your HTML.
 
 You only need to add image/video tags with an id starting by ```djmedia_``` ex: ```id="djmedia-image-top"```
 

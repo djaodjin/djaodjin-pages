@@ -1,7 +1,7 @@
 Pages Edition
 =============
 
-Pages edition will allow you to edit live template and upload image. 
+Pages edition will allow you to edit live template and upload media.
 
 Configuration
 -------------
@@ -10,7 +10,7 @@ Add Pages settings to make it work properly:
 
 .. code-block:: python
 
-    # allow to save edition for an account 
+    # allow to save edition for an account
     # can be a user, organization...
     PAGES_ACCOUNT_MODEL = 'testsite.ExampleAccount'
 
@@ -68,7 +68,8 @@ ex:
 
     <h1 class="editable">Hello world!</h1>
 
-Djaodjin-pages allows you to kind of edition.
+Djaodjin-pages allows you two kind of edition.
+
 - Simple edition: use it for header or little paragraph.
 - Markdown edition: use it for big paragraph. It allows you to format your paragraph with subtitle, list...
 

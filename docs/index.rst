@@ -6,13 +6,14 @@
 Welcome to djaodjin-pages's documentation!
 ==========================================
 
-Djaodjin-pages is a Django Application that allow edition of live template and upload templates packages. 
+Djaodjin-pages is a Django Application that allows to edit template files
+through the web browser in a What-You-See-Is-What-You-Get (WYSIWYG) mode.
 
 Major Features:
 
 - Live template edition
 - Markdown syntax
-- Upload image
+- Upload media (images and videos)
 
 Contents:
 
