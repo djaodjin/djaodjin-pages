@@ -20,7 +20,7 @@ Contents:
 .. toctree::
    :maxdepth: 1
 
-   introduction
+   getting_started
    pages_edition
    pages_upload_media
 

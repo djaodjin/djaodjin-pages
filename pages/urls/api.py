@@ -35,12 +35,12 @@ from pages.api.upload_template import (
     UploadedTemplateAPIView)
 
 urlpatterns = patterns('',
-    url(r'^media-detail/(?P<pk>\d+)/',
-        MediaUpdateDestroyAPIView.as_view(), name='image_element'),
-    url(r'^list/uploaded-media/',
-        MediaListAPIView.as_view(), name='upload_image_element'),
-    url(r'^editables/upload-image/',
-        FileUploadView.as_view(), name='upload_image_element'),
+    url(r'^uploaded-media/(?P<pk>\d+)/',
+        MediaUpdateDestroyAPIView.as_view(), name='media_element'),
+    url(r'^uploaded-media/',
+        MediaListAPIView.as_view(), name='uploaded_media_elements'),
+    url(r'^editables/upload-media/',
+        FileUploadView.as_view(), name='upload_media_element'),
     url(r'^editables/(?P<slug>[\w-]+)/',
         PageElementDetail.as_view(), name='edit_page_element'),
     url(r'^uploaded-templates/(?P<pk>\d+)/', #pylint: disable=line-too-long

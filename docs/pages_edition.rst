@@ -40,8 +40,8 @@ by:
     class HomeView(PageView):
         template_name = "index.html"
 
-Djaodjin-pages edition run thanks to djaodjin-editor jQuery plugin. So, you have now to work on your templates.
-All templates you want to get live edtion need some modification
+Djaodjin-pages edition run with djaodjin-editor jQuery plugin. So, you have now to work on your templates.
+All templates you want to get live edtion need some modifications.
 
 First include at the pages_edition.html in all templates or in your base.html of your project to make it available on each PageView
 
@@ -51,6 +51,7 @@ First include at the pages_edition.html in all templates or in your base.html of
     <html>
     <head>
     <title>your templates</title>
+    {% load pages_static %}
     {% pages_static_css %}
     </head>
     <body>

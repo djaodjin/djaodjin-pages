@@ -4,7 +4,7 @@ from django.forms.widgets import Media
 
 register = template.Library()
 
-@register.simple_tag
+@register.simple_tag()
 def pages_static_js():
     javascript = [
         "vendor/js/jquery.js",
@@ -21,7 +21,6 @@ def pages_static_js():
         "vendor/js/jquery.ui-contextmenu.js",
         "vendor/js/djaodjin-sidebar-gallery.js",
         "js/init_plugin.js"]
-
     media = Media(js=javascript)
     return media.render()
 
@@ -29,10 +28,11 @@ def pages_static_js():
 @register.simple_tag
 def pages_static_css():
     stylesheets = {
-        'screen': ("vendor/css/bootstrap.min.css",
-                "vendor/css/jquery-ui.css",
-                "vendor/css/djaodjin-editor.css",
-                "vendor/css/djaodjin-sidebar-gallery.css")
+        'screen': (
+            "vendor/css/bootstrap.min.css",
+            "vendor/css/jquery-ui.css",
+            "vendor/css/djaodjin-editor.css",
+            "vendor/css/djaodjin-sidebar-gallery.css")
         }
 
     media = Media(css=stylesheets)
