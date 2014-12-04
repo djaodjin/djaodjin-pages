@@ -46,7 +46,6 @@ except ImportError:
 
 
 from django.conf import settings
-from django.core.files.storage import default_storage
 
 from rest_framework import status
 from rest_framework import generics
