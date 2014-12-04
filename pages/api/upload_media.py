@@ -88,7 +88,7 @@ class MediaListAPIView(AccountMixin, generics.ListCreateAPIView):
         else:
             return S3BotoStorage(bucket=DEFAULT_STORAGE_BUCKET_NAME)
 
-    def post(self, request, account_slug=None, format=None, *args, **kwargs):#pylint: disable=unused-argument,redefined-builtin
+    def post(self, request, account_slug=None, format=None, *args, **kwargs):#pylint: disable=unused-argument,redefined-builtin, too-many-locals
         uploaded_file = request.FILES['file']
         existing_file = False
         sha1_filename = hashlib.sha1(uploaded_file.read()).hexdigest() + '.' +\
@@ -187,7 +187,7 @@ class MediaUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-def upload_progress(request, account_slug=None):
+def upload_progress(request, account_slug=None):#pylint: disable=unused-argument
     """
     Used by Ajax calls
 

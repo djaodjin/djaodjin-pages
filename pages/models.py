@@ -65,13 +65,16 @@ class S3Bucket(models.Model):
     account = models.ForeignKey(
         ACCOUNT_MODEL, related_name='bucket_account', null=True, blank=True)
 
+    def __unicode__(self):
+        return self.bucket_name
 
 class UploadedImage(models.Model):
     """
    	Image uploaded
     """
     created_at = models.DateTimeField(auto_now_add=True)
-    uploaded_file = models.FileField(upload_to=file_name, storage=None, null=True, blank=True)
+    uploaded_file = models.FileField(
+        upload_to=file_name, storage=None, null=True, blank=True)
     uploaded_file_temp = models.FileField(
         upload_to=file_name, storage=FILE_SYSTEM, null=True, blank=True)
     account = models.ForeignKey(
@@ -81,7 +84,7 @@ class UploadedImage(models.Model):
     def __unicode__(self):
         return unicode(self.uploaded_file)
 
-    def save(self, *args, **kwargs):
+    def save(self, *args, **kwargs): #pylint: disable=super-on-old-class
         if self.uploaded_file and USE_S3:
             if self.account:
                 try:
