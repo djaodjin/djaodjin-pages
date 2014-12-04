@@ -24,9 +24,8 @@
 
 from django.conf.urls import patterns, url
 
-from pages.api.edition import PageElementDetail
+from pages.api.edition import PageElementDetail, PagesElementListAPIView
 from pages.api.upload_media import (
-    FileUploadView,
     MediaUpdateDestroyAPIView,
     MediaListAPIView)
 
@@ -39,10 +38,10 @@ urlpatterns = patterns('',
         MediaUpdateDestroyAPIView.as_view(), name='media_element'),
     url(r'^uploaded-media/',
         MediaListAPIView.as_view(), name='uploaded_media_elements'),
-    url(r'^editables/upload-media/',
-        FileUploadView.as_view(), name='upload_media_element'),
     url(r'^editables/(?P<slug>[\w-]+)/',
         PageElementDetail.as_view(), name='edit_page_element'),
+    url(r'^editables/',
+        PagesElementListAPIView.as_view(), name='page_elements'),
     url(r'^uploaded-templates/(?P<pk>\d+)/', #pylint: disable=line-too-long
         UploadedTemplateAPIView.as_view(),
         name='update_uploaded_template'),

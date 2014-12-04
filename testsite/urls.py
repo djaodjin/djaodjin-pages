@@ -5,9 +5,6 @@ from django.conf.urls.static import static
 from django.conf import settings
 
 urlpatterns = patterns('',
-    # Examples:
-    # url(r'^$', 'testsite.views.home', name='home'),
-    # url(r'^blog/', include('blog.urls')),
     url(r'^', include('pages.urls')),
     url(r'^$', HomeView.as_view()),
 

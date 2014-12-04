@@ -19,6 +19,8 @@ from pages.encrypt_path import decode
 
 from pages.mixins import AccountMixin
 
+class PagesElementListAPIView(AccountMixin, generics.ListCreateAPIView):
+    pass
 
 class PageElementDetail(AccountMixin, generics.RetrieveUpdateDestroyAPIView):
     """

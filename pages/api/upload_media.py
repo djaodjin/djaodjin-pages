@@ -12,6 +12,7 @@ from StringIO import StringIO
 from django.http import HttpResponse
 from django.core.cache import cache
 from django.core.files.uploadedfile import InMemoryUploadedFile
+from django.core.exceptions import ImproperlyConfigured
 
 try:
     import json
@@ -24,20 +25,21 @@ from django.conf import settings
 from django.core.files.storage import default_storage
 
 from rest_framework import status
-from rest_framework.views import APIView
 from rest_framework import generics
 from rest_framework.parsers import FileUploadParser
 from rest_framework.response import Response
 
-from pages.models import UploadedImage, PageElement
+from pages.models import UploadedImage, PageElement, S3Bucket
 from pages.serializers import UploadedImageSerializer
-from pages.settings import USE_S3, MEDIA_PATH, FFMPEG_PATH, NO_LOCAL_STORAGE, S3_URL
+from pages.settings import USE_S3, MEDIA_PATH, FFMPEG_PATH, NO_LOCAL_STORAGE, DEFAULT_STORAGE_BUCKET_NAME
+
 from pages.mixins import AccountMixin
 from pages.tasks import upload_to_s3
+from storages.backends.s3boto import S3BotoStorage
 
 
-#pylint: disable=too-many-locals
-class FileUploadView(AccountMixin, APIView):
+class MediaListAPIView(AccountMixin, generics.ListCreateAPIView):
+    serializer_class = UploadedImageSerializer
     parser_classes = (FileUploadParser,)
 
     @staticmethod
@@ -75,6 +77,17 @@ class FileUploadView(AccountMixin, APIView):
         imf.seek(0)
         return imf
 
+    def get_default_storage(self):
+        if self.get_account():
+            try:
+                bucket = S3Bucket.objects.get(account=self.get_account())
+                return S3BotoStorage(bucket=bucket.bucket_name)
+            except S3Bucket.DoesNotExist:
+                raise ImproperlyConfigured(
+                    "Account '%s' has not valid S3 bucket." % self.get_account().slug)
+        else:
+            return S3BotoStorage(bucket=DEFAULT_STORAGE_BUCKET_NAME)
+
     def post(self, request, account_slug=None, format=None, *args, **kwargs):#pylint: disable=unused-argument,redefined-builtin
         uploaded_file = request.FILES['file']
         existing_file = False
@@ -87,7 +100,7 @@ class FileUploadView(AccountMixin, APIView):
                 full_path = path + self.get_account().slug + '/' + sha1_filename
             else:
                 full_path = path + sha1_filename
-            if default_storage.exists(full_path):
+            if self.get_default_storage().exists(full_path):
                 existing_file = True
         if not existing_file:
             if USE_S3:
@@ -108,6 +121,7 @@ class FileUploadView(AccountMixin, APIView):
                         uploaded_file_temp=uploaded_file,
                         account=self.get_account()
                         )
+
             else:
                 file_obj = UploadedImage(
                     uploaded_file=uploaded_file,
@@ -129,7 +143,7 @@ class FileUploadView(AccountMixin, APIView):
                 }
         elif USE_S3 and NO_LOCAL_STORAGE:
             response = {
-                'uploaded_file_temp': os.path.join(S3_URL, serializer.data['uploaded_file']),
+                'uploaded_file_temp': os.path.join(self.get_s3_url(file_obj), serializer.data['uploaded_file']),
                 'exist': existing_file
                 }
         else:
@@ -139,8 +153,12 @@ class FileUploadView(AccountMixin, APIView):
                 }
         return Response(response, status=status.HTTP_200_OK)
 
-class MediaListAPIView(AccountMixin, generics.ListCreateAPIView):
-    serializer_class = UploadedImageSerializer
+    @staticmethod
+    def get_s3_url(obj):
+        if obj.account:
+            return 'https://%s.s3.amazonaws.com/' % obj.account.bucket_name
+        else:
+            return 'https://%s.s3.amazonaws.com/' % DEFAULT_STORAGE_BUCKET_NAME
 
     def get_queryset(self):
         search = self.request.GET.get('search')
@@ -169,7 +187,7 @@ class MediaUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-def upload_progress(request):
+def upload_progress(request, account_slug=None):
     """
     Used by Ajax calls
 

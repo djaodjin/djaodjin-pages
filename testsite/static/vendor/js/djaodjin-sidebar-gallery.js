@@ -115,7 +115,7 @@
 
             var DocDropzone = new Dropzone('#media-container', { // Make the whole body a dropzone
                 paramName: 'file',
-                url: _this.options.media_upload_url,
+                url: _this.options.base_media_url,
                 maxFilesize: 50,
                 parallelUploads: 2,
                 clickable: true,
@@ -124,7 +124,7 @@
 
             DocDropzone.on("processing", function(file){
                 id = (new Date()).getTime();
-                this.options.url = _this.options.media_upload_url + '?X-Progress-ID=' +id;
+                this.options.url = _this.options.base_media_url + '?X-Progress-ID=' +id;
             });
 
             DocDropzone.on("cancel", function(file){
@@ -170,9 +170,9 @@
                 }
                 if (!response.exist){
                     if (response.uploaded_file_temp.indexOf('.mp4') > 0){
-                        $('#list-media').append('<div class="col-md-6 padding-top-img"><video id="image_'+ last_index + '" class="image image_media" src="'+ response.uploaded_file_temp +'" width="50px"></video></div>');
+                        $('#list-media').append('<div class="col-md-6 padding-top-img"><video id="image_'+ last_index + '" class="image  clickable-menu image_media" src="'+ response.uploaded_file_temp +'" width="50px"></video></div>');
                     }else{
-                        $('#list-media').append('<div class="col-md-6 padding-top-img"><img id="image_'+ last_index + '" class="image image_media" src="'+ response.uploaded_file_temp +'" width="50px"></div>');
+                        $('#list-media').append('<div class="col-md-6 padding-top-img"><img id="image_'+ last_index + '" class="image  clickable-menu image_media" src="'+ response.uploaded_file_temp +'" width="50px"></div>');
                     }
                     
                 
@@ -207,7 +207,7 @@
             $.ajax({
                 method:'PUT',
                 async:false,
-                url: _this.options.base_url + id_element +'/',
+                url: _this.options.base_save_url + id_element +'/',
                 data:data,
                 success: function(data){
                     console.log('saved');
@@ -259,7 +259,7 @@
             $('#list-media').empty();
             $.ajax({
                 method:'GET',
-                url:_this.options.list_media_url + '?search='+search,
+                url:_this.options.base_media_url + '?search='+search,
                 success: function(data){
                     $.each(data, function(index,element){
                         var src_file = null;
@@ -269,7 +269,7 @@
                             src_file = element.file_src_temp;
                         }
                         if (src_file.indexOf('.mp4') > 0){
-                            $('#list-media').append('<div class="col-md-6 padding-top-img"><video data-id="'+ element.id + '" id="image_'+ index + '" class="image clickable-menu padding-top-img image_media" src="'+ src_file +'" width="50px"></video></div>');
+                            $('#list-media').append('<div class="col-md-6 padding-top-img"><img data-id="'+ element.id + '" id="image_'+ index + '" class="image clickable-menu padding-top-img image_media" src="'+ src_file +'" width="50px"></div>');
                         }else{
                             $('#list-media').append('<div class="col-md-6 padding-top-img"><img data-id="'+ element.id + '" id="image_'+ index + '" class="image clickable-menu padding-top-img image_media" src="'+ src_file +'" width="50px"></div>');
                         }
@@ -300,7 +300,7 @@
                     if (ui.cmd == 'delete_media'){
                         $.ajax({
                             method: 'delete',
-                            url:_this.options.base_update_media_url +id +'/',
+                            url:_this.options.base_media_url +id +'/',
                             success: function(){
                                 $(ui.target).parent('.col-md-6').remove();
                             }
@@ -310,7 +310,7 @@
                         $.ajax({
                             method: 'get',
                             async:false,
-                            url:_this.options.base_update_media_url+id+'/',
+                            url:_this.options.base_media_url+id+'/',
                             success: function(response){
                                 orginal_tags = response.tags;
                             }
@@ -320,7 +320,7 @@
                         if (tags !== null){
                             $.ajax({
                                 method: 'patch',
-                                url:_this.options.base_update_media_url+id+'/',
+                                url:_this.options.base_media_url+id+'/',
                                 data:{'tags': tags},
                                 success: function(){
                                     console.log('updated');
@@ -345,11 +345,9 @@
     };
 
     $.sidebargallery.defaults = {
-        base_url: null, // Url to send request to server
+        base_save_url: null, // Url to send request to server
         csrf_token:'',
-        media_upload_url:'',
-        list_media_url:'',
-        base_update_media_url:'',
+        base_media_url:'',
         toggle: null
     };
 })(jQuery);

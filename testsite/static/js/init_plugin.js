@@ -33,7 +33,7 @@ $(document).ready(function(){
     var template_path = $('#template_path').val();
     var url_gallery = $('#url_gallery').val();
     var url_editor = $('#url_editor').val();
-    var csrf_token = $('#csrf_token').val();
+    var csrf_token = csrftoken;
     
     $('body').editor({
         base_url: url_editor,
@@ -41,15 +41,11 @@ $(document).ready(function(){
         template_path: template_path,
         csrf_token: csrftoken,
         enable_upload: false,
-        img_upload_url:url_gallery,
     });
 
     $.sidebargallery({
-        base_url:'/api/editables/',
-        media_upload_url:url_gallery,
+        base_save_url:'/example/api/editables/',
         csrf_token: csrftoken,
-        list_media_url:'/api/uploaded-media/',
-        base_update_media_url:'/api/uploaded-detail/'
-
+        base_media_url:url_gallery
     });
 });

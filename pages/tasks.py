@@ -8,7 +8,10 @@ from django.conf import settings
 # XXX -  not callable on pylint!
 @task()#pylint: disable=not-callable
 def upload_to_s3(uploaded_file, account, filename):
-    full_path = MEDIA_PATH + account.slug + '/' + filename
+    if account:
+        full_path = MEDIA_PATH + account.slug + '/' + filename
+    else:
+        full_path = MEDIA_PATH + filename
     if not NO_LOCAL_STORAGE:
 
         uploaded_temp = UploadedImage.objects.get(

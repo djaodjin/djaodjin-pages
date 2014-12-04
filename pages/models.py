@@ -23,10 +23,14 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from django.db import models
-from pages.settings import MEDIA_PATH, ACCOUNT_MODEL
+from pages.settings import (
+    MEDIA_PATH,
+    ACCOUNT_MODEL,
+    DEFAULT_STORAGE_BUCKET_NAME,
+    USE_S3)
 
 from django.conf import settings
-
+from django.core.exceptions import ImproperlyConfigured
 
 def file_name(instance, filename):
     path = MEDIA_PATH
@@ -51,15 +55,23 @@ class PageElement(models.Model):
 
 
 from django.core.files.storage import FileSystemStorage
+from storages.backends.s3boto import S3BotoStorage
 
 FILE_SYSTEM = FileSystemStorage(location=settings.MEDIA_ROOT)
+
+
+class S3Bucket(models.Model):
+    bucket_name = models.CharField(max_length=150)
+    account = models.ForeignKey(
+        ACCOUNT_MODEL, related_name='bucket_account', null=True, blank=True)
+
 
 class UploadedImage(models.Model):
     """
    	Image uploaded
     """
     created_at = models.DateTimeField(auto_now_add=True)
-    uploaded_file = models.FileField(upload_to=file_name, null=True, blank=True)
+    uploaded_file = models.FileField(upload_to=file_name, storage=None, null=True, blank=True)
     uploaded_file_temp = models.FileField(
         upload_to=file_name, storage=FILE_SYSTEM, null=True, blank=True)
     account = models.ForeignKey(
@@ -68,6 +80,22 @@ class UploadedImage(models.Model):
 
     def __unicode__(self):
         return unicode(self.uploaded_file)
+
+    def save(self, *args, **kwargs):
+        if self.uploaded_file and USE_S3:
+            if self.account:
+                try:
+                    bucket = S3Bucket.objects.get(account=self.account)
+                    self.uploaded_file.storage = S3BotoStorage(
+                        bucket=bucket.bucket_name)
+                except S3Bucket.DoesNotExist:
+                    raise ImproperlyConfigured(
+                        "Account '%s' has not valid S3 bucket" \
+                        % self.account.slug)
+            else:
+                self.uploaded_file.storage = S3BotoStorage(
+                    bucket=DEFAULT_STORAGE_BUCKET_NAME)
+        super(UploadedImage, self).save(*args, **kwargs)
 
 
 class UploadedTemplate(models.Model):

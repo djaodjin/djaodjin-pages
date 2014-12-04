@@ -153,7 +153,6 @@ MEDIA_ROOT = BASE_DIR + '/testsite/media'
 
 PAGES = {
     'MEDIA_ROOT': BASE_DIR + '/testsite/media',
-    'MEDIA_PATH' : '',
     'UPLOADED_TEMPLATE_DIR' : BASE_DIR + '/testsite/templates',
     'UPLOADED_STATIC_DIR' : STATIC_ROOT,
 }
@@ -161,7 +160,6 @@ PAGES = {
 
 # XXX - to define
 FILE_UPLOAD_MAX_MEMORY_SIZE = 41943040
-
 
 
 LOGGING = {

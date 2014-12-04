@@ -22,9 +22,10 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from pages.settings import USE_S3, S3_URL
+from django.core.exceptions import ImproperlyConfigured
+from pages.settings import USE_S3, DEFAULT_STORAGE_BUCKET_NAME
 from rest_framework import serializers
-from pages.models import PageElement, UploadedImage, UploadedTemplate
+from pages.models import PageElement, UploadedImage, UploadedTemplate, S3Bucket
 #pylint: disable=no-init
 #pylint: disable=old-style-class
 
@@ -50,10 +51,22 @@ class UploadedImageSerializer(serializers.ModelSerializer):
             'id',
             'tags')
 
+    @staticmethod
+    def get_s3_url(obj):
+        if obj.account:
+            try:
+                bucket = S3Bucket.objects.get(account=obj.account)
+                return 'https://%s.s3.amazonaws.com/' % bucket.bucket_name
+            except S3Bucket.DoesNotExist:
+                raise ImproperlyConfigured(
+                    "Account '%s' has not valid S3 bucket." % obj.account.slug)
+        else:
+            return 'https://%s.s3.amazonaws.com/' % DEFAULT_STORAGE_BUCKET_NAME
+
     def get_file_url(self, obj):#pylint: disable=no-self-use
         if obj.uploaded_file:
             if USE_S3:
-                return obj.uploaded_file.url.split('?')[0].replace('/media/', S3_URL)#pylint: disable=line-too-long
+                return obj.uploaded_file.url.split('?')[0].replace('/media/', self.get_s3_url(obj))#pylint: disable=line-too-long
             else:
                 return obj.uploaded_file.url.split('?')[0]
         else:
