@@ -15,8 +15,6 @@ install::
 initdb:
 	-rm -f db.sqlite3
 	cd $(srcDir) && $(PYTHON) ./manage.py migrate --noinput
-	cd $(srcDir) && $(PYTHON) ./manage.py loaddata \
-						testsite/fixtures/initial_data.json
 	cp ./testsite/templates/index-sample.html ./testsite/templates/index.html 
 
 doc:

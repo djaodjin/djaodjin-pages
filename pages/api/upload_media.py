@@ -163,17 +163,20 @@ class MediaListAPIView(AccountMixin, generics.ListCreateAPIView):
         if USE_S3 and not NO_LOCAL_STORAGE:
             response = {
                 'uploaded_file_temp': os.path.join(settings.MEDIA_URL, serializer.data['uploaded_file_temp']),
-                'exist': existing_file
+                'exist': existing_file,
+                'id':serializer.data['id']
                 }
         elif USE_S3 and NO_LOCAL_STORAGE:
             response = {
                 'uploaded_file_temp': os.path.join(self.get_s3_url(file_obj), serializer.data['uploaded_file']),
-                'exist': existing_file
+                'exist': existing_file,
+                'id':serializer.data['id']
                 }
         else:
             response = {
                 'uploaded_file_temp': os.path.join(settings.MEDIA_URL, serializer.data['uploaded_file']),
-                'exist': existing_file
+                'exist': existing_file,
+                'id':serializer.data['id']
                 }
         return Response(response, status=status.HTTP_200_OK)
 
@@ -196,11 +199,23 @@ class MediaUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
     model = UploadedImage
     serializer_class = UploadedImageSerializer
 
+    @staticmethod
+    def get_default_storage(obj):
+        if obj.account:
+            try:
+                bucket = S3Bucket.objects.get(account=obj.account)
+                return S3BotoStorage(bucket=bucket.bucket_name)
+            except S3Bucket.DoesNotExist:
+                raise ImproperlyConfigured(
+                    "Account '%s' has not valid S3 bucket." % obj.account.slug)
+        else:
+            return S3BotoStorage(bucket=DEFAULT_STORAGE_BUCKET_NAME)
+
     def delete(self, request, *args, **kwargs):
         instance = self.get_object()
         if USE_S3:
             # remove fil from S3 Bucket
-            default_storage.delete(instance.uploaded_file.name)
+            self.get_default_storage(instance).delete(instance.uploaded_file.name)
         else:
             # remove file from server
             os.remove(os.path.join(settings.MEDIA_ROOT, instance.uploaded_file.name))

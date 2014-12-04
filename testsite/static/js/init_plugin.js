@@ -44,7 +44,7 @@ $(document).ready(function(){
     });
 
     $.sidebargallery({
-        base_save_url:'/example/api/editables/',
+        base_save_url:'/api/editables/',
         csrf_token: csrftoken,
         base_media_url:url_gallery
     });

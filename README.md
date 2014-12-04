@@ -15,7 +15,7 @@ the prerequisites, create the database then run the testsite webapp.
     $ virtualenv-2.7 _installTop_
     $ source _installTop_/bin/activate
     $ pip install -r requirements.txt -r testsite/requirements.txt
-    $ python manage.py migrate
+    $ make initdb
     $ python manage.py runserver
 
     # Browse http://localhost:8000/

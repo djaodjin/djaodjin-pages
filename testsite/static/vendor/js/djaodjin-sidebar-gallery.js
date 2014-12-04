@@ -170,9 +170,9 @@
                 }
                 if (!response.exist){
                     if (response.uploaded_file_temp.indexOf('.mp4') > 0){
-                        $('#list-media').append('<div class="col-md-6 padding-top-img"><video id="image_'+ last_index + '" class="image  clickable-menu image_media" src="'+ response.uploaded_file_temp +'" width="50px"></video></div>');
+                        $('#list-media').append('<div class="col-md-6 padding-top-img"><video data-id="'+ response.id + '" id="image_'+ last_index + '" class="image  clickable-menu image_media" src="'+ response.uploaded_file_temp +'" width="50px"></video></div>');
                     }else{
-                        $('#list-media').append('<div class="col-md-6 padding-top-img"><img id="image_'+ last_index + '" class="image  clickable-menu image_media" src="'+ response.uploaded_file_temp +'" width="50px"></div>');
+                        $('#list-media').append('<div class="col-md-6 padding-top-img"><img data-id="'+ response.id + '" id="image_'+ last_index + '" class="image  clickable-menu image_media" src="'+ response.uploaded_file_temp +'" width="50px"></div>');
                     }
                     
                 
@@ -186,6 +186,7 @@
                             });
                         },
                     });
+                    _this.makemenu();
                     var descr = "We're processing your uploaded file. You can start use it by using the sample in your gallery.";
                     notify_user(descr, 'info');
                 }else{
@@ -288,6 +289,10 @@
                     });
                 }
             });
+            _this.makemenu();
+        },
+
+        makemenu: function(){
             $(document).contextmenu({
                 delegate: ".clickable-menu",
                 menu: [
@@ -336,6 +341,7 @@
                 }
             });
         }
+
 
     };
 
