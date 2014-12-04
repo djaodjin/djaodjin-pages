@@ -48,14 +48,13 @@ If you want external media storage, djaodjin-pages allows to upload media to Ama
     AWS_ACCESS_KEY_ID = ''
     AWS_SECRET_ACCESS_KEY = ''
 
-    # Amazon S3 bucket name
-    AWS_STORAGE_BUCKET_NAME = ''
+    # Amazon S3 bucket name if no PAGES_ACCOUNT_MODEL provided
+    DEFAULT_STORAGE_BUCKET_NAME = ''
 
-    # Your S3 bucket url to serve files. 
-    # Don't forget to allow anybody to read it. on amazon console
-    S3_URL = 'https://%s.s3.amazonaws.com' % AWS_STORAGE_BUCKET_NAME
 
-    DEFAULT_FILE_STORAGE = 'storages.backends.s3boto.S3BotoStorage'
+If you have set a ```PAGES_ACCOUNT_MODEL```, you need to save a bucket name for each account by using model ``S3Bucket````:
+
+.. autoclass:: pages.models.S3Bucket
 
 
 Upload to S3 may take a while. So Djaodjin-pages offer two possibilities to make this time invisible for user.

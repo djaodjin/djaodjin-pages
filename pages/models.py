@@ -61,6 +61,9 @@ FILE_SYSTEM = FileSystemStorage(location=settings.MEDIA_ROOT)
 
 
 class S3Bucket(models.Model):
+    """
+    Defines a S3 bucket for an account
+    """
     bucket_name = models.CharField(max_length=150)
     account = models.ForeignKey(
         ACCOUNT_MODEL, related_name='bucket_account', null=True, blank=True)
