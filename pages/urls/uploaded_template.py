@@ -27,5 +27,4 @@ from pages.views import UploadedTemplatesView
 
 urlpatterns = patterns('',
     url(r'^uploaded-templates/', UploadedTemplatesView.as_view()),
-    url(r'^get-progress/upload/', 'pages.api.upload_media.upload_progress'),
 )

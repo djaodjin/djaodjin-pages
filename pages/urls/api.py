@@ -26,6 +26,7 @@ from django.conf.urls import patterns, url
 
 from pages.api.edition import PageElementDetail, PagesElementListAPIView
 from pages.api.upload_media import (
+    upload_progress,
     MediaUpdateDestroyAPIView,
     MediaListAPIView)
 
@@ -34,6 +35,8 @@ from pages.api.upload_template import (
     UploadedTemplateAPIView)
 
 urlpatterns = patterns('',
+    url(r'^uploaded-media/get-progress/upload/',
+        upload_progress),
     url(r'^uploaded-media/(?P<pk>\d+)/',
         MediaUpdateDestroyAPIView.as_view(), name='media_element'),
     url(r'^uploaded-media/',
@@ -42,10 +45,10 @@ urlpatterns = patterns('',
         PageElementDetail.as_view(), name='edit_page_element'),
     url(r'^editables/',
         PagesElementListAPIView.as_view(), name='page_elements'),
-    url(r'^uploaded-templates/(?P<pk>\d+)/', #pylint: disable=line-too-long
+    url(r'^uploaded-templates/(?P<pk>\d+)/',
         UploadedTemplateAPIView.as_view(),
         name='update_uploaded_template'),
-    url(r'^uploaded-templates/', #pylint: disable=line-too-long
+    url(r'^uploaded-templates/',
         UploadedTemplateListAPIView.as_view(),
         name='get_uploadedtemplate_list'),
 )

@@ -28,10 +28,10 @@
 import os
 import zipfile, tempfile, shutil
 
+from django.db.models import Q
 from django.utils import timezone
 
-from rest_framework import status
-from rest_framework import generics
+from rest_framework import status, generics
 from rest_framework.parsers import FileUploadParser
 from rest_framework.response import Response
 
@@ -49,7 +49,7 @@ class UploadedTemplateListAPIView(AccountMixin, generics.ListCreateAPIView):
 
     def get_queryset(self):
         queryset = UploadedTemplate.objects.filter(
-            account=self.get_account())
+            Q(account=self.get_account())|Q(account=None))
         return queryset
 
     def post(self, request, format=None, *args, **kwargs):#pylint: disable=unused-argument, redefined-builtin, too-many-locals, too-many-statements
