@@ -32,7 +32,9 @@ setup(
     author_email='support@djaodjin.com',
     packages=[
         'pages',
-        'pages.api'],
+        'pages.api',
+        'pages.urls',
+        'pages.templatetags'],
     package_data={'pages': [
         'static/vendor/css/*', 'static/vendor/js/*',
         'templates/pages/*.html']},
