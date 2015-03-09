@@ -25,10 +25,7 @@
 #pylint: disable=no-init,no-member,unused-variable
 #pylint: disable=old-style-class,line-too-long,maybe-no-member
 
-import os
-import tempfile
-import hashlib
-import subprocess
+import json, hashlib, os, subprocess, tempfile
 
 from PIL import Image
 from StringIO import StringIO
@@ -37,28 +34,18 @@ from django.http import HttpResponse
 from django.core.cache import cache
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.core.exceptions import ImproperlyConfigured
-
-try:
-    import json
-except ImportError:
-    # Django <1.7 packages simplejson for older Python versions
-    from django.utils import simplejson as json
-
-
 from django.conf import settings
-
 from rest_framework import status
 from rest_framework import generics
 from rest_framework.parsers import FileUploadParser
 from rest_framework.response import Response
+from storages.backends.s3boto import S3BotoStorage
 
+from pages import settings
 from pages.models import UploadedImage, PageElement, S3Bucket
 from pages.serializers import UploadedImageSerializer
-from pages.settings import USE_S3, MEDIA_PATH, FFMPEG_PATH, NO_LOCAL_STORAGE, DEFAULT_STORAGE_BUCKET_NAME
-
 from pages.mixins import AccountMixin
 from pages.tasks import upload_to_s3
-from storages.backends.s3boto import S3BotoStorage
 
 
 class MediaListAPIView(AccountMixin, generics.ListCreateAPIView):
@@ -72,7 +59,7 @@ class MediaListAPIView(AccountMixin, generics.ListCreateAPIView):
         temp_path = tempfile.gettempdir()
         with open(os.path.join(temp_path, 'temp_video'), 'wb') as new_file:
             new_file.write(video.read())
-        subprocess.call([FFMPEG_PATH, '-ss', '1', '-i', os.path.join(temp_path, 'temp_video'), '-c', 'copy', '-t', '3', '-y', os.path.join(temp_path, video_origin.name), '-loglevel', 'quiet'])
+        subprocess.call([settings.FFMPEG_PATH, '-ss', '1', '-i', os.path.join(temp_path, 'temp_video'), '-c', 'copy', '-t', '3', '-y', os.path.join(temp_path, video_origin.name), '-loglevel', 'quiet'])
         return temp_path
 
     @staticmethod
@@ -109,7 +96,7 @@ class MediaListAPIView(AccountMixin, generics.ListCreateAPIView):
                 raise ImproperlyConfigured(
                     "Account '%s' has not valid S3 bucket." % self.get_account().slug)
         else:
-            return S3BotoStorage(bucket=DEFAULT_STORAGE_BUCKET_NAME)
+            return S3BotoStorage(bucket=settings.DEFAULT_STORAGE_BUCKET_NAME)
 
     def post(self, request, account_slug=None, format=None, *args, **kwargs):#pylint: disable=unused-argument,redefined-builtin, too-many-locals
         uploaded_file = request.FILES['file']
@@ -117,8 +104,8 @@ class MediaListAPIView(AccountMixin, generics.ListCreateAPIView):
         sha1_filename = hashlib.sha1(uploaded_file.read()).hexdigest() + '.' +\
             str(uploaded_file).split('.')[1].lower()
         uploaded_file.name = sha1_filename
-        if USE_S3:
-            path = MEDIA_PATH
+        if settings.USE_S3:
+            path = settings.MEDIA_PATH
             if self.get_account():
                 full_path = path + self.get_account().slug + '/' + sha1_filename
             else:
@@ -126,8 +113,8 @@ class MediaListAPIView(AccountMixin, generics.ListCreateAPIView):
             if self.get_default_storage().exists(full_path):
                 existing_file = True
         if not existing_file:
-            if USE_S3:
-                if NO_LOCAL_STORAGE:
+            if settings.USE_S3:
+                if settings.NO_LOCAL_STORAGE:
                     # Image processing
                     if uploaded_file.name.endswith(('.jpg', '.bmp', '.gif', '.jpg', '.png')):
                         in_memory_file = self.resize_image(uploaded_file)
@@ -151,7 +138,7 @@ class MediaListAPIView(AccountMixin, generics.ListCreateAPIView):
                     account=self.get_account())
 
             file_obj.save()
-            if USE_S3:
+            if settings.USE_S3:
                 # Delay the upload to S3
                 upload_to_s3.delay(uploaded_file, self.get_account(), sha1_filename)
             serializer = UploadedImageSerializer(file_obj)
@@ -159,13 +146,13 @@ class MediaListAPIView(AccountMixin, generics.ListCreateAPIView):
             file_obj = UploadedImage.objects.get(uploaded_file=full_path)
             serializer = UploadedImageSerializer(file_obj)
 
-        if USE_S3 and not NO_LOCAL_STORAGE:
+        if settings.USE_S3 and not settings.NO_LOCAL_STORAGE:
             response = {
                 'uploaded_file_temp': os.path.join(settings.MEDIA_URL, serializer.data['uploaded_file_temp']),
                 'exist': existing_file,
                 'id':serializer.data['id']
                 }
-        elif USE_S3 and NO_LOCAL_STORAGE:
+        elif settings.USE_S3 and settings.NO_LOCAL_STORAGE:
             response = {
                 'uploaded_file_temp': os.path.join(self.get_s3_url(file_obj), serializer.data['uploaded_file']),
                 'exist': existing_file,
@@ -184,7 +171,7 @@ class MediaListAPIView(AccountMixin, generics.ListCreateAPIView):
         if obj.account:
             return 'https://%s.s3.amazonaws.com/' % obj.account.bucket_name
         else:
-            return 'https://%s.s3.amazonaws.com/' % DEFAULT_STORAGE_BUCKET_NAME
+            return 'https://%s.s3.amazonaws.com/' % settings.DEFAULT_STORAGE_BUCKET_NAME
 
     def get_queryset(self):
         search = self.request.GET.get('search')
@@ -208,11 +195,11 @@ class MediaUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
                 raise ImproperlyConfigured(
                     "Account '%s' has not valid S3 bucket." % obj.account.slug)
         else:
-            return S3BotoStorage(bucket=DEFAULT_STORAGE_BUCKET_NAME)
+            return S3BotoStorage(bucket=settings.DEFAULT_STORAGE_BUCKET_NAME)
 
     def delete(self, request, *args, **kwargs):
         instance = self.get_object()
-        if USE_S3:
+        if settings.USE_S3:
             # remove fil from S3 Bucket
             self.get_default_storage(instance).delete(instance.uploaded_file.name)
         else:
