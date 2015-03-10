@@ -90,7 +90,7 @@ class PageElementDetail(AccountMixin, CreateModelMixin, generics.RetrieveUpdateD
             with open(path, "w") as myfile:
                 myfile.write(html)
 
-    def update_or_create_pagelement(self, request, *args, **kwargs):#pylint: disable=too-many-locals,unused-argument
+    def update_or_create_pagelement(self, request, *args, **kwargs):#pylint: disable=too-many-locals,unused-argument,too-many-statements
         """
         Update an existing PageElement if id provided
         If no id provided create a pagelement with new id,
@@ -99,8 +99,8 @@ class PageElementDetail(AccountMixin, CreateModelMixin, generics.RetrieveUpdateD
         partial = kwargs.pop('partial', False)
         try:
             self.object = self.get_object()
-        except:
-            self.object =  None
+        except PageElement.DoesNotExist:
+            self.object = None
 
         serializer = self.get_serializer(self.object, data=request.DATA, partial=partial)
 
