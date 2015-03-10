@@ -99,7 +99,7 @@ class PageElementDetail(AccountMixin, CreateModelMixin, generics.RetrieveUpdateD
         partial = kwargs.pop('partial', False)
         try:
             self.object = self.get_object()
-        except PageElement.DoesNotExist:
+        except:#pylint: disable=bare-except
             self.object = None
 
         serializer = self.get_serializer(self.object, data=request.DATA, partial=partial)
