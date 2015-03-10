@@ -32,6 +32,7 @@ from bs4 import BeautifulSoup
 from django.conf import settings
 
 from rest_framework import status
+from rest_framework.mixins import CreateModelMixin
 from rest_framework import generics
 from rest_framework.response import Response
 from rest_framework.serializers import ValidationError
@@ -46,12 +47,14 @@ from pages.mixins import AccountMixin
 class PagesElementListAPIView(AccountMixin, generics.ListCreateAPIView):
     pass
 
-class PageElementDetail(AccountMixin, generics.RetrieveUpdateDestroyAPIView):
+class PageElementDetail(AccountMixin, CreateModelMixin, generics.RetrieveUpdateDestroyAPIView):
     """
     Create or Update an editable element on a ``Page``.
     """
     model = PageElement
     serializer_class = PageElementSerializer
+    lookup_field = 'slug'
+    queryset = PageElement.objects.all()
 
     @staticmethod
     def clean_text(text):
@@ -94,14 +97,18 @@ class PageElementDetail(AccountMixin, generics.RetrieveUpdateDestroyAPIView):
         write new html and return id to live template
         """
         partial = kwargs.pop('partial', False)
-        self.object = self.get_object_or_none()
-        serializer = self.get_serializer(self.object, data=request.DATA,
-                                         files=request.FILES, partial=partial)
+        try:
+            self.object = self.get_object()
+        except:
+            self.object =  None
+
+        serializer = self.get_serializer(self.object, data=request.DATA, partial=partial)
+
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            self.pre_save(serializer.object)
+            self.perform_update(serializer)
         except ValidationError as err:
             # full_clean on model instance may be called in pre_save,
             # so we have to handle eventual errors.
@@ -123,10 +130,9 @@ class PageElementDetail(AccountMixin, generics.RetrieveUpdateDestroyAPIView):
                 account = self.get_account()
                 if account:
                     pagelement.account = account
-                serializer = self.get_serializer(pagelement, data=request.DATA,
-                    files=request.FILES, partial=partial)
+                serializer = self.get_serializer(pagelement, data=request.DATA)
+                serializer.is_valid(raise_exception=True)
                 self.object = serializer.save(force_insert=True)
-
                 changed = False
                 template_name = request.DATA['template_name']
                 template_path = decode(request.DATA['template_path'])
@@ -139,8 +145,9 @@ class PageElementDetail(AccountMixin, generics.RetrieveUpdateDestroyAPIView):
                 elif template_path:
                     path = template_path
                 self.write_html(path, new_id)
-                self.post_save(self.object, created=True)
-                return Response(serializer.data, status=status.HTTP_201_CREATED)
+                self.perform_create(serializer)
+                headers = self.get_success_headers(serializer.data)
+                return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
             else:
                 account = self.get_account()
                 text = request.DATA['text']
@@ -156,11 +163,12 @@ class PageElementDetail(AccountMixin, generics.RetrieveUpdateDestroyAPIView):
                 pagelement = PageElement(slug=new_id, text=text)
                 if account:
                     pagelement.account = account
-                serializer = self.get_serializer(pagelement, data=request.DATA,
-                    files=request.FILES, partial=partial)
+                serializer = self.get_serializer(pagelement, data=request.DATA, partial=partial)
+                serializer.is_valid(raise_exception=True)
                 self.object = serializer.save(force_insert=True)
+        serializer.is_valid(raise_exception=True)
         self.object = serializer.save(force_update=True)
-        self.post_save(self.object, created=False)
+        # self.post_save(self.object, created=False)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def put(self, request, *args, **kwargs):
