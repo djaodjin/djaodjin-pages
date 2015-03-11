@@ -1,4 +1,4 @@
-# Copyright (c) 2014, DjaoDjin inc.
+# Copyright (c) 2015, DjaoDjin inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -22,19 +22,20 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import re
+
 from bs4 import BeautifulSoup
-from django.views.generic import TemplateView
-from pages.models import PageElement
-from django.template.response import TemplateResponse
-import markdown, re
-from django.template.loader import find_template_loader
-from django.template.base import TemplateDoesNotExist
-from .mixins import AccountMixin
-
-from .settings import USE_S3
 from django.conf import settings
+from django.template.base import TemplateDoesNotExist
+from django.template.loader import find_template_loader
+from django.template.response import TemplateResponse
+from django.views.generic import TemplateView
+import markdown
 
-from pages.encrypt_path import encode
+from .encrypt_path import encode
+from .mixins import AccountMixin
+from .models import PageElement
+
 
 class PageView(AccountMixin, TemplateView):
     """
@@ -82,12 +83,7 @@ class PageView(AccountMixin, TemplateView):
                 except KeyError:
                     continue
                 try:
-                    if account:
-                        edit = page_elements.get(
-                            slug=id_element, account=account)
-                        # edit = edit.get(account=account)
-                    else:
-                        edit = page_elements.get(slug=id_element)
+                    edit = page_elements.get(slug=id_element)
                     new_text = re.sub(r'[\ ]{2,}', '', edit.text)
                     if 'edit-markdown' in editable['class']:
                         new_text = markdown.markdown(new_text)
@@ -118,21 +114,14 @@ class PageView(AccountMixin, TemplateView):
                 except KeyError:
                     continue
                 try:
-                    # db_image = PageElement.objects.filter(slug=id_element)
-                    account = self.get_account()
-                    if account:
-                        db_media = db_medias.get(
-                            slug=id_element, account=account)
-                    else:
-                        db_media = db_medias.get(slug=id_element)
-                    if USE_S3:
-                        media['src'] = db_media.text
-                    else:
-                        media['src'] = db_media.text
-                except:#pylint: disable=bare-except
+                    db_media = db_medias.get(slug=id_element)
+                    media['src'] = db_media.text
+                except PageElement.DoesNotExist:
                     continue
             response.content = soup.prettify()
         return response
 
+
 class UploadedTemplatesView(TemplateView):
+
     template_name = "pages/uploaded_template_list.html"

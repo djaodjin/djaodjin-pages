@@ -1,4 +1,4 @@
-# Copyright (c) 2014, DjaoDjin inc.
+# Copyright (c) 2015, DjaoDjin inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -23,29 +23,25 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import os
-from django.db.models.loading import get_model
-from django.shortcuts import get_object_or_404
-from django.conf import settings
+
+from django.conf import settings as django_settings
 from django.core.exceptions import ImproperlyConfigured
 
-from pages.models import UploadedTemplate
-from .settings import ACCOUNT_URL_KWARG, ACCOUNT_MODEL
+from .models import UploadedTemplate
+from . import settings
 
 
 class AccountMixin(object):
 
-    account_url_kwarg = ACCOUNT_URL_KWARG
+    account_url_kwarg = settings.ACCOUNT_URL_KWARG
 
     def get_account(self):
-        if isinstance(ACCOUNT_MODEL, str):
-            account_model = get_model(*ACCOUNT_MODEL.rsplit('.', 1))
-        else:
-            account_model = ACCOUNT_MODEL
-        if self.account_url_kwarg in self.kwargs and\
-            self.kwargs.get(self.account_url_kwarg) is not None:
-            return get_object_or_404(account_model,
-                slug=self.kwargs.get(self.account_url_kwarg))
+        if settings.GET_CURRENT_ACCOUNT:
+            from .compat import import_string
+            return import_string(settings.GET_CURRENT_ACCOUNT)(
+                self.account_url_kwarg, self.kwargs)
         return None
+
 
 class TemplateChoiceMixin(AccountMixin):
 
@@ -70,7 +66,7 @@ class TemplateChoiceMixin(AccountMixin):
                     root_account_path = account.slug +'/'+ uploaded_templates.name
                 else:
                     root_account_path = uploaded_templates.name
-                for directory in settings.TEMPLATE_DIRS:
+                for directory in django_settings.TEMPLATE_DIRS:
                     for (dirpath, dirnames, filenames) in os.walk(directory):
                         if root_account_path in dirpath:
                             for filename in filenames:

@@ -27,6 +27,7 @@ from django.conf import settings
 
 _SETTINGS = {
     'ACCOUNT_MODEL': settings.AUTH_USER_MODEL,
+    'GET_CURRENT_ACCOUNT': '',
     'ACCOUNT_URL_KWARG': None,
     'MEDIA_PATH': 'pages/images/',
     'MEDIA_URL': getattr(settings, 'MEDIA_URL'),
@@ -47,6 +48,7 @@ SLUG_RE = r'[a-zA-Z0-9_\-]+'
 _SETTINGS.update(getattr(settings, 'PAGES', {}))
 
 ACCOUNT_MODEL = _SETTINGS.get('ACCOUNT_MODEL')
+GET_CURRENT_ACCOUNT = _SETTINGS.get('GET_CURRENT_ACCOUNT')
 ACCOUNT_URL_KWARG = _SETTINGS.get('ACCOUNT_URL_KWARG')
 MEDIA_PATH = _SETTINGS.get('MEDIA_PATH')
 MEDIA_URL = _SETTINGS.get('MEDIA_URL')

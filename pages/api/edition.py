@@ -93,7 +93,9 @@ class PageElementDetail(AccountMixin, CreateModelMixin,
                 myfile.write(html)
 
     def perform_create(self, serializer):
-        return serializer.save(account=self.get_account())
+        return serializer.save(
+            slug=self.kwargs.get(self.lookup_url_kwarg),
+            account=self.get_account())
 
     def update_or_create_pagelement(self, request, *args, **kwargs):
         #pylint: disable=unused-argument
