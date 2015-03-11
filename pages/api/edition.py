@@ -1,4 +1,4 @@
-# Copyright (c) 2014, Djaodjin Inc.
+# Copyright (c) 2015, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -22,39 +22,41 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#pylint: disable=no-init,no-member,unused-variable
-#pylint: disable=old-style-class,line-too-long,maybe-no-member
+#pylint: disable=no-init,no-member
+#pylint: disable=old-style-class,maybe-no-member
 
-import os, random, string, re
+import re
 
 from bs4 import BeautifulSoup
-
 from django.conf import settings
-
 from rest_framework import status
 from rest_framework.mixins import CreateModelMixin
 from rest_framework import generics
 from rest_framework.response import Response
-from rest_framework.serializers import ValidationError
 
 from pages.models import PageElement, UploadedImage
 from pages.serializers import PageElementSerializer
-
-from pages.encrypt_path import decode
-
 from pages.mixins import AccountMixin
+
 
 class PagesElementListAPIView(AccountMixin, generics.ListCreateAPIView):
     pass
 
-class PageElementDetail(AccountMixin, CreateModelMixin, generics.RetrieveUpdateDestroyAPIView):
+class PageElementDetail(AccountMixin, CreateModelMixin,
+                        generics.RetrieveUpdateDestroyAPIView):
     """
-    Create or Update an editable element on a ``Page``.
+    Create or Update an editable element on a ``PageElement``.
     """
-    model = PageElement
     serializer_class = PageElementSerializer
     lookup_field = 'slug'
-    queryset = PageElement.objects.all()
+    lookup_url_kwarg = 'slug'
+
+    def get_queryset(self):
+        kwargs = {self.lookup_field: self.kwargs.get(self.lookup_url_kwarg)}
+        account_slug = self.kwargs.get(self.account_url_kwarg, None)
+        if account_slug:
+            kwargs.update({'account__slug': account_slug})
+        return PageElement.objects.filter(**kwargs) #pylint:disable=star-args
 
     @staticmethod
     def clean_text(text):
@@ -90,86 +92,42 @@ class PageElementDetail(AccountMixin, CreateModelMixin, generics.RetrieveUpdateD
             with open(path, "w") as myfile:
                 myfile.write(html)
 
-    def update_or_create_pagelement(self, request, *args, **kwargs):#pylint: disable=too-many-locals,unused-argument,too-many-statements
+    def perform_create(self, serializer):
+        return serializer.save(account=self.get_account())
+
+    def update_or_create_pagelement(self, request, *args, **kwargs):
+        #pylint: disable=unused-argument
         """
-        Update an existing PageElement if id provided
-        If no id provided create a pagelement with new id,
-        write new html and return id to live template
+        Update or create a ``PageElement`` with a text overlay
+        of the default text present in the HTML template.
         """
-        partial = kwargs.pop('partial', False)
-        try:
-            self.object = self.get_object()
-        except:#pylint: disable=bare-except
-            self.object = None
-
-        serializer = self.get_serializer(self.object, data=request.DATA, partial=partial)
-
-        if not serializer.is_valid():
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-        try:
-            self.perform_update(serializer)
-        except ValidationError as err:
-            # full_clean on model instance may be called in pre_save,
-            # so we have to handle eventual errors.
-            return Response(err.message_dict, status=status.HTTP_400_BAD_REQUEST)
-
-
-        if self.object is None:
-            if kwargs.get('slug') != 'undefined':
-                new_id = kwargs.get('slug')
-            else:
-            # Create a new id
-                new_id = ''.join(random.choice(string.lowercase) for i in range(10))
-                while PageElement.objects.filter(slug__exact=new_id).count() > 0:
-                    new_id = ''.join(random.choice(string.lowercase) for i in range(10))
-
-            if not new_id.startswith('djmedia-'):
-            # Create a pageelement
-                pagelement = PageElement(slug=new_id, text=request.DATA['text'])
-                account = self.get_account()
-                if account:
-                    pagelement.account = account
-                serializer = self.get_serializer(pagelement, data=request.DATA)
-                serializer.is_valid(raise_exception=True)
-                self.object = serializer.save(force_insert=True)
-                changed = False
-                template_name = request.DATA['template_name']
-                template_path = decode(request.DATA['template_path'])
-                if template_name:
-                    for directory in settings.TEMPLATE_DIRS:
-                        for (dirpath, dirnames, filenames) in os.walk(directory):
-                            for filename in filenames:
-                                if filename == template_name:
-                                    path = os.path.join(dirpath, filename)
-                elif template_path:
-                    path = template_path
-                self.write_html(path, new_id)
-                self.perform_create(serializer)
-                headers = self.get_success_headers(serializer.data)
-                return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
-            else:
-                account = self.get_account()
-                text = request.DATA['text']
-                #check S3 version exists
-                if not 's3.amazon' in text:
-                    try:
-                        upload_image = UploadedImage.objects.get(
-                            uploaded_file_temp=text.replace('/media/', ''))
-                        if upload_image.uploaded_file:
-                            text = settings.S3_URL + '/' + text.replace('/media/', '')
-                    except: #pylint: disable=bare-except
-                        pass
-                pagelement = PageElement(slug=new_id, text=text)
-                if account:
-                    pagelement.account = account
-                serializer = self.get_serializer(pagelement, data=request.DATA, partial=partial)
-                serializer.is_valid(raise_exception=True)
-                self.object = serializer.save(force_insert=True)
+        serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        self.object = serializer.save(force_update=True)
-        # self.post_save(self.object, created=False)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        queryset = self.get_queryset()
+        if queryset.exists():
+            self.object = queryset.get()
+            response_status = status.HTTP_200_OK
+            self.perform_update(serializer)
+        else:
+            self.object = self.perform_create(serializer)
+            response_status = status.HTTP_201_CREATED
+
+        if self.object.slug.startswith('djmedia-'):
+            text = request.DATA['text']
+            #check S3 version exists
+            if not 's3.amazon' in text:
+                try:
+                    upload_image = UploadedImage.objects.get(
+                        uploaded_file_temp=text.replace('/media/', ''))
+                    if upload_image.uploaded_file:
+                        text = \
+                            settings.S3_URL + '/' + text.replace('/media/', '')
+                except: #pylint: disable=bare-except
+                    pass
+
+        headers = self.get_success_headers(serializer.data)
+        return Response(
+            serializer.data, status=response_status, headers=headers)
 
     def put(self, request, *args, **kwargs):
         return self.update_or_create_pagelement(request, *args, **kwargs)
