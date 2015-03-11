@@ -53,10 +53,8 @@ class PageElementDetail(AccountMixin, CreateModelMixin,
 
     def get_queryset(self):
         kwargs = {self.lookup_field: self.kwargs.get(self.lookup_url_kwarg)}
-        account_slug = self.kwargs.get(self.account_url_kwarg, None)
-        if account_slug:
-            kwargs.update({'account__slug': account_slug})
-        return PageElement.objects.filter(**kwargs) #pylint:disable=star-args
+        return PageElement.objects.filter(
+            account=self.get_account(), **kwargs) #pylint:disable=star-args
 
     @staticmethod
     def clean_text(text):
