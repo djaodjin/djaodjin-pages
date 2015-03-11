@@ -102,14 +102,17 @@ class PageElementDetail(AccountMixin, CreateModelMixin,
         Update or create a ``PageElement`` with a text overlay
         of the default text present in the HTML template.
         """
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
+
         queryset = self.get_queryset()
         if queryset.exists():
             self.object = queryset.get()
+            serializer = self.get_serializer(self.object, data=request.data)
+            serializer.is_valid(raise_exception=True)
             response_status = status.HTTP_200_OK
             self.perform_update(serializer)
         else:
+            serializer = self.get_serializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
             self.object = self.perform_create(serializer)
             response_status = status.HTTP_201_CREATED
 

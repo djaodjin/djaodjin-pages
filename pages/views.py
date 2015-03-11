@@ -97,8 +97,9 @@ class PageView(AccountMixin, TemplateView):
                             if element.name != 'html' and\
                                 element.name != 'body':
                                 if len(element.findChildren()) > 0:
-                                    element.append(element.findChildren()[0])
-                                    children_done += [element.findChildren()[0]]
+                                    for sub_el in element.findChildren():
+                                        element.append(sub_el)
+                                        children_done += [sub_el]
                                 if not element in children_done:
                                     editable.append(element)
                     else:
