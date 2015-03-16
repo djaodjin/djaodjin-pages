@@ -25,9 +25,6 @@
 #pylint: disable=no-init,no-member
 #pylint: disable=old-style-class,maybe-no-member
 
-import re
-
-from bs4 import BeautifulSoup
 from django.conf import settings
 from rest_framework import status
 from rest_framework.mixins import CreateModelMixin
