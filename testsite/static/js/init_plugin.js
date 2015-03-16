@@ -35,9 +35,10 @@ $(document).ready(function(){
     var url_editor = $('#url_editor').val();
     var csrf_token = csrftoken;
     
-    $('body').editor({
+    
+
+    $('.editable').editor({
         base_url: url_editor,
-        autotag: false,
         template_path: template_path,
         csrf_token: csrftoken,
         enable_upload: false,

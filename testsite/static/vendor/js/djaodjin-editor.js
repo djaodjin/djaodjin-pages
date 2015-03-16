@@ -1,371 +1,235 @@
-
-/*djaodjin-editor.js
-jQuery plugin allowing to edit html online.
-*/
-/* jshint multistr: true */
 (function ($) {
-	var _this = null;
 
-	var tags = ['p','h1','h2','h3','h4','h5','h6', 'a'];
+    function Editor(element, options){
+        return true;
+    }
 
-	var clicked_element = null;
-	var orig_element = null;
-	var class_element = null;
-	var new_text = null;
-	var orig_text = null;
-	var font_size = null;
-	var line_height = null;
-	var height = null;
-	var width = null;
-	var margin_bottom = null;
-	var margin_top = null;
-	var font_family = null;
-	var font_weight = null;
-	var text_align = null;
-	var padding = null;
-	var color = null;
-	var id_element = null;
-	var new_id = null;
+    Editor.prototype = {
+        init: function(){
+            var self = this;
+            self.get_properties();
+            if (!self.$el.attr('id') || self.$el.attr('id') === ""){
+                throw new Error("editable element does not have valid id !");
+            }
 
-	var markdown_tool = false;
+            self.$el.on('click', function(){
+                self.toggle_input();
+            });
+        },
 
-	function Editor(el, options){
-		this.$el = el;
-		this.options = options;
-		this.debug = false;
-		this._init();
-	}
+        get_element_properties:function(){
+            var self = this;
+            return self.$el;
+        },
 
-	Editor.prototype = {
-		_init: function(){
-			_this = this;
-			// add editable class on all tags
-			if (_this.options.autotag){
-				$.each(tags, function(index,element){
-					$(element).each(function(){
-						if (!($(this).children().length > 0 && $(this).children().first().text() == $(this).text())){
-							$(this).addClass('editable');
-						}
+        get_properties: function(){
+            var self = this;
+            self.class_element = self.$el.attr('class');
+            var element = self.get_element_properties();
+            self.css_var = {
+                'font-size' : element.css('font-size'),
+                'line-height' : element.css('line-height'),
+                'height' : parseInt(element.css('height').split("px"))+(parseInt(element.css('line-height').split('px'))-parseInt(element.css('font-size').split('px')))+'px',
+                'margin-top' : element.css('margin-top'),
+                'font-family' : element.css('font-family'),
+                'font-weight' : element.css('font-weight'),
+                'text-align' : element.css('text-align'),
+                'padding-top': -(parseInt(element.css('line-height').split('px'))-parseInt(element.css('font-size').split('px')))+'px',
+                'color' : element.css('color'),
+                'width' : element.css('width'),
+            };
+        },
 
-						if (($(this).prop("tagName") == _this.options.markdown_identifier.toUpperCase() ) && _this.options.enable_markdown){
-							$(this).addClass('edit-markdown');
-						}
-					});
-				});
-			}	
+        input_editable: '<div class="input-group" id="editable_section"><textarea class="form-control editor" id="input_editor" value="" spellcheck="false"></textarea></div>',
 
-			// add toggle edit mode
-			/* XXX toggle_button creates an unnecessary ugly checkbox
-			   and should be moved to the test page.
-			   In general, if a developper runs $("body").editor(),
-			   it is because editing functionality is required.
-			*/
-			$(document).on('click', _this.documentClick);
-			$(document).on('click, keydown','#input_editor', _this.removeAlert);
-			$(document).on('click', '.btn_tool',_this.addMarkdowntag);
-			// $(document).on('drop', '#input_editor', _this.DropImage);
-		},
+        toggle_input:function(){
+            var self = this;
+            self.$el.replaceWith(self.input_editable);
+            $('#input_editor').focus();
+            $('#input_editor').val(self.get_origin_text());
+            $('#input_editor').css(self.css_var);
+            $('#input_editor').autosize({append:''});
+            $('#input_editor').on('blur', function(event){
+                self.save_edition(event);
+            });
+            $('body').on('click', function(event){
+                var $target = $(event.target);
+                if (($target.attr('class') && $target.attr('class').indexOf(self.options.no_change_editor) >= 0) || ($target.attr('id') && $target.attr('id').indexOf(self.options.no_change_editor) >= 0)){
+                    $('#input_editor').unbind('blur');
+                }
+            });
+            
+            $('#input_editor').on('keyup', function(){
+                self.check_input();
+            });
+            
+        },
 
-		_clickEditable: function(){
-			
-			id_element = clicked_element.attr(_this.options.unique_identifier);
-			orig_element = clicked_element;
-			if (clicked_element.hasClass('edit-markdown')){
-				_this.getTextElement();
-			}else{
-				orig_text = $.trim(clicked_element.text());
-			}
-			// orig_text = $.trim(clicked_element.text());
-			
-			class_element = clicked_element.attr('class');
-			font_size = parseInt(clicked_element.css('font-size').split("px"));
-			line_height = parseInt(clicked_element.css('line-height').split("px"));
-			height = clicked_element.css('height');
-			margin_bottom = clicked_element.css('margin-bottom');
-			margin_top = clicked_element.css('margin-top');
-			font_family = clicked_element.css('font-family');
-			font_weight = clicked_element.css('font-weight');
-			text_align =clicked_element.css('text-align');
-			padding = clicked_element.css('padding');
-			color = clicked_element.css('color');
-			width = clicked_element.css('width');
+        get_saved_text: function(){
+            return $('#input_editor').val();
+        },
 
-			
-			if (clicked_element.prop('tagName') == 'DIV'){
-				if (clicked_element.children('p').length > 0){
-					font_size = parseInt(clicked_element.children('p').css('font-size').split("px"));
-					line_height = parseInt(clicked_element.children('p').css('line-height').split("px"));
-					height = clicked_element.children('p').css('height');
-					margin_bottom = clicked_element.children('p').css('margin-bottom');
-					margin_top = clicked_element.children('p').css('margin-top');
-					font_family = clicked_element.children('p').css('font-family');
-					font_weight = clicked_element.children('p').css('font-weight');
-					text_align =clicked_element.children('p').css('text-align');
-					padding = clicked_element.children('p').css('padding');
-					color = clicked_element.children('p').css('color');
-					width = clicked_element.children('p').css('width');
-				}else{
-					font_size = parseInt($('p').first().css('font-size').split("px"));
-					line_height = parseInt($('p').first().css('line-height').split("px"));
-					height = $('p').first().css('height');
-					margin_bottom = $('p').first().css('margin-bottom');
-					margin_top = $('p').first().css('margin-top');
-					font_family = $('p').first().css('font-family');
-					font_weight = $('p').first().css('font-weight');
-					text_align =$('p').first().css('text-align');
-					padding = $('p').first().css('padding');
-					color = $('p').first().css('color');
-					width = $('p').first().css('width');
-				}
-				
-			}
-			_this.inputEdit();
-		},
+        get_displayed_text:function(){
+            var self = this;
+            return self.get_saved_text();
+        },
 
-		inputEdit: function(){
-			_this.toggleInput();
+        check_input: function(){
+            var self = this;
+            if (self.get_saved_text() === self.options.empty_input || self.get_saved_text() === ""){
+                $('#input_editor').val(self.options.empty_input);
+                $('#input_editor').css({'color':'red'});
+                $('#input_editor').focus();
+                return false;
+            }else if (self.get_saved_text() != self.options.empty_input){
+                if (self.get_saved_text().indexOf(self.options.empty_input) >= 0){
+                    $('#input_editor').val(self.get_saved_text().split(self.options.empty_input)[1]);
+                }
+                $('#input_editor').css({'color':self.$el.css('color')});
+                return true;
+            }
+        },
 
-		},
+        save_edition: function(event){
+            var self = this;
+            var id_element = self.$el.attr("id");
+            var saved_text = self.get_saved_text();
+            
+            var displayed_text = self.get_displayed_text();
 
-		toggleInput: function(){
-			var upload_enable = false;
-			var upload_form = ''
-			markdown_tool = false;
-			if (clicked_element.hasClass('edit-markdown')){
-				markdown_tool = true;
-			}
-			var mardown_tool_html = '<div id="tool_markdown"><button type="button" class="btn_tool" id="title_h3">H3</button>\
-		             <button type="button" class="btn_tool" id="title_h4">H4</button>\
-		             <button type="button" class="btn_tool" id="bold"><strong>B</strong></button>\
-		             <button type="button" class="btn_tool" id="italic"><em>I</em></button>\
-		             <button type="button" class="btn_tool" id="list_ul">List</button>\
-		             <button type="button" class="btn_tool" id="link">Link</button></div>';
-		    if (_this.options.enable_upload){
-		    	upload_form = '<form action="/file-upload" class="dropzone" id="uploadzone" style="display:none;height:50px;position:absolute;bottom:0px;width:100%;border:1px solid #AAA;border-radius:5px;color:#AAA;padding:5px;margin-bottom:0px"></form>';
-		    }
-      	    var textarea_html = '<div class="input-group" id="editable_section"><textarea class="form-control editor" id="input_editor" value="" spellcheck="false"></textarea>'+upload_form+'</div>';
-      	    if (clicked_element.hasClass('edit-markdown')){
-      	    	upload_enable = true;
-      	    }
-		    clicked_element.replaceWith(textarea_html);
+            if (!self.check_input()){
+                return false;
+            }
 
-		    if (_this.options.enable_upload){
-		    	if (upload_enable){
-					$("#uploadzone").dropzone({
-		                paramName: 'img',
-		                url: _this.options.img_upload_url,
-		                dictDefaultMessage: "To add an image in this part place the cursor where you want it and drag an image from your desktop to this zone.",
-		                clickable: true,
-		                enqueueForUpload: true,
-		                createImageThumbnails:false,
-		                maxFilesize: 1,
-		                uploadMultiple: false,
-		                addRemoveLinks: true,
-		                sending: function(file, xhr, formData){
-		                	formData.append('csrfmiddlewaretoken', _this.options.csrf_token)
-		                },
-		                success: function(data, response){
-		                	$('#input_editor').focus()
-		                	$('#input_editor').selection('insert',{text:'![Alt text]('+ response.img +')' ,mode:'before'})
-		                }
-	            	});
-					$('#uploadzone').show();
-					$('#input_editor').css({'margin-bottom':"50px"});
-				}
-		    }
+            if (!id_element){
+                id_element = 'undefined';
+            }
+            var data = {};
+            var method = 'PUT';
+            if (self.$el.attr('data-key')){
+                data[self.$el.attr('data-key')] = $.trim(saved_text);
+                method = 'PATCH';
+            }else{
+                data = {slug:id_element, text:$.trim(saved_text), old_text:self.origin_text, template_name:self.options.template_name, template_path:self.options.template_path, tag: self.$el.prop("tagName")};
+            }
+            self.$el.html(displayed_text);
+            $('#editable_section').replaceWith(self.$el);
+            if (!self.options.base_url){
+                if ($('.error-label').length > 0){
+                    $('.error-label').remove();
+                }
+                $('body').prepend('<div class="error-label">No base_url option provided. Please update your script to use save edition.</div>');
+                return false;
+            }else{
+                $.ajax({
+                    method:method,
+                    async:false,
+                    url: self.options.base_url + id_element +'/',
+                    data:data,
+                    success: function(data){
+                        console.log('Success');
+                    }
+                });
+            }
+            
+            self.init();
+        },
+    };
 
-			$('#editable_section').css({
-				'margin-bottom':parseInt(margin_bottom.split("px"))-(line_height-font_size)+'px',
-				'margin-top':parseInt(margin_top.split("px"))+'px',
-			});
+    function TextEditor(element, options){
+        var _this = this;
+        _this.el = element;
+        _this.$el = $(element);
+        _this.options = options;
+        _this.init();
+        return _this;
+    }
 
-			$('#editable_section').addClass(class_element);
-			$('#editable_section').removeClass('edit-hover editable');
-			$('#input_editor').val($.trim(orig_text)).focus();
-			
-			$('#input_editor').css({
-				'position':'relative',
-				'padding-top':-(line_height-font_size)+'px',
-				'line-height':line_height + 'px',
-				'font-size': font_size + 'px',
-				'font-family':font_family,
-				'font-weight':font_weight,
-				'text-align':text_align,
-				'color':color,
-				'width':width,
-				'height':parseInt(height.split("px"))+(line_height-font_size)+'px',				
-			});
-			$('#input_editor').autosize({append:''});
+    TextEditor.prototype = $.extend({}, Editor.prototype, {
+        get_origin_text: function(){
+            var self = this;
+            self.origin_text = $.trim(self.$el.text());
+            return self.origin_text;
+        },
+    });
 
-			if (markdown_tool){
-				$('body').append(mardown_tool_html);
-				$('#tool_markdown').css({
-					'top': ($('#editable_section').offset().top - 45) + 'px',
-					'left': $('#editable_section').offset().left +'px',
-				});
-			}
-			// focus input end of text
-			$('#input_editor')[0].setSelectionRange($('#input_editor').val().length, $('#input_editor').val().length);
-			$.event.trigger({
-			  type: "editInputVisible",
-			  message: "myTrigger fired.",
-			  time:    new Date()
-			});
-		},
+    function MarkdownEditor(element, options){
+        var _this = this;
+        _this.el = element;
+        _this.$el = $(element);
+        _this.options = options;
+        _this.init();
+        return _this;
+    }
 
-		toggleTextarea: function(){
-			
-		},
+    MarkdownEditor.prototype = $.extend({}, Editor.prototype,{
+        get_element_properties:function(){
+            var self = this;
+            if (self.$el.prop('tagName') == 'DIV'){
+                if (self.$el.children('p').length > 0){
+                    return self.$el.children('p');
+                }else{
+                    return $('p');
+                }
+            }else{
+                return self.$el;
+            }
+        },
 
-		checkInput: function () {
-			if ($('#input_editor').length > 0){
-				new_text = $('#input_editor').val();
-				if (new_text != "" && new_text != "Please enter text"){ //jshint ignore:line
-					if (new_text != orig_text){
-						if (clicked_element.attr('data-type') == 'currency_to_integer'){
-							new_text = (parseFloat(new_text.replace('$',''))*100).toFixed();
-						}
-						_this.saveEdition();
-						if (clicked_element.attr('data-type') == 'currency_to_integer'){
-							new_text = '$' + parseFloat(new_text)/100;
-						}
-					}
-					if (markdown_tool){
-						convert = new Markdown.getSanitizingConverter().makeHtml;
-						new_text = convert(new_text).replace(/<img /g, '<img style="max-width:100%"');
-            			clicked_element.html(new_text);
-					}else{
-						clicked_element.text(new_text);
-					}
-					
-					$('#editable_section').replaceWith(clicked_element);
-					if (clicked_element.attr('id') === undefined && new_id){
-						clicked_element.attr('id',new_id);
-						new_id = null;
-					}
-					$('#tool_markdown').remove();
-				}else if (new_text == "" || new_text == "Please enter text"){ //jshint ignore:line
-					$('#input_editor').val('Please enter text');
-					$('#input_editor').css('color','red').focus();
-				}
-			}
-		},
+        get_origin_text: function(){
+            var self = this;
+            self.origin_text = "";
+            if (self.options.base_url){
+                $.ajax({
+                    method:'GET',
+                    async:false,
+                    url: self.options.base_url + self.$el.attr('id') +'/',
+                    success: function(data){
+                        if (self.$el.attr('data-key')){
+                            self.origin_text = data[self.$el.attr('data-key')];
+                        }else{
+                            self.origin_text = data.text;
+                        }
+                    },
+                    error: function(){
+                        self.origin_text = $.trim(self.$el.text());
+                    }
+                });
+            }
+            return self.origin_text;
+        },
 
-		saveEdition: function(){
-			if (_this.debug == false){//jshint ignore:line
-				if (!_this.options.base_url){
-					if ($('.error-label').length > 0){
-						$('.error-label').remove();
-					}
-					$('body').prepend('<div class="error-label">No base_url option provided. Please update your script to use save edition.</div>');
-					return false;
-				}
-				if (!id_element){
-					id_element = 'undefined';
-				}
-				var data = {};
-				var method = 'PUT';
-				if (clicked_element.attr('data-key')){
-					data[clicked_element.attr('data-key')] = $.trim(new_text);
-					method = 'PATCH';
-				}else{
-					data = {text:$.trim(new_text), old_text:$.trim(orig_text), template_name:_this.options.template_name, template_path:_this.options.template_path, tag: clicked_element.prop("tagName")};
-				}
-				$.ajax({
-					method:method,
-					async:false,
-					url: _this.options.base_url + id_element +'/',
-					data:data,
-					success: function(data){
-						new_id = data.slug;
-					}
-				});
-			}
-		},
+        get_displayed_text: function(){
+            var self = this;
+            convert = new Markdown.getSanitizingConverter().makeHtml;
+            return convert(self.get_saved_text());
+        }
+    });
 
-		getTextElement: function(){
-			if (_this.debug == false){//jshint ignore:line
-				$.ajax({
-					method:'GET',
-					async:false,
-					url: _this.options.base_url + id_element +'/',
-					success: function(data){
-						if (clicked_element.attr('data-key')){
-							orig_text = data[clicked_element.attr('data-key')];
-						}else{
-							orig_text = data.text;
-						}
-					},
-					error: function(){
-						orig_text = $.trim(clicked_element.text());
-					}
-				});
-			}
-		},
+    $.fn.editor = function(options, custom){
+        var opts = $.extend( {}, $.fn.editor.defaults, options );
+        return this.each(function() {
+            if (!$.data($(this), 'editor')) {
+                if ($(this).hasClass('edit-markdown')){
+                    $.data($(this), 'editor', new MarkdownEditor($(this), opts));
+                }else{
+                    $.data($(this), 'editor', new TextEditor($(this), opts));
+                }
+            }
+        });
+    };
 
-		removeAlert: function(){
-			if ($('#input_editor').val() == 'Please enter text' && event.keycode != 27){
-				$('#input_editor').val('');
-				$('#input_editor').css('color',color);
-			}
-		},
+    $.fn.editor.defaults = {
+        base_url: null, // Url to send request to server
+        enable_markdown: true,
+        template_name:'',
+        template_path:'',
+        csrf_token:'',
+        enable_upload : false,
+        img_upload_url:'',
+        empty_input:'Please enter text!',
+        no_change_editor: 'btn-toggle'
 
-		documentClick: function(event){
-			if ($(event.target).hasClass('editable') || $(event.target).parents('.editable').length > 0){
-				_this.checkInput();
-				if ($('#input_editor').length == 0){//jshint ignore:line
-					if (!$(event.target).hasClass('editable')){
-						clicked_element = $(event.target).closest('.editable');
-					}else{
-						clicked_element = $(event.target);
-					}
-					_this._clickEditable();
-				}
-			}else if ($(event.target).attr('id') != 'input_editor' && $(event.target).parents('#tool_markdown').length == 0 && $(event.target).attr('id') != 'btn-toggle' && !$(event.target).hasClass('image_media')){//jshint ignore:line
-				_this.checkInput();
-				clicked_element = null;
-			}
-		},
+    };
 
-		addMarkdowntag: function(event){
-			if ($(this).attr('id') == 'title_h3'){
-				$('#input_editor').selection('insert',{text:'###' ,mode:'before'}).selection('insert', {text: '', mode: 'after'});
-			}else if($(this).attr('id') == 'title_h4'){
-				$('#input_editor').selection('insert',{text:'####' ,mode:'before'}).selection('insert', {text: '', mode: 'after'});
-			}else if($(this).attr('id') == 'bold'){
-				$('#input_editor').selection('insert',{text:'**' ,mode:'before'}).selection('insert', {text: '**', mode: 'after'});
-			}else if($(this).attr('id') == 'list_ul'){
-				$('#input_editor').selection('insert',{text:'* ' ,mode:'before'}).selection('insert', {text: '', mode: 'after'});
-			}else if($(this).attr('id') == 'link'){
-				var text = $('#input_editor').selection();
-        		if (text.indexOf("http://") >= 0){
-           			$('#input_editor').selection('insert',{text:'['+text+'](' ,mode:'before'}).selection('insert', {text: ')', mode: 'after'});
-        		}else{
-           			$('#input_editor').selection('insert',{text:'[http://'+text+'](http://' ,mode:'before'}).selection('insert', {text: ')', mode: 'after'});
-        		}
-			}else if($(this).attr('id') == 'italic'){
-				$('#input_editor').selection('insert',{text:'*' ,mode:'before'}).selection('insert', {text: '*', mode: 'after'});
-			}
-		}
-	};
-
-	$.fn.editor = function(options) {
-		var opts = $.extend( {}, $.fn.editor.defaults, options );
-		editor = new Editor($(this), opts);
-		return editor;
-	};
-
-	$.fn.editor.defaults = {
-		base_url: null, // Url to send request to server
-		unique_identifier: 'id',
-		autotag:false,
-		enable_markdown: true,
-		markdown_identifier: 'p',
-		template_name:'',
-		template_path:'',
-		csrf_token:'',
-		enable_upload:false,
-		img_upload_url:'',
-	};
-
-})(jQuery);
+}( jQuery ));

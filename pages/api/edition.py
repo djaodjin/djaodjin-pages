@@ -57,40 +57,6 @@ class PageElementDetail(AccountMixin, CreateModelMixin,
         return PageElement.objects.filter(
             account=self.get_account(), **kwargs)
 
-    @staticmethod
-    def clean_text(text):
-        formatted_text = re.sub(r'[\ ]{2,}', '', text)
-        if formatted_text.startswith('\n'):
-            formatted_text = formatted_text[1:]
-        if formatted_text.endswith('\n'):
-            formatted_text = formatted_text[:len(formatted_text)-1]
-        return formatted_text
-
-    def write_html(self, path, new_id):
-        with open(path, "r") as myfile:
-            soup = BeautifulSoup(myfile, "html.parser")
-            soup_elements = soup.find_all(self.request.DATA['tag'].lower())
-            if len(soup_elements) > 1:
-                for element in soup_elements:
-                    if element.string:
-                        formatted_text = self.clean_text(element.string)
-                        if formatted_text == self.request.DATA['old_text']:
-                            soup_element = element
-                            break
-                if not soup_element:
-                    # XXX - raise an exception
-                    pass
-            else:
-                soup_element = soup_elements[0]
-
-            soup_element['id'] = new_id
-            html = soup.prettify("utf-8")
-            changed = True
-        if changed:
-            # write html to save new id
-            with open(path, "w") as myfile:
-                myfile.write(html)
-
     def perform_create(self, serializer):
         return serializer.save(
             slug=self.kwargs.get(self.lookup_url_kwarg),
