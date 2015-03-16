@@ -1,0 +1,7 @@
+site_name: Djaodjin-pages
+pages:
+- [index.md, Home]
+- [user-guide/getting-started.md, User guide]
+- [user-guide/pages-edition.md, User guide]
+- [user-guide/pages-upload-media.md, User guide]
+- [license.md, License]

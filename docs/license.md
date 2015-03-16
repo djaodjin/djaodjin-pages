@@ -1,3 +1,6 @@
+# License
+---
+
 Copyright (c) 2015, DjaoDjin inc.
 All rights reserved.
 
