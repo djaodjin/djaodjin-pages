@@ -16,7 +16,6 @@ install::
 initdb:
 	-rm -f db.sqlite3
 	cd $(srcDir) && $(PYTHON) ./manage.py migrate --noinput
-	cp ./testsite/templates/index-sample.html ./testsite/templates/index.html 
 
 doc:
 	$(installDirs) docs

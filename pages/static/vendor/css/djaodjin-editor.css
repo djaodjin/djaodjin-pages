@@ -42,7 +42,8 @@
 }
 
 #input_editor:focus{
-	outline-offset: 0px;
+    outline: none;
+	/*outline-offset: 0px;*/
 }
 
 #tool_markdown{

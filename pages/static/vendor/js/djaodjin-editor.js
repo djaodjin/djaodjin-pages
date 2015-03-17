@@ -1,4 +1,37 @@
+/* jshint multistr: true */
+
 (function ($) {
+
+    var mardown_tool_html = '<div id="tool_markdown"><button type="button" class="btn_tool" id="title_h3">H3</button>\
+                     <button type="button" class="btn_tool" id="title_h4">H4</button>\
+                     <button type="button" class="btn_tool" id="bold"><strong>B</strong></button>\
+                     <button type="button" class="btn_tool" id="italic"><em>I</em></button>\
+                     <button type="button" class="btn_tool" id="list_ul">List</button>\
+                     <button type="button" class="btn_tool" id="link">Link</button></div>';
+
+
+    $('body').on('mousedown', '#tool_markdown', function(event){
+        event.preventDefault();
+        var $target = $(event.target);
+        if ($target.attr('id') == 'title_h3'){
+            $('#input_editor').selection('insert',{text:'###' ,mode:'before'}).selection('insert', {text: '', mode: 'after'});
+        }else if($target.attr('id') == 'title_h4'){
+            $('#input_editor').selection('insert',{text:'####' ,mode:'before'}).selection('insert', {text: '', mode: 'after'});
+        }else if($target.attr('id') == 'bold'){
+            $('#input_editor').selection('insert',{text:'**' ,mode:'before'}).selection('insert', {text: '**', mode: 'after'});
+        }else if($target.attr('id') == 'list_ul'){
+            $('#input_editor').selection('insert',{text:'* ' ,mode:'before'}).selection('insert', {text: '', mode: 'after'});
+        }else if($target.attr('id') == 'link'){
+            var text = $('#input_editor').selection();
+            if (text.indexOf("http://") >= 0){
+                $('#input_editor').selection('insert',{text:'['+text+'](' ,mode:'before'}).selection('insert', {text: ')', mode: 'after'});
+            }else{
+                $('#input_editor').selection('insert',{text:'[http://'+text+'](http://' ,mode:'before'}).selection('insert', {text: ')', mode: 'after'});
+            }
+        }else if($target.attr('id') == 'italic'){
+            $('#input_editor').selection('insert',{text:'*' ,mode:'before'}).selection('insert', {text: '*', mode: 'after'});
+        }
+    });
 
     function Editor(element, options){
         return true;
@@ -7,11 +40,11 @@
     Editor.prototype = {
         init: function(){
             var self = this;
+            console.log(self)
             self.get_properties();
             if (!self.$el.attr('id') || self.$el.attr('id') === ""){
                 throw new Error("editable element does not have valid id !");
             }
-
             self.$el.on('click', function(){
                 self.toggle_input();
             });
@@ -42,8 +75,17 @@
 
         input_editable: '<div class="input-group" id="editable_section"><textarea class="form-control editor" id="input_editor" value="" spellcheck="false"></textarea></div>',
 
+        toogle_start_optional : function(){
+            return true;
+        },
+
+        toogle_end_optional : function(){
+            return true;
+        },
+
         toggle_input:function(){
             var self = this;
+            self.toogle_start_optional();
             self.$el.replaceWith(self.input_editable);
             $('#input_editor').focus();
             $('#input_editor').val(self.get_origin_text());
@@ -55,13 +97,15 @@
             $('body').on('click', function(event){
                 var $target = $(event.target);
                 if (($target.attr('class') && $target.attr('class').indexOf(self.options.no_change_editor) >= 0) || ($target.attr('id') && $target.attr('id').indexOf(self.options.no_change_editor) >= 0)){
-                    $('#input_editor').unbind('blur');
+                    $('#input_editor').unbind('change');
                 }
             });
             
             $('#input_editor').on('keyup', function(){
                 self.check_input();
             });
+
+            
             
         },
 
@@ -92,6 +136,7 @@
 
         save_edition: function(event){
             var self = this;
+            console.log(event)
             var id_element = self.$el.attr("id");
             var saved_text = self.get_saved_text();
             
@@ -110,15 +155,16 @@
                 data[self.$el.attr('data-key')] = $.trim(saved_text);
                 method = 'PATCH';
             }else{
-                data = {slug:id_element, text:$.trim(saved_text), old_text:self.origin_text, template_name:self.options.template_name, template_path:self.options.template_path, tag: self.$el.prop("tagName")};
+                data = {slug:id_element, text:$.trim(saved_text), old_text:self.origin_text, tag: self.$el.prop("tagName")};
             }
             self.$el.html(displayed_text);
+            self.toogle_end_optional();
             $('#editable_section').replaceWith(self.$el);
             if (!self.options.base_url){
                 if ($('.error-label').length > 0){
                     $('.error-label').remove();
                 }
-                $('body').prepend('<div class="error-label">No base_url option provided. Please update your script to use save edition.</div>');
+                $('body').append('<div class="error-label">No base_url option provided. Please update your script to use save edition.</div>');
                 return false;
             }else{
                 $.ajax({
@@ -163,6 +209,19 @@
     }
 
     MarkdownEditor.prototype = $.extend({}, Editor.prototype,{
+        toogle_start_optional: function(){
+            var self = this;
+            $('body').prepend(mardown_tool_html);
+            $('#tool_markdown').css({
+                'top': (self.$el.offset().top - 45) + 'px',
+                'left': self.$el.offset().left +'px',
+            });
+        },
+
+        toogle_end_optional: function(){
+            $('#tool_markdown').remove();
+        },
+
         get_element_properties:function(){
             var self = this;
             if (self.$el.prop('tagName') == 'DIV'){
@@ -222,14 +281,10 @@
     $.fn.editor.defaults = {
         base_url: null, // Url to send request to server
         enable_markdown: true,
-        template_name:'',
-        template_path:'',
-        csrf_token:'',
         enable_upload : false,
         img_upload_url:'',
         empty_input:'Please enter text!',
         no_change_editor: 'btn-toggle'
-
     };
 
 }( jQuery ));

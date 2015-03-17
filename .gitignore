@@ -5,5 +5,4 @@
 .DS_Store
 .timestamp
 pages/migrations/
-testsite/templates/index.html
 docs/build/
