@@ -3,7 +3,7 @@
 (function ($) {
 
     
-    var sidebar = '<div id="sidebar-gallery"><h1 class="text-center" style="color:white;">Media gallery</h1><input placeholder="Search..." id="gallery-filter" type="text" class="form-control"><div id="media-container"><div id="list-media"></div><div class="col-xs-12">Drag and drop or click to upload Media</div></div></div';
+    var sidebar = '<div id="sidebar-gallery"><h1 class="text-center" style="color:white;">Media gallery</h1><input placeholder="Search..." id="gallery-filter" type="text" class="form-control"><div id="media-container"><div id="list-media"></div><div class="col-xs-12">Drag and drop or click to upload Media</div></div></div>';
     var sidebar_size = 200;
     var loaded = false;
     var initialized = false;
