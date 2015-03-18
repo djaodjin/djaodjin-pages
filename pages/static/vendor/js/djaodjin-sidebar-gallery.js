@@ -67,7 +67,6 @@
             }
             
             $('body').append(toggle_button).append(sidebar);
-            $('body').wrapInner('<div id="gallery-wrapper"></div>');
             $(document).on('click','#btn-toggle', _this._toggle_sidebar);
             $(document).on('keyup', '#gallery-filter', _this.filterImage);
             $(document).on('start_upload', function(){
@@ -226,25 +225,14 @@
         },
 
         _open_sidebar: function(){
-            var width_wrap = $('#gallery-wrapper').css('width').split('px')[0];
             $('#btn-toggle').addClass('active');
             $('#sidebar-gallery').addClass('active');
-            $('#gallery-wrapper').css({'max-width':width_wrap - sidebar_size});
-            $('.row').css({'padding-right':'30px'});
-            $('.row').css({'padding-left':'30px'});
-            $('.row').css({'margin-right':'30px'});
             _this.loadImage();
         },
 
         _close_sidebar: function(){
-            var width_wrap = $('#gallery-wrapper').css('width').split('px')[0];
             $('#sidebar-gallery').removeClass('active');
             $('#btn-toggle').removeClass('active');
-            $('#gallery-wrapper').css({'max-width': '100%'});
-            $('.row').css({'padding-right':'0px'});
-            $('.row').css({'padding-left':'0px'});
-            $('.row').css({'margin-right':'0px'});
-            $('.row').css({'margin-left':'0px'});
             $('.image-gallery').remove();
         },
 
