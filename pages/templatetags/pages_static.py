@@ -35,7 +35,6 @@ def pages_static_js():
         "vendor/js/dropzone.js",
         "vendor/js/jquery.autosize.js",
         "vendor/js/jquery.selection.js",
-        "vendor/js/jquery.pagedown-bootstrap.combined.js",
         "vendor/js/djaodjin-editor.js",
         "vendor/js/jquery-ui.js",
         "vendor/js/Markdown.Converter.js",
