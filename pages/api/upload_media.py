@@ -184,6 +184,7 @@ class MediaListAPIView(AccountMixin, generics.ListCreateAPIView):
 class MediaUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
     model = UploadedImage
     serializer_class = UploadedImageSerializer
+    queryset = UploadedImage.objects.all()
 
     @staticmethod
     def get_default_storage(obj):
