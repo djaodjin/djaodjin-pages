@@ -261,7 +261,10 @@
         get_displayed_text: function(){
             var self = this;
             convert = new Markdown.getSanitizingConverter().makeHtml;
-            return convert(self.get_saved_text());
+            html_text = convert(self.get_saved_text());
+            html_text = html_text.replace(/<img /g, '<img style="max-width:100%" ');
+            console.log(html_text)
+            return html_text;
         }
     });
 

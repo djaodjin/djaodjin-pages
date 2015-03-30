@@ -3,7 +3,16 @@
 (function ($) {
 
     
-    var sidebar = '<div id="sidebar-gallery"><h1 class="text-center" style="color:white;">Media gallery</h1><input placeholder="Search..." id="gallery-filter" type="text" class="form-control"><div id="media-container"><div id="list-media"></div><div class="col-xs-12">Drag and drop or click to upload Media</div></div></div>';
+    var sidebar = '\
+        <div id="sidebar-gallery">\
+            <h1 class="">Medias</h1>\
+            <input placeholder="Search..." id="gallery-filter" type="text" class="form-control">\
+            <div id="media-container">\
+                <div class="col-xs-12">Drag and drop or click to upload Media</div>\
+                <div id="list-media"></div>\
+            </div>\
+            <div id="media-info"></div>\
+        </div>';
     var sidebar_size = 200;
     var loaded = false;
     var initialized = false;
@@ -149,6 +158,9 @@
             });
 
             DocDropzone.on("drop", function(event){
+                if ($('.url_info').length){
+                    $('.url_info').remove();
+                }
                 $('.notify-user-label').remove();
                 count = 0;
             });
@@ -169,9 +181,9 @@
                 }
                 if (!response.exist){
                     if (response.uploaded_file_temp.indexOf('.mp4') > 0){
-                        $('#list-media').append('<div class="col-md-6 padding-top-img"><video data-id="'+ response.id + '" id="image_'+ last_index + '" class="image  clickable-menu image_media" src="'+ response.uploaded_file_temp +'" width="50px"></video></div>');
+                        $('#list-media').append('<div class="media-single-container"><video data-id="'+ response.id + '" id="image_'+ last_index + '" class="image  clickable-menu image_media" src="'+ response.uploaded_file_temp +'" width="50px"></video></div>');
                     }else{
-                        $('#list-media').append('<div class="col-md-6 padding-top-img"><img data-id="'+ response.id + '" id="image_'+ last_index + '" class="image  clickable-menu image_media" src="'+ response.uploaded_file_temp +'" width="50px"></div>');
+                        $('#list-media').append('<div class="media-single-container"><img data-id="'+ response.id + '" id="image_'+ last_index + '" class="image  clickable-menu image_media" src="'+ response.uploaded_file_temp +'" width="50px"></div>');
                     }
                     
                 
@@ -258,9 +270,9 @@
                             src_file = element.file_src_temp;
                         }
                         if (src_file.indexOf('.mp4') > 0){
-                            $('#list-media').append('<div class="col-md-6 padding-top-img"><img data-id="'+ element.id + '" id="image_'+ index + '" class="image clickable-menu padding-top-img image_media" src="'+ src_file +'" width="50px"></div>');
+                            $('#list-media').append('<div class="media-single-container"><img data-id="'+ element.id + '" id="image_'+ index + '" class="image clickable-menu image_media" src="'+ src_file +'" width="50px"></div>');
                         }else{
-                            $('#list-media').append('<div class="col-md-6 padding-top-img"><img data-id="'+ element.id + '" id="image_'+ index + '" class="image clickable-menu padding-top-img image_media" src="'+ src_file +'" width="50px"></div>');
+                            $('#list-media').append('<div class="media-single-container"><img data-id="'+ element.id + '" id="image_'+ index + '" class="image clickable-menu image_media" src="'+ src_file +'" width="50px"></div>');
                         }
                         // $('#list-images').append('<div class="col-md-6 padding-top-img"><img data-id="'+ element.id + '" id="image_'+ index + '" class="image clickable-menu padding-top-img image_media" src="'+ src_file+'" width="50px"></div>');
                         $('#image_' + index).draggable({
@@ -286,9 +298,13 @@
                 menu: [
                     {title: "Delete", cmd: "delete_media"},
                     {title: "Add tag", cmd: "add_tag"},
-                    {title: "Preview Video", cmd: "preview_video" }
+                    {title: "Preview Video", cmd: "preview_video" },
+                    {title: "Media info", cmd: "media_info" }
                     ],
                 select: function(event, ui) {
+                    if ($('.url_info').length){
+                        $('.url_info').remove();
+                    }
                     var id = $(ui.target).data('id');
                     if (ui.cmd == 'delete_media'){
                         $.ajax({
@@ -325,6 +341,15 @@
                         $('body').append(modal);
                         $('#modal-video').attr('src',$(ui.target).attr('src'));
                         $('#myModal').modal('show');
+                    }else if (ui.cmd == 'media_info') {
+                        $.ajax({
+                            method: 'get',
+                            async:false,
+                            url:_this.options.base_media_url+id+'/',
+                            success: function(response){
+                                $('#media-info').append('<div class="url_info"><h4>Full media url</h4><textarea style="width:98%" rows="4" readonly>'+response.uploaded_file+'</textarea></div>');
+                            }
+                        });
                     }
                 }
             });
