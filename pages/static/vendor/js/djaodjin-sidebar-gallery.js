@@ -1,8 +1,11 @@
+/* jshint multistr: true */
 
- /* jshint multistr: true */
+/* relies on:
+    - jquery-ui.js
+    - dropzone.js
+*/
 (function ($) {
 
-    
     var sidebar = '\
         <div id="sidebar-gallery">\
             <h1 class="">Medias</h1>\
@@ -68,18 +71,10 @@
 
         _init: function(){
             _this = this;
-
-            if (_this.options.toggle){
-                toggle_button = _this.options.toggle;
-            }else{
-                toggle_button = '<button class="btn btn-default" id="btn-toggle">Gallery</button>';
-            }
-            
-            $('body').append(toggle_button).append(sidebar);
+            $('body').append(_this.options.toggle).append(sidebar);
             $(document).on('click','#btn-toggle', _this._toggle_sidebar);
             $(document).on('keyup', '#gallery-filter', _this.filterImage);
             $(document).on('start_upload', function(){
-                
                 setTimeout(update_progress_info, 20);
             });
 
@@ -95,8 +90,8 @@
                     }
                 });
             });
-            
-            
+
+
             $('.droppable-image').droppable({
                 drop: function( event, ui ) {
                     var droppable = $(this);
@@ -360,13 +355,13 @@
 
     $.sidebargallery = function(options) {
         var opts = $.extend( {}, $.sidebargallery.defaults, options );
-        gallery = new SidebarGallery(options);
+        gallery = new SidebarGallery(opts);
     };
 
     $.sidebargallery.defaults = {
         base_save_url: null, // Url to send request to server
         csrf_token:'',
         base_media_url:'',
-        toggle: null
+        toggle: '<button class="btn btn-default" id="btn-toggle">Gallery</button>'
     };
 })(jQuery);
