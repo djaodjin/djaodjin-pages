@@ -40,11 +40,8 @@
     Editor.prototype = {
         init: function(){
             var self = this;
-            console.log(self)
             self.get_properties();
-            if (!self.$el.attr('id') || self.$el.attr('id') === ""){
-                throw new Error("editable element does not have valid id !");
-            }
+            this.id = self.$el.parents('[id]').attr('id');
             self.$el.on('click', function(){
                 self.toggle_input();
             });
@@ -100,13 +97,10 @@
                     $('#input_editor').unbind('change');
                 }
             });
-            
+
             $('#input_editor').on('keyup', function(){
                 self.check_input();
             });
-
-            
-            
         },
 
         get_saved_text: function(){
@@ -137,9 +131,8 @@
         save_edition: function(event){
             var self = this;
             console.log(event)
-            var id_element = self.$el.attr("id");
+            var id_element = self.id;
             var saved_text = self.get_saved_text();
-            
             var displayed_text = self.get_displayed_text();
 
             if (!self.check_input()){
@@ -177,7 +170,6 @@
                     }
                 });
             }
-            
             self.init();
         },
     };
@@ -242,7 +234,7 @@
                 $.ajax({
                     method:'GET',
                     async:false,
-                    url: self.options.base_url + self.$el.attr('id') +'/',
+                    url: self.options.base_url + self.id +'/',
                     success: function(data){
                         if (self.$el.attr('data-key')){
                             self.origin_text = data[self.$el.attr('data-key')];
