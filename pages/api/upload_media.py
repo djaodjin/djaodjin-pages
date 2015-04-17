@@ -137,7 +137,8 @@ class MediaUpdateDestroyAPIView(
         else:
             os.remove(os.path.join(MEDIA_ROOT, instance.uploaded_file.name))
         instance.delete()
-        page_elements = PageElement.objects.filter(text=instance.uploaded_file.url.split('?')[0])
+        page_elements = PageElement.objects.filter(
+            text=instance.uploaded_file.url.split('?')[0])
         for page_element in page_elements:
             page_elements.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
