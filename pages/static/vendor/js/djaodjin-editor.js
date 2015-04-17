@@ -41,7 +41,9 @@
         init: function(){
             var self = this;
             self.get_properties();
-            this.id = self.$el.parents('[id]').attr('id');
+            if (!self.$el.attr(self.options.unique_identifier) || self.$el.attr(self.options.unique_identifier) === ""){
+                throw new Error("editable element does not have valid id !");
+            }
             self.$el.on('click', function(){
                 self.toggle_input();
             });
@@ -91,6 +93,7 @@
             $('#input_editor').on('blur', function(event){
                 self.save_edition(event);
             });
+
             $('body').on('click', function(event){
                 var $target = $(event.target);
                 if (($target.attr('class') && $target.attr('class').indexOf(self.options.no_change_editor) >= 0) || ($target.attr('id') && $target.attr('id').indexOf(self.options.no_change_editor) >= 0)){
@@ -130,9 +133,9 @@
 
         save_edition: function(event){
             var self = this;
-            console.log(event)
-            var id_element = self.id;
+            var id_element = self.$el.attr(self.options.unique_identifier);
             var saved_text = self.get_saved_text();
+
             var displayed_text = self.get_displayed_text();
 
             if (!self.check_input()){
@@ -170,6 +173,7 @@
                     }
                 });
             }
+
             self.init();
         },
     };
@@ -234,7 +238,7 @@
                 $.ajax({
                     method:'GET',
                     async:false,
-                    url: self.options.base_url + self.id +'/',
+                    url: self.options.base_url + self.$el.attr(self.options.unique_identifier) +'/',
                     success: function(data){
                         if (self.$el.attr('data-key')){
                             self.origin_text = data[self.$el.attr('data-key')];
@@ -253,10 +257,7 @@
         get_displayed_text: function(){
             var self = this;
             convert = new Markdown.getSanitizingConverter().makeHtml;
-            html_text = convert(self.get_saved_text());
-            html_text = html_text.replace(/<img /g, '<img style="max-width:100%" ');
-            console.log(html_text)
-            return html_text;
+            return convert(self.get_saved_text());
         }
     });
 
@@ -279,7 +280,8 @@
         enable_upload : false,
         img_upload_url:'',
         empty_input:'Please enter text!',
-        no_change_editor: 'btn-toggle'
+        no_change_editor: 'btn-toggle',
+        unique_identifier: 'id'
     };
 
 }( jQuery ));

@@ -141,7 +141,6 @@ USE_TZ = True
 
 MEDIA_URL = '/media/'
 
-
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.7/howto/static-files/
 STATIC_ROOT = BASE_DIR + '/testsite/static'
@@ -151,16 +150,16 @@ STATIC_URL = '/static/'
 
 MEDIA_ROOT = BASE_DIR + '/testsite/media'
 
+if 'AWS_STORAGE_BUCKET_NAME' in locals():
+    DEFAULT_FILE_STORAGE = 'storages.backends.s3boto.S3BotoStorage'
+
 PAGES = {
-    'MEDIA_ROOT': BASE_DIR + '/testsite/media',
     'UPLOADED_TEMPLATE_DIR' : BASE_DIR + '/testsite/templates',
     'UPLOADED_STATIC_DIR' : STATIC_ROOT,
 }
 
-
 # XXX - to define
 FILE_UPLOAD_MAX_MEMORY_SIZE = 41943040
-
 
 LOGGING = {
     'version': 1,
@@ -182,7 +181,7 @@ LOGGING = {
         }
     },
     'loggers': {
-        'saas': {
+        'pages': {
             'handlers': ['logfile'],
             'level': 'INFO',
             'propagate': False,

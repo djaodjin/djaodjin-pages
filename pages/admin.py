@@ -1,4 +1,4 @@
-# Copyright (c) 2014, DjaoDjin inc.
+# Copyright (c) 2015, DjaoDjin inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -24,8 +24,7 @@
 
 from django.contrib import admin
 # Register your models here.
-from .models import PageElement, UploadedImage, S3Bucket
+from .models import PageElement, UploadedImage
 
 admin.site.register(PageElement)
 admin.site.register(UploadedImage)
-admin.site.register(S3Bucket)

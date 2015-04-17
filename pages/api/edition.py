@@ -25,19 +25,21 @@
 #pylint: disable=no-init,no-member
 #pylint: disable=old-style-class,maybe-no-member
 
-from django.conf import settings
-from rest_framework import status
+
+from django.http import Http404
 from rest_framework.mixins import CreateModelMixin
 from rest_framework import generics
-from rest_framework.response import Response
 
-from pages.models import PageElement, UploadedImage
+from pages.models import PageElement
 from pages.serializers import PageElementSerializer
 from pages.mixins import AccountMixin
 
-
 class PagesElementListAPIView(AccountMixin, generics.ListCreateAPIView):
-    pass
+
+    def get_queryset(self):
+        return PageElement.objects.filter(
+            account=self.get_account())
+
 
 class PageElementDetail(AccountMixin, CreateModelMixin,
                         generics.RetrieveUpdateDestroyAPIView):
@@ -50,51 +52,27 @@ class PageElementDetail(AccountMixin, CreateModelMixin,
 
     def get_queryset(self):
         kwargs = {self.lookup_field: self.kwargs.get(self.lookup_url_kwarg)}
-        #pylint:disable=star-args
         return PageElement.objects.filter(
             account=self.get_account(), **kwargs)
+
+    def perform_update(self, serializer):
+        serializer.save()
 
     def perform_create(self, serializer):
         return serializer.save(
             slug=self.kwargs.get(self.lookup_url_kwarg),
             account=self.get_account())
 
-    def update_or_create_pagelement(self, request, *args, **kwargs):
+    def update_or_create(self, request, *args, **kwargs):
         #pylint: disable=unused-argument
         """
         Update or create a ``PageElement`` with a text overlay
         of the default text present in the HTML template.
         """
-
-        queryset = self.get_queryset()
-        if queryset.exists():
-            self.object = queryset.get()
-            serializer = self.get_serializer(self.object, data=request.data)
-            serializer.is_valid(raise_exception=True)
-            response_status = status.HTTP_200_OK
-            self.perform_update(serializer)
-        else:
-            serializer = self.get_serializer(data=request.data)
-            serializer.is_valid(raise_exception=True)
-            self.object = self.perform_create(serializer)
-            response_status = status.HTTP_201_CREATED
-
-        if self.object.slug.startswith('djmedia-'):
-            text = request.DATA['text']
-            #check S3 version exists
-            if not 's3.amazon' in text:
-                try:
-                    upload_image = UploadedImage.objects.get(
-                        uploaded_file_temp=text.replace('/media/', ''))
-                    if upload_image.uploaded_file:
-                        text = \
-                            settings.S3_URL + '/' + text.replace('/media/', '')
-                except: #pylint: disable=bare-except
-                    pass
-
-        headers = self.get_success_headers(serializer.data)
-        return Response(
-            serializer.data, status=response_status, headers=headers)
+        try:
+            return self.update(request)
+        except Http404:
+            return self.create(request)
 
     def put(self, request, *args, **kwargs):
-        return self.update_or_create_pagelement(request, *args, **kwargs)
+        return self.update_or_create(request, *args, **kwargs)

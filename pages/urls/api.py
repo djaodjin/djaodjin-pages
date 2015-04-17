@@ -1,4 +1,4 @@
-# Copyright (c) 2014, Djaodjin Inc.
+# Copyright (c) 2015, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -37,7 +37,7 @@ from pages.api.upload_template import (
 urlpatterns = patterns('',
     url(r'^uploaded-media/get-progress/upload/',
         upload_progress),
-    url(r'^uploaded-media/(?P<pk>\d+)/',
+    url(r'^uploaded-media/(?P<slug>[\w-]+)/',
         MediaUpdateDestroyAPIView.as_view(), name='media_element'),
     url(r'^uploaded-media/',
         MediaListAPIView.as_view(), name='uploaded_media_elements'),

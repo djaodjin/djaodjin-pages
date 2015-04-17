@@ -54,8 +54,8 @@
         }, 5000);
     }
 
-    function update_progress_info() {
-        $.getJSON("/get-progress/upload/", {'X-Progress-ID': id}, function(data, status){
+    function update_progress_info(url) {
+        $.getJSON(url, {'X-Progress-ID': id}, function(data, status){
             if(data){
                 $('#progress-span').text((data.uploaded /data.lenght)*100);
             }
@@ -63,7 +63,7 @@
                 $('#progress-span').text(100);
                 return false;
             }
-            setTimeout(update_progress_info, 10);
+            setTimeout(update_progress_info(url), 100);
         });
     }
 
@@ -74,9 +74,11 @@
             $('body').append(_this.options.toggle).append(sidebar);
             $(document).on('click','#btn-toggle', _this._toggle_sidebar);
             $(document).on('keyup', '#gallery-filter', _this.filterImage);
-            $(document).on('start_upload', function(){
-                setTimeout(update_progress_info, 20);
-            });
+            if (_this.options.url_progress){
+                $(document).on('start_upload', function(){
+                    setTimeout(update_progress_info(_this.options.url_progress), 20);
+                });
+            }
 
             $(document).on('editInputVisible', function(){
                 $('#input_editor').droppable({
@@ -127,7 +129,9 @@
 
             DocDropzone.on("processing", function(file){
                 id = (new Date()).getTime();
-                this.options.url = _this.options.base_media_url + '?X-Progress-ID=' +id;
+                if (_this.options.url_progress){
+                    this.options.url = _this.options.base_media_url + '?X-Progress-ID=' +id;
+                }
             });
 
             DocDropzone.on("cancel", function(file){
@@ -137,7 +141,7 @@
             DocDropzone.on("sending", function(file, xhr, formData){
                 formData.append('csrfmiddlewaretoken', _this.options.csrf_token);
                 formData.append('csrfmiddlewaretoken', _this.options.csrf_token);
-                $('#media-container').append('<div class="col-md-12 padding-top-img progress-text text-center">Upload in progress<br><p><span id="progress-span">0</span>%</p>Please wait...</div>');                      
+                $('#media-container').append('<div class="col-md-12 padding-top-img progress-text text-center">Upload in progress<br><p><span id="progress-span">0</span>%</p>Please wait...</div>');
                 $.event.trigger({
                   type:    "start_upload",
                   message: "myTrigger fired.",
@@ -175,10 +179,10 @@
                     last_index = 0;
                 }
                 if (!response.exist){
-                    if (response.uploaded_file_temp.indexOf('.mp4') > 0){
-                        $('#list-media').append('<div class="media-single-container"><video data-id="'+ response.id + '" id="image_'+ last_index + '" class="image  clickable-menu image_media" src="'+ response.uploaded_file_temp +'" width="50px"></video></div>');
+                    if (response.uploaded_file.indexOf('.mp4') > 0){
+                        $('#list-media').prepend('<div class="media-single-container"><video data-id="'+ response.unique_id + '" id="image_'+ last_index + '" class="image  clickable-menu image_media" src="'+ response.uploaded_file +'" width="50px"></video></div>');
                     }else{
-                        $('#list-media').append('<div class="media-single-container"><img data-id="'+ response.id + '" id="image_'+ last_index + '" class="image  clickable-menu image_media" src="'+ response.uploaded_file_temp +'" width="50px"></div>');
+                        $('#list-media').prepend('<div class="media-single-container"><img data-id="'+ response.unique_id + '" id="image_'+ last_index + '" class="image  clickable-menu image_media" src="'+ response.uploaded_file +'" width="50px"></div>');
                     }
                     
                 
@@ -255,19 +259,14 @@
             $('#list-media').empty();
             $.ajax({
                 method:'GET',
-                url:_this.options.base_media_url + '?search='+search,
+                url:_this.options.base_media_url + '?q='+search,
                 success: function(data){
                     $.each(data, function(index,element){
-                        var src_file = null;
-                        if (element.file_src){
-                            src_file = element.file_src;
-                        }else{
-                            src_file = element.file_src_temp;
-                        }
+                        var src_file = element.file_src;
                         if (src_file.indexOf('.mp4') > 0){
-                            $('#list-media').append('<div class="media-single-container"><img data-id="'+ element.id + '" id="image_'+ index + '" class="image clickable-menu image_media" src="'+ src_file +'" width="50px"></div>');
+                            $('#list-media').append('<div class="media-single-container"><img data-id="'+ element.unique_id + '" id="image_'+ index + '" class="image clickable-menu image_media" src="'+ src_file +'" width="50px"></div>');
                         }else{
-                            $('#list-media').append('<div class="media-single-container"><img data-id="'+ element.id + '" id="image_'+ index + '" class="image clickable-menu image_media" src="'+ src_file +'" width="50px"></div>');
+                            $('#list-media').append('<div class="media-single-container"><img data-id="'+ element.unique_id + '" id="image_'+ index + '" class="image clickable-menu image_media" src="'+ src_file +'" width="50px"></div>');
                         }
                         // $('#list-images').append('<div class="col-md-6 padding-top-img"><img data-id="'+ element.id + '" id="image_'+ index + '" class="image clickable-menu padding-top-img image_media" src="'+ src_file+'" width="50px"></div>');
                         $('#image_' + index).draggable({
@@ -306,7 +305,7 @@
                             method: 'delete',
                             url:_this.options.base_media_url +id +'/',
                             success: function(){
-                                $(ui.target).parent('.col-md-6').remove();
+                                $(ui.target).parent('.media-single-container').remove();
                             }
                         });
                     }else if (ui.cmd == 'add_tag'){
@@ -342,7 +341,7 @@
                             async:false,
                             url:_this.options.base_media_url+id+'/',
                             success: function(response){
-                                $('#media-info').append('<div class="url_info"><h4>Full media url</h4><textarea style="width:98%" rows="4" readonly>'+response.uploaded_file+'</textarea></div>');
+                                $('#media-info').append('<div class="url_info"><h4>Full media url</h4><textarea style="width:98%" rows="4" readonly>'+response.file_src +'</textarea></div>');
                             }
                         });
                     }
@@ -362,6 +361,7 @@
         base_save_url: null, // Url to send request to server
         csrf_token:'',
         base_media_url:'',
+        url_progress:null,
         toggle: '<button class="btn btn-default" id="btn-toggle">Gallery</button>'
     };
 })(jQuery);

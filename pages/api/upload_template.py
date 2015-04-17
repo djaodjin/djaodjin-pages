@@ -1,4 +1,4 @@
-# Copyright (c) 2014, Djaodjin Inc.
+# Copyright (c) 2015, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -37,9 +37,10 @@ from rest_framework.response import Response
 
 from pages.models import UploadedTemplate
 from pages.serializers import UploadedTemplateSerializer
-
-
-from pages.settings import UPLOADED_TEMPLATE_DIR, UPLOADED_STATIC_DIR, DISABLE_ACCOUNT_TEMPLATE_PATH
+from pages.settings import (
+    UPLOADED_TEMPLATE_DIR,
+    UPLOADED_STATIC_DIR,
+    DISABLE_ACCOUNT_TEMPLATE_PATH)
 
 from pages.mixins import AccountMixin
 

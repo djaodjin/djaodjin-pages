@@ -1,4 +1,4 @@
-# Copyright (c) 2014, Djaodjin Inc.
+# Copyright (c) 2015, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -22,22 +22,24 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import os
+
 from django.db import models
+from django.core.files.storage import FileSystemStorage
+
 from pages.settings import (
     MEDIA_PATH,
     ACCOUNT_MODEL,
-    DEFAULT_STORAGE_BUCKET_NAME,
-    USE_S3)
+    MEDIA_ROOT)
 
-from django.conf import settings
-from django.core.exceptions import ImproperlyConfigured
+FILE_SYSTEM = FileSystemStorage(location=MEDIA_ROOT)
 
-def file_name(instance, filename):
+def file_full_path(instance, filename):
     path = MEDIA_PATH
     if instance.account:
-        return path + instance.account.slug + '/' + filename
+        return os.path.join(path, instance.account.slug, filename)
     else:
-        return path + filename
+        return os.path.join(path, filename)
 
 
 class PageElement(models.Model):
@@ -47,6 +49,8 @@ class PageElement(models.Model):
 
     slug = models.CharField(max_length=50)
     text = models.TextField(blank=True)
+    image = models.ForeignKey("UploadedImage",
+        null=True)
     account = models.ForeignKey(
         ACCOUNT_MODEL, related_name='account_page_element', null=True)
 
@@ -54,54 +58,23 @@ class PageElement(models.Model):
         return unicode(self.slug)
 
 
-from django.core.files.storage import FileSystemStorage
-from storages.backends.s3boto import S3BotoStorage
-
-FILE_SYSTEM = FileSystemStorage(location=settings.MEDIA_ROOT)
-
-
-class S3Bucket(models.Model):
-    """
-    Defines a S3 bucket for an account
-    """
-    bucket_name = models.CharField(max_length=150)
-    account = models.ForeignKey(
-        ACCOUNT_MODEL, related_name='bucket_account', null=True, blank=True)
-
-    def __unicode__(self):
-        return self.bucket_name
-
 class UploadedImage(models.Model):
     """
    	Image uploaded
     """
     created_at = models.DateTimeField(auto_now_add=True)
     uploaded_file = models.FileField(
-        upload_to=file_name, storage=None, null=True, blank=True)
-    uploaded_file_temp = models.FileField(
-        upload_to=file_name, storage=FILE_SYSTEM, null=True, blank=True)
+        upload_to=file_full_path, null=True, blank=True)
+    uploaded_file_cache = models.FileField(
+        upload_to=file_full_path, storage=FILE_SYSTEM, null=True, blank=True)
     account = models.ForeignKey(
         ACCOUNT_MODEL, related_name='account_image', null=True, blank=True)
+    # Original filename to make search easier.
+    file_name = models.CharField(max_length=100)
     tags = models.CharField(max_length=200, blank=True, null=True)
 
     def __unicode__(self):
         return unicode(self.uploaded_file)
-
-    def save(self, *args, **kwargs): #pylint: disable=super-on-old-class
-        if self.uploaded_file and USE_S3:
-            if self.account:
-                try:
-                    bucket = S3Bucket.objects.get(account=self.account)
-                    self.uploaded_file.storage = S3BotoStorage(
-                        bucket=bucket.bucket_name)
-                except S3Bucket.DoesNotExist:
-                    raise ImproperlyConfigured(
-                        "Account '%s' has not valid S3 bucket" \
-                        % self.account.slug)
-            else:
-                self.uploaded_file.storage = S3BotoStorage(
-                    bucket=DEFAULT_STORAGE_BUCKET_NAME)
-        super(UploadedImage, self).save(*args, **kwargs)
 
 
 class UploadedTemplate(models.Model):
@@ -122,5 +95,3 @@ class UploadedTemplate(models.Model):
             return '%s-%s' % (self.account, self.name)
         else:
             return self.name
-
-

@@ -23,16 +23,12 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import re
-
-from bs4 import BeautifulSoup
-from django.conf import settings
-from django.template.base import TemplateDoesNotExist
-from django.template.loader import find_template_loader
-from django.template.response import TemplateResponse
-from django.views.generic import TemplateView
 import markdown
 
-from .encrypt_path import encode
+from bs4 import BeautifulSoup
+from django.template.response import TemplateResponse
+from django.views.generic import TemplateView
+
 from .mixins import AccountMixin
 from .models import PageElement
 
@@ -43,29 +39,6 @@ class PageView(AccountMixin, TemplateView):
 
     """
     http_method_names = ['get']
-
-    def get_template_path(self):
-        #pylint: disable=unused-variable
-        loaders = []
-        for loader_name in settings.TEMPLATE_LOADERS:
-            loader = find_template_loader(loader_name)
-            if loader is not None:
-                loaders.append(loader)
-        for loader in loaders:
-            try:
-                source, display_name = loader.load_template_source(
-                    self.get_template_names()[0])
-                break
-            except TemplateDoesNotExist:
-                source = (
-                    "Template Does Not Exist: %s"\
-                    % (self.get_template_names()[0]))
-        return display_name
-
-    def get_context_data(self, **kwargs):
-        context = super(PageView, self).get_context_data(**kwargs)
-        context.update({'template_path': encode(self.get_template_path())})
-        return context
 
     def get(self, request, *args, **kwargs):#pylint: disable=too-many-statements, too-many-locals
         response = super(PageView, self).get(request, *args, **kwargs)
@@ -116,7 +89,13 @@ class PageView(AccountMixin, TemplateView):
                     continue
                 try:
                     db_media = db_medias.get(slug=id_element)
-                    media['src'] = db_media.text
+                    if db_media.image:
+                        if db_media.image.uploaded_file:
+                            media['src'] = db_media.image.\
+                                uploaded_file.url.split('?')[0]
+                        else:
+                            media['src'] = db_media.image.\
+                                uploaded_file_cache.url
                 except PageElement.DoesNotExist:
                     continue
             response.content = soup.prettify()

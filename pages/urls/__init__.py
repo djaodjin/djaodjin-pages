@@ -1,4 +1,4 @@
-# Copyright (c) 2014, Djaodjin Inc.
+# Copyright (c) 2015, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -24,7 +24,10 @@
 
 from django.conf.urls import patterns, url, include
 
+from pages.api.upload_media import upload_progress
+
 urlpatterns = patterns('',
     url(r'^api/', include('pages.urls.api')),
+    url(r'^get-progress/', upload_progress, name="upload_progress"),
     url(r'^', include('pages.urls.uploaded_template')),
 )

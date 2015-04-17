@@ -1,4 +1,4 @@
-# Copyright (c) 2014, Djaodjin Inc.
+# Copyright (c) 2015, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -31,7 +31,6 @@ register = template.Library()
 def pages_static_js():
     javascript = [
         "vendor/js/jquery.js",
-        "js/ajax_setup.js",
         "vendor/js/dropzone.js",
         "vendor/js/jquery.autosize.js",
         "vendor/js/jquery.selection.js",

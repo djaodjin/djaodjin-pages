@@ -22,60 +22,41 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import os
-
-from django.conf import settings as django_settings
+from django.core.files.storage import get_storage_class
+from storages.backends.s3boto import S3BotoStorage
 from django.core.exceptions import ImproperlyConfigured
 
-from .models import UploadedTemplate
-from . import settings
+from .settings import (
+    GET_CURRENT_ACCOUNT,
+    ACCOUNT_URL_KWARG,
+    AWS_STORAGE_BUCKET_NAME)
+from .compat import import_string
 
 
 class AccountMixin(object):
 
-    account_url_kwarg = settings.ACCOUNT_URL_KWARG
+    account_url_kwarg = ACCOUNT_URL_KWARG
 
     def get_account(self):
-        if settings.GET_CURRENT_ACCOUNT:
-            from .compat import import_string
-            return import_string(settings.GET_CURRENT_ACCOUNT)(
+        if GET_CURRENT_ACCOUNT:
+            return import_string(GET_CURRENT_ACCOUNT)(
                 self.account_url_kwarg, self.kwargs)
         return None
 
 
-class TemplateChoiceMixin(AccountMixin):
+class UploadedImageMixin(object):
 
-    #pylint: disable=unused-variable, line-too-long
-    def get_template_names(self):
-        """
-        Returns a list of template names to be used for the request. Must return
-        a list. May not be called if render_to_response is overridden.
-        """
-        account = self.get_account()
-        if self.template_name is None:
-            raise ImproperlyConfigured(
-                "TemplateResponseMixin requires either a definition of "
-                "'template_name' or an implementation of 'get_template_names()'")
-        else:
-            if UploadedTemplate.objects.filter(
-                    account=account, is_active=True).count() > 0:
-                template_name = None
-                uploaded_templates = UploadedTemplate.objects.filter(
-                    account=account, is_active=True).order_by("-created_at")[0]
-                if account:
-                    root_account_path = account.slug +'/'+ uploaded_templates.name
-                else:
-                    root_account_path = uploaded_templates.name
-                for directory in django_settings.TEMPLATE_DIRS:
-                    for (dirpath, dirnames, filenames) in os.walk(directory):
-                        if root_account_path in dirpath:
-                            for filename in filenames:
-                                if filename == self.template_name:
-                                    template_name = os.path.join(root_account_path, filename)
-
-                if template_name:
-                    return [template_name]
-                else:
-                    return [self.template_name]
+    @staticmethod
+    def get_default_storage(instance):
+        if get_storage_class() == S3BotoStorage:
+            if instance.account:
+                try:
+                    bucket_name = instance.account.bucket_name
+                except AttributeError:
+                    raise ImproperlyConfigured(
+                        "Your account model need to have a bucket name field.")
             else:
-                return [self.template_name]
+                bucket_name = AWS_STORAGE_BUCKET_NAME
+            return get_storage_class()(bucket=bucket_name)
+        else:
+            return None

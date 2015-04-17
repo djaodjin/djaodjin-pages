@@ -1,4 +1,4 @@
-# Copyright (c) 2014, Djaodjin Inc.
+# Copyright (c) 2015, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -22,61 +22,76 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from django.core.exceptions import ImproperlyConfigured
-from pages.settings import USE_S3, DEFAULT_STORAGE_BUCKET_NAME
+import os
+
+from django.db.models import Q
 from rest_framework import serializers
-from pages.models import PageElement, UploadedImage, UploadedTemplate, S3Bucket
+
+from pages.settings import MEDIA_PATH
+from pages.models import PageElement, UploadedImage, UploadedTemplate
 #pylint: disable=no-init
-#pylint: disable=old-style-class
 
 class PageElementSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = PageElement
-        fields = ('slug', 'text')
+        fields = ('slug', 'text', 'image')
         read_only_fields = ('slug',)
+
+    @staticmethod
+    def set_image_field(instance, validated_data):
+        if instance.slug.startswith('djmedia-'):
+            img = validated_data.get('text').split('/')[-1]
+            if instance.account:
+                img_path = os.path.join(MEDIA_PATH, instance.account.slug, img)
+            else:
+                img_path = os.path.join(MEDIA_PATH, img)
+            uploadimage = UploadedImage.objects.filter(Q(
+                    uploaded_file=img_path)|Q(uploaded_file_cache=img_path))
+            if uploadimage.count() > 0:
+                instance.image = uploadimage.first()
+        return instance
+
+    def update(self, instance, validated_data):
+        return super(PageElementSerializer, self).update(
+            self.set_image_field(instance, validated_data), validated_data)
+
+    def create(self, validated_data):
+        instance = super(PageElementSerializer, self).create(validated_data)
+        instance = self.set_image_field(instance, validated_data)
+        instance.save()
+        return instance
+
 
 class UploadedImageSerializer(serializers.ModelSerializer):
     file_src = serializers.SerializerMethodField('get_file_url')
-    file_src_temp = serializers.SerializerMethodField('get_file_temp_url')
+    unique_id = serializers.SerializerMethodField('get_sha1_name')
 
     class Meta:
         model = UploadedImage
         fields = (
             'file_src',
             'uploaded_file',
-            'file_src_temp',
-            'uploaded_file_temp',
             'account',
-            'id',
-            'tags')
-
-    @staticmethod
-    def get_s3_url(obj):
-        if obj.account:
-            try:
-                bucket = S3Bucket.objects.get(account=obj.account)
-                return 'https://%s.s3.amazonaws.com/' % bucket.bucket_name
-            except S3Bucket.DoesNotExist:
-                raise ImproperlyConfigured(
-                    "Account '%s' has not valid S3 bucket." % obj.account.slug)
-        else:
-            return 'https://%s.s3.amazonaws.com/' % DEFAULT_STORAGE_BUCKET_NAME
+            'tags',
+            'unique_id')
 
     def get_file_url(self, obj):#pylint: disable=no-self-use
         if obj.uploaded_file:
-            if USE_S3:
-                return obj.uploaded_file.url.split('?')[0].replace('/media/', self.get_s3_url(obj))#pylint: disable=line-too-long
-            else:
-                return obj.uploaded_file.url.split('?')[0]
+            return obj.uploaded_file.url.split('?')[0]
         else:
-            return None
+            return obj.uploaded_file_cache.url
 
-    def get_file_temp_url(self, obj):#pylint: disable=no-self-use
-        if obj.uploaded_file_temp:
-            return '/media/' + obj.uploaded_file_temp.name
+    def get_sha1_name(self, obj):
+        """
+        Return the sha1 name of the file without extension
+        Will be used as id to update and delete file
+        """
+        if obj.uploaded_file:
+            return obj.uploaded_file.name.split('/')[-1].split('.')[0]
         else:
-            return None
+            return obj.uploaded_file_cache.name.split('/')[-1].split('.')[0]
+
 
 class UploadedTemplateSerializer(serializers.ModelSerializer):
 

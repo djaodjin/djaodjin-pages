@@ -1,4 +1,4 @@
-# Copyright (c) 2014, Djaodjin Inc.
+# Copyright (c) 2015, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -37,7 +37,12 @@ class ProgressBarUploadHandler(FileUploadHandler):
         self.progress_id = None
         self.cache_key = None
 
-    def handle_raw_input(self, input_data, META, content_length, boundary, encoding=None):#pylint: disable=line-too-long
+    def handle_raw_input(self,
+        input_data,
+        META,
+        content_length,
+        boundary,
+        encoding=None):
         self.content_length = content_length
         if 'X-Progress-ID' in self.request.GET:
             self.progress_id = self.request.GET['X-Progress-ID']
@@ -50,9 +55,6 @@ class ProgressBarUploadHandler(FileUploadHandler):
                 'length': self.content_length,
                 'uploaded': 0
             })
-
-    def new_file(self, field_name, file_name, content_type, content_length, charset=None, *args, **kwargs):#pylint: disable=line-too-long
-        pass
 
     def receive_data_chunk(self, raw_data, start):
         if self.cache_key:

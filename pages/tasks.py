@@ -1,4 +1,4 @@
-# Copyright (c) 2014, Djaodjin Inc.
+# Copyright (c) 2015, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -24,37 +24,23 @@
 
 import os
 
+from pages.settings import MEDIA_ROOT
 from celery import task
-from pages.models import UploadedImage, PageElement
-from pages.settings import MEDIA_PATH, NO_LOCAL_STORAGE
-from django.conf import settings
 
 # XXX -  not callable on pylint!
 @task()#pylint: disable=not-callable
-def upload_to_s3(uploaded_file, account, filename):
-    if account:
-        full_path = MEDIA_PATH + account.slug + '/' + filename
-    else:
-        full_path = MEDIA_PATH + filename
-    if not NO_LOCAL_STORAGE:
+def upload_to_s3(file_obj, uploaded_file):
+    file_path = os.path.join(MEDIA_ROOT,
+        file_obj.uploaded_file_cache.name)
+    file_obj.uploaded_file = uploaded_file
 
-        uploaded_temp = UploadedImage.objects.get(
-            uploaded_file_temp=full_path)
+    file_obj.save()
 
-        uploaded_temp.uploaded_file = uploaded_file
-        uploaded_temp.save()
+    file_obj.uploaded_file_cache = None
+    os.remove(file_path)
+    # Duplicate save:
+    # First is to upload file to S3 but keep cache file
+    # Second clear cache
+    file_obj.save()
 
-        page_elements = PageElement.objects.filter(text='/media/' + full_path)
-        for page_element in page_elements:
-            page_element.text = settings.S3_URL + '/' + full_path
-            page_element.save()
-        # delete file in server
-        os.remove(os.path.join(settings.MEDIA_ROOT, full_path))
-    else:
-        img_obj = UploadedImage(
-            uploaded_file=uploaded_file,
-            account=account
-            )
-        img_obj.save()
-        UploadedImage.objects.filter(
-            uploaded_file=full_path).order_by('-created_at')[0].delete()
+

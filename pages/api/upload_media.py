@@ -1,4 +1,4 @@
-# Copyright (c) 2014, Djaodjin Inc.
+# Copyright (c) 2015, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -23,189 +23,117 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pylint: disable=no-init,no-member,unused-variable
-#pylint: disable=old-style-class,line-too-long,maybe-no-member
+#pylint: disable=old-style-class,maybe-no-member
 
-import json, hashlib, os, subprocess, tempfile
-
-from PIL import Image
-from StringIO import StringIO
+import json, hashlib, os
 
 from django.http import HttpResponse
 from django.core.cache import cache
-from django.core.files.uploadedfile import InMemoryUploadedFile
-from django.core.exceptions import ImproperlyConfigured
-from django.conf import settings
+from django.utils.text import slugify
+from django.core.files.storage import get_storage_class
+
+from django.db.models import Q
+
+from storages.backends.s3boto import S3BotoStorage
+
 from rest_framework import status
 from rest_framework import generics
 from rest_framework.parsers import FileUploadParser
 from rest_framework.response import Response
-from storages.backends.s3boto import S3BotoStorage
 
-from pages import settings
-from pages.models import UploadedImage, PageElement, S3Bucket
+from pages.settings import MEDIA_ROOT
+from pages.models import UploadedImage, PageElement
 from pages.serializers import UploadedImageSerializer
-from pages.mixins import AccountMixin
+from pages.mixins import AccountMixin, UploadedImageMixin
 from pages.tasks import upload_to_s3
 
 
-class MediaListAPIView(AccountMixin, generics.ListCreateAPIView):
+class MediaListAPIView(AccountMixin,
+    UploadedImageMixin,
+    generics.ListCreateAPIView):
+
     serializer_class = UploadedImageSerializer
     parser_classes = (FileUploadParser,)
-
-    @staticmethod
-    def cut_off_video(video_origin):
-        video = video_origin
-        video.file.seek(0)
-        temp_path = tempfile.gettempdir()
-        with open(os.path.join(temp_path, 'temp_video'), 'wb') as new_file:
-            new_file.write(video.read())
-        subprocess.call([settings.FFMPEG_PATH, '-ss', '1', '-i', os.path.join(temp_path, 'temp_video'), '-c', 'copy', '-t', '3', '-y', os.path.join(temp_path, video_origin.name), '-loglevel', 'quiet'])
-        return temp_path
-
-    @staticmethod
-    def video_as_memory_file(video_origin, temp_path):
-        video_string = StringIO()
-        with open(os.path.join(temp_path, video_origin.name), 'rb') as video_file:
-            video_string.write(video_file.read())
-        c_type = video_origin.content_type
-        videof = InMemoryUploadedFile(video_string, None, video_origin.name, c_type, video_string.len, None)
-        videof.seek(0)
-        return videof
-
-    @staticmethod
-    def resize_image(image_origin):
-        image = image_origin
-        image.file.seek(0) # just in case
-        img_duplicate = Image.open(StringIO(image.file.read()))
-        img_duplicate.thumbnail((100, 100), Image.ANTIALIAS)
-        image_string = StringIO()
-        img_duplicate.save(image_string, img_duplicate.format)
-
-        # for some reason content_type is e.g. 'images/jpeg' instead of 'image/jpeg'
-        c_type = image.content_type.replace('images', 'image')
-        imf = InMemoryUploadedFile(image_string, None, image.name, c_type, image_string.len, None)
-        imf.seek(0)
-        return imf
-
-    def get_default_storage(self):
-        if self.get_account():
-            try:
-                bucket = S3Bucket.objects.get(account=self.get_account())
-                return S3BotoStorage(bucket=bucket.bucket_name)
-            except S3Bucket.DoesNotExist:
-                raise ImproperlyConfigured(
-                    "Account '%s' has not valid S3 bucket." % self.get_account().slug)
-        else:
-            return S3BotoStorage(bucket=settings.DEFAULT_STORAGE_BUCKET_NAME)
 
     def post(self, request, account_slug=None, format=None, *args, **kwargs):#pylint: disable=unused-argument,redefined-builtin, too-many-locals
         uploaded_file = request.FILES['file']
         existing_file = False
+        file_name = slugify(uploaded_file.name)
         sha1_filename = hashlib.sha1(uploaded_file.read()).hexdigest() + '.' +\
             str(uploaded_file).split('.')[1].lower()
+
+        # Replace filename by unique hash key
         uploaded_file.name = sha1_filename
-        if settings.USE_S3:
-            path = settings.MEDIA_PATH
-            if self.get_account():
-                full_path = path + self.get_account().slug + '/' + sha1_filename
-            else:
-                full_path = path + sha1_filename
-            if self.get_default_storage().exists(full_path):
-                existing_file = True
-        if not existing_file:
-            if settings.USE_S3:
-                if settings.NO_LOCAL_STORAGE:
-                    # Image processing
-                    if uploaded_file.name.endswith(('.jpg', '.bmp', '.gif', '.jpg', '.png')):
-                        in_memory_file = self.resize_image(uploaded_file)
-                    # Video processing
-                    elif uploaded_file.name.endswith('.mp4'):
-                        temp_path = self.cut_off_video(uploaded_file)
-                        in_memory_file = self.video_as_memory_file(uploaded_file, temp_path)
-                    file_obj = UploadedImage(
-                        uploaded_file=in_memory_file,
-                        account=self.get_account()
-                        )
-                else:
-                    file_obj = UploadedImage(
-                        uploaded_file_temp=uploaded_file,
-                        account=self.get_account()
-                        )
+        account = self.get_account()
 
-            else:
-                file_obj = UploadedImage(
-                    uploaded_file=uploaded_file,
-                    account=self.get_account())
-
-            file_obj.save()
-            if settings.USE_S3:
-                # Delay the upload to S3
-                upload_to_s3.delay(uploaded_file, self.get_account(), sha1_filename)
-            serializer = UploadedImageSerializer(file_obj)
+        if get_storage_class() == S3BotoStorage:
+            file_obj = UploadedImage.objects.create(
+                uploaded_file_cache=uploaded_file,
+                account=self.get_account(),
+                file_name=file_name)
+            upload_to_s3.delay(file_obj, uploaded_file)
         else:
-            file_obj = UploadedImage.objects.get(uploaded_file=full_path)
-            serializer = UploadedImageSerializer(file_obj)
+            file_obj = UploadedImage.objects.create(
+                uploaded_file=uploaded_file,
+                account=self.get_account(),
+                file_name=file_name)
 
-        if settings.USE_S3 and not settings.NO_LOCAL_STORAGE:
-            response = {
-                'uploaded_file_temp': os.path.join(settings.MEDIA_URL, serializer.data['uploaded_file_temp']),
+        serializer = UploadedImageSerializer(file_obj)
+
+        file_src = serializer.data['file_src']
+        if not file_src:
+            file_src = serializer.data['file_src_cache']
+        response = {
+                'uploaded_file': file_src,
                 'exist': existing_file,
-                'id':serializer.data['id']
-                }
-        elif settings.USE_S3 and settings.NO_LOCAL_STORAGE:
-            response = {
-                'uploaded_file_temp': os.path.join(self.get_s3_url(file_obj), serializer.data['uploaded_file']),
-                'exist': existing_file,
-                'id':serializer.data['id']
-                }
-        else:
-            response = {
-                'uploaded_file_temp': os.path.join(settings.MEDIA_URL, serializer.data['uploaded_file']),
-                'exist': existing_file,
-                'id':serializer.data['id']
+                'unique_id':serializer.data['unique_id']
                 }
         return Response(response, status=status.HTTP_200_OK)
 
-    @staticmethod
-    def get_s3_url(obj):
-        if obj.account:
-            return 'https://%s.s3.amazonaws.com/' % obj.account.bucket_name
-        else:
-            return 'https://%s.s3.amazonaws.com/' % settings.DEFAULT_STORAGE_BUCKET_NAME
-
     def get_queryset(self):
-        search = self.request.GET.get('search')
-        queryset = UploadedImage.objects.filter(account=self.get_account()).order_by("-created_at")
-        if search != '':
-            queryset = UploadedImage.objects.filter(tags__contains=search).order_by("-created_at")
+        queryset = UploadedImage.objects.filter(
+            account=self.get_account()).order_by("-created_at")
+        if self.request.GET.get('q') != '':
+            queryset = queryset.filter(
+                Q(tags__contains=self.request.GET.get('q')) | \
+                Q(file_name__contains=self.request.GET.get('q')))\
+                .order_by("-created_at")
         return queryset
 
 
-class MediaUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
+class MediaUpdateDestroyAPIView(
+    AccountMixin,
+    UploadedImageMixin,
+    generics.RetrieveUpdateDestroyAPIView):
+
     model = UploadedImage
     serializer_class = UploadedImageSerializer
-    queryset = UploadedImage.objects.all()
+    lookup_url_kwarg = 'slug'
 
-    @staticmethod
-    def get_default_storage(obj):
-        if obj.account:
-            try:
-                bucket = S3Bucket.objects.get(account=obj.account)
-                return S3BotoStorage(bucket=bucket.bucket_name)
-            except S3Bucket.DoesNotExist:
-                raise ImproperlyConfigured(
-                    "Account '%s' has not valid S3 bucket." % obj.account.slug)
-        else:
-            return S3BotoStorage(bucket=settings.DEFAULT_STORAGE_BUCKET_NAME)
+    def get_queryset(self):
+        return UploadedImage.objects.filter(
+            account=self.get_account())
+
+    def get_object(self):
+        queryset = self.get_queryset()
+        unique_id = self.kwargs.get(self.lookup_url_kwarg)
+        instance = self.get_queryset().filter(
+            Q(uploaded_file__contains=unique_id)\
+            |Q(uploaded_file_cache__contains=unique_id))[0]
+        return instance
 
     def delete(self, request, *args, **kwargs):
         instance = self.get_object()
-        if settings.USE_S3:
-            # remove fil from S3 Bucket
-            self.get_default_storage(instance).delete(instance.uploaded_file.name)
+        storage_backend = self.get_default_storage(instance)
+        if storage_backend:
+            try:
+                storage_backend.delete(instance.uploaded_file.name)
+            except ValueError:
+                # No file found on S3 delete cache file
+                os.remove(os.path.join(
+                    MEDIA_ROOT, instance.uploaded_file_cache.name))
         else:
-            # remove file from server
-            os.remove(os.path.join(settings.MEDIA_ROOT, instance.uploaded_file.name))
+            os.remove(os.path.join(MEDIA_ROOT, instance.uploaded_file.name))
         instance.delete()
         page_elements = PageElement.objects.filter(text=instance.uploaded_file.url.split('?')[0])
         for page_element in page_elements:
