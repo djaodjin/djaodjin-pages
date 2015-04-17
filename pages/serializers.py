@@ -30,6 +30,7 @@ from rest_framework import serializers
 from pages.settings import MEDIA_PATH
 from pages.models import PageElement, UploadedImage, UploadedTemplate
 #pylint: disable=no-init
+#pylint: disable=old-style-class
 
 class PageElementSerializer(serializers.ModelSerializer):
 
@@ -82,7 +83,7 @@ class UploadedImageSerializer(serializers.ModelSerializer):
         else:
             return obj.uploaded_file_cache.url
 
-    def get_sha1_name(self, obj):
+    def get_sha1_name(self, obj):#pylint: disable=no-self-use
         """
         Return the sha1 name of the file without extension
         Will be used as id to update and delete file

@@ -52,6 +52,7 @@ class PageElementDetail(AccountMixin, CreateModelMixin,
 
     def get_queryset(self):
         kwargs = {self.lookup_field: self.kwargs.get(self.lookup_url_kwarg)}
+        #pylint: disable=star-args
         return PageElement.objects.filter(
             account=self.get_account(), **kwargs)
 

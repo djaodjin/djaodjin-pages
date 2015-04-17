@@ -55,7 +55,9 @@ class MediaListAPIView(AccountMixin,
     serializer_class = UploadedImageSerializer
     parser_classes = (FileUploadParser,)
 
-    def post(self, request, account_slug=None, format=None, *args, **kwargs):#pylint: disable=unused-argument,redefined-builtin, too-many-locals
+    def post(self, request,
+        account_slug=None, format=None, *args, **kwargs):#pylint: disable=unused-argument,redefined-builtin, too-many-locals
+
         uploaded_file = request.FILES['file']
         existing_file = False
         file_name = slugify(uploaded_file.name)
