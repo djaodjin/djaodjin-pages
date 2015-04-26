@@ -32,7 +32,7 @@ from pages.mixins import UploadedImageMixin
 
 class S3UploadMediaTask(UploadedImageMixin, Task):
 
-    def run(self, file_obj, uploaded_file):
+    def run(self, file_obj, uploaded_file):# pylint: disable=arguments-differ
         default_storage = self.get_default_storage(file_obj.account)
         file_path = os.path.join(MEDIA_ROOT,
             file_obj.file_path)

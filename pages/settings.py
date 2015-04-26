@@ -32,7 +32,8 @@ _SETTINGS = {
     'MEDIA_PATH': 'pages/images/',
     'MEDIA_URL': getattr(settings, 'MEDIA_URL'),
     'MEDIA_ROOT': getattr(settings, 'MEDIA_ROOT'),
-    'AWS_STORAGE_BUCKET_NAME': getattr(settings, 'AWS_STORAGE_BUCKET_NAME', None),
+    'AWS_STORAGE_BUCKET_NAME': getattr(
+        settings, 'AWS_STORAGE_BUCKET_NAME', None),
     'UPLOADED_TEMPLATE_DIR': None,
     'DISABLE_ACCOUNT_TEMPLATE_PATH': False,
     'UPLOADED_STATIC_DIR': None,

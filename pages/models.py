@@ -51,9 +51,6 @@ class UploadedImage(models.Model):
    	Image uploaded
     """
     created_at = models.DateTimeField(auto_now_add=True)
-    #uploaded_file = models.FileField(upload_to=file_full_path, null=True, blank=True)
-    #uploaded_file_cache = models.FileField(
-    #    upload_to=file_full_path, storage=FILE_SYSTEM, null=True, blank=True)
     uploaded_file = models.CharField(
         max_length=500, null=True, blank=True)
     uploaded_file_cache = models.CharField(
@@ -61,7 +58,8 @@ class UploadedImage(models.Model):
     file_path = models.CharField(
         max_length=500, null=True, blank=True)
     account = models.ForeignKey(
-       settings.ACCOUNT_MODEL, related_name='account_image', null=True, blank=True)
+       settings.ACCOUNT_MODEL, related_name='account_image',
+       null=True, blank=True)
     # Original filename to make search easier.
     file_name = models.CharField(max_length=100)
     tags = models.CharField(max_length=200, blank=True, null=True)
