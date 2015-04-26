@@ -41,8 +41,11 @@
         init: function(){
             var self = this;
             self.get_properties();
-            if (!self.$el.attr(self.options.unique_identifier) || self.$el.attr(self.options.unique_identifier) === ""){
-                throw new Error("editable element does not have valid id !");
+            this.id = self.$el.attr(self.options.unique_identifier);
+            if( !this.id ) {
+                this.id = self.$el.parents(
+                    '['+self.options.unique_identifier+']').attr(
+                        self.options.unique_identifier);
             }
             self.$el.on('click', function(){
                 self.toggle_input();
@@ -133,7 +136,7 @@
 
         save_edition: function(event){
             var self = this;
-            var id_element = self.$el.attr(self.options.unique_identifier);
+            var id_element = self.id;
             var saved_text = self.get_saved_text();
 
             var displayed_text = self.get_displayed_text();
@@ -238,7 +241,7 @@
                 $.ajax({
                     method:'GET',
                     async:false,
-                    url: self.options.base_url + self.$el.attr(self.options.unique_identifier) +'/',
+                    url: self.options.base_url + self.id +'/',
                     success: function(data){
                         if (self.$el.attr('data-key')){
                             self.origin_text = data[self.$el.attr('data-key')];
