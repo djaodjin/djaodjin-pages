@@ -47,7 +47,6 @@ class PageElementSerializer(serializers.ModelSerializer):
             uploadimage = UploadedImage.objects.filter(Q(
                     uploaded_file=img)|Q(uploaded_file_cache=img),
                     account=instance.account)
-            print uploadimage
             if uploadimage.count() > 0:
                 instance.image = uploadimage.first()
         return instance

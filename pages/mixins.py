@@ -48,7 +48,7 @@ class UploadedImageMixin(object):
     @staticmethod
     def get_default_storage(account=None):
         if get_storage_class() == S3BotoStorage:
-            if True:
+            if account:
                 try:
                     bucket_name = account.bucket_name
                 except AttributeError:
