@@ -22,8 +22,6 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import os
-
 from django.core.files.storage import get_storage_class
 from storages.backends.s3boto import S3BotoStorage
 from django.core.exceptions import ImproperlyConfigured

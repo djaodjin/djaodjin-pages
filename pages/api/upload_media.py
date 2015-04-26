@@ -29,7 +29,6 @@ import json, hashlib, os
 
 from django.http import HttpResponse
 from django.core.cache import cache
-from django.core.files.storage import get_storage_class
 from django.db.models import Q
 from django.core.files.storage import FileSystemStorage
 
@@ -54,7 +53,7 @@ class MediaListAPIView(AccountMixin,
     serializer_class = UploadedImageSerializer
     parser_classes = (FileUploadParser,)
 
-    def post(self, request, *args, **kwargs):#pylint: disable=unused-argument
+    def post(self, request, *args, **kwargs):#pylint: disable=unused-argument, too-many-locals
         uploaded_file = request.FILES['file']
         existing_file = False
         file_name = uploaded_file.name
