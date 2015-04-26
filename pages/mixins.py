@@ -58,8 +58,4 @@ class UploadedImageMixin(object):
                 bucket_name = settings.AWS_STORAGE_BUCKET_NAME
             return get_storage_class()(bucket=bucket_name)
         else:
-            if account:
-                return get_storage_class()(location=os.path.join(
-                    settings.MEDIA_ROOT, account.slug))
-            else:
-                return get_storage_class()(location=settings.MEDIA_ROOT)
+            return get_storage_class()(location=settings.MEDIA_ROOT)
