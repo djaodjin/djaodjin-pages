@@ -24,23 +24,24 @@
 
 import os
 
-from pages.settings import MEDIA_ROOT
-from celery import task
+from celery import Task
 
-# XXX -  not callable on pylint!
-@task()#pylint: disable=not-callable
-def upload_to_s3(file_obj, uploaded_file):
-    file_path = os.path.join(MEDIA_ROOT,
-        file_obj.uploaded_file_cache.name)
-    file_obj.uploaded_file = uploaded_file
+from pages.settings import MEDIA_ROOT, MEDIA_PATH
+from pages.mixins import UploadedImageMixin
 
-    file_obj.save()
 
-    file_obj.uploaded_file_cache = None
-    os.remove(file_path)
-    # Duplicate save:
-    # First is to upload file to S3 but keep cache file
-    # Second clear cache
-    file_obj.save()
+class S3UploadMediaTask(UploadedImageMixin, Task):
+
+    def run(self, file_obj, uploaded_file):
+        default_storage = self.get_default_storage(file_obj.account)
+        file_path = os.path.join(MEDIA_ROOT,
+            file_obj.file_path)
+        path = default_storage.save(
+                os.path.join(MEDIA_PATH, uploaded_file.name), uploaded_file)
+
+        file_obj.uploaded_file = default_storage.url(path).split('?')[0]
+        file_obj.save()
+        # clear cache
+        os.remove(file_path)
 
 

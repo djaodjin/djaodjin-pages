@@ -36,8 +36,6 @@
 $(document).ready(function() {
       $('.editable').editor({
           base_url: "{% url 'page_elements' %}",
-          template_path: "{{ template_path }}",
-          enable_upload: false,
       });
 
       $.sidebargallery({

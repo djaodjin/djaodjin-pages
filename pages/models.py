@@ -22,24 +22,12 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import os
-
 from django.db import models
 from django.core.files.storage import FileSystemStorage
 
-from pages.settings import (
-    MEDIA_PATH,
-    ACCOUNT_MODEL,
-    MEDIA_ROOT)
+from . import settings
 
-FILE_SYSTEM = FileSystemStorage(location=MEDIA_ROOT)
-
-def file_full_path(instance, filename):
-    path = MEDIA_PATH
-    if instance.account:
-        return os.path.join(path, instance.account.slug, filename)
-    else:
-        return os.path.join(path, filename)
+FILE_SYSTEM = FileSystemStorage(location=settings.MEDIA_ROOT)
 
 
 class PageElement(models.Model):
@@ -52,7 +40,7 @@ class PageElement(models.Model):
     image = models.ForeignKey("UploadedImage",
         null=True)
     account = models.ForeignKey(
-        ACCOUNT_MODEL, related_name='account_page_element', null=True)
+        settings.ACCOUNT_MODEL, related_name='account_page_element', null=True)
 
     def __unicode__(self):
         return unicode(self.slug)
@@ -63,12 +51,17 @@ class UploadedImage(models.Model):
    	Image uploaded
     """
     created_at = models.DateTimeField(auto_now_add=True)
-    uploaded_file = models.FileField(
-        upload_to=file_full_path, null=True, blank=True)
-    uploaded_file_cache = models.FileField(
-        upload_to=file_full_path, storage=FILE_SYSTEM, null=True, blank=True)
+    #uploaded_file = models.FileField(upload_to=file_full_path, null=True, blank=True)
+    #uploaded_file_cache = models.FileField(
+    #    upload_to=file_full_path, storage=FILE_SYSTEM, null=True, blank=True)
+    uploaded_file = models.CharField(
+        max_length=500, null=True, blank=True)
+    uploaded_file_cache = models.CharField(
+        max_length=500, null=True, blank=True)
+    file_path = models.CharField(
+        max_length=500, null=True, blank=True)
     account = models.ForeignKey(
-        ACCOUNT_MODEL, related_name='account_image', null=True, blank=True)
+       settings.ACCOUNT_MODEL, related_name='account_image', null=True, blank=True)
     # Original filename to make search easier.
     file_name = models.CharField(max_length=100)
     tags = models.CharField(max_length=200, blank=True, null=True)
@@ -83,7 +76,7 @@ class UploadedTemplate(models.Model):
     """
 
     account = models.ForeignKey(
-        ACCOUNT_MODEL,
+        settings.ACCOUNT_MODEL,
         related_name='account_template', null=True, blank=True)
     name = models.CharField(max_length=150)
     created_at = models.DateTimeField(auto_now_add=True)

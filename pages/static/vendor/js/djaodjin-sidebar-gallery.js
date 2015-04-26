@@ -6,6 +6,21 @@
 */
 (function ($) {
 
+    $(document).on('click', '.closeModal', function(event){
+        event.preventDefault();
+        $('#openModal').remove();
+    });
+
+    var modalPreview = function(url){
+        var modal = '<div id="openModal" class="modalDialog">\
+                    <div>\
+                        <a href="#close" title="Close" class="closeModal">X</a>\
+                        <video src="'+ url +'" width="500px" controls></video>\
+                    </div>\
+                </div>';
+        return modal;
+    };
+
     var sidebar = '\
         <div id="sidebar-gallery">\
             <h1 class="">Medias</h1>\
@@ -22,6 +37,18 @@
     var id= null;
     var toggle_button = null;
     var count = 0;
+
+    var menuImage = function(sha, video, src){
+        var menu = '<ul id="menu-list">\
+        <li><a id="tag_media" media="' + sha + '" href="">Add tag</a></li>\
+        <li><a id="delete_media" media="' + sha + '" href="">Delete</a></li>';
+        if (video){
+            menu += '<li><a id="preview_media" image="' + sha + '" href="" src="'+ src +'">Preview</a></li></ul>';
+        }else{
+            menu += '</ul>';
+        }
+        return menu;
+    };
 
     var modal = '<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">\
   <div class="modal-dialog">\
@@ -79,6 +106,9 @@
                     setTimeout(update_progress_info(_this.options.url_progress), 20);
                 });
             }
+            $(document).on('click', '#delete_media', _this.deleteMedia);
+            $(document).on('click', '#tag_media', _this.tagMedia);
+            $(document).on('click', '#preview_media', _this.previewMedia);
 
             $(document).on('editInputVisible', function(){
                 $('#input_editor').droppable({
@@ -169,6 +199,13 @@
                 count = 0;
             });
 
+            DocDropzone.on("error", function(data, response){
+                $('#media-container').append('<div class="col-md-12 padding-top-img alert">' + response.message + '</div>');
+                setTimeout(function() {
+                    $('.alert').remove();
+                }, 3000);
+            });
+
             DocDropzone.on("success", function(data, response){
                 $('.progress-text').remove();
                 $('.dz-preview').remove();
@@ -179,10 +216,10 @@
                     last_index = 0;
                 }
                 if (!response.exist){
-                    if (response.uploaded_file.indexOf('.mp4') > 0){
-                        $('#list-media').prepend('<div class="media-single-container"><video data-id="'+ response.unique_id + '" id="image_'+ last_index + '" class="image  clickable-menu image_media" src="'+ response.uploaded_file +'" width="50px"></video></div>');
+                    if (response.file_src.indexOf('.mp4') > 0){
+                        $('#list-media').prepend('<div class="media-single-container"><video data-id="'+ response.sha + '" id="image_'+ last_index + '" class="image  clickable-menu image_media" src="'+ response.file_src +'" width="50px"></video></div>');
                     }else{
-                        $('#list-media').prepend('<div class="media-single-container"><img data-id="'+ response.unique_id + '" id="image_'+ last_index + '" class="image  clickable-menu image_media" src="'+ response.uploaded_file +'" width="50px"></div>');
+                        $('#list-media').prepend('<div class="media-single-container"><img data-id="'+ response.sha + '" id="image_'+ last_index + '" class="image  clickable-menu image_media" src="'+ response.file_src +'" width="50px"></div>');
                     }
                     
                 
@@ -210,6 +247,51 @@
                     _this._open_sidebar();
                 }
             });
+        },
+
+        deleteMedia: function(event){
+            event.preventDefault();
+            var $this_element = $(this);
+            $.ajax({
+                method: 'delete',
+                url: _this.options.base_media_url + $this_element.attr('media') +'/',
+                success: function(){
+                    $('img[data-id="' + $this_element.attr('media') + '"]').parent('.media-single-container').remove();
+                }
+            });
+            $('#media-info').empty();
+        },
+
+        tagMedia: function(event){
+            event.preventDefault();
+            var $this_element = $(this);
+            var orginal_tags = null;
+            $.ajax({
+                method: 'get',
+                async:false,
+                url:_this.options.base_media_url + $this_element.attr('media') +'/',
+                success: function(response){
+                    orginal_tags = response.tags;
+                }
+            });
+            
+            var tags = prompt('Please enter tags', orginal_tags);
+            if (tags !== null){
+                $.ajax({
+                    method: 'patch',
+                    url:_this.options.base_media_url + $this_element.attr('media') + '/',
+                    data:{'tags': tags},
+                    success: function(){
+                        console.log('updated');
+                    }
+                });
+            }
+        },
+
+        previewMedia: function(event){
+            event.preventDefault();
+            var $this_element = $(this);
+            $('body').append(modalPreview($this_element.attr('src')));
         },
 
         saveImage: function(element){
@@ -264,11 +346,10 @@
                     $.each(data, function(index,element){
                         var src_file = element.file_src;
                         if (src_file.indexOf('.mp4') > 0){
-                            $('#list-media').append('<div class="media-single-container"><img data-id="'+ element.unique_id + '" id="image_'+ index + '" class="image clickable-menu image_media" src="'+ src_file +'" width="50px"></div>');
+                            $('#list-media').append('<div class="media-single-container"><video data-id="'+ element.sha + '" id="image_'+ index + '" class="image clickable-menu image_media" src="'+ src_file +'" width="50px"></video></div>');
                         }else{
-                            $('#list-media').append('<div class="media-single-container"><img data-id="'+ element.unique_id + '" id="image_'+ index + '" class="image clickable-menu image_media" src="'+ src_file +'" width="50px"></div>');
+                            $('#list-media').append('<div class="media-single-container"><img data-id="'+ element.sha + '" id="image_'+ index + '" class="image clickable-menu image_media" src="'+ src_file +'" width="50px"></div>');
                         }
-                        // $('#list-images').append('<div class="col-md-6 padding-top-img"><img data-id="'+ element.id + '" id="image_'+ index + '" class="image clickable-menu padding-top-img image_media" src="'+ src_file+'" width="50px"></div>');
                         $('#image_' + index).draggable({
                             helper: 'clone',
                             revert: true,
@@ -287,66 +368,80 @@
         },
 
         makemenu: function(){
-            $(document).contextmenu({
-                delegate: ".clickable-menu",
-                menu: [
-                    {title: "Delete", cmd: "delete_media"},
-                    {title: "Add tag", cmd: "add_tag"},
-                    {title: "Preview Video", cmd: "preview_video" },
-                    {title: "Media info", cmd: "media_info" }
-                    ],
-                select: function(event, ui) {
-                    if ($('.url_info').length){
-                        $('.url_info').remove();
+
+            $(document).on('click', '.clickable-menu', function(){
+                $('#media-info').empty();
+                console.log($(this).attr('src'))
+                $.ajax({
+                    method: 'get',
+                    async:false,
+                    url:_this.options.base_media_url + $(this).data('id') + '/',
+                    success: function(response){
+                        $('#media-info').append('<div class="url_info"><textarea style="width:98%" rows="4" readonly>'+response.file_src +'</textarea></div>');
                     }
-                    var id = $(ui.target).data('id');
-                    if (ui.cmd == 'delete_media'){
-                        $.ajax({
-                            method: 'delete',
-                            url:_this.options.base_media_url +id +'/',
-                            success: function(){
-                                $(ui.target).parent('.media-single-container').remove();
-                            }
-                        });
-                    }else if (ui.cmd == 'add_tag'){
-                        var orginal_tags = null;
-                        $.ajax({
-                            method: 'get',
-                            async:false,
-                            url:_this.options.base_media_url+id+'/',
-                            success: function(response){
-                                orginal_tags = response.tags;
-                            }
-                        });
-                        
-                        var tags = prompt('Please enter tags', orginal_tags);
-                        if (tags !== null){
-                            $.ajax({
-                                method: 'patch',
-                                url:_this.options.base_media_url+id+'/',
-                                data:{'tags': tags},
-                                success: function(){
-                                    console.log('updated');
-                                }
-                            });
-                        }
-                        
-                    }else if (ui.cmd == 'preview_video'){
-                        $('body').append(modal);
-                        $('#modal-video').attr('src',$(ui.target).attr('src'));
-                        $('#myModal').modal('show');
-                    }else if (ui.cmd == 'media_info') {
-                        $.ajax({
-                            method: 'get',
-                            async:false,
-                            url:_this.options.base_media_url+id+'/',
-                            success: function(response){
-                                $('#media-info').append('<div class="url_info"><h4>Full media url</h4><textarea style="width:98%" rows="4" readonly>'+response.file_src +'</textarea></div>');
-                            }
-                        });
-                    }
-                }
+                });
+                $('#media-info').append(menuImage($(this).data('id'), $(this).prop("tagName") == 'VIDEO', $(this).attr('src')));
             });
+            // $(document).contextmenu({
+            //     delegate: ".clickable-menu",
+            //     menu: [
+            //         {title: "Delete", cmd: "delete_media"},
+            //         {title: "Add tag", cmd: "add_tag"},
+            //         {title: "Preview Video", cmd: "preview_video" },
+            //         {title: "Media info", cmd: "media_info" }
+            //         ],
+            //     select: function(event, ui) {
+            //         if ($('.url_info').length){
+            //             $('.url_info').remove();
+            //         }
+            //         var id = $(ui.target).data('id');
+            //         if (ui.cmd == 'delete_media'){
+            //             $.ajax({
+            //                 method: 'delete',
+            //                 url:_this.options.base_media_url +id +'/',
+            //                 success: function(){
+            //                     $(ui.target).parent('.media-single-container').remove();
+            //                 }
+            //             });
+            //         }else if (ui.cmd == 'add_tag'){
+            //             var orginal_tags = null;
+            //             $.ajax({
+            //                 method: 'get',
+            //                 async:false,
+            //                 url:_this.options.base_media_url+id+'/',
+            //                 success: function(response){
+            //                     orginal_tags = response.tags;
+            //                 }
+            //             });
+                        
+            //             var tags = prompt('Please enter tags', orginal_tags);
+            //             if (tags !== null){
+            //                 $.ajax({
+            //                     method: 'patch',
+            //                     url:_this.options.base_media_url+id+'/',
+            //                     data:{'tags': tags},
+            //                     success: function(){
+            //                         console.log('updated');
+            //                     }
+            //                 });
+            //             }
+                        
+            //         }else if (ui.cmd == 'preview_video'){
+            //             $('body').append(modal);
+            //             $('#modal-video').attr('src',$(ui.target).attr('src'));
+            //             $('#myModal').modal('show');
+            //         }else if (ui.cmd == 'media_info') {
+            //             $.ajax({
+            //                 method: 'get',
+            //                 async:false,
+            //                 url:_this.options.base_media_url+id+'/',
+            //                 success: function(response){
+            //                     $('#media-info').append('<div class="url_info"><h4>Full media url</h4><textarea style="width:98%" rows="4" readonly>'+response.file_src +'</textarea></div>');
+            //                 }
+            //             });
+            //         }
+            //     }
+            // });
         }
 
 

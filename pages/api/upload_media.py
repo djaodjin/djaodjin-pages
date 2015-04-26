@@ -29,10 +29,9 @@ import json, hashlib, os
 
 from django.http import HttpResponse
 from django.core.cache import cache
-from django.utils.text import slugify
 from django.core.files.storage import get_storage_class
-
 from django.db.models import Q
+from django.core.files.storage import FileSystemStorage
 
 from storages.backends.s3boto import S3BotoStorage
 
@@ -41,11 +40,11 @@ from rest_framework import generics
 from rest_framework.parsers import FileUploadParser
 from rest_framework.response import Response
 
-from pages.settings import MEDIA_ROOT
+from pages import settings
 from pages.models import UploadedImage, PageElement
 from pages.serializers import UploadedImageSerializer
 from pages.mixins import AccountMixin, UploadedImageMixin
-from pages.tasks import upload_to_s3
+from pages.tasks import S3UploadMediaTask
 
 
 class MediaListAPIView(AccountMixin,
@@ -55,50 +54,64 @@ class MediaListAPIView(AccountMixin,
     serializer_class = UploadedImageSerializer
     parser_classes = (FileUploadParser,)
 
-    def post(self, request,
-        account_slug=None, format=None, *args, **kwargs):#pylint: disable=unused-argument,redefined-builtin, too-many-locals
-
+    def post(self, request, *args, **kwargs):#pylint: disable=unused-argument
         uploaded_file = request.FILES['file']
         existing_file = False
-        file_name = slugify(uploaded_file.name)
+        file_name = uploaded_file.name
         sha1_filename = hashlib.sha1(uploaded_file.read()).hexdigest() + '.' +\
             str(uploaded_file).split('.')[1].lower()
 
         # Replace filename by unique hash key
         uploaded_file.name = sha1_filename
         account = self.get_account()
+        storage = storage = self.get_default_storage(account)
 
-        if get_storage_class() == S3BotoStorage:
-            file_obj = UploadedImage.objects.create(
-                uploaded_file_cache=uploaded_file,
-                account=self.get_account(),
-                file_name=file_name)
-            upload_to_s3.delay(file_obj, uploaded_file)
+        if storage.exists(os.path.join(settings.MEDIA_PATH, sha1_filename)):
+
+            file_obj = UploadedImage.objects.get(
+                Q(file_path=os.path.join(settings.MEDIA_PATH, sha1_filename))|
+                Q(file_path=os.path.join(settings.MEDIA_PATH, sha1_filename)),
+                account=account)
+
+            serializer = UploadedImageSerializer(file_obj)
+            return Response({'message':"Image already in your gallery."},
+                status=status.HTTP_400_BAD_REQUEST)
+
         else:
-            file_obj = UploadedImage.objects.create(
-                uploaded_file=uploaded_file,
-                account=self.get_account(),
-                file_name=file_name)
+            if get_storage_class() == S3BotoStorage:
+                system_storage = FileSystemStorage(location=settings.MEDIA_ROOT)
+                storage = self.get_default_storage(account)
+                path = system_storage.save(
+                    os.path.join(
+                    settings.MEDIA_PATH, sha1_filename), uploaded_file)
+                file_obj = UploadedImage.objects.create(
+                    uploaded_file_cache=os.path.join(settings.MEDIA_URL, path),
+                    file_path=path,
+                    account=self.get_account(),
+                    file_name=file_name)
+                upload_to_s3 = S3UploadMediaTask()
+                upload_to_s3.delay(file_obj, uploaded_file)
+            else:
+                path = storage.save(
+                    os.path.join(
+                    settings.MEDIA_PATH, sha1_filename), uploaded_file)
+                file_obj = UploadedImage.objects.create(
+                    uploaded_file=os.path.join(settings.MEDIA_URL, path),
+                    file_path=path,
+                    account=self.get_account(),
+                    file_name=file_name)
 
-        serializer = UploadedImageSerializer(file_obj)
-
-        file_src = serializer.data['file_src']
-        if not file_src:
-            file_src = serializer.data['file_src_cache']
-        response = {
-                'uploaded_file': file_src,
-                'exist': existing_file,
-                'unique_id':serializer.data['unique_id']
-                }
-        return Response(response, status=status.HTTP_200_OK)
+            serializer = UploadedImageSerializer(file_obj)
+            return Response(serializer.data, status=status.HTTP_200_OK)
 
     def get_queryset(self):
         queryset = UploadedImage.objects.filter(
             account=self.get_account()).order_by("-created_at")
-        if self.request.GET.get('q') != '':
+        search = self.request.GET.get('q')
+        if search != '':
             queryset = queryset.filter(
-                Q(tags__contains=self.request.GET.get('q')) | \
-                Q(file_name__contains=self.request.GET.get('q')))\
+                Q(tags__contains=search) | \
+                Q(file_name__contains=search))\
                 .order_by("-created_at")
         return queryset
 
@@ -118,27 +131,31 @@ class MediaUpdateDestroyAPIView(
 
     def get_object(self):
         queryset = self.get_queryset()
-        unique_id = self.kwargs.get(self.lookup_url_kwarg)
+        sha = self.kwargs.get(self.lookup_url_kwarg)
         instance = self.get_queryset().filter(
-            Q(uploaded_file__contains=unique_id)\
-            |Q(uploaded_file_cache__contains=unique_id))[0]
+            Q(uploaded_file__contains=sha)\
+            |Q(uploaded_file_cache__contains=sha))[0]
         return instance
 
     def delete(self, request, *args, **kwargs):
         instance = self.get_object()
-        storage_backend = self.get_default_storage(instance)
-        if storage_backend:
-            try:
-                storage_backend.delete(instance.uploaded_file.name)
-            except ValueError:
+        storage = self.get_default_storage(instance.account)
+        if isinstance(storage, S3BotoStorage):
+            if storage.exists(instance.file_path):
+                storage.delete(instance.file_path)
+            else:
+                try:
                 # No file found on S3 delete cache file
-                os.remove(os.path.join(
-                    MEDIA_ROOT, instance.uploaded_file_cache.name))
+                    os.remove(os.path.join(
+                        settings.MEDIA_ROOT, instance.file_path))
+                except OSError:
+                    pass
         else:
-            os.remove(os.path.join(MEDIA_ROOT, instance.uploaded_file.name))
-        instance.delete()
+            os.remove(os.path.join(settings.MEDIA_ROOT, instance.file_path))
+
         page_elements = PageElement.objects.filter(
-            text=instance.uploaded_file.url.split('?')[0])
+            text=instance.uploaded_file)
+        instance.delete()
         for page_element in page_elements:
             page_elements.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)

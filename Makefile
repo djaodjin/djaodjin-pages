@@ -14,6 +14,7 @@ install::
 		build -b $(CURDIR)/build install
 
 initdb:
+	-rm -rf testsite/media/pages
 	-rm -f db.sqlite3
 	cd $(srcDir) && $(PYTHON) ./manage.py migrate --noinput
 

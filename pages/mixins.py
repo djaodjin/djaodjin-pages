@@ -22,24 +22,23 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from django.core.files.storage import get_storage_class
+import os
+
+from django.core.files.storage import get_storage_class, default_storage
 from storages.backends.s3boto import S3BotoStorage
 from django.core.exceptions import ImproperlyConfigured
 
-from .settings import (
-    GET_CURRENT_ACCOUNT,
-    ACCOUNT_URL_KWARG,
-    AWS_STORAGE_BUCKET_NAME)
-from .compat import import_string
+from pages import settings
 
+from .compat import import_string
 
 class AccountMixin(object):
 
-    account_url_kwarg = ACCOUNT_URL_KWARG
+    account_url_kwarg = settings.ACCOUNT_URL_KWARG
 
     def get_account(self):
-        if GET_CURRENT_ACCOUNT:
-            return import_string(GET_CURRENT_ACCOUNT)(
+        if settings.GET_CURRENT_ACCOUNT:
+            return import_string(settings.GET_CURRENT_ACCOUNT)(
                 self.account_url_kwarg, self.kwargs)
         return None
 
@@ -47,16 +46,20 @@ class AccountMixin(object):
 class UploadedImageMixin(object):
 
     @staticmethod
-    def get_default_storage(instance):
+    def get_default_storage(account=None):
         if get_storage_class() == S3BotoStorage:
-            if instance.account:
+            if True:
                 try:
-                    bucket_name = instance.account.bucket_name
+                    bucket_name = account.bucket_name
                 except AttributeError:
                     raise ImproperlyConfigured(
                         "Your account model need to have a bucket name field.")
             else:
-                bucket_name = AWS_STORAGE_BUCKET_NAME
+                bucket_name = settings.AWS_STORAGE_BUCKET_NAME
             return get_storage_class()(bucket=bucket_name)
         else:
-            return None
+            if account:
+                return get_storage_class()(location=os.path.join(
+                    settings.MEDIA_ROOT, account.slug))
+            else:
+                return get_storage_class()(location=settings.MEDIA_ROOT)

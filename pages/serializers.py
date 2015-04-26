@@ -22,13 +22,14 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import os
 
 from django.db.models import Q
 from rest_framework import serializers
 
-from pages.settings import MEDIA_PATH
-from pages.models import PageElement, UploadedImage, UploadedTemplate
+from pages.models import (
+    PageElement,
+    UploadedImage,
+    UploadedTemplate)
 #pylint: disable=no-init
 #pylint: disable=old-style-class
 
@@ -42,13 +43,11 @@ class PageElementSerializer(serializers.ModelSerializer):
     @staticmethod
     def set_image_field(instance, validated_data):
         if instance.slug.startswith('djmedia-'):
-            img = validated_data.get('text').split('/')[-1]
-            if instance.account:
-                img_path = os.path.join(MEDIA_PATH, instance.account.slug, img)
-            else:
-                img_path = os.path.join(MEDIA_PATH, img)
+            img = validated_data.get('text')
             uploadimage = UploadedImage.objects.filter(Q(
-                    uploaded_file=img_path)|Q(uploaded_file_cache=img_path))
+                    uploaded_file=img)|Q(uploaded_file_cache=img),
+                    account=instance.account)
+            print uploadimage
             if uploadimage.count() > 0:
                 instance.image = uploadimage.first()
         return instance
@@ -65,8 +64,8 @@ class PageElementSerializer(serializers.ModelSerializer):
 
 
 class UploadedImageSerializer(serializers.ModelSerializer):
-    file_src = serializers.SerializerMethodField('get_file_url')
-    unique_id = serializers.SerializerMethodField('get_sha1_name')
+    sha = serializers.SerializerMethodField('get_sha1_name')
+    file_src = serializers.SerializerMethodField('get_src_file')
 
     class Meta:
         model = UploadedImage
@@ -75,13 +74,13 @@ class UploadedImageSerializer(serializers.ModelSerializer):
             'uploaded_file',
             'account',
             'tags',
-            'unique_id')
+            'sha')
 
-    def get_file_url(self, obj):#pylint: disable=no-self-use
+    def get_src_file(self, obj):#pylint: disable=no-self-use
         if obj.uploaded_file:
-            return obj.uploaded_file.url.split('?')[0]
+            return obj.uploaded_file
         else:
-            return obj.uploaded_file_cache.url
+            return obj.uploaded_file_cache
 
     def get_sha1_name(self, obj):#pylint: disable=no-self-use
         """
@@ -89,9 +88,9 @@ class UploadedImageSerializer(serializers.ModelSerializer):
         Will be used as id to update and delete file
         """
         if obj.uploaded_file:
-            return obj.uploaded_file.name.split('/')[-1].split('.')[0]
+            return obj.uploaded_file.split('/')[-1].split('.')[0]
         else:
-            return obj.uploaded_file_cache.name.split('/')[-1].split('.')[0]
+            return obj.uploaded_file_cache.split('/')[-1].split('.')[0]
 
 
 class UploadedTemplateSerializer(serializers.ModelSerializer):

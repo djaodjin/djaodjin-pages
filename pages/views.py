@@ -91,11 +91,9 @@ class PageView(AccountMixin, TemplateView):
                     db_media = db_medias.get(slug=id_element)
                     if db_media.image:
                         if db_media.image.uploaded_file:
-                            media['src'] = db_media.image.\
-                                uploaded_file.url.split('?')[0]
+                            media['src'] = db_media.image.uploaded_file
                         else:
-                            media['src'] = db_media.image.\
-                                uploaded_file_cache.url
+                            media['src'] = db_media.image.uploaded_file_cache
                 except PageElement.DoesNotExist:
                     continue
             response.content = soup.prettify()

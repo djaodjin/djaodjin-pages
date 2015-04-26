@@ -5,7 +5,7 @@
 }
 
 #btn-toggle.active{
-    right:220px;
+    right:200px;
 }
 
 #sidebar-gallery{
@@ -14,17 +14,13 @@
     padding-bottom:20px;
     position:fixed;
     top:0px;
-    right: -226px;
+    right: -220px;
     height: 100%;
     width:200px;
     background: #FFF;
     color : #656565;
     border-left:1px solid #656565;
     z-index:10000;
-    -moz-box-shadow: -1px 0px 6px 0px #656565;
-    -webkit-box-shadow: -1px 0px 6px 0px #656565;
-    -o-box-shadow: -1px 0px 6px 0px #656565;
-    box-shadow: -1px 0px 6px 0px #656565;
 }
 
 #sidebar-gallery.active{
@@ -64,6 +60,10 @@
     margin-top:0px;
 }
 
+.clickable-menu{
+    cursor: pointer;
+}
+
 
 .media-single-container{
     float:left;
@@ -71,6 +71,12 @@
     width:45%;
     padding-top: 5px;
     margin:0;
+    border:1px solid transparent;
+    border-radius: 3px;
+}
+
+.media-single-container:hover{
+    border-color: #CCC;
 }
 
 .image{
@@ -100,30 +106,6 @@
     border:1px solid #555;
 }
 
-.ui-menu{
-    width: 100px;
-    z-index: 10000;
-    background: white;
-}
-
-.ui-menu .ui-menu-item{
-    color: #777;
-}
-
-.ui-menu .ui-menu-item:hover{
-    color:#000;
-}
-.ui-menu .ui-state-focus{
-    margin:0px;
-}
-
-.ui-state-disabled.ui-menu-item{
-    color: #777;
-}
-.ui-state-disabled.ui-menu-item:hover{
-    color: #777;
-}
-
 .notify-user-label{
     position:fixed;
     top:0;
@@ -144,4 +126,54 @@
     background: #32add6;
     border:1px solid #006b8e;
     color: #006b8e;
+}
+
+.modalDialog {
+    position: fixed;
+    font-family: Arial, Helvetica, sans-serif;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    background: rgba(0,0,0,0.8);
+    z-index: 999999;
+    opacity:1;
+    -webkit-transition: opacity 400ms ease-in;
+    -moz-transition: opacity 400ms ease-in;
+    transition: opacity 400ms ease-in;
+    pointer-events: auto;
+}
+
+
+.modalDialog > div {
+    width: 500px;
+    position: relative;
+    margin: 10% auto;
+    background: #fff;
+    
+}
+
+.closeModal {
+    background: #606061;
+    color: #FFFFFF;
+    line-height: 25px;
+    position: absolute;
+    right: -12px;
+    text-align: center;
+    top: -10px;
+    width: 24px;
+    text-decoration: none;
+    font-weight: bold;
+    -webkit-border-radius: 12px;
+    -moz-border-radius: 12px;
+    border-radius: 12px;
+    -moz-box-shadow: 1px 1px 3px #000;
+    -webkit-box-shadow: 1px 1px 3px #000;
+    box-shadow: 1px 1px 3px #000;
+}
+
+.closeModal:hover { background: #00d9ff; }
+
+#menu-list li{
+    list-style-type: none;
 }

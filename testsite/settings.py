@@ -138,7 +138,6 @@ USE_L10N = True
 USE_TZ = True
 
 # S3 settings
-
 MEDIA_URL = '/media/'
 
 # Static files (CSS, JavaScript, Images)
@@ -150,13 +149,14 @@ STATIC_URL = '/static/'
 
 MEDIA_ROOT = BASE_DIR + '/testsite/media'
 
+PAGES = {
+    'UPLOADED_TEMPLATE_DIR' : BASE_DIR + '/testsite/templates',
+    'UPLOADED_STATIC_DIR' : STATIC_ROOT
+}
+
 if 'AWS_STORAGE_BUCKET_NAME' in locals():
     DEFAULT_FILE_STORAGE = 'storages.backends.s3boto.S3BotoStorage'
 
-PAGES = {
-    'UPLOADED_TEMPLATE_DIR' : BASE_DIR + '/testsite/templates',
-    'UPLOADED_STATIC_DIR' : STATIC_ROOT,
-}
 
 # XXX - to define
 FILE_UPLOAD_MAX_MEMORY_SIZE = 41943040
