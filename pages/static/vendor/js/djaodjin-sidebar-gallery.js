@@ -170,7 +170,6 @@
 
             DocDropzone.on("sending", function(file, xhr, formData){
                 formData.append('csrfmiddlewaretoken', _this.options.csrf_token);
-                formData.append('csrfmiddlewaretoken', _this.options.csrf_token);
                 $('#media-container').append('<div class="col-md-12 padding-top-img progress-text text-center">Upload in progress<br><p><span id="progress-span">0</span>%</p>Please wait...</div>');
                 $.event.trigger({
                   type:    "start_upload",
@@ -382,69 +381,7 @@
                 });
                 $('#media-info').append(menuImage($(this).data('id'), $(this).prop("tagName") == 'VIDEO', $(this).attr('src')));
             });
-            // $(document).contextmenu({
-            //     delegate: ".clickable-menu",
-            //     menu: [
-            //         {title: "Delete", cmd: "delete_media"},
-            //         {title: "Add tag", cmd: "add_tag"},
-            //         {title: "Preview Video", cmd: "preview_video" },
-            //         {title: "Media info", cmd: "media_info" }
-            //         ],
-            //     select: function(event, ui) {
-            //         if ($('.url_info').length){
-            //             $('.url_info').remove();
-            //         }
-            //         var id = $(ui.target).data('id');
-            //         if (ui.cmd == 'delete_media'){
-            //             $.ajax({
-            //                 method: 'delete',
-            //                 url:_this.options.base_media_url +id +'/',
-            //                 success: function(){
-            //                     $(ui.target).parent('.media-single-container').remove();
-            //                 }
-            //             });
-            //         }else if (ui.cmd == 'add_tag'){
-            //             var orginal_tags = null;
-            //             $.ajax({
-            //                 method: 'get',
-            //                 async:false,
-            //                 url:_this.options.base_media_url+id+'/',
-            //                 success: function(response){
-            //                     orginal_tags = response.tags;
-            //                 }
-            //             });
-                        
-            //             var tags = prompt('Please enter tags', orginal_tags);
-            //             if (tags !== null){
-            //                 $.ajax({
-            //                     method: 'patch',
-            //                     url:_this.options.base_media_url+id+'/',
-            //                     data:{'tags': tags},
-            //                     success: function(){
-            //                         console.log('updated');
-            //                     }
-            //                 });
-            //             }
-                        
-            //         }else if (ui.cmd == 'preview_video'){
-            //             $('body').append(modal);
-            //             $('#modal-video').attr('src',$(ui.target).attr('src'));
-            //             $('#myModal').modal('show');
-            //         }else if (ui.cmd == 'media_info') {
-            //             $.ajax({
-            //                 method: 'get',
-            //                 async:false,
-            //                 url:_this.options.base_media_url+id+'/',
-            //                 success: function(response){
-            //                     $('#media-info').append('<div class="url_info"><h4>Full media url</h4><textarea style="width:98%" rows="4" readonly>'+response.file_src +'</textarea></div>');
-            //                 }
-            //             });
-            //         }
-            //     }
-            // });
         }
-
-
     };
 
     $.sidebargallery = function(options) {

@@ -5,20 +5,6 @@
 <head>
   <title>Djaodjin-pages</title>
   {% pages_static_css %}
-  <script type="text/javascript">
-    $(document).ready(function(){
-      function csrfSafeMethod(method) {
-          return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
-      }
-      $.ajaxSetup({
-          crossDomain: false, // obviates need for sameOrigin test
-          beforeSend: function(xhr, settings) {
-              if (!csrfSafeMethod(settings.type)) {
-                  xhr.setRequestHeader("X-CSRFToken", "{{ csrf_token }}");
-              }
-          }
-      });
-    });
   </script>
 </head>
 <body>
