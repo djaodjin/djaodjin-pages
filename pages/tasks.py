@@ -22,26 +22,26 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import os
-
 from celery import Task
 
-from pages.settings import MEDIA_ROOT, MEDIA_PATH
-from pages.mixins import UploadedImageMixin
+from .mixins import UploadedImageMixin
 
 
 class S3UploadMediaTask(UploadedImageMixin, Task):
 
-    def run(self, file_obj, uploaded_file):# pylint: disable=arguments-differ
-        default_storage = self.get_default_storage(file_obj.account)
-        file_path = os.path.join(MEDIA_ROOT,
-            file_obj.file_path)
-        path = default_storage.save(
-                os.path.join(MEDIA_PATH, uploaded_file.name), uploaded_file)
+    def run(self, file_obj):# pylint: disable=arguments-differ
+        storage = self.get_default_storage(file_obj.account)
+        storage_cache = self.get_cache_storage(file_obj.account)
+        relative_path = file_obj.relative_path()
 
-        file_obj.uploaded_file = default_storage.url(path).split('?')[0]
+        cache_obj = storage_cache.open(relative_path)
+        storage.save(relative_path, cache_obj.read())
+        cache_obj.close()
+
+        file_obj.uploaded_file = storage.url(relative_path)
         file_obj.save()
+
         # clear cache
-        os.remove(file_path)
+        storage_cache.delete(relative_path)
 
 

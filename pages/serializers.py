@@ -63,33 +63,24 @@ class PageElementSerializer(serializers.ModelSerializer):
 
 
 class UploadedImageSerializer(serializers.ModelSerializer):
-    sha = serializers.SerializerMethodField('get_sha1_name')
-    file_src = serializers.SerializerMethodField('get_src_file')
+    sha1 = serializers.SerializerMethodField()
+    file_src = serializers.SerializerMethodField()
 
     class Meta:
         model = UploadedImage
         fields = (
             'file_src',
-            'uploaded_file',
             'account',
             'tags',
-            'sha')
+            'sha1')
 
-    def get_src_file(self, obj):#pylint: disable=no-self-use
-        if obj.uploaded_file:
-            return obj.uploaded_file
-        else:
-            return obj.uploaded_file_cache
+    @staticmethod
+    def get_file_src(obj):
+        return obj.get_src_file()
 
-    def get_sha1_name(self, obj):#pylint: disable=no-self-use
-        """
-        Return the sha1 name of the file without extension
-        Will be used as id to update and delete file
-        """
-        if obj.uploaded_file:
-            return obj.uploaded_file.split('/')[-1].split('.')[0]
-        else:
-            return obj.uploaded_file_cache.split('/')[-1].split('.')[0]
+    @staticmethod
+    def get_sha1(obj):
+        return obj.get_sha1()
 
 
 class UploadedTemplateSerializer(serializers.ModelSerializer):

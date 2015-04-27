@@ -216,9 +216,9 @@
                 }
                 if (!response.exist){
                     if (response.file_src.indexOf('.mp4') > 0){
-                        $('#list-media').prepend('<div class="media-single-container"><video data-id="'+ response.sha + '" id="image_'+ last_index + '" class="image  clickable-menu image_media" src="'+ response.file_src +'" width="50px"></video></div>');
+                        $('#list-media').prepend('<div class="media-single-container"><video data-id="'+ response.sha1 + '" id="image_'+ last_index + '" class="image  clickable-menu image_media" src="'+ response.file_src +'" width="50px"></video></div>');
                     }else{
-                        $('#list-media').prepend('<div class="media-single-container"><img data-id="'+ response.sha + '" id="image_'+ last_index + '" class="image  clickable-menu image_media" src="'+ response.file_src +'" width="50px"></div>');
+                        $('#list-media').prepend('<div class="media-single-container"><img data-id="'+ response.sha1 + '" id="image_'+ last_index + '" class="image  clickable-menu image_media" src="'+ response.file_src +'" width="50px"></div>');
                     }
                     
                 
@@ -345,9 +345,9 @@
                     $.each(data, function(index,element){
                         var src_file = element.file_src;
                         if (src_file.indexOf('.mp4') > 0){
-                            $('#list-media').append('<div class="media-single-container"><video data-id="'+ element.sha + '" id="image_'+ index + '" class="image clickable-menu image_media" src="'+ src_file +'" width="50px"></video></div>');
+                            $('#list-media').append('<div class="media-single-container"><video data-id="'+ element.sha1 + '" id="image_'+ index + '" class="image clickable-menu image_media" src="'+ src_file +'" width="50px"></video></div>');
                         }else{
-                            $('#list-media').append('<div class="media-single-container"><img data-id="'+ element.sha + '" id="image_'+ index + '" class="image clickable-menu image_media" src="'+ src_file +'" width="50px"></div>');
+                            $('#list-media').append('<div class="media-single-container"><img data-id="'+ element.sha1 + '" id="image_'+ index + '" class="image clickable-menu image_media" src="'+ src_file +'" width="50px"></div>');
                         }
                         $('#image_' + index).draggable({
                             helper: 'clone',
