@@ -26,12 +26,13 @@ import re
 import markdown
 
 from bs4 import BeautifulSoup
+from django.core.context_processors import csrf
+from django.template import loader, Context
 from django.template.response import TemplateResponse
 from django.views.generic import TemplateView
 
 from .mixins import AccountMixin
 from .models import PageElement
-
 
 class PageView(AccountMixin, TemplateView):
     """
@@ -39,8 +40,16 @@ class PageView(AccountMixin, TemplateView):
 
     """
     http_method_names = ['get']
+    edition_tools_template_name = 'pages/edition_tools.html'
 
-    def get(self, request, *args, **kwargs):#pylint: disable=too-many-statements, too-many-locals
+    def add_edition_tools(self, soup):
+        template = loader.get_template(self.edition_tools_template_name)
+        content = template.render(Context(csrf(self.request)))
+        soup.body.append(BeautifulSoup(content))
+        return soup
+
+    def get(self, request, *args, **kwargs):
+        #pylint: disable=too-many-statements, too-many-locals
         response = super(PageView, self).get(request, *args, **kwargs)
         if self.template_name and isinstance(response, TemplateResponse):
             response.render()
@@ -96,6 +105,7 @@ class PageView(AccountMixin, TemplateView):
                             media['src'] = db_media.image.uploaded_file_cache
                 except PageElement.DoesNotExist:
                     continue
+            soup = self.add_edition_tools(soup)
             response.content = soup.prettify()
         return response
 
