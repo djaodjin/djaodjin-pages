@@ -29,7 +29,6 @@ import json, hashlib, os
 
 from django.http import HttpResponse
 from django.core.cache import cache
-from django.core.files.storage import get_storage_class
 from django.db.models import Q
 from django.core.files.storage import FileSystemStorage
 
@@ -54,7 +53,7 @@ class MediaListAPIView(AccountMixin,
     serializer_class = UploadedImageSerializer
     parser_classes = (FileUploadParser,)
 
-    def post(self, request, *args, **kwargs):#pylint: disable=unused-argument
+    def post(self, request, *args, **kwargs):#pylint: disable=unused-argument, too-many-locals
         uploaded_file = request.FILES['file']
         existing_file = False
         file_name = uploaded_file.name
@@ -66,11 +65,17 @@ class MediaListAPIView(AccountMixin,
         account = self.get_account()
         storage = storage = self.get_default_storage(account)
 
-        if storage.exists(os.path.join(settings.MEDIA_PATH, sha1_filename)):
+        # If account and local storage add account.slug in path
+        if account and not isinstance(storage, S3BotoStorage):
+            media_path = os.path.join(settings.MEDIA_PATH, account.slug)
+        else:
+            media_path = settings.MEDIA_PATH
+
+        if storage.exists(os.path.join(media_path, sha1_filename)):
 
             file_obj = UploadedImage.objects.get(
-                Q(file_path=os.path.join(settings.MEDIA_PATH, sha1_filename))|
-                Q(file_path=os.path.join(settings.MEDIA_PATH, sha1_filename)),
+                Q(file_path=os.path.join(media_path, sha1_filename))|
+                Q(file_path=os.path.join(media_path, sha1_filename)),
                 account=account)
 
             serializer = UploadedImageSerializer(file_obj)
@@ -78,12 +83,12 @@ class MediaListAPIView(AccountMixin,
                 status=status.HTTP_400_BAD_REQUEST)
 
         else:
-            if get_storage_class() == S3BotoStorage:
+            if isinstance(storage, S3BotoStorage):
                 system_storage = FileSystemStorage(location=settings.MEDIA_ROOT)
                 storage = self.get_default_storage(account)
                 path = system_storage.save(
                     os.path.join(
-                    settings.MEDIA_PATH, sha1_filename), uploaded_file)
+                    media_path, sha1_filename), uploaded_file)
                 file_obj = UploadedImage.objects.create(
                     uploaded_file_cache=os.path.join(settings.MEDIA_URL, path),
                     file_path=path,
@@ -94,7 +99,7 @@ class MediaListAPIView(AccountMixin,
             else:
                 path = storage.save(
                     os.path.join(
-                    settings.MEDIA_PATH, sha1_filename), uploaded_file)
+                    media_path, sha1_filename), uploaded_file)
                 file_obj = UploadedImage.objects.create(
                     uploaded_file=os.path.join(settings.MEDIA_URL, path),
                     file_path=path,
