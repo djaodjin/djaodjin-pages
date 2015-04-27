@@ -67,7 +67,7 @@ class MediaListAPIView(AccountMixin,
         storage = self.get_default_storage(account)
         storage_cache = self.get_cache_storage(account)
         result = {}
-        if storage.exists(sha1_path) or storage_cache.exits(sha1_path):
+        if storage.exists(sha1_path) or storage_cache.exists(sha1_path):
             # File might be in the cache, yet to be uploaded to final storage.
             # File might be uploaded before database records are created.
             try:
