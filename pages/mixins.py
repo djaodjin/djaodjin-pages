@@ -22,13 +22,15 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from django.core.files.storage import get_storage_class
-from storages.backends.s3boto import S3BotoStorage
-from django.core.exceptions import ImproperlyConfigured
+import logging, os
 
-from pages import settings
+from django.core.files.storage import get_storage_class, FileSystemStorage
 
+from . import settings
 from .compat import import_string
+
+LOGGER = logging.getLogger(__name__)
+
 
 class AccountMixin(object):
 
@@ -44,16 +46,26 @@ class AccountMixin(object):
 class UploadedImageMixin(object):
 
     @staticmethod
-    def get_default_storage(account=None):
-        if get_storage_class() == S3BotoStorage:
-            if account:
-                try:
-                    bucket_name = account.bucket_name
-                except AttributeError:
-                    raise ImproperlyConfigured(
-                        "Your account model need to have a bucket name field.")
-            else:
-                bucket_name = settings.AWS_STORAGE_BUCKET_NAME
-            return get_storage_class()(bucket=bucket_name)
+    def get_bucket_name(account=None):
+        if account:
+            try:
+                bucket_name = account.bucket_name
+            except AttributeError:
+                LOGGER.warning("``%s`` does not contain a ``bucket_name``"\
+" field, using ``slug`` instead.", account.__class__)
+                bucket_name = account.slug
         else:
-            return get_storage_class()(location=settings.MEDIA_ROOT)
+            bucket_name = settings.AWS_STORAGE_BUCKET_NAME
+        return bucket_name
+
+    def get_default_storage(self, account=None):
+        bucket_name = self.get_bucket_name(account)
+        if get_storage_class() != FileSystemStorage:
+            return get_storage_class()(bucket=bucket_name)
+        return self.get_cache_storage(account)
+
+    def get_cache_storage(self, account=None):
+        bucket_name = self.get_bucket_name(account)
+        return FileSystemStorage(
+            location=os.path.join(settings.MEDIA_ROOT, bucket_name),
+            base_url='%s%s/' % (settings.MEDIA_URL, bucket_name))
