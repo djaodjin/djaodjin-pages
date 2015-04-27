@@ -22,8 +22,6 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import os
-
 from django.core.files.storage import get_storage_class
 from storages.backends.s3boto import S3BotoStorage
 from django.core.exceptions import ImproperlyConfigured
@@ -58,8 +56,4 @@ class UploadedImageMixin(object):
                 bucket_name = settings.AWS_STORAGE_BUCKET_NAME
             return get_storage_class()(bucket=bucket_name)
         else:
-            if account:
-                return get_storage_class()(location=os.path.join(
-                    settings.MEDIA_ROOT, account.slug))
-            else:
-                return get_storage_class()(location=settings.MEDIA_ROOT)
+            return get_storage_class()(location=settings.MEDIA_ROOT)
