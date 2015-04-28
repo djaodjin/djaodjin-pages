@@ -22,6 +22,8 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import os
+
 from django.db import models
 from django.core.files.storage import FileSystemStorage
 
@@ -48,24 +50,41 @@ class PageElement(models.Model):
 
 class UploadedImage(models.Model):
     """
-   	Image uploaded
+    Image uploaded
     """
     created_at = models.DateTimeField(auto_now_add=True)
     uploaded_file = models.CharField(
         max_length=500, null=True, blank=True)
     uploaded_file_cache = models.CharField(
         max_length=500, null=True, blank=True)
-    file_path = models.CharField(
-        max_length=500, null=True, blank=True)
     account = models.ForeignKey(
-       settings.ACCOUNT_MODEL, related_name='account_image',
+       settings.ACCOUNT_MODEL, related_name='media_uploads',
        null=True, blank=True)
     # Original filename to make search easier.
     file_name = models.CharField(max_length=100)
     tags = models.CharField(max_length=200, blank=True, null=True)
 
     def __unicode__(self):
-        return unicode(self.uploaded_file)
+        return unicode(self.get_src_file())
+
+    def get_src_file(self):
+        if self.uploaded_file:
+            return self.uploaded_file
+        else:
+            return self.uploaded_file_cache
+
+    def get_sha1(self):
+        """
+        Return the sha1 name of the file without extension
+        Will be used as id to update and delete file
+        """
+        src = self.get_src_file()
+        if src:
+            return os.path.splitext(os.path.basename(self.get_src_file()))[0]
+        return '*unkown*'
+
+    def relative_path(self):
+        return self.uploaded_file_cache.replace(settings.MEDIA_URL, '')
 
 
 class UploadedTemplate(models.Model):

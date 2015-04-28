@@ -27,23 +27,21 @@
 
 import json, hashlib, os
 
-from django.http import HttpResponse
 from django.core.cache import cache
 from django.db.models import Q
-from django.core.files.storage import FileSystemStorage
-
-from storages.backends.s3boto import S3BotoStorage
-
+from django.http import HttpResponse
+from django.utils.encoding import force_text
 from rest_framework import status
 from rest_framework import generics
 from rest_framework.parsers import FileUploadParser
 from rest_framework.response import Response
+from storages.backends.s3boto import S3BotoStorage
 
-from pages import settings
-from pages.models import UploadedImage, PageElement
-from pages.serializers import UploadedImageSerializer
-from pages.mixins import AccountMixin, UploadedImageMixin
-from pages.tasks import S3UploadMediaTask
+from .. import settings
+from ..models import UploadedImage, PageElement
+from ..serializers import UploadedImageSerializer
+from ..mixins import AccountMixin, UploadedImageMixin
+from ..tasks import S3UploadMediaTask
 
 
 class MediaListAPIView(AccountMixin,
@@ -53,61 +51,60 @@ class MediaListAPIView(AccountMixin,
     serializer_class = UploadedImageSerializer
     parser_classes = (FileUploadParser,)
 
-    def post(self, request, *args, **kwargs):#pylint: disable=unused-argument, too-many-locals
+    def post(self, request, *args, **kwargs):
+        #pylint: disable=unused-argument,too-many-locals
         uploaded_file = request.FILES['file']
-        existing_file = False
-        file_name = uploaded_file.name
-        sha1_filename = hashlib.sha1(uploaded_file.read()).hexdigest() + '.' +\
-            str(uploaded_file).split('.')[1].lower()
+        sha1 = hashlib.sha1(uploaded_file.read()).hexdigest()
 
+        # Store filenames with forward slashes, even on Windows
+        file_name = force_text(uploaded_file.name.replace('\\', '/'))
+        sha1_filename = sha1 + os.path.splitext(file_name)[1]
+        sha1_path = os.path.join(settings.MEDIA_PATH, sha1_filename)
         # Replace filename by unique hash key
-        uploaded_file.name = sha1_filename
+        uploaded_file.name = sha1_path
         account = self.get_account()
-        storage = storage = self.get_default_storage(account)
-
-        # If account and local storage add account.slug in path
-        if account and not isinstance(storage, S3BotoStorage):
-            media_path = os.path.join(settings.MEDIA_PATH, account.slug)
-        else:
-            media_path = settings.MEDIA_PATH
-
-        if storage.exists(os.path.join(media_path, sha1_filename)):
-
-            file_obj = UploadedImage.objects.get(
-                Q(file_path=os.path.join(media_path, sha1_filename))|
-                Q(file_path=os.path.join(media_path, sha1_filename)),
-                account=account)
-
-            serializer = UploadedImageSerializer(file_obj)
-            return Response({'message':"Image already in your gallery."},
-                status=status.HTTP_400_BAD_REQUEST)
-
-        else:
-            if isinstance(storage, S3BotoStorage):
-                system_storage = FileSystemStorage(location=settings.MEDIA_ROOT)
-                storage = self.get_default_storage(account)
-                path = system_storage.save(
-                    os.path.join(
-                    media_path, sha1_filename), uploaded_file)
+        bucket_name = self.get_bucket_name(account)
+        storage = self.get_default_storage(account)
+        storage_cache = self.get_cache_storage(account)
+        result = {}
+        if storage.exists(sha1_path) or storage_cache.exists(sha1_path):
+            # File might be in the cache, yet to be uploaded to final storage.
+            # File might be uploaded before database records are created.
+            try:
+                file_obj = UploadedImage.objects.get(
+                    Q(uploaded_file=storage.url(sha1_path))
+                    | Q(uploaded_file_cache=storage_cache.url(sha1_path)),
+                    account=account)
+                response_status = status.HTTP_200_OK
+                result = {
+                    "message": "%s is already in the gallery." % file_name}
+            except UploadedImage.DoesNotExist:
                 file_obj = UploadedImage.objects.create(
-                    uploaded_file_cache=os.path.join(settings.MEDIA_URL, path),
-                    file_path=path,
-                    account=self.get_account(),
+                    account=account,
+                    uploaded_file=storage.url(sha1_path),
+                    uploaded_file_cache=storage_cache.url(sha1_path),
+                    file_name=file_name)
+                response_status = status.HTTP_201_CREATED
+        else:
+            storage_cache.save(sha1_path, uploaded_file)
+            if isinstance(storage, S3BotoStorage):
+                file_obj = UploadedImage.objects.create(
+                    account=account,
+                    uploaded_file=None,
+                    uploaded_file_cache=storage_cache.url(sha1_path),
                     file_name=file_name)
                 upload_to_s3 = S3UploadMediaTask()
-                upload_to_s3.delay(file_obj, uploaded_file)
+                upload_to_s3.delay(file_obj)
             else:
-                path = storage.save(
-                    os.path.join(
-                    media_path, sha1_filename), uploaded_file)
                 file_obj = UploadedImage.objects.create(
-                    uploaded_file=os.path.join(settings.MEDIA_URL, path),
-                    file_path=path,
-                    account=self.get_account(),
+                    account=account,
+                    uploaded_file=storage.url(sha1_path),
+                    uploaded_file_cache=storage_cache.url(sha1_path),
                     file_name=file_name)
-
-            serializer = UploadedImageSerializer(file_obj)
-            return Response(serializer.data, status=status.HTTP_200_OK)
+            response_status = status.HTTP_201_CREATED
+        serializer = UploadedImageSerializer(file_obj)
+        result.update(serializer.data)
+        return Response(result, status=response_status)
 
     def get_queryset(self):
         queryset = UploadedImage.objects.filter(
@@ -136,37 +133,30 @@ class MediaUpdateDestroyAPIView(
 
     def get_object(self):
         queryset = self.get_queryset()
-        sha = self.kwargs.get(self.lookup_url_kwarg)
+        sha1 = self.kwargs.get(self.lookup_url_kwarg)
         instance = self.get_queryset().filter(
-            Q(uploaded_file__contains=sha)\
-            |Q(uploaded_file_cache__contains=sha))[0]
+            Q(uploaded_file__contains=sha1)\
+            |Q(uploaded_file_cache__contains=sha1))[0]
         return instance
 
     def delete(self, request, *args, **kwargs):
-        instance = self.get_object()
-        storage = self.get_default_storage(instance.account)
-        if isinstance(storage, S3BotoStorage):
-            if storage.exists(instance.file_path):
-                storage.delete(instance.file_path)
-            else:
-                try:
-                # No file found on S3 delete cache file
-                    os.remove(os.path.join(
-                        settings.MEDIA_ROOT, instance.file_path))
-                except OSError:
-                    pass
-        else:
-            os.remove(os.path.join(settings.MEDIA_ROOT, instance.file_path))
+        file_obj = self.get_object()
+        relative_path = file_obj.relative_path()
+        storage = self.get_default_storage(file_obj.account)
+        if storage.exists(relative_path):
+            storage.delete(relative_path)
+        cache_storage = self.get_cache_storage(file_obj.account)
+        if cache_storage.exists(relative_path):
+            cache_storage.delete(relative_path)
 
         page_elements = PageElement.objects.filter(
-            text=instance.uploaded_file)
-        instance.delete()
-        for page_element in page_elements:
-            page_elements.delete()
+            text=file_obj.uploaded_file).delete()
+        file_obj.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-def upload_progress(request, account_slug=None):#pylint: disable=unused-argument
+def upload_progress(request, account_slug=None):
+    #pylint: disable=unused-argument
     """
     Used by Ajax calls
 

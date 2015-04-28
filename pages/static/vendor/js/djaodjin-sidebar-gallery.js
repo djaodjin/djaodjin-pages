@@ -216,12 +216,10 @@
                 }
                 if (!response.exist){
                     if (response.file_src.indexOf('.mp4') > 0){
-                        $('#list-media').prepend('<div class="media-single-container"><video data-id="'+ response.sha + '" id="image_'+ last_index + '" class="image  clickable-menu image_media" src="'+ response.file_src +'" style="max-height:80%;max-width:80%;"></video></div>');
+                        $('#list-media').prepend('<div class="media-single-container"><video data-id="'+ response.sha1 + '" id="image_'+ last_index + '" class="image  clickable-menu image_media" src="'+ response.file_src +'" style="max-height:80%;max-width:80%;"></video></div>');
                     }else{
-                        $('#list-media').prepend('<div class="media-single-container"><img data-id="'+ response.sha + '" id="image_'+ last_index + '" class="image  clickable-menu image_media" src="'+ response.file_src +'" style="max-height:80%;max-width:80%;"></div>');
+                        $('#list-media').prepend('<div class="media-single-container"><img data-id="'+ response.sha1 + '" id="image_'+ last_index + '" class="image  clickable-menu image_media" src="'+ response.file_src +'" style="max-height:80%;max-width:80%;"></div>');
                     }
-                    
-                
                     $('#image_' + last_index).draggable({
                         helper: 'clone',
                         revert: true,
@@ -240,7 +238,6 @@
                     setTimeout(function() {
                         $('.alert').remove();
                     }, 3000);
-                    
                 }
                 if (!$('#sidebar-gallery').hasClass('active')){
                     _this._open_sidebar();
@@ -273,7 +270,6 @@
                     orginal_tags = response.tags;
                 }
             });
-            
             var tags = prompt('Please enter tags', orginal_tags);
             if (tags !== null){
                 $.ajax({
@@ -308,7 +304,6 @@
         },
 
         _toggle_sidebar: function(){
-            
             if ($('#sidebar-gallery').hasClass('active')){
                 _this._close_sidebar();
             }else{
@@ -345,9 +340,9 @@
                     $.each(data, function(index,element){
                         var src_file = element.file_src;
                         if (src_file.indexOf('.mp4') > 0){
-                            $('#list-media').append('<div class="media-single-container"><video data-id="'+ element.sha + '" id="image_'+ index + '" class="image clickable-menu image_media" src="'+ src_file +'" style="max-height:80%;max-width:80%;"></video></div>');
+                            $('#list-media').append('<div class="media-single-container"><video data-id="'+ element.sha1 + '" id="image_'+ index + '" class="image clickable-menu image_media" src="'+ src_file +'" style="max-height:80%;max-width:80%;"></video></div>');
                         }else{
-                            $('#list-media').append('<div class="media-single-container"><img data-id="'+ element.sha + '" id="image_'+ index + '" class="image clickable-menu image_media" src="'+ src_file +'" style="max-height:80%;max-width:80%;"></div>');
+                            $('#list-media').append('<div class="media-single-container"><img data-id="'+ element.sha1 + '" id="image_'+ index + '" class="image clickable-menu image_media" src="'+ src_file +'" style="max-height:80%;max-width:80%;"></div>');
                         }
                         $('#image_' + index).draggable({
                             helper: 'clone',
