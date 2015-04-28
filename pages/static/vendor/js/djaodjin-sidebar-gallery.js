@@ -34,13 +34,13 @@
     var sidebar = '\
         <div id="sidebar-container" class="">\
             <div id="sidebar-gallery">\
-                <h1 class="">Medias</h1>\
+                <h1 class="">Media</h1>\
                 <input placeholder="Search..." id="gallery-filter" type="text" class="form-control">\
                 <div id="media-container">\
                     <div class="col-xs-12">Drag and drop or click to upload Media</div>\
                     <div id="list-media"></div>\
                 </div>\
-                <div id="media-info" style="display:none;"></div>\
+                <div id="media-info" class="placeholder">Click on an item to view more options</div>\
             </div>\
         </div>';
 
@@ -124,26 +124,10 @@
                 });
             });
 
-            $('#sidebar-container').resizable({
-                handles: 'w',
-                minWidth: 180,
-                resize: function(event, ui){
-                    var view_width = $(window).width();
-                    $('#sidebar-container').css("right", "0px").css("left", view_width- $(ui.element).width());
-                    $('#btn-toggle').css("right",$(ui.element).width());
-                },
-                stop : function(event, ui){
-                    var view_width = $(window).width();
-                    $('#sidebar-container').css("right", "0px").css("left", view_width- $(ui.element).width());
-                    $('#btn-toggle').css("right",  $(ui.element).width());
-                }
-            });
-
             $('.droppable-image').droppable({
                 drop: function( event, ui ) {
                     var droppable = $(this);
                     if (droppable.prop("tagName") == 'IMG'){
-
                         if (ui.draggable.attr('src').indexOf(".png") > 0 || ui.draggable.attr('src').indexOf(".jpg") > 0){
                             droppable.attr('src', ui.draggable.attr('src'));
                             $(ui.helper).remove();
@@ -313,6 +297,10 @@
             });
         },
 
+        _initMediaInfo: function(){
+            $('#media-info').addClass('placeholder').text('Click on an item to view more options');
+        },
+
         _toggle_sidebar: function(){
             if ($('#sidebar-container').hasClass('active')){
                 _this._close_sidebar();
@@ -321,8 +309,36 @@
             }
         },
 
+        _draggableButton: function(){
+            $('#btn-toggle').draggable({
+                axis: "x",
+                cursor: "move",
+                drag: function(event, ui){
+                    var view_width = $(window).width();
+                    if (view_width - ui.position.left - $(ui.helper).outerWidth() >= 300){
+                        $('#sidebar-container').css("right", "0px").css("width", view_width - ui.position.left - $(ui.helper).outerWidth());
+                    }else{
+                        $('#btn-toggle').css("left", view_width - 300 - $(ui.helper).outerWidth());
+                        return false;
+                    }
+                },
+                stop : function(event, ui){
+                    var view_width = $(window).width();
+                    if (view_width - ui.position.left - $(ui.helper).outerWidth() >= 300){
+                        $('#sidebar-container').css("right", "0px").css("width", view_width - ui.position.left - $(ui.helper).outerWidth());
+                    }else{
+                        $('#sidebar-container').css("right", "0px").css("width", 300);
+                    }
+
+                    $( event.toElement ).one('click', function(e){ e.stopImmediatePropagation(); } );
+
+                }
+            });
+        },
+
         _open_sidebar: function(){
             $('#btn-toggle').addClass('active');
+            _this._draggableButton();
             $('#sidebar-container').addClass('active');
             _this.loadImage();
         },
@@ -330,6 +346,7 @@
         _close_sidebar: function(){
             $('#sidebar-container').removeClass('active').attr("style", "");
             $('#btn-toggle').removeClass('active').attr("style", "");
+            $('#btn-toggle').draggable('destroy');
             $('.image-gallery').remove();
         },
 
@@ -370,10 +387,11 @@
         makemenu: function(){
 
             $(document).on('click', '.clickable-menu', function(){
-                $('#media-info').empty();
+                _this._initMediaInfo();
                 $('.clickable-menu').not($(this)).removeClass('active-media');
                 $('.media-single-container').css("border-color","transparent");
                 if (!$(this).hasClass('active-media')){
+                    $('#media-info').removeClass('placeholder').text('');
                     $(this).addClass('active-media');
                     $(this).parent('.media-single-container').css("border-color", "#000");
                     $.ajax({
@@ -385,9 +403,7 @@
                         }
                     });
                     $('#media-info').append(_this.menuMedia($(this).data('id'), $(this).prop("tagName") == 'VIDEO', $(this).attr('src')));
-                    $('#media-info').slideDown();
                 }else{
-                    $('#media-info').slideUp();
                     $(this).removeClass('active-media');
                 }
             });
