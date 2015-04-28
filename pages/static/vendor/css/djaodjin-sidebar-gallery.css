@@ -40,7 +40,7 @@
     padding:3px;
     padding-top:10px;
     background: #FFF;
-    height:350px;
+    height:300px;
     margin-bottom:20px;
     overflow: scroll;
     border:1px solid #656565 ;
@@ -53,7 +53,7 @@
     padding:3px;
     padding-top:10px;
     background: #FFF;
-    height:auto;
+    max-height:100%;
     margin-bottom:20px;
     overflow: scroll;
     border:1px solid #656565 ;
@@ -71,6 +71,7 @@
 .media-single-container{
     float:left;
     height:50px;
+    min-width: 50px;
     max-width:70px;
     padding-top: 5px;
     margin:0;
@@ -179,7 +180,3 @@
 }
 
 .closeModal:hover { background: #00d9ff; }
-
-#menu-list li{
-    list-style-type: none;
-}

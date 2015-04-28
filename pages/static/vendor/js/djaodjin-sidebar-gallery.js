@@ -23,14 +23,13 @@
 
     var singleMedia = function(file, index){
         var single_media = '';
-        console.log(file.file_src)
         if (file.file_src.indexOf('.mp4') > 0){
             single_media = '<div class="media-single-container"><video data-id="'+ file.sha1 + '" id="image_'+ index + '" class="image  clickable-menu image_media" src="'+ file.file_src +'" style="max-height:80%;max-width:80%;"></video></div>';
         }else{
             single_media = '<div class="media-single-container"><img data-id="'+ file.sha1 + '" id="image_'+ index + '" class="image  clickable-menu image_media" src="'+ file.file_src +'" style="max-height:80%;max-width:80%;"></div>';
         }
         return single_media;
-    }
+    };
 
     var sidebar = '\
         <div id="sidebar-container" class="">\
@@ -41,7 +40,7 @@
                     <div class="col-xs-12">Drag and drop or click to upload Media</div>\
                     <div id="list-media"></div>\
                 </div>\
-                <div id="media-info"></div>\
+                <div id="media-info" style="display:none;"></div>\
             </div>\
         </div>';
 
@@ -51,18 +50,6 @@
     var id= null;
     var toggle_button = null;
     var count = 0;
-
-    var menuImage = function(sha, video, src){
-        var menu = '<ul id="menu-list">\
-            <li><button id="tag_media" media="' + sha + '">Add tag</button></li>\
-            <li><button id="delete_media" media="' + sha + '">Delete</button></li>';
-        if (video){
-            menu += '<li><button id="preview_media" image="' + sha + '" href="" src="'+ src +'">Preview</button></li></ul>';
-        }else{
-            menu += '</ul>';
-        }
-        return menu;
-    };
 
     var modal = '<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">\
           <div class="modal-dialog">\
@@ -148,7 +135,7 @@
                 stop : function(event, ui){
                     var view_width = $(window).width();
                     $('#sidebar-container').css("right", "0px").css("left", view_width- $(ui.element).width());
-                    $('#btn-toggle').css("right",  $(ui.element).width())
+                    $('#btn-toggle').css("right",  $(ui.element).width());
                 }
             });
 
@@ -207,7 +194,7 @@
             });
 
             DocDropzone.on("dragover", function(event){
-                if (count == 0){
+                if (count !== 0){
                     $('body').prepend('<div class="notify-user-label info-label">Release your file to upload it</div>');
                     count = 1;
                 }
@@ -355,16 +342,14 @@
             if (!search){
                 search = "";
             }
-            $('#list-media').empty();
+            
             $.ajax({
                 method:'GET',
                 url:_this.options.base_media_url + '?q='+search,
                 success: function(data){
+                    $('#list-media').empty();
                     $.each(data, function(index,file){
-                        console.log(file)
-                        console.log(singleMedia(file, index))
                         $('#list-media').append(singleMedia(file, index));
-
                         $('#image_' + index).draggable({
                             helper: 'clone',
                             revert: true,
@@ -386,16 +371,36 @@
 
             $(document).on('click', '.clickable-menu', function(){
                 $('#media-info').empty();
-                $.ajax({
-                    method: 'get',
-                    async:false,
-                    url:_this.options.base_media_url + $(this).data('id') + '/',
-                    success: function(response){
-                        $('#media-info').append('<div class="url_info"><textarea style="width:98%" rows="4" readonly>'+response.file_src +'</textarea></div>');
-                    }
-                });
-                $('#media-info').append(menuImage($(this).data('id'), $(this).prop("tagName") == 'VIDEO', $(this).attr('src')));
+                $('.clickable-menu').not($(this)).removeClass('active-media');
+                $('.media-single-container').css("border-color","transparent");
+                if (!$(this).hasClass('active-media')){
+                    $(this).addClass('active-media');
+                    $(this).parent('.media-single-container').css("border-color", "#000");
+                    $.ajax({
+                        method: 'get',
+                        async:false,
+                        url:_this.options.base_media_url + $(this).data('id') + '/',
+                        success: function(response){
+                            $('#media-info').append('<div class="url_info"><textarea style="width:98%" rows="4" readonly>'+response.file_src +'</textarea></div>');
+                        }
+                    });
+                    $('#media-info').append(_this.menuMedia($(this).data('id'), $(this).prop("tagName") == 'VIDEO', $(this).attr('src')));
+                    $('#media-info').slideDown();
+                }else{
+                    $('#media-info').slideUp();
+                    $(this).removeClass('active-media');
+                }
             });
+        },
+
+        menuMedia : function(sha, video, src){
+            var menu = '\
+                <button id="tag_media" media="' + sha + '" class="' + _this.options.button_class + '">Add tag</button>\
+                <button id="delete_media" media="' + sha + '" class="' + _this.options.button_class + '">Delete</button>';
+            if (video){
+                menu += '<button id="preview_media" image="' + sha + '" src="'+ src +'" class="' + _this.options.button_class + '">Preview</button>';
+            }
+            return menu;
         }
     };
 
@@ -409,6 +414,7 @@
         csrf_token:'',
         base_media_url:'',
         url_progress:null,
-        toggle: '<button class="btn btn-default" id="btn-toggle">Gallery</button>'
+        toggle: '<button class="btn btn-default" id="btn-toggle">Gallery</button>',
+        button_class: ''
     };
 })(jQuery);
