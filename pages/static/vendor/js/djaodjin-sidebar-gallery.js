@@ -21,16 +21,30 @@
         return modal;
     };
 
+    var singleMedia = function(file, index){
+        var single_media = '';
+        console.log(file.file_src)
+        if (file.file_src.indexOf('.mp4') > 0){
+            single_media = '<div class="media-single-container"><video data-id="'+ file.sha1 + '" id="image_'+ index + '" class="image  clickable-menu image_media" src="'+ file.file_src +'" style="max-height:80%;max-width:80%;"></video></div>';
+        }else{
+            single_media = '<div class="media-single-container"><img data-id="'+ file.sha1 + '" id="image_'+ index + '" class="image  clickable-menu image_media" src="'+ file.file_src +'" style="max-height:80%;max-width:80%;"></div>';
+        }
+        return single_media;
+    }
+
     var sidebar = '\
-        <div id="sidebar-gallery">\
-            <h1 class="">Medias</h1>\
-            <input placeholder="Search..." id="gallery-filter" type="text" class="form-control">\
-            <div id="media-container">\
-                <div class="col-xs-12">Drag and drop or click to upload Media</div>\
-                <div id="list-media"></div>\
+        <div id="sidebar-container" class="">\
+            <div id="sidebar-gallery">\
+                <h1 class="">Medias</h1>\
+                <input placeholder="Search..." id="gallery-filter" type="text" class="form-control">\
+                <div id="media-container">\
+                    <div class="col-xs-12">Drag and drop or click to upload Media</div>\
+                    <div id="list-media"></div>\
+                </div>\
+                <div id="media-info"></div>\
             </div>\
-            <div id="media-info"></div>\
         </div>';
+
     var sidebar_size = 200;
     var loaded = false;
     var initialized = false;
@@ -40,10 +54,10 @@
 
     var menuImage = function(sha, video, src){
         var menu = '<ul id="menu-list">\
-        <li><a id="tag_media" media="' + sha + '" href="">Add tag</a></li>\
-        <li><a id="delete_media" media="' + sha + '" href="">Delete</a></li>';
+            <li><button id="tag_media" media="' + sha + '">Add tag</button></li>\
+            <li><button id="delete_media" media="' + sha + '">Delete</button></li>';
         if (video){
-            menu += '<li><a id="preview_media" image="' + sha + '" href="" src="'+ src +'">Preview</a></li></ul>';
+            menu += '<li><button id="preview_media" image="' + sha + '" href="" src="'+ src +'">Preview</button></li></ul>';
         }else{
             menu += '</ul>';
         }
@@ -51,22 +65,22 @@
     };
 
     var modal = '<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">\
-  <div class="modal-dialog">\
-    <div class="modal-content">\
-      <div class="modal-header">\
-        <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>\
-        <h4 class="modal-title" id="myModalLabel">Modal title</h4>\
-      </div>\
-      <div class="modal-body">\
-        <video src="" id="modal-video" controls style="width:100%" preload="auto"></video>\
-      </div>\
-      <div class="modal-footer">\
-        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>\
-        <button type="button" class="btn btn-primary">Save changes</button>\
-      </div>\
-    </div>\
-  </div>\
-</div>';
+          <div class="modal-dialog">\
+            <div class="modal-content">\
+              <div class="modal-header">\
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>\
+                <h4 class="modal-title" id="myModalLabel">Modal title</h4>\
+              </div>\
+              <div class="modal-body">\
+                <video src="" id="modal-video" controls style="width:100%" preload="auto"></video>\
+              </div>\
+              <div class="modal-footer">\
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>\
+                <button type="button" class="btn btn-primary">Save changes</button>\
+              </div>\
+            </div>\
+          </div>\
+        </div>';
 
     function SidebarGallery(options){
         this.options = options;
@@ -123,6 +137,20 @@
                 });
             });
 
+            $('#sidebar-container').resizable({
+                handles: 'w',
+                minWidth: 180,
+                resize: function(event, ui){
+                    var view_width = $(window).width();
+                    $('#sidebar-container').css("right", "0px").css("left", view_width- $(ui.element).width());
+                    $('#btn-toggle').css("right",$(ui.element).width());
+                },
+                stop : function(event, ui){
+                    var view_width = $(window).width();
+                    $('#sidebar-container').css("right", "0px").css("left", view_width- $(ui.element).width());
+                    $('#btn-toggle').css("right",  $(ui.element).width())
+                }
+            });
 
             $('.droppable-image').droppable({
                 drop: function( event, ui ) {
@@ -205,7 +233,8 @@
                 }, 3000);
             });
 
-            DocDropzone.on("success", function(data, response){
+            DocDropzone.on("success", function(file, response){
+                var status = file.xhr.status;
                 $('.progress-text').remove();
                 $('.dz-preview').remove();
                 var last_index = $('#list-media').children().last().children().attr('id');
@@ -214,12 +243,9 @@
                 }else{
                     last_index = 0;
                 }
-                if (!response.exist){
-                    if (response.file_src.indexOf('.mp4') > 0){
-                        $('#list-media').prepend('<div class="media-single-container"><video data-id="'+ response.sha1 + '" id="image_'+ last_index + '" class="image  clickable-menu image_media" src="'+ response.file_src +'" style="max-height:80%;max-width:80%;"></video></div>');
-                    }else{
-                        $('#list-media').prepend('<div class="media-single-container"><img data-id="'+ response.sha1 + '" id="image_'+ last_index + '" class="image  clickable-menu image_media" src="'+ response.file_src +'" style="max-height:80%;max-width:80%;"></div>');
-                    }
+                if (status == 201){
+                    $('#list-media').prepend(singleMedia(response, last_index));
+
                     $('#image_' + last_index).draggable({
                         helper: 'clone',
                         revert: true,
@@ -234,10 +260,7 @@
                     var descr = "We're processing your uploaded file. You can start use it by using the sample in your gallery.";
                     notify_user(descr, 'info');
                 }else{
-                    $('#media-container').append('<div class="col-md-12 padding-top-img alert">Image already in your gallery</div>');
-                    setTimeout(function() {
-                        $('.alert').remove();
-                    }, 3000);
+                    notify_user(response.message, 'error');
                 }
                 if (!$('#sidebar-gallery').hasClass('active')){
                     _this._open_sidebar();
@@ -304,7 +327,7 @@
         },
 
         _toggle_sidebar: function(){
-            if ($('#sidebar-gallery').hasClass('active')){
+            if ($('#sidebar-container').hasClass('active')){
                 _this._close_sidebar();
             }else{
                 _this._open_sidebar();
@@ -313,13 +336,13 @@
 
         _open_sidebar: function(){
             $('#btn-toggle').addClass('active');
-            $('#sidebar-gallery').addClass('active');
+            $('#sidebar-container').addClass('active');
             _this.loadImage();
         },
 
         _close_sidebar: function(){
-            $('#sidebar-gallery').removeClass('active');
-            $('#btn-toggle').removeClass('active');
+            $('#sidebar-container').removeClass('active').attr("style", "");
+            $('#btn-toggle').removeClass('active').attr("style", "");
             $('.image-gallery').remove();
         },
 
@@ -337,13 +360,11 @@
                 method:'GET',
                 url:_this.options.base_media_url + '?q='+search,
                 success: function(data){
-                    $.each(data, function(index,element){
-                        var src_file = element.file_src;
-                        if (src_file.indexOf('.mp4') > 0){
-                            $('#list-media').append('<div class="media-single-container"><video data-id="'+ element.sha1 + '" id="image_'+ index + '" class="image clickable-menu image_media" src="'+ src_file +'" style="max-height:80%;max-width:80%;"></video></div>');
-                        }else{
-                            $('#list-media').append('<div class="media-single-container"><img data-id="'+ element.sha1 + '" id="image_'+ index + '" class="image clickable-menu image_media" src="'+ src_file +'" style="max-height:80%;max-width:80%;"></div>');
-                        }
+                    $.each(data, function(index,file){
+                        console.log(file)
+                        console.log(singleMedia(file, index))
+                        $('#list-media').append(singleMedia(file, index));
+
                         $('#image_' + index).draggable({
                             helper: 'clone',
                             revert: true,

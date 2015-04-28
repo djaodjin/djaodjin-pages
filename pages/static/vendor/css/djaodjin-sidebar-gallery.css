@@ -5,26 +5,29 @@
 }
 
 #btn-toggle.active{
-    right:200px;
+    right:300px;
+}
+
+#sidebar-container{
+    position:fixed !important;
+    top:0px !important;
+    right: -300px;
+    height: 100% !important;
+    width: 300px;
+    border-left:1px solid #656565;
+    z-index:10000;
+    background: #FFF;
+    color : #656565;
 }
 
 #sidebar-gallery{
-    padding:10px;
-    padding-top:0px;
-    padding-bottom:20px;
-    position:fixed;
-    top:0px;
-    right: -220px;
-    height: 100%;
-    width:200px;
-    background: #FFF;
-    color : #656565;
-    border-left:1px solid #656565;
-    z-index:10000;
+    position: relative;
+    padding: 20px;
+    min-height: 100%;
 }
 
-#sidebar-gallery.active{
-    right:0px;
+#sidebar-container.active{
+    right:0 !important;
 }
 
 #sidebar-gallery h1{
@@ -37,7 +40,7 @@
     padding:3px;
     padding-top:10px;
     background: #FFF;
-    min-height:50%;
+    height:350px;
     margin-bottom:20px;
     overflow: scroll;
     border:1px solid #656565 ;
@@ -50,7 +53,7 @@
     padding:3px;
     padding-top:10px;
     background: #FFF;
-    height:22%;
+    height:auto;
     margin-bottom:20px;
     overflow: scroll;
     border:1px solid #656565 ;
@@ -68,7 +71,7 @@
 .media-single-container{
     float:left;
     height:50px;
-    width:45%;
+    max-width:70px;
     padding-top: 5px;
     margin:0;
     border:1px solid transparent;
@@ -84,6 +87,9 @@
 }
 
 #gallery-filter{
+    -moz-box-sizing: border-box;
+    box-sizing:border-box;
+    width: 100%;
     height: 34px;
     position:relative;
     padding: 6px 12px;
