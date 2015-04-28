@@ -34,7 +34,7 @@
     var sidebar = '\
         <div id="sidebar-container" class="">\
             <div id="sidebar-gallery">\
-                <h1 class="">Medias</h1>\
+                <h1 class="">Media</h1>\
                 <input placeholder="Search..." id="gallery-filter" type="text" class="form-control">\
                 <div id="media-container">\
                     <div class="col-xs-12">Drag and drop or click to upload Media</div>\
