@@ -9,6 +9,7 @@
 }
 
 #sidebar-container{
+    overflow: scroll;
     position:fixed !important;
     top:0px !important;
     right: -300px;
