@@ -313,6 +313,7 @@
             $('#btn-toggle').draggable({
                 axis: "x",
                 cursor: "move",
+                containment: "window",
                 drag: function(event, ui){
                     var view_width = $(window).width();
                     if (view_width - ui.position.left - $(ui.helper).outerWidth() >= 300){
@@ -331,7 +332,6 @@
                     }
 
                     $( event.toElement ).one('click', function(e){ e.stopImmediatePropagation(); } );
-
                 }
             });
         },
