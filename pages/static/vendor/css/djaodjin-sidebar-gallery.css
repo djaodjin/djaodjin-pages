@@ -54,10 +54,18 @@
     padding:3px;
     padding-top:10px;
     background: #FFF;
+    min-height: 150px;
     max-height:100%;
     margin-bottom:20px;
     overflow: scroll;
     border:1px solid #656565 ;
+}
+
+#media-info.placeholder{
+    background: #CCC;
+    color:#FFF;
+    line-height:150px;
+    text-align:center;
 }
 
 #media-info h4{
