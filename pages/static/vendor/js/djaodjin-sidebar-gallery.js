@@ -221,8 +221,11 @@
                         helper: 'clone',
                         revert: true,
                         appendTo: "body",
-                        start: function() {
-                            $(".ui-draggable").not(this).css({
+                        zIndex: 10000,
+                        start: function(event, ui) {
+                            console.log($(event.target).width());
+                            ui.helper.css({
+                                // height: 50,
                                 width: 50
                             });
                         },
@@ -371,8 +374,10 @@
                             helper: 'clone',
                             revert: true,
                             appendTo: "body",
-                            start: function() {
-                                $(".ui-draggable").not(this).css({
+                            zIndex: 10000,
+                            start: function(event, ui) {
+                                console.log($(event.target).width());
+                                ui.helper.css({
                                     // height: 50,
                                     width: 50
                                 });

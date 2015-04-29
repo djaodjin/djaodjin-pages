@@ -1,14 +1,8 @@
 /* jshint multistr: true */
 
 (function ($) {
-
-    var mardown_tool_html = '<div id="tool_markdown"><button type="button" class="btn_tool" id="title_h3">H3</button>\
-                     <button type="button" class="btn_tool" id="title_h4">H4</button>\
-                     <button type="button" class="btn_tool" id="bold"><strong>B</strong></button>\
-                     <button type="button" class="btn_tool" id="italic"><em>I</em></button>\
-                     <button type="button" class="btn_tool" id="list_ul">List</button>\
-                     <button type="button" class="btn_tool" id="link">Link</button></div>';
-
+    var mardown_tool_html = "";
+    var preventclick = false;
 
     $('body').on('mousedown', '#tool_markdown', function(event){
         event.preventDefault();
@@ -50,6 +44,11 @@
             self.$el.on('click', function(){
                 self.toggle_input();
             });
+
+            $(document).on('click', self.options.prevent_change_editor_selectors, function(event){
+                preventclick = true;
+            });
+
         },
 
         get_element_properties:function(){
@@ -87,26 +86,31 @@
 
         toggle_input:function(){
             var self = this;
+            if (!$('#input_editor').length){
+
+
             self.toogle_start_optional();
             self.$el.replaceWith(self.input_editable);
+            $(document).trigger('editInputVisible');
             $('#input_editor').focus();
             $('#input_editor').val(self.get_origin_text());
             $('#input_editor').css(self.css_var);
             $('#input_editor').autosize({append:''});
             $('#input_editor').on('blur', function(event){
-                self.save_edition(event);
-            });
-
-            $('body').on('click', function(event){
-                var $target = $(event.target);
-                if (($target.attr('class') && $target.attr('class').indexOf(self.options.no_change_editor) >= 0) || ($target.attr('id') && $target.attr('id').indexOf(self.options.no_change_editor) >= 0)){
-                    $('#input_editor').unbind('change');
+                if (!preventclick){
+                    self.save_edition(event);
+                }else{
+                    $('#input_editor').focus();
+                    preventclick = false;
                 }
             });
 
             $('#input_editor').on('keyup', function(){
                 self.check_input();
             });
+            }else{
+                return false;
+            }
         },
 
         get_saved_text: function(){
@@ -121,9 +125,7 @@
         check_input: function(){
             var self = this;
             if (self.get_saved_text() === self.options.empty_input || self.get_saved_text() === ""){
-                $('#input_editor').val(self.options.empty_input);
-                $('#input_editor').css({'color':'red'});
-                $('#input_editor').focus();
+                $('#input_editor').focus().attr('placeholder' , self.options.empty_input);
                 return false;
             }else if (self.get_saved_text() != self.options.empty_input){
                 if (self.get_saved_text().indexOf(self.options.empty_input) >= 0){
@@ -210,6 +212,13 @@
     MarkdownEditor.prototype = $.extend({}, Editor.prototype,{
         toogle_start_optional: function(){
             var self = this;
+            mardown_tool_html = '<div id="tool_markdown" class="' + self.options.container_tool_class + '">\
+                    <button type="button" class="' + self.options.btn_tool_class + '" id="title_h3">H3</button>\
+                    <button type="button" class="' + self.options.btn_tool_class + '" id="title_h4">H4</button>\
+                    <button type="button" class="' + self.options.btn_tool_class + '" id="bold"><strong>B</strong></button>\
+                    <button type="button" class="' + self.options.btn_tool_class + '" id="italic"><em>I</em></button>\
+                    <button type="button" class="' + self.options.btn_tool_class + '" id="list_ul">List</button>\
+                    <button type="button" class="' + self.options.btn_tool_class + '" id="link">Link</button></div>';
             $('body').prepend(mardown_tool_html);
             $('#tool_markdown').css({
                 'top': (self.$el.offset().top - 45) + 'px',
@@ -260,7 +269,7 @@
         get_displayed_text: function(){
             var self = this;
             convert = new Markdown.getSanitizingConverter().makeHtml;
-            return convert(self.get_saved_text());
+            return convert(self.get_saved_text()).replace('<img ', '<img style="max-width:100%" ');
         }
     });
 
@@ -282,9 +291,11 @@
         enable_markdown: true,
         enable_upload : false,
         img_upload_url:'',
-        empty_input:'Please enter text!',
-        no_change_editor: 'btn-toggle',
-        unique_identifier: 'id'
+        empty_input:'Please enter text...',
+        prevent_change_editor_selectors: '',
+        unique_identifier: 'id',
+        container_tool_class:'',
+        btn_tool_class: ''
     };
 
 }( jQuery ));
