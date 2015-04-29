@@ -48,22 +48,7 @@
 
 #tool_markdown{
 	position: absolute;
-}
-
-.btn_tool{
-	border:1px solid #974040;
-	min-width:50px;
-	border-radius: 3px;
-	background: #D95C5C;
-	color:white;
-}
-
-.btn_tool:hover{
-	background: #E75859;
-}
-
-.btn_tool:active{
-	background: #E75859;
+    z-index:1000;
 }
 
 .error-label{
