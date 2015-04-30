@@ -35,12 +35,6 @@
         init: function(){
             var self = this;
             self.get_properties();
-            this.id = self.$el.attr(self.options.unique_identifier);
-            if( !this.id ) {
-                this.id = self.$el.parents(
-                    '['+self.options.unique_identifier+']').attr(
-                        self.options.unique_identifier);
-            }
             self.$el.on('click', function(){
                 self.toggle_input();
             });
@@ -49,6 +43,20 @@
                 preventclick = true;
             });
 
+        },
+
+        getId: function() {
+            var self = this;
+            var slug = self.$el.attr(self.options.unique_identifier);
+            if( !slug ) {
+                slug = self.$el.parents(
+                    '['+self.options.unique_identifier+']').attr(
+                        self.options.unique_identifier);
+            }
+            if( !slug ) {
+                slug = 'undefined';
+            }
+            return slug;
         },
 
         get_element_properties:function(){
@@ -138,7 +146,6 @@
 
         save_edition: function(event){
             var self = this;
-            var id_element = self.id;
             var saved_text = self.get_saved_text();
 
             var displayed_text = self.get_displayed_text();
@@ -147,16 +154,18 @@
                 return false;
             }
 
-            if (!id_element){
-                id_element = 'undefined';
-            }
             var data = {};
             var method = 'PUT';
             if (self.$el.attr('data-key')){
                 data[self.$el.attr('data-key')] = $.trim(saved_text);
                 method = 'PATCH';
-            }else{
-                data = {slug:id_element, text:$.trim(saved_text), old_text:self.origin_text, tag: self.$el.prop("tagName")};
+            } else {
+                data = {
+                    slug:self.getId(),
+                    text:$.trim(saved_text),
+                    old_text:self.origin_text,
+                    tag: self.$el.prop("tagName")
+                };
             }
             self.$el.html(displayed_text);
             self.toogle_end_optional();
@@ -171,11 +180,12 @@
                 $.ajax({
                     method:method,
                     async:false,
-                    url: self.options.base_url + id_element +'/',
+                    url: self.options.base_url + self.getId() +'/',
                     data:data,
-                    success: function(data){
-                        console.log('Success');
-                    }
+                    success: function(data) {
+                        self.options.onSuccess(self, data);
+                    },
+                    error: self.options.onError
                 });
             }
 
@@ -250,7 +260,7 @@
                 $.ajax({
                     method:'GET',
                     async:false,
-                    url: self.options.base_url + self.id +'/',
+                    url: self.options.base_url + self.getId() +'/',
                     success: function(data){
                         if (self.$el.attr('data-key')){
                             self.origin_text = data[self.$el.attr('data-key')];
@@ -295,7 +305,9 @@
         prevent_change_editor_selectors: '',
         unique_identifier: 'id',
         container_tool_class:'',
-        btn_tool_class: ''
+        btn_tool_class: '',
+        onSuccess: null,
+        onError: null
     };
 
 }( jQuery ));
