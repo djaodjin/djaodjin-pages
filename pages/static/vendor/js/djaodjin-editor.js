@@ -28,7 +28,12 @@
     });
 
     function Editor(element, options){
-        return true;
+        var _this = this;
+        _this.el = element;
+        _this.$el = $(element);
+        _this.options = options;
+        _this.init();
+        return _this;
     }
 
     Editor.prototype = {
@@ -57,6 +62,12 @@
                 slug = 'undefined';
             }
             return slug;
+        },
+
+        get_origin_text: function(){
+            var self = this;
+            self.origin_text = $.trim(self.$el.text());
+            return self.origin_text;
         },
 
         get_element_properties:function(){
@@ -96,12 +107,12 @@
             var self = this;
             if (!$('#input_editor').length){
 
-
             self.toogle_start_optional();
+            var origin_text = self.get_origin_text();
             self.$el.replaceWith(self.input_editable);
             $(document).trigger('editInputVisible');
             $('#input_editor').focus();
-            $('#input_editor').val(self.get_origin_text());
+            $('#input_editor').val(origin_text);
             $('#input_editor').css(self.css_var);
             $('#input_editor').autosize({append:''});
             $('#input_editor').on('blur', function(event){
@@ -132,11 +143,11 @@
 
         check_input: function(){
             var self = this;
-            if (self.get_saved_text() === self.options.empty_input || self.get_saved_text() === ""){
+            if (self.get_displayed_text() === self.options.empty_input || self.get_displayed_text() === ""){
                 $('#input_editor').focus().attr('placeholder' , self.options.empty_input);
                 return false;
-            }else if (self.get_saved_text() != self.options.empty_input){
-                if (self.get_saved_text().indexOf(self.options.empty_input) >= 0){
+            }else if (self.get_displayed_text() != self.options.empty_input){
+                if (self.get_displayed_text().indexOf(self.options.empty_input) >= 0){
                     $('#input_editor').val(self.get_saved_text().split(self.options.empty_input)[1]);
                 }
                 $('#input_editor').css({'color':self.$el.css('color')});
@@ -188,12 +199,11 @@
                     error: self.options.onError
                 });
             }
-
             self.init();
         },
     };
 
-    function TextEditor(element, options){
+    function CurrencyEditor(element, options){
         var _this = this;
         _this.el = element;
         _this.$el = $(element);
@@ -202,12 +212,25 @@
         return _this;
     }
 
-    TextEditor.prototype = $.extend({}, Editor.prototype, {
-        get_origin_text: function(){
-            var self = this;
-            self.origin_text = $.trim(self.$el.text());
-            return self.origin_text;
+    CurrencyEditor.prototype = $.extend({}, Editor.prototype, {
+        get_saved_text: function(){
+            var entered_value =  $('#input_editor').val();
+            var amount = parseInt(parseFloat(entered_value.replace(/[^0-9\.]+/g,""))*100);
+            return amount;
         },
+
+        get_displayed_text: function(){
+            var self = this;
+            var default_currency = '$';
+            if (self.$el.data('currency')){
+                currency = self.$el.data('currency');
+            }
+
+            var amount = self.get_saved_text();
+            var text = default_currency + String((amount/100).toFixed(2));
+
+            return text;
+        }
     });
 
     function MarkdownEditor(element, options){
@@ -289,8 +312,10 @@
             if (!$.data($(this), 'editor')) {
                 if ($(this).hasClass('edit-markdown')){
                     $.data($(this), 'editor', new MarkdownEditor($(this), opts));
+                }else if ($(this).hasClass('edit-currency')){
+                    $.data($(this), 'editor', new CurrencyEditor($(this), opts));
                 }else{
-                    $.data($(this), 'editor', new TextEditor($(this), opts));
+                    $.data($(this), 'editor', new Editor($(this), opts));
                 }
             }
         });
@@ -306,8 +331,12 @@
         unique_identifier: 'id',
         container_tool_class:'',
         btn_tool_class: '',
-        onSuccess: null,
-        onError: null
+        onSuccess: function(){
+            return true;
+        },
+        onError: function(){
+            return true;
+        }
     };
 
 }( jQuery ));
