@@ -265,19 +265,30 @@
                 url:_this.options.base_media_url + $this_element.attr('media') +'/',
                 success: function(response){
                     orginal_tags = response.tags;
+                    if (orginal_tags === null){
+                        orginal_tags = "";
+                    }
                 }
             });
-            var tags = prompt('Please enter tags', orginal_tags);
-            if (tags !== null){
-                $.ajax({
-                    method: 'patch',
-                    url:_this.options.base_media_url + $this_element.attr('media') + '/',
-                    data:{'tags': tags},
-                    success: function(){
-                        console.log('updated');
-                    }
-                });
-            }
+
+            var current_info = $('#media-info').html();
+            $('#media-info').empty().append('<h4>Update media tag</h4><input id="input-tag" media="'+ $this_element.attr('media') + '" type="text" value="' + orginal_tags + '" placeholder="Please enter tag."><button id="add-tag">Add tag</button>');
+            $('#input-tag').focus();
+            $(document).on('click', '#add-tag',function(){
+                var tags = $('#input-tag').val();
+
+                if (tags !== orginal_tags){
+                    $.ajax({
+                        method: 'patch',
+                        url:_this.options.base_media_url + $this_element.attr('media') + '/',
+                        data:{'tags': tags},
+                        success: function(){
+                            console.log('updated');
+                        }
+                    });
+                }
+                $('#media-info').empty().append(current_info);
+            });
         },
 
         previewMedia: function(event){

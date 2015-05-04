@@ -44,9 +44,11 @@
                 self.toggle_input();
             });
 
-            $(document).on('click', self.options.prevent_change_editor_selectors, function(event){
-                preventclick = true;
-            });
+            if (self.options.prevent_change_editor_selectors !== ""){
+                $(document).on('click', self.options.prevent_change_editor_selectors, function(event){
+                    preventclick = true;
+                });
+            }
 
         },
 
@@ -143,14 +145,10 @@
 
         check_input: function(){
             var self = this;
-            if (self.get_displayed_text() === self.options.empty_input || self.get_displayed_text() === ""){
+            if (self.get_displayed_text() === ""){
                 $('#input_editor').focus().attr('placeholder' , self.options.empty_input);
                 return false;
-            }else if (self.get_displayed_text() != self.options.empty_input){
-                if (self.get_displayed_text().indexOf(self.options.empty_input) >= 0){
-                    $('#input_editor').val(self.get_saved_text().split(self.options.empty_input)[1]);
-                }
-                $('#input_editor').css({'color':self.$el.css('color')});
+            }else{
                 return true;
             }
         },
