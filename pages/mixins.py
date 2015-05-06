@@ -36,10 +36,10 @@ class AccountMixin(object):
 
     account_url_kwarg = settings.ACCOUNT_URL_KWARG
 
-    def get_account(self):
+    @staticmethod
+    def get_account():
         if settings.GET_CURRENT_ACCOUNT:
-            return import_string(settings.GET_CURRENT_ACCOUNT)(
-                self.account_url_kwarg, self.kwargs)
+            return import_string(settings.GET_CURRENT_ACCOUNT)()
         return None
 
 
