@@ -22,8 +22,6 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#pylint:disable=too-many-arguments, line-too-long, unused-argument
-
 from django.core.cache import cache
 from django.core.files.uploadhandler import FileUploadHandler
 
@@ -37,6 +35,7 @@ class ProgressBarUploadHandler(FileUploadHandler):
         self.progress_id = None
         self.cache_key = None
 
+    #pylint: disable=too-many-arguments
     def handle_raw_input(self,
         input_data,
         META,
