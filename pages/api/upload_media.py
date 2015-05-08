@@ -22,8 +22,6 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#pylint: disable=no-init,no-member,unused-variable
-#pylint: disable=old-style-class,maybe-no-member
 
 import json, hashlib, os
 
@@ -37,7 +35,6 @@ from rest_framework.parsers import FileUploadParser
 from rest_framework.response import Response
 from storages.backends.s3boto import S3BotoStorage
 
-from .. import settings
 from ..models import UploadedImage, PageElement
 from ..serializers import UploadedImageSerializer
 from ..mixins import AccountMixin, UploadedImageMixin
@@ -59,11 +56,8 @@ class MediaListAPIView(AccountMixin,
         # Store filenames with forward slashes, even on Windows
         file_name = force_text(uploaded_file.name.replace('\\', '/'))
         sha1_filename = sha1 + os.path.splitext(file_name)[1]
-        sha1_path = os.path.join(settings.MEDIA_PATH, sha1_filename)
-        # Replace filename by unique hash key
-        uploaded_file.name = sha1_path
         account = self.get_account()
-        bucket_name = self.get_bucket_name(account)
+        sha1_path = os.path.join(self.get_media_prefix(account), sha1_filename)
         storage = self.get_default_storage(account)
         storage_cache = self.get_cache_storage(account)
         result = {}
@@ -132,7 +126,6 @@ class MediaUpdateDestroyAPIView(
             account=self.get_account())
 
     def get_object(self):
-        queryset = self.get_queryset()
         sha1 = self.kwargs.get(self.lookup_url_kwarg)
         instance = self.get_queryset().filter(
             Q(uploaded_file__contains=sha1)\
@@ -149,8 +142,8 @@ class MediaUpdateDestroyAPIView(
         if cache_storage.exists(relative_path):
             cache_storage.delete(relative_path)
 
-        page_elements = PageElement.objects.filter(
-            text=file_obj.uploaded_file).delete()
+        # XXX looks like this should be a DELETE CASCADE
+        PageElement.objects.filter(text=file_obj.uploaded_file).delete()
         file_obj.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 

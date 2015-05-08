@@ -26,5 +26,5 @@ from django.conf.urls import patterns, url
 from pages.views import UploadedTemplatesView
 
 urlpatterns = patterns('',
-    url(r'^uploaded-templates/', UploadedTemplatesView.as_view()),
+    url(r'^templates/', UploadedTemplatesView.as_view()),
 )

@@ -32,22 +32,6 @@ from . import settings
 FILE_SYSTEM = FileSystemStorage(location=settings.MEDIA_ROOT)
 
 
-class PageElement(models.Model):
-    """
-    Elements of an editable HTML page.
-    """
-
-    slug = models.CharField(max_length=50)
-    text = models.TextField(blank=True)
-    image = models.ForeignKey("UploadedImage",
-        null=True)
-    account = models.ForeignKey(
-        settings.ACCOUNT_MODEL, related_name='account_page_element', null=True)
-
-    def __unicode__(self):
-        return unicode(self.slug)
-
-
 class UploadedImage(models.Model):
     """
     Image uploaded
@@ -85,6 +69,21 @@ class UploadedImage(models.Model):
 
     def relative_path(self):
         return self.uploaded_file_cache.replace(settings.MEDIA_URL, '')
+
+
+class PageElement(models.Model):
+    """
+    Elements of an editable HTML page.
+    """
+
+    slug = models.CharField(max_length=50)
+    text = models.TextField(blank=True)
+    image = models.ForeignKey(UploadedImage, null=True)
+    account = models.ForeignKey(
+        settings.ACCOUNT_MODEL, related_name='account_page_element', null=True)
+
+    def __unicode__(self):
+        return unicode(self.slug)
 
 
 class UploadedTemplate(models.Model):

@@ -45,6 +45,7 @@ class AccountMixin(object):
 
 class UploadedImageMixin(object):
 
+
     @staticmethod
     def get_bucket_name(account=None):
         if account:
@@ -57,6 +58,16 @@ class UploadedImageMixin(object):
         else:
             bucket_name = settings.AWS_STORAGE_BUCKET_NAME
         return bucket_name
+
+    @staticmethod
+    def get_media_prefix(account=None):
+        if account:
+            try:
+                return account.media_prefix
+            except AttributeError:
+                LOGGER.warning("``%s`` does not contain a ``media_prefix``"\
+" field.", account.__class__)
+        return settings.MEDIA_PREFIX
 
     def get_default_storage(self, account=None):
         bucket_name = self.get_bucket_name(account)
