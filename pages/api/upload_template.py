@@ -22,8 +22,6 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#pylint: disable=no-init,no-member,unused-variable
-#pylint: disable=old-style-class,line-too-long,maybe-no-member
 
 import os
 import zipfile, tempfile, shutil
@@ -53,13 +51,16 @@ class UploadedTemplateListAPIView(AccountMixin, generics.ListCreateAPIView):
             Q(account=self.get_account())|Q(account=None))
         return queryset
 
-    def post(self, request, format=None, *args, **kwargs):#pylint: disable=unused-argument, redefined-builtin, too-many-locals, too-many-statements
-
+    def post(self, request, format=None, *args, **kwargs):
+        #pylint: disable=unused-argument,redefined-builtin
+        #pylint: disable=too-many-locals,too-many-statements
         new_package = True
         account = self.get_account()
         if account and not DISABLE_ACCOUNT_TEMPLATE_PATH:
-            uploaded_template_dir = os.path.join(UPLOADED_TEMPLATE_DIR, account.slug)
-            uploaded_static_dir = os.path.join(UPLOADED_STATIC_DIR, account.slug)
+            uploaded_template_dir = os.path.join(
+                UPLOADED_TEMPLATE_DIR, account.slug)
+            uploaded_static_dir = os.path.join(
+                UPLOADED_STATIC_DIR, account.slug)
         else:
             uploaded_template_dir = UPLOADED_TEMPLATE_DIR
             uploaded_static_dir = UPLOADED_STATIC_DIR

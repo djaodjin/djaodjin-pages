@@ -19,7 +19,7 @@ Update your settings.py to manage Media.
     PAGES = {
         ...
         'MEDIA_ROOT' : '/media_path',
-        'MEDIA_PATH' : '/path/to/uploaded/media',
+        'MEDIA_PREFIX' : '/path/to/uploaded/media',
         ...
     }
 
