@@ -1,29 +1,30 @@
 /* jshint multistr: true */
 
 (function ($) {
-    var mardown_tool_html = "";
+    "use strict";
+    var mardownToolHtml = "";
     var preventclick = false;
 
-    $('body').on('mousedown', '#tool_markdown', function(event){
+    $("body").on("mousedown", "#tool_markdown", function(event){
         event.preventDefault();
         var $target = $(event.target);
-        if ($target.attr('id') == 'title_h3'){
-            $('#input_editor').selection('insert',{text:'###' ,mode:'before'}).selection('insert', {text: '', mode: 'after'});
-        }else if($target.attr('id') == 'title_h4'){
-            $('#input_editor').selection('insert',{text:'####' ,mode:'before'}).selection('insert', {text: '', mode: 'after'});
-        }else if($target.attr('id') == 'bold'){
-            $('#input_editor').selection('insert',{text:'**' ,mode:'before'}).selection('insert', {text: '**', mode: 'after'});
-        }else if($target.attr('id') == 'list_ul'){
-            $('#input_editor').selection('insert',{text:'* ' ,mode:'before'}).selection('insert', {text: '', mode: 'after'});
-        }else if($target.attr('id') == 'link'){
-            var text = $('#input_editor').selection();
+        if ($target.attr("id") === "title_h3"){
+            $("#input_editor").selection("insert", {text: "###", mode: "before"}).selection("insert", {text: "", mode: "after"});
+        }else if($target.attr("id") === "title_h4"){
+            $("#input_editor").selection("insert", {text: "####", mode: "before"}).selection("insert", {text: "", mode: "after"});
+        }else if($target.attr("id") === "bold"){
+            $("#input_editor").selection("insert", {text: "**", mode: "before"}).selection("insert", {text: "**", mode: "after"});
+        }else if($target.attr("id") === "list_ul"){
+            $("#input_editor").selection("insert", {text: "* ", mode: "before"}).selection("insert", {text: "", mode: "after"});
+        }else if($target.attr("id") === "link"){
+            var text = $("#input_editor").selection();
             if (text.indexOf("http://") >= 0){
-                $('#input_editor').selection('insert',{text:'['+text+'](' ,mode:'before'}).selection('insert', {text: ')', mode: 'after'});
+                $("#input_editor").selection("insert", {text: "[" + text + "](", mode: "before"}).selection("insert", {text: ")", mode: "after"});
             }else{
-                $('#input_editor').selection('insert',{text:'[http://'+text+'](http://' ,mode:'before'}).selection('insert', {text: ')', mode: 'after'});
+                $("#input_editor").selection("insert", {text: "[http://" + text + "](http://", mode: "before"}).selection("insert", {text: ")", mode: "after"});
             }
-        }else if($target.attr('id') == 'italic'){
-            $('#input_editor').selection('insert',{text:'*' ,mode:'before'}).selection('insert', {text: '*', mode: 'after'});
+        }else if($target.attr("id") === "italic"){
+            $("#input_editor").selection("insert", {text: "*", mode: "before"}).selection("insert", {text: "*", mode: "after"});
         }
     });
 
@@ -39,13 +40,13 @@
     Editor.prototype = {
         init: function(){
             var self = this;
-            self.get_properties();
-            self.$el.on('click', function(){
-                self.toggle_input();
+            self.getProperties();
+            self.$el.on("click", function(){
+                self.toggleInput();
             });
 
             if (self.options.prevent_change_editor_selectors !== ""){
-                $(document).on('click', self.options.prevent_change_editor_selectors, function(event){
+                $(document).on("click", self.options.prevent_change_editor_selectors, function(){
                     preventclick = true;
                 });
             }
@@ -57,148 +58,148 @@
             var slug = self.$el.attr(self.options.unique_identifier);
             if( !slug ) {
                 slug = self.$el.parents(
-                    '['+self.options.unique_identifier+']').attr(
+                    "[" + self.options.unique_identifier + "]").attr(
                         self.options.unique_identifier);
             }
             if( !slug ) {
-                slug = 'undefined';
+                slug = "undefined";
             }
             return slug;
         },
 
-        get_origin_text: function(){
+        getOriginText: function(){
             var self = this;
-            self.origin_text = $.trim(self.$el.text());
-            return self.origin_text;
+            self.originText = $.trim(self.$el.text());
+            return self.originText;
         },
 
-        get_element_properties:function(){
+        getElementProperties: function(){
             var self = this;
             return self.$el;
         },
 
-        get_properties: function(){
+        getProperties: function(){
             var self = this;
-            self.class_element = self.$el.attr('class');
-            var element = self.get_element_properties();
-            self.css_var = {
-                'font-size' : element.css('font-size'),
-                'line-height' : element.css('line-height'),
-                'height' : parseInt(element.css('height').split("px"))+(parseInt(element.css('line-height').split('px'))-parseInt(element.css('font-size').split('px')))+'px',
-                'margin-top' : element.css('margin-top'),
-                'font-family' : element.css('font-family'),
-                'font-weight' : element.css('font-weight'),
-                'text-align' : element.css('text-align'),
-                'padding-top': -(parseInt(element.css('line-height').split('px'))-parseInt(element.css('font-size').split('px')))+'px',
-                'color' : element.css('color'),
-                'width' : element.css('width'),
+            self.classElement = self.$el.attr("class");
+            var element = self.getElementProperties();
+            self.cssVar = {
+                "font-size": element.css("font-size"),
+                "line-height": element.css("line-height"),
+                "height": parseInt(element.css("height").split("px")) + (parseInt(element.css("line-height").split("px")) - parseInt(element.css("font-size").split("px"))) + "px",
+                "margin-top": element.css("margin-top"),
+                "font-family": element.css("font-family"),
+                "font-weight": element.css("font-weight"),
+                "text-align": element.css("text-align"),
+                "padding-top": -(parseInt(element.css("line-height").split("px")) - parseInt(element.css("font-size").split("px"))) + "px",
+                "color": element.css("color"),
+                "width": element.css("width")
             };
         },
 
-        input_editable: '<div class="input-group" id="editable_section"><textarea class="form-control editor" id="input_editor" value="" spellcheck="false"></textarea></div>',
+        inputEditable: "<div class=\"input-group\" id=\"editable_section\"><textarea class=\"form-control editor\" id=\"input_editor\" spellcheck=\"false\"></textarea></div>",
 
-        toogle_start_optional : function(){
+        toogleStartOptional: function(){
             return true;
         },
 
-        toogle_end_optional : function(){
+        toogleEndOptional: function(){
             return true;
         },
 
-        toggle_input:function(){
+        toggleInput: function(){
             var self = this;
-            if (!$('#input_editor').length){
+            if (!$("#input_editor").length){
 
-            self.toogle_start_optional();
-            var origin_text = self.get_origin_text();
-            self.$el.replaceWith(self.input_editable);
-            $(document).trigger('editInputVisible');
-            $('#input_editor').focus();
-            $('#input_editor').val(origin_text);
-            $('#input_editor').css(self.css_var);
-            $('#input_editor').autosize({append:''});
-            $('#input_editor').on('blur', function(event){
+            self.toogleStartOptional();
+            var originText = self.getOriginText();
+            self.$el.replaceWith(self.inputEditable);
+            $(document).trigger("editInputVisible");
+            $("#input_editor").focus();
+            $("#input_editor").val(originText);
+            $("#input_editor").css(self.cssVar);
+            $("#input_editor").autosize({append:""});
+            $("#input_editor").on("blur", function(event){
                 if (!preventclick){
-                    self.save_edition(event);
+                    self.saveEdition(event);
                 }else{
-                    $('#input_editor').focus();
+                    $("#input_editor").focus();
                     preventclick = false;
                 }
             });
 
-            $('#input_editor').on('keyup', function(){
-                self.check_input();
+            $("#input_editor").on("keyup", function(){
+                self.checkInput();
             });
             }else{
                 return false;
             }
         },
 
-        get_saved_text: function(){
-            return $('#input_editor').val();
+        getSavedText: function(){
+            return $("#input_editor").val();
         },
 
-        get_displayed_text:function(){
+        getDisplayedText: function(){
             var self = this;
-            return self.get_saved_text();
+            return self.getSavedText();
         },
 
-        check_input: function(){
+        checkInput: function(){
             var self = this;
-            if (self.get_displayed_text() === ""){
-                $('#input_editor').focus().attr('placeholder' , self.options.empty_input);
+            if (self.getDisplayedText() === ""){
+                $("#input_editor").focus().attr("placeholder", self.options.empty_input);
                 return false;
             }else{
                 return true;
             }
         },
 
-        save_edition: function(event){
+        saveEdition: function(){
             var self = this;
-            var saved_text = self.get_saved_text();
+            var savedText = self.getSavedText();
 
-            var displayed_text = self.get_displayed_text();
+            var displayedText = self.getDisplayedText();
 
-            if (!self.check_input()){
+            if (!self.checkInput()){
                 return false;
             }
 
             var data = {};
-            var method = 'PUT';
-            if (self.$el.attr('data-key')){
-                data[self.$el.attr('data-key')] = $.trim(saved_text);
-                method = 'PATCH';
+            var method = "PUT";
+            if (self.$el.attr("data-key")){
+                data[self.$el.attr("data-key")] = $.trim(savedText);
+                method = "PATCH";
             } else {
                 data = {
-                    slug:self.getId(),
-                    text:$.trim(saved_text),
-                    old_text:self.origin_text,
+                    slug: self.getId(),
+                    text: $.trim(savedText),
+                    old_text: self.originText,
                     tag: self.$el.prop("tagName")
                 };
             }
-            self.$el.html(displayed_text);
-            self.toogle_end_optional();
-            $('#editable_section').replaceWith(self.$el);
+            self.$el.html(displayedText);
+            self.toogleEndOptional();
+            $("#editable_section").replaceWith(self.$el);
             if (!self.options.base_url){
-                if ($('.error-label').length > 0){
-                    $('.error-label').remove();
+                if ($(".error-label").length > 0){
+                    $(".error-label").remove();
                 }
-                $('body').append('<div class="error-label">No base_url option provided. Please update your script to use save edition.</div>');
+                $("body").append("<div class=\"error-label\">No base_url option provided. Please update your script to use save edition.</div>");
                 return false;
             }else{
                 $.ajax({
-                    method:method,
-                    async:false,
-                    url: self.options.base_url + self.getId() +'/',
-                    data:data,
-                    success: function(data) {
-                        self.options.onSuccess(self, data);
+                    method: method,
+                    async: false,
+                    url: self.options.base_url + self.getId() + "/",
+                    data: data,
+                    success: function(response) {
+                        self.options.onSuccess(self, response);
                     },
                     error: self.options.onError
                 });
             }
             self.init();
-        },
+        }
     };
 
     function CurrencyEditor(element, options){
@@ -211,21 +212,21 @@
     }
 
     CurrencyEditor.prototype = $.extend({}, Editor.prototype, {
-        get_saved_text: function(){
-            var entered_value =  $('#input_editor').val();
-            var amount = parseInt(parseFloat(entered_value.replace(/[^0-9\.]+/g,""))*100);
+        getSavedText: function(){
+            var enteredValue =  $("#input_editor").val();
+            var amount = parseInt(parseFloat(enteredValue.replace(/[^0-9\.]+/g, "")) * 100);
             return amount;
         },
 
-        get_displayed_text: function(){
+        getDisplayedText: function(){
             var self = this;
-            var default_currency = '$';
-            if (self.$el.data('currency')){
-                currency = self.$el.data('currency');
+            var defaultCurrency = "$";
+            if (self.$el.data("currency")){
+                defaultCurrency = self.$el.data("currency");
             }
 
-            var amount = self.get_saved_text();
-            var text = default_currency + String((amount/100).toFixed(2));
+            var amount = self.getSavedText();
+            var text = defaultCurrency + String((amount / 100).toFixed(2));
 
             return text;
         }
@@ -240,80 +241,80 @@
         return _this;
     }
 
-    MarkdownEditor.prototype = $.extend({}, Editor.prototype,{
-        toogle_start_optional: function(){
+    MarkdownEditor.prototype = $.extend({}, Editor.prototype, {
+        toogleStartOptional: function(){
             var self = this;
-            mardown_tool_html = '<div id="tool_markdown" class="' + self.options.container_tool_class + '">\
-                    <button type="button" class="' + self.options.btn_tool_class + '" id="title_h3">H3</button>\
-                    <button type="button" class="' + self.options.btn_tool_class + '" id="title_h4">H4</button>\
-                    <button type="button" class="' + self.options.btn_tool_class + '" id="bold"><strong>B</strong></button>\
-                    <button type="button" class="' + self.options.btn_tool_class + '" id="italic"><em>I</em></button>\
-                    <button type="button" class="' + self.options.btn_tool_class + '" id="list_ul">List</button>\
-                    <button type="button" class="' + self.options.btn_tool_class + '" id="link">Link</button></div>';
-            $('body').prepend(mardown_tool_html);
-            $('#tool_markdown').css({
-                'top': (self.$el.offset().top - 45) + 'px',
-                'left': self.$el.offset().left +'px',
+            mardownToolHtml = "<div id=\"tool_markdown\" class=\"" + self.options.container_tool_class + "\">\
+                    <button type=\"button\" class=\"" + self.options.btn_tool_class + "\" id=\"title_h3\">H3</button>\
+                    <button type=\"button\" class=\"" + self.options.btn_tool_class + "\" id=\"title_h4\">H4</button>\
+                    <button type=\"button\" class=\"" + self.options.btn_tool_class + "\" id=\"bold\"><strong>B</strong></button>\
+                    <button type=\"button\" class=\"" + self.options.btn_tool_class + "\" id=\"italic\"><em>I</em></button>\
+                    <button type=\"button\" class=\"" + self.options.btn_tool_class + "\" id=\"list_ul\">List</button>\
+                    <button type=\"button\" class=\"" + self.options.btn_tool_class + "\" id=\"link\">Link</button></div>";
+            $("body").prepend(mardownToolHtml);
+            $("#tool_markdown").css({
+                "top": (self.$el.offset().top - 45) + "px",
+                "left": self.$el.offset().left + "px"
             });
         },
 
-        toogle_end_optional: function(){
-            $('#tool_markdown').remove();
+        toogleEndOptional: function(){
+            $("#tool_markdown").remove();
         },
 
-        get_element_properties:function(){
+        getElementProperties: function(){
             var self = this;
-            if (self.$el.prop('tagName') == 'DIV'){
-                if (self.$el.children('p').length > 0){
-                    return self.$el.children('p');
+            if (self.$el.prop("tagName") === "DIV"){
+                if (self.$el.children("p").length > 0){
+                    return self.$el.children("p");
                 }else{
-                    return $('p');
+                    return $("p");
                 }
             }else{
                 return self.$el;
             }
         },
 
-        get_origin_text: function(){
+        getOriginText: function(){
             var self = this;
-            self.origin_text = "";
+            self.originText = "";
             if (self.options.base_url){
                 $.ajax({
-                    method:'GET',
-                    async:false,
-                    url: self.options.base_url + self.getId() +'/',
+                    method: "GET",
+                    async: false,
+                    url: self.options.base_url + self.getId() + "/",
                     success: function(data){
-                        if (self.$el.attr('data-key')){
-                            self.origin_text = data[self.$el.attr('data-key')];
+                        if (self.$el.attr("data-key")){
+                            self.originText = data[self.$el.attr("data-key")];
                         }else{
-                            self.origin_text = data.text;
+                            self.originText = data.text;
                         }
                     },
                     error: function(){
-                        self.origin_text = $.trim(self.$el.text());
+                        self.originText = $.trim(self.$el.text());
                     }
                 });
             }
-            return self.origin_text;
+            return self.originText;
         },
 
-        get_displayed_text: function(){
+        getDisplayedText: function(){
             var self = this;
-            convert = new Markdown.getSanitizingConverter().makeHtml;
-            return convert(self.get_saved_text()).replace('<img ', '<img style="max-width:100%" ');
+            var convert = new Markdown.getSanitizingConverter().makeHtml;
+            return convert(self.getSavedText()).replace("<img ", "<img style=\"max-width:100%\" ");
         }
     });
 
     $.fn.editor = function(options, custom){
         var opts = $.extend( {}, $.fn.editor.defaults, options );
         return this.each(function() {
-            if (!$.data($(this), 'editor')) {
-                if ($(this).hasClass('edit-markdown')){
-                    $.data($(this), 'editor', new MarkdownEditor($(this), opts));
-                }else if ($(this).hasClass('edit-currency')){
-                    $.data($(this), 'editor', new CurrencyEditor($(this), opts));
+            if (!$.data($(this), "editor")) {
+                if ($(this).hasClass("edit-markdown")){
+                    $.data($(this), "editor", new MarkdownEditor($(this), opts));
+                }else if ($(this).hasClass("edit-currency")){
+                    $.data($(this), "editor", new CurrencyEditor($(this), opts));
                 }else{
-                    $.data($(this), 'editor', new Editor($(this), opts));
+                    $.data($(this), "editor", new Editor($(this), opts));
                 }
             }
         });

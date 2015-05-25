@@ -1,10 +1,8 @@
 {% load static %}
-{% load pages_static %}
 <!DOCTYPE html>
 <html>
 <head>
   <title>Djaodjin-pages</title>
-  {% pages_static_css %}
   </script>
 </head>
 <body>
@@ -15,21 +13,6 @@
 
 
 <img alt="Generic placeholder image" class="droppable-image" id="djmedia-two" src="/static/vendor/img/test.gif" style="width: 600px;"/>
-
-{% pages_static_js %}
-
-<script type="text/javascript">
-$(document).ready(function() {
-      $('.editable').editor({
-          base_url: "{% url 'page_elements' %}",
-      });
-
-      $.sidebargallery({
-          base_save_url: "/api/editables/",
-          base_media_url: "{% url 'uploaded_media_elements' %}",
-      });
-  });
-</script>
 
 </body>
 </html>
