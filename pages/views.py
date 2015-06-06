@@ -23,8 +23,8 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import re
-import markdown
 
+import markdown
 from bs4 import BeautifulSoup
 from django.core.context_processors import csrf
 from django.template import loader, Context
@@ -34,23 +34,25 @@ from django.views.generic import TemplateView
 from .mixins import AccountMixin
 from .models import PageElement
 
-class PageView(AccountMixin, TemplateView):
+
+class PageMixin(AccountMixin):
     """
     Display or Edit a ``Page`` of a ``Project``.
 
     """
-    http_method_names = ['get']
     edition_tools_template_name = 'pages/edition_tools.html'
 
     def add_edition_tools(self, soup):
+        context = {}
+        context.update(csrf(self.request))
         template = loader.get_template(self.edition_tools_template_name)
-        content = template.render(Context(csrf(self.request)))
+        content = template.render(Context(context))
         soup.body.append(BeautifulSoup(content))
         return soup
 
     def get(self, request, *args, **kwargs):
         #pylint: disable=too-many-statements, too-many-locals
-        response = super(PageView, self).get(request, *args, **kwargs)
+        response = super(PageMixin, self).get(request, *args, **kwargs)
         if self.template_name and isinstance(response, TemplateResponse):
             response.render()
             soup = BeautifulSoup(response.content)
@@ -108,6 +110,11 @@ class PageView(AccountMixin, TemplateView):
             soup = self.add_edition_tools(soup)
             response.content = soup.prettify()
         return response
+
+
+class PageView(PageMixin, TemplateView):
+
+    http_method_names = ['get']
 
 
 class UploadedTemplatesView(TemplateView):
