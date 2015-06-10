@@ -152,7 +152,22 @@
             });
 
             DocDropzone.on("sending", function(file, xhr, formData){
-                formData.append("csrfmiddlewaretoken", _this.options.csrf_token);
+                if( _this.options.access_key) {
+                    formData.append("key", file.name);
+                    formData.append("policy", _this.options.policy);
+                    formData.append("x-amz-algorithm", "AWS4-HMAC-SHA256");
+                    formData.append("x-amz-credential",
+                        _this.options.amzCredential);
+                    formData.append("x-amz-date", _this.options.amzDate);
+                    formData.append("x-amz-security-token",
+                        _this.options.securityToken);
+                    formData.append("x-amz-signature",
+                        _this.options.signature);
+                } else {
+                    formData.append("csrfmiddlewaretoken",
+                        _this.options.csrf_token);
+                }
+
                 $("#media-container").append("<div class=\"col-md-12 padding-top-img progress-text text-center\">Upload in progress<br><p><span id=\"progress-span\">0</span>%</p>Please wait...</div>");
                 $.event.trigger({
                   type: "start_upload",
@@ -418,9 +433,15 @@
 
     $.sidebargallery.defaults = {
         base_save_url: null, // Url to send request to server
-        csrf_token: "",
         base_media_url: "",
         url_progress: null,
+        csrf_token: "",
+        access_key: null,
+        securityToken: null,
+        policy: "",
+        signature: null,
+        amzCredential: null,
+        amzDate: null,
         toggle: "<button class=\"btn btn-default\" id=\"btn-toggle\">Gallery</button>",
         button_class: ""
     };

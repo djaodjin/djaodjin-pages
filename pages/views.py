@@ -42,8 +42,9 @@ class PageMixin(AccountMixin):
     """
     edition_tools_template_name = 'pages/edition_tools.html'
 
-    def add_edition_tools(self, soup):
-        context = {}
+    def add_edition_tools(self, soup, context=None):
+        if context is None:
+            context = {}
         context.update(csrf(self.request))
         template = loader.get_template(self.edition_tools_template_name)
         content = template.render(Context(context))

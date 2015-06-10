@@ -23,6 +23,12 @@ $(document).ready(function() {
           base_save_url: "{% url 'page_elements' %}",
           base_media_url: "{% url 'uploaded_media_elements' %}",
           csrf_token: "{{csrf_token}}",
+          access_key: "{{access_key}}",
+          policy: "{{aws_policy}}",
+          signature: "{{aws_policy_signature}}",
+          securityToken: "{{security_token}}",
+          amzCredential: "{{x_amz_credential}}",
+          amzDate: "{{x_amz_date}}"
       });
   });
 </script>
