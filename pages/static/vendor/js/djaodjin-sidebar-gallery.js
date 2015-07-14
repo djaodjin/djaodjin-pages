@@ -153,7 +153,7 @@
 
             DocDropzone.on("sending", function(file, xhr, formData){
                 if( _this.options.access_key) {
-                    formData.append("key", file.name);
+                    formData.append("key", _this.options.mediaPrefix + file.name);
                     formData.append("policy", _this.options.policy);
                     formData.append("x-amz-algorithm", "AWS4-HMAC-SHA256");
                     formData.append("x-amz-credential",
@@ -213,7 +213,7 @@
                 }else{
                     lastIndex = 0;
                 }
-                if (status == 201){
+                if ([200, 201, 204].indexOf(status) >= 0){
                     $("#list-media").prepend(singleMedia(response, lastIndex));
 
                     $("#image_" + lastIndex).draggable({
@@ -384,7 +384,6 @@
                             appendTo: "body",
                             zIndex: 10000,
                             start: function(event, ui) {
-                                console.log($(event.target).width());
                                 ui.helper.css({
                                     // height: 50,
                                     width: 50
@@ -437,6 +436,7 @@
         url_progress: null,
         csrf_token: "",
         access_key: null,
+        mediaPrefix: null,
         securityToken: null,
         policy: "",
         signature: null,
