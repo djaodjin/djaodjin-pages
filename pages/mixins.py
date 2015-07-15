@@ -79,4 +79,4 @@ class UploadedImageMixin(object):
         bucket_name = self.get_bucket_name(account)
         return FileSystemStorage(
             location=os.path.join(settings.MEDIA_ROOT, bucket_name),
-            base_url='%s%s/' % (settings.MEDIA_URL, bucket_name))
+            base_url=os.path.join(settings.MEDIA_URL, bucket_name))

@@ -106,6 +106,8 @@ class PageMixin(AccountMixin):
                             media['src'] = db_media.image.uploaded_file
                         else:
                             media['src'] = db_media.image.uploaded_file_cache
+                    else:
+                        media['src'] = db_media.text
                 except PageElement.DoesNotExist:
                     continue
             soup = self.add_edition_tools(soup)
