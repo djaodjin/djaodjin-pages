@@ -441,14 +441,9 @@
         },
 
         menuMedia : function(sha, video, src){
-            var disabledButton = "";
-            if( _this.options.access_key) {
-
-                disabledButton = "disabled";
-            }
             var menu = "\
-                <button id=\"tag_media\" media=\"" + sha + "\" class=\"" + _this.options.button_class + "\" " + disabledButton + ">Add tag</button>\
-                <button id=\"delete_media\" media=\"" + sha + "\" class=\"" + _this.options.button_class + "\" " + disabledButton + ">Delete</button>";
+                <button id=\"tag_media\" media=\"" + sha + "\" class=\"" + _this.options.button_class + "\">Add tag</button>\
+                <button id=\"delete_media\" media=\"" + sha + "\" class=\"" + _this.options.button_class + "\">Delete</button>";
             if (video){
                 menu += "<button id=\"preview_media\" image=\"" + sha + "\" src=\"" + src + "\" class=\"" + _this.options.button_class + "\">Preview</button>";
             }

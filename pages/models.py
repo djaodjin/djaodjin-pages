@@ -29,47 +29,6 @@ from django.core.files.storage import FileSystemStorage
 
 from . import settings
 
-FILE_SYSTEM = FileSystemStorage(location=settings.MEDIA_ROOT)
-
-
-class UploadedImage(models.Model):
-    """
-    Image uploaded
-    """
-    created_at = models.DateTimeField(auto_now_add=True)
-    uploaded_file = models.CharField(
-        max_length=500, null=True, blank=True)
-    uploaded_file_cache = models.CharField(
-        max_length=500, null=True, blank=True)
-    account = models.ForeignKey(
-       settings.ACCOUNT_MODEL, related_name='media_uploads',
-       null=True, blank=True)
-    # Original filename to make search easier.
-    file_name = models.CharField(max_length=100)
-    tags = models.CharField(max_length=200, blank=True, null=True)
-
-    def __unicode__(self):
-        return unicode(self.get_src_file())
-
-    def get_src_file(self):
-        if self.uploaded_file:
-            return self.uploaded_file
-        else:
-            return self.uploaded_file_cache
-
-    def get_sha1(self):
-        """
-        Return the sha1 name of the file without extension
-        Will be used as id to update and delete file
-        """
-        src = self.get_src_file()
-        if src:
-            return os.path.splitext(os.path.basename(self.get_src_file()))[0]
-        return '*unkown*'
-
-    def relative_path(self):
-        return self.uploaded_file_cache.replace(settings.MEDIA_URL, '')
-
 
 class PageElement(models.Model):
     """
@@ -78,13 +37,20 @@ class PageElement(models.Model):
 
     slug = models.CharField(max_length=50)
     text = models.TextField(blank=True)
-    image = models.ForeignKey(UploadedImage, null=True)
     account = models.ForeignKey(
         settings.ACCOUNT_MODEL, related_name='account_page_element', null=True)
 
     def __unicode__(self):
         return unicode(self.slug)
 
+
+class MediaTag(models.Model):
+
+    media_url = models.CharField(max_length=250)
+    tag = models.CharField(max_length=50)
+
+    def __unicode__(self):
+        return unicode(self.tag)
 
 class UploadedTemplate(models.Model):
     """
