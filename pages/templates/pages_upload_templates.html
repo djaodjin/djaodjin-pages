@@ -10,8 +10,8 @@
         $httpProvider.defaults.headers.common['X-CSRFToken'] = '{{ csrf_token|escapejs }}';
     });
       app.constant('urls', {
-        get_uploaded_templates: "{% url 'get_uploadedtemplate_list' %}",
-        upload_template: "{% url 'get_uploadedtemplate_list' %}",
+        get_uploaded_templates: "{% url 'pages_api_theme_base' %}",
+        upload_template: "{% url 'pages_api_theme_base' %}",
     });
       app.constant('csrf', {
         csrf_token: "{{ csrf_token|escapejs }}",
