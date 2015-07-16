@@ -22,31 +22,36 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from django.conf.urls import patterns, url
+import logging, os, zipfile
+from optparse import make_option
 
-from .. import settings
-from ..api.edition import PageElementDetail, PagesElementListAPIView
-from ..api.upload_media import (upload_progress, MediaUpdateDestroyAPIView,
-    MediaListAPIView)
-from ..api.upload_template import (UploadedTemplateListAPIView,
-    UploadedTemplateAPIView)
+from django.core.management.base import BaseCommand
+
+from ...themes import install_theme
+
+LOGGER = logging.getLogger(__name__)
 
 
-urlpatterns = patterns('',
-    url(r'^uploaded-media/get-progress/upload/',
-        upload_progress),
-    url(r'^uploaded-media/(?P<slug>[\w-]+)/',
-        MediaUpdateDestroyAPIView.as_view(), name='media_element'),
-    url(r'^uploaded-media/',
-        MediaListAPIView.as_view(), name='uploaded_media_elements'),
-    url(r'^editables/(?P<slug>[\w-]+)/',
-        PageElementDetail.as_view(), name='edit_page_element'),
-    url(r'^editables/',
-        PagesElementListAPIView.as_view(), name='page_elements'),
-    url(r'^theme/(?P<theme>%s)/' % settings.SLUG_RE,
-        UploadedTemplateAPIView.as_view(),
-        name='update_uploaded_template'),
-    url(r'^theme/',
-        UploadedTemplateListAPIView.as_view(),
-        name='pages_api_theme_base'),
-)
+class Command(BaseCommand):
+    """
+    Install resources and templates into a multi-tier environment.
+
+    Templates are installed into ``MULTITIER_TEMPLATES_ROOT/APP_NAME``.
+    Resources include CSS, JS, images and other files which can be accessed
+    anonymously over HTTP and are necessary for the functionality of the site.
+    They are copied into ``MULTITIER_RESOURCES_ROOT/APP_NAME``
+    """
+
+    option_list = BaseCommand.option_list + (
+        make_option('--app_name', action='store', dest='app_name',
+            default=None, help='overrides the destination theme name'),
+        )
+
+    def handle(self, *args, **options):
+        for package_path in args:
+            app_name = options['app_name']
+            if not app_name:
+                app_name = os.path.splitext(os.path.basename(package_path))[0]
+            print "install %s to %s" % (package_path, app_name)
+            with zipfile.ZipFile(package_path, 'r') as zip_file:
+                install_theme(app_name, zip_file)
