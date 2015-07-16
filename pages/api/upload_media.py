@@ -157,6 +157,7 @@ class MediaUpdateDestroyAPIView(
                     media_url = media_obj['file_src']
                     cache_storage.delete(media_obj['media'])
 
+        MediaTag.objects.filter(media_url=media_url).delete()
         PageElement.objects.filter(text=media_url).delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 

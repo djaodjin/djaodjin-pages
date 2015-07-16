@@ -25,6 +25,7 @@
 import logging, os
 
 from django.core.files.storage import get_storage_class, FileSystemStorage
+from django.utils.six.moves.urllib.parse import urljoin
 
 from . import settings
 from .compat import import_string
@@ -105,4 +106,4 @@ class UploadedImageMixin(object):
         bucket_name = self.get_bucket_name(account)
         return FileSystemStorage(
             location=os.path.join(settings.MEDIA_ROOT, bucket_name),
-            base_url=os.path.join(settings.MEDIA_URL, bucket_name))
+            base_url=urljoin(settings.MEDIA_URL, bucket_name))

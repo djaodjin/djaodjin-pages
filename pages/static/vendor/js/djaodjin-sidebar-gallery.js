@@ -423,7 +423,6 @@
             if (countLoad === 0){
                 $(document).on("click", ".clickable-menu", function(){
                     _this._initMediaInfo();
-                    console.log($(this))
                     $(".clickable-menu").not($(this)).removeClass("active-media");
                     $(".media-single-container").css("border-color", "transparent");
                     if (!$(this).hasClass("active-media")){
