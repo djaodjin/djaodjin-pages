@@ -28,7 +28,6 @@ from rest_framework import serializers
 
 from pages.models import (
     PageElement,
-    UploadedImage,
     UploadedTemplate)
 #pylint: disable=no-init
 #pylint: disable=old-style-class
@@ -37,50 +36,8 @@ class PageElementSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = PageElement
-        fields = ('slug', 'text', 'image')
+        fields = ('slug', 'text')
         read_only_fields = ('slug',)
-
-    @staticmethod
-    def set_image_field(instance, validated_data):
-        if instance.slug.startswith('djmedia-'):
-            img = validated_data.get('text')
-            uploadimage = UploadedImage.objects.filter(Q(
-                    uploaded_file=img)|Q(uploaded_file_cache=img),
-                    account=instance.account)
-            if uploadimage.count() > 0:
-                instance.image = uploadimage.first()
-        return instance
-
-    def update(self, instance, validated_data):
-        return super(PageElementSerializer, self).update(
-            self.set_image_field(instance, validated_data), validated_data)
-
-    def create(self, validated_data):
-        instance = super(PageElementSerializer, self).create(validated_data)
-        instance = self.set_image_field(instance, validated_data)
-        instance.save()
-        return instance
-
-
-class UploadedImageSerializer(serializers.ModelSerializer):
-    sha1 = serializers.SerializerMethodField()
-    file_src = serializers.SerializerMethodField()
-
-    class Meta:
-        model = UploadedImage
-        fields = (
-            'file_src',
-            'account',
-            'tags',
-            'sha1')
-
-    @staticmethod
-    def get_file_src(obj):
-        return obj.get_src_file()
-
-    @staticmethod
-    def get_sha1(obj):
-        return obj.get_sha1()
 
 
 class UploadedTemplateSerializer(serializers.ModelSerializer):

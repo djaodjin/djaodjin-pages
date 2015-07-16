@@ -8,6 +8,7 @@
     "use strict";
 
     var _this = null;
+    var countLoad = 0;
 
     $(document).on("click", ".closeModal", function(event){
         event.preventDefault();
@@ -111,29 +112,35 @@
             $(".droppable-image").droppable({
                 drop: function( event, ui ) {
                     var droppable = $(this);
+                    var source = ui.draggable.attr("src").toLowerCase();
                     if (droppable.prop("tagName") === "IMG"){
-                        if (ui.draggable.attr("src").indexOf(".png") > 0 || ui.draggable.attr("src").indexOf(".jpg") > 0){
+                        if (_this.options.acceptedImages.some(function(v) { return source.indexOf(v) >= 0; })){
                             droppable.attr("src", ui.draggable.attr("src"));
                             $(ui.helper).remove();
                             _this.saveImage(droppable);
                         }else{
-                            notifyUser("You can't put other file than image in this place", "error");
+                            notifyUser("This placeholder accepts only: " + _this.options.acceptedImages.join(", ") + " files.", "error");
                         }
                     }else if (droppable.prop("tagName") === "VIDEO"){
-                        if (ui.draggable.attr("src").indexOf(".mp4") > 0){
+                        if (_this.options.acceptedVideos.some(function(v) { return source.indexOf(v) >= 0; })){
                             droppable.attr("src", ui.draggable.attr("src"));
                             $(ui.helper).remove();
                             _this.saveImage(droppable);
                         }else{
-                            notifyUser("You can't put other file than video in this place", "error");
+                            notifyUser("This placeholder accepts only: " + _this.options.acceptedVideos.join(", ") + " files.", "error");
                         }
                     }
               }
             });
 
+            var dropzoneUrl = _this.options.base_media_url;
+            if (_this.options.access_key){
+                dropzoneUrl = _this.options.S3DirectUploadUrl;
+            }
+
             var DocDropzone = new Dropzone("#media-container", { // Make the whole body a dropzone
                 paramName: "file",
-                url: _this.options.base_media_url,
+                url: dropzoneUrl,
                 maxFilesize: 50,
                 parallelUploads: 2,
                 clickable: true,
@@ -146,6 +153,16 @@
                     this.options.url = _this.options.base_media_url + "?X-Progress-ID=" +id;
                 }
             });
+
+            if (!_this.options.url_progress){
+                DocDropzone.on("uploadprogress", function(file, progress){
+                    if (progress < 100){
+                        $("#progress-span").text(progress.toFixed(1));
+                    }else{
+                        $(".progress-text").remove();
+                    }
+                });
+            }
 
             DocDropzone.on("cancel", function(file){
                 $(".progress-text").remove();
@@ -214,23 +231,27 @@
                     lastIndex = 0;
                 }
                 if ([200, 201, 204].indexOf(status) >= 0){
-                    $("#list-media").prepend(singleMedia(response, lastIndex));
+                    if (_this.options.access_key){
+                        _this.loadImage();
+                    }else{
+                        $("#list-media").prepend(singleMedia(response, lastIndex));
 
-                    $("#image_" + lastIndex).draggable({
-                        helper: "clone",
-                        revert: true,
-                        appendTo: "body",
-                        zIndex: 10000,
-                        start: function(event, ui) {
-                            ui.helper.css({
-                                // height: 50,
-                                width: 50
-                            });
-                        }
-                    });
-                    _this.makemenu();
-                    var descr = "We're processing your uploaded file. You can start use it by using the sample in your gallery.";
-                    notifyUser(descr, "info");
+                        $("#image_" + lastIndex).draggable({
+                            helper: "clone",
+                            revert: true,
+                            appendTo: "body",
+                            zIndex: 10000,
+                            start: function(event, ui) {
+                                ui.helper.css({
+                                    // height: 50,
+                                    width: 50
+                                });
+                            }
+                        });
+                        _this.makemenu();
+                        var descr = "We're processing your uploaded file. You can start use it by using the sample in your gallery.";
+                        notifyUser(descr, "info");
+                    }
                 }else{
                     notifyUser(response.message, "error");
                 }
@@ -371,11 +392,11 @@
             if (!search){
                 search = "";
             }
+            $("#list-media").empty();
             $.ajax({
                 method: "GET",
                 url: _this.options.base_media_url + "?q=" + search,
                 success: function(data){
-                    $("#list-media").empty();
                     $.each(data, function(index, file){
                         $("#list-media").append(singleMedia(file, index));
                         $("#image_" + index).draggable({
@@ -394,24 +415,28 @@
                 }
             });
             _this.makemenu();
+
+
         },
 
         makemenu: function(){
-
-            $(document).on("click", ".clickable-menu", function(){
-                _this._initMediaInfo();
-                $(".clickable-menu").not($(this)).removeClass("active-media");
-                $(".media-single-container").css("border-color", "transparent");
-                if (!$(this).hasClass("active-media")){
-                    $("#media-info").removeClass("placeholder").text("");
-                    $(this).addClass("active-media");
-                    $(this).parent(".media-single-container").css("border-color", "#000");
-                    $("#media-info").append("<div class=\"url_info\"><textarea style=\"width:98%\" rows=\"4\" readonly>" + $(this).attr("src") + "</textarea></div>");
-                    $("#media-info").append(_this.menuMedia($(this).data("id"), $(this).prop("tagName") === "VIDEO", $(this).attr("src")));
-                }else{
-                    $(this).removeClass("active-media");
-                }
-            });
+            if (countLoad === 0){
+                $(document).on("click", ".clickable-menu", function(){
+                    _this._initMediaInfo();
+                    $(".clickable-menu").not($(this)).removeClass("active-media");
+                    $(".media-single-container").css("border-color", "transparent");
+                    if (!$(this).hasClass("active-media")){
+                        $("#media-info").removeClass("placeholder").text("");
+                        $(this).addClass("active-media");
+                        $(this).parent(".media-single-container").css("border-color", "#000");
+                        $("#media-info").append("<div class=\"url_info\"><textarea style=\"width:98%\" rows=\"4\" readonly>" + $(this).attr("src") + "</textarea></div>");
+                        $("#media-info").append(_this.menuMedia($(this).data("id"), $(this).prop("tagName") === "VIDEO", $(this).attr("src")));
+                    }else{
+                        $(this).removeClass("active-media");
+                    }
+                });
+                countLoad += 1;
+            }
         },
 
         menuMedia : function(sha, video, src){
@@ -434,7 +459,10 @@
         base_save_url: null, // Url to send request to server
         base_media_url: "",
         url_progress: null,
+        acceptedImages: [".jpg", ".png", ".gif"],
+        acceptedVideos: [".mp4"],
         csrf_token: "",
+        S3DirectUploadUrl: null,
         access_key: null,
         mediaPrefix: null,
         securityToken: null,

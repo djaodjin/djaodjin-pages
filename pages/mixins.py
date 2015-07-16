@@ -25,11 +25,18 @@
 import logging, os
 
 from django.core.files.storage import get_storage_class, FileSystemStorage
+from django.utils.six.moves.urllib.parse import urljoin
 
 from . import settings
 from .compat import import_string
 
 LOGGER = logging.getLogger(__name__)
+
+def is_in_array(item, filter_list):
+    for filter_item in filter_list:
+        if filter_item in item:
+            return True
+    return False
 
 
 class AccountMixin(object):
@@ -45,6 +52,26 @@ class AccountMixin(object):
 
 class UploadedImageMixin(object):
 
+    def get_media(self, storage, filter_list, media_prefix):
+        list_media = self.list_media(
+            storage, filter_list, media_prefix)
+        if len(list_media) == 1:
+            return list_media[0]
+        return None
+
+    @staticmethod
+    def list_media(storage, filter_list, media_prefix):
+        list_media = []
+        for media in storage.listdir(media_prefix)[1]:
+            if not media.endswith('/') and media != "":
+                if not filter_list or is_in_array(media_prefix + media, filter_list):
+                    media_url = storage.url(media_prefix + media).split('?')[0]
+                    sha1 = os.path.splitext(os.path.basename(media_url))[0]
+                    list_media += [
+                        {'file_src': media_url,
+                        'sha1': sha1,
+                        'media': media_prefix + media}]
+        return list_media
 
     @staticmethod
     def get_bucket_name(account=None):
@@ -79,4 +106,4 @@ class UploadedImageMixin(object):
         bucket_name = self.get_bucket_name(account)
         return FileSystemStorage(
             location=os.path.join(settings.MEDIA_ROOT, bucket_name),
-            base_url='%s%s/' % (settings.MEDIA_URL, bucket_name))
+            base_url=urljoin(settings.MEDIA_URL, bucket_name))

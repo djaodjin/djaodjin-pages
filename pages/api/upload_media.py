@@ -26,27 +26,40 @@
 import json, hashlib, os
 
 from django.core.cache import cache
-from django.db.models import Q
 from django.http import HttpResponse
 from django.utils.encoding import force_text
 from rest_framework import status
-from rest_framework import generics
+from rest_framework.views import APIView
 from rest_framework.parsers import FileUploadParser
 from rest_framework.response import Response
-from storages.backends.s3boto import S3BotoStorage
 
-from ..models import UploadedImage, PageElement
-from ..serializers import UploadedImageSerializer
+from ..models import  PageElement, MediaTag
 from ..mixins import AccountMixin, UploadedImageMixin
-from ..tasks import S3UploadMediaTask
 
 
 class MediaListAPIView(AccountMixin,
     UploadedImageMixin,
-    generics.ListCreateAPIView):
+    APIView):
 
-    serializer_class = UploadedImageSerializer
     parser_classes = (FileUploadParser,)
+
+    def get(self, request, *args, **kwargs):
+        search = request.GET.get('q')
+        tags = None
+        if search != '':
+            tags = MediaTag.objects.filter(tag__startswith=search)\
+                .values_list('media_url', flat=True)
+        account = self.get_account()
+        storage = self.get_default_storage(account)
+        storage_cache = self.get_cache_storage(account)
+        if storage:
+            return Response(
+                self.list_media(
+                    storage, tags, self.get_media_prefix(account)))
+        else:
+            return Response(
+                self.list_media(
+                    storage_cache, tags, self.get_media_prefix(account)))
 
     def post(self, request, *args, **kwargs):
         #pylint: disable=unused-argument,too-many-locals
@@ -62,89 +75,90 @@ class MediaListAPIView(AccountMixin,
         storage_cache = self.get_cache_storage(account)
         result = {}
         if storage.exists(sha1_path) or storage_cache.exists(sha1_path):
-            # File might be in the cache, yet to be uploaded to final storage.
-            # File might be uploaded before database records are created.
-            try:
-                file_obj = UploadedImage.objects.get(
-                    Q(uploaded_file=storage.url(sha1_path))
-                    | Q(uploaded_file_cache=storage_cache.url(sha1_path)),
-                    account=account)
-                response_status = status.HTTP_200_OK
-                result = {
-                    "message": "%s is already in the gallery." % file_name}
-            except UploadedImage.DoesNotExist:
-                file_obj = UploadedImage.objects.create(
-                    account=account,
-                    uploaded_file=storage.url(sha1_path),
-                    uploaded_file_cache=storage_cache.url(sha1_path),
-                    file_name=file_name)
-                response_status = status.HTTP_201_CREATED
+            result = {
+                "message": "%s is already in the gallery." % file_name}
+            response_status = status.HTTP_200_OK
         else:
             storage_cache.save(sha1_path, uploaded_file)
-            if isinstance(storage, S3BotoStorage):
-                file_obj = UploadedImage.objects.create(
-                    account=account,
-                    uploaded_file=None,
-                    uploaded_file_cache=storage_cache.url(sha1_path),
-                    file_name=file_name)
-                upload_to_s3 = S3UploadMediaTask()
-                upload_to_s3.delay(file_obj)
-            else:
-                file_obj = UploadedImage.objects.create(
-                    account=account,
-                    uploaded_file=storage.url(sha1_path),
-                    uploaded_file_cache=storage_cache.url(sha1_path),
-                    file_name=file_name)
             response_status = status.HTTP_201_CREATED
-        serializer = UploadedImageSerializer(file_obj)
-        result.update(serializer.data)
+        result.update({'file_src': storage_cache.url(sha1_path)})
         return Response(result, status=response_status)
-
-    def get_queryset(self):
-        queryset = UploadedImage.objects.filter(
-            account=self.get_account()).order_by("-created_at")
-        search = self.request.GET.get('q')
-        if search != '':
-            queryset = queryset.filter(
-                Q(tags__contains=search) | \
-                Q(file_name__contains=search))\
-                .order_by("-created_at")
-        return queryset
 
 
 class MediaUpdateDestroyAPIView(
     AccountMixin,
     UploadedImageMixin,
-    generics.RetrieveUpdateDestroyAPIView):
+    APIView):
 
-    model = UploadedImage
-    serializer_class = UploadedImageSerializer
     lookup_url_kwarg = 'slug'
 
-    def get_queryset(self):
-        return UploadedImage.objects.filter(
-            account=self.get_account())
+    def patch(self, request, *args, **kwargs):
+        file_obj = self.kwargs.get(self.lookup_url_kwarg)
+        account = self.get_account()
+        storage = self.get_default_storage(self.get_account())
+        tags = self.request.DATA['tags']
+        media_obj = None
+        for tag in tags.split(" "):
+            if storage:
+                media_obj = self.get_media(
+                    storage, [file_obj], self.get_media_prefix(account))
+            else:
+                cache_storage = self.get_cache_storage(account)
+                if cache_storage:
+                    media_obj = self.get_media(
+                        storage, [file_obj], self.get_media_prefix(account))
+            new_tag = MediaTag.objects.get_or_create(
+                tag=tag, media_url=media_obj['file_src'])
+        return Response({}, status=status.HTTP_200_OK)
 
-    def get_object(self):
-        sha1 = self.kwargs.get(self.lookup_url_kwarg)
-        instance = self.get_queryset().filter(
-            Q(uploaded_file__contains=sha1)\
-            |Q(uploaded_file_cache__contains=sha1))[0]
-        return instance
+    def get(self, request, *args, **kwargs):
+        file_obj = self.kwargs.get(self.lookup_url_kwarg)
+        account = self.get_account()
+        storage = self.get_default_storage(self.get_account())
+        if storage:
+            media_obj = self.get_media(
+                storage, [file_obj], self.get_media_prefix(account))
+            tags = MediaTag.objects.filter(media_url=media_obj['file_src'])\
+                    .values_list('tag', flat=True)
+            media_obj['tags'] = " ".join(tags)
+            return Response(media_obj)
+        else:
+            cache_storage = self.get_cache_storage(account)
+            if cache_storage:
+                media_obj = self.get_media(
+                    storage, [file_obj], self.get_media_prefix(account))
+                tags = MediaTag.objects.filter(media_url=media_obj['file_src'])\
+                    .values_list('tag', flat=True)
+                media_obj['tags'] = "".join(tags)
+                return Response(media_obj)
+        return Response({})
 
     def delete(self, request, *args, **kwargs):
-        file_obj = self.get_object()
-        relative_path = file_obj.relative_path()
-        storage = self.get_default_storage(file_obj.account)
-        if storage.exists(relative_path):
-            storage.delete(relative_path)
-        cache_storage = self.get_cache_storage(file_obj.account)
-        if cache_storage.exists(relative_path):
-            cache_storage.delete(relative_path)
+        file_obj = self.kwargs.get(self.lookup_url_kwarg)
+        account = self.get_account()
+        storage = self.get_default_storage(self.get_account())
+        media_url = ""
+        media_obj = None
+        deleted = False
+        if storage:
+            media_obj = self.get_media(
+                storage, [file_obj], self.get_media_prefix(account))
+            if media_obj and storage.exists(media_obj['media']):
+                media_url = media_obj['file_src']
+                storage.delete(media_obj['media'])
+                deleted = True
 
-        # XXX looks like this should be a DELETE CASCADE
-        PageElement.objects.filter(text=file_obj.uploaded_file).delete()
-        file_obj.delete()
+        if not deleted:
+            cache_storage = self.get_cache_storage(account)
+            if cache_storage:
+                media_obj = self.get_media(
+                    cache_storage, [file_obj], self.get_media_prefix(account))
+                if media_obj and cache_storage.exists(media_obj['media']):
+                    media_url = media_obj['file_src']
+                    cache_storage.delete(media_obj['media'])
+
+        MediaTag.objects.filter(media_url=media_url).delete()
+        PageElement.objects.filter(text=media_url).delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
