@@ -93,6 +93,7 @@ class MediaUpdateDestroyAPIView(
     lookup_url_kwarg = 'slug'
 
     def patch(self, request, *args, **kwargs):
+        #pylint: disable=unused-argument
         file_obj = self.kwargs.get(self.lookup_url_kwarg)
         account = self.get_account()
         storage = self.get_default_storage(self.get_account())
@@ -107,7 +108,7 @@ class MediaUpdateDestroyAPIView(
                 if cache_storage:
                     media_obj = self.get_media(
                         storage, [file_obj], self.get_media_prefix(account))
-            new_tag = MediaTag.objects.get_or_create(
+            MediaTag.objects.get_or_create(
                 tag=tag, media_url=media_obj['file_src'])
         return Response({}, status=status.HTTP_200_OK)
 
@@ -134,6 +135,7 @@ class MediaUpdateDestroyAPIView(
         return Response({})
 
     def delete(self, request, *args, **kwargs):
+        #pylint: disable=unused-argument
         file_obj = self.kwargs.get(self.lookup_url_kwarg)
         account = self.get_account()
         storage = self.get_default_storage(self.get_account())

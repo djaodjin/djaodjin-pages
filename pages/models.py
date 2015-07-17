@@ -22,10 +22,7 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import os
-
 from django.db import models
-from django.core.files.storage import FileSystemStorage
 
 from . import settings
 
