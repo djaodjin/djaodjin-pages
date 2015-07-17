@@ -23,7 +23,6 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-from django.db.models import Q
 from rest_framework import serializers
 
 from pages.models import (

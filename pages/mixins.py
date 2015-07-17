@@ -25,6 +25,7 @@
 import logging, os
 
 from django.core.files.storage import get_storage_class, FileSystemStorage
+#pylint:disable=no-name-in-module,import-error
 from django.utils.six.moves.urllib.parse import urljoin
 
 from . import settings
@@ -64,7 +65,8 @@ class UploadedImageMixin(object):
         list_media = []
         for media in storage.listdir(media_prefix)[1]:
             if not media.endswith('/') and media != "":
-                if not filter_list or is_in_array(media_prefix + media, filter_list):
+                if not filter_list or is_in_array(
+                        media_prefix + media, filter_list):
                     media_url = storage.url(media_prefix + media).split('?')[0]
                     sha1 = os.path.splitext(os.path.basename(media_url))[0]
                     list_media += [
