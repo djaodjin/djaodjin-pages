@@ -33,9 +33,10 @@ from .compat import import_string
 
 LOGGER = logging.getLogger(__name__)
 
+# XXX - Need to Improve function
 def is_in_array(item, filter_list):
     for filter_item in filter_list:
-        if filter_item in item:
+        if item in filter_item or filter_item in item:
             return True
     return False
 
@@ -67,7 +68,8 @@ class UploadedImageMixin(object):
             if not media.endswith('/') and media != "":
                 if not filter_list or is_in_array(
                         media_prefix + media, filter_list):
-                    media_url = storage.url(media_prefix + media).split('?')[0]
+                    media_url = storage.url(os.path.join(storage.base_url,
+                        media_prefix, media)).split('?')[0]
                     sha1 = os.path.splitext(os.path.basename(media_url))[0]
                     list_media += [
                         {'file_src': media_url,
