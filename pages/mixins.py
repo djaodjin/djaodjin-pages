@@ -99,8 +99,14 @@ class UploadedImageMixin(object):
         return self.get_cache_storage(account)
 
     def get_cache_storage(self, account=None):
+        location = settings.MEDIA_ROOT
+        base_url = settings.MEDIA_URL
         bucket_name = self.get_bucket_name(account)
+        if bucket_name:
+            location = os.path.join(location, bucket_name)
+            base_url = urljoin(base_url, bucket_name + '/')
         prefix = self.get_media_prefix(account)
-        return FileSystemStorage(
-            location=os.path.join(settings.MEDIA_ROOT, bucket_name, prefix),
-            base_url=urljoin(settings.MEDIA_URL, bucket_name + '/', prefix))
+        if prefix:
+            location = os.path.join(location, prefix)
+            base_url = urljoin(base_url, prefix)
+        return FileSystemStorage(location=location, base_url=base_url)
