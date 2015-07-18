@@ -94,7 +94,7 @@ class MediaUpdateDestroyAPIView(
         file_obj = self.kwargs.get(self.lookup_url_kwarg)
         account = self.get_account()
         storage = self.get_default_storage(self.get_account())
-        tags = self.request.DATA['tags']
+        tags = self.request.DATA.get('tags', "")
         media_obj = None
         for tag in tags.split(" "):
             if storage:
