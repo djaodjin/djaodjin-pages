@@ -53,26 +53,25 @@ class AccountMixin(object):
 
 class UploadedImageMixin(object):
 
-    def get_media(self, storage, filter_list, media_prefix):
-        list_media = self.list_media(
-            storage, filter_list, media_prefix)
+    def get_media(self, storage, filter_list):
+        list_media = self.list_media(storage, filter_list)
         if len(list_media) == 1:
             return list_media[0]
         return None
 
     @staticmethod
-    def list_media(storage, filter_list, media_prefix):
+    def list_media(storage, filter_list):
         list_media = []
-        for media in storage.listdir(media_prefix)[1]:
-            if not media.endswith('/') and media != "":
-                if not filter_list or is_in_array(
-                        media_prefix + media, filter_list):
-                    media_url = storage.url(media_prefix + media).split('?')[0]
-                    sha1 = os.path.splitext(os.path.basename(media_url))[0]
-                    list_media += [
-                        {'file_src': media_url,
-                        'sha1': sha1,
-                        'media': media_prefix + media}]
+        if storage.exists(''):
+            for media in storage.listdir('')[1]:
+                if not media.endswith('/') and media != "":
+                    if not filter_list or is_in_array(media, filter_list):
+                        media_url = storage.url(media).split('?')[0]
+                        sha1 = os.path.splitext(os.path.basename(media_url))[0]
+                        list_media += [
+                            {'file_src': media_url,
+                            'sha1': sha1,
+                            'media': media}]
         return list_media
 
     @staticmethod
@@ -99,13 +98,15 @@ class UploadedImageMixin(object):
         return settings.MEDIA_PREFIX
 
     def get_default_storage(self, account=None):
-        bucket_name = self.get_bucket_name(account)
         if get_storage_class() != FileSystemStorage:
-            return get_storage_class()(bucket=bucket_name)
+            return get_storage_class()(
+                bucket=self.get_bucket_name(account),
+                location=self.get_media_prefix(account))
         return self.get_cache_storage(account)
 
     def get_cache_storage(self, account=None):
         bucket_name = self.get_bucket_name(account)
+        prefix = self.get_media_prefix(account)
         return FileSystemStorage(
-            location=os.path.join(settings.MEDIA_ROOT, bucket_name),
-            base_url=urljoin(settings.MEDIA_URL, bucket_name))
+            location=os.path.join(settings.MEDIA_ROOT, bucket_name, prefix),
+            base_url=urljoin(settings.MEDIA_URL, bucket_name + '/', prefix))
