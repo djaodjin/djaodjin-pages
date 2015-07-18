@@ -51,13 +51,7 @@ class MediaListAPIView(AccountMixin,
                 .values_list('media_url', flat=True)
         account = self.get_account()
         storage = self.get_default_storage(account)
-        storage_cache = self.get_cache_storage(account)
-        if storage:
-            return Response(
-                self.list_media(storage, tags))
-        else:
-            return Response(
-                self.list_media(storage_cache, tags))
+        return Response(self.list_media(storage, tags))
 
     def post(self, request, *args, **kwargs):
         #pylint: disable=unused-argument,too-many-locals
@@ -89,12 +83,12 @@ class MediaUpdateDestroyAPIView(
 
     lookup_url_kwarg = 'slug'
 
-    def patch(self, request, *args, **kwargs):
+    def put(self, request, *args, **kwargs):
         #pylint: disable=unused-argument
         file_obj = self.kwargs.get(self.lookup_url_kwarg)
         account = self.get_account()
         storage = self.get_default_storage(self.get_account())
-        tags = self.request.DATA.get('tags', "")
+        tags = request.data.get('tags', "")
         media_obj = None
         for tag in tags.split(" "):
             if storage:

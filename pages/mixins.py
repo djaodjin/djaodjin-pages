@@ -33,12 +33,6 @@ from .compat import import_string
 
 LOGGER = logging.getLogger(__name__)
 
-def is_in_array(item, filter_list):
-    for filter_item in filter_list:
-        if filter_item in item:
-            return True
-    return False
-
 
 class AccountMixin(object):
 
@@ -65,8 +59,8 @@ class UploadedImageMixin(object):
         if storage.exists(''):
             for media in storage.listdir('')[1]:
                 if not media.endswith('/') and media != "":
-                    if not filter_list or is_in_array(media, filter_list):
-                        media_url = storage.url(media).split('?')[0]
+                    media_url = storage.url(media).split('?')[0]
+                    if not filter_list or media_url in filter_list:
                         sha1 = os.path.splitext(os.path.basename(media_url))[0]
                         list_media += [
                             {'file_src': media_url,

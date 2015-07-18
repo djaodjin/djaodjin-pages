@@ -81,8 +81,7 @@
 
         _init: function(){
             _this = this;
-            $("body").append(_this.options.toggle).append(sidebar);
-            $(document).on("click","#btn-toggle", _this._toggle_sidebar);
+            $("body").append(sidebar);
             $(document).on("keyup", "#gallery-filter", _this.filterImage);
             if (_this.options.url_progress){
                 $(document).on("start_upload", function(){
@@ -259,6 +258,9 @@
                     _this._open_sidebar();
                 }
             });
+
+            $("body").append(_this.options.toggle);
+            $(document).on("click","#btn-toggle", _this._toggle_sidebar);
         },
 
         deleteMedia: function(event){
@@ -295,12 +297,13 @@
             $("#input-tag").focus();
             $(document).on("click", "#add-tag", function(){
                 var tags = $("#input-tag").val();
-
                 if (tags !== orginalTags){
                     $.ajax({
-                        method: "patch",
+                        type: "PUT",
                         url: _this.options.base_media_url + $this_element.attr("media") + "/",
-                        data: {"tags": tags},
+                        data: JSON.stringify({"tags": tags}),
+                        datatype: "json",
+                        contentType: "application/json; charset=utf-8",
                         success: function(){
                             console.log("updated");
                         }
