@@ -100,7 +100,7 @@ class UploadedImageMixin(object):
     def get_default_storage(self, account=None):
         storage_class = get_storage_class()
         try:
-            bucket_name = storage_class.bucket_name
+            _ = storage_class.bucket_name
             return storage_class(
                 bucket=self.get_bucket_name(account),
                 location=self.get_media_prefix(account))

@@ -56,12 +56,15 @@ class PageMixin(AccountMixin):
         response = super(PageMixin, self).get(request, *args, **kwargs)
         if self.template_name and isinstance(response, TemplateResponse):
             response.render()
-            soup = BeautifulSoup(response.content)
+
+        content_type = response.get('content-type', '')
+        if content_type.startswith('text/html'):
             account = self.get_account()
             if account:
                 page_elements = PageElement.objects.filter(account=account)
             else:
                 page_elements = PageElement.objects.all()
+            soup = BeautifulSoup(response.content)
             for editable in soup.find_all(class_="editable"):
                 try:
                     id_element = editable['id']
