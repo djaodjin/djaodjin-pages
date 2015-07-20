@@ -56,7 +56,7 @@ class UploadedImageMixin(object):
     @staticmethod
     def list_media(storage, filter_list):
         list_media = []
-        if storage.exists(''):
+        try:
             for media in storage.listdir('')[1]:
                 if not media.endswith('/') and media != "":
                     media_url = storage.url(media).split('?')[0]
@@ -66,36 +66,47 @@ class UploadedImageMixin(object):
                             {'file_src': media_url,
                             'sha1': sha1,
                             'media': media}]
+        except OSError:
+            LOGGER.warning("Unable to list objects in FileSystemStorage.")
         return list_media
 
     @staticmethod
     def get_bucket_name(account=None):
-        if account:
-            try:
-                bucket_name = account.bucket_name
-            except AttributeError:
-                LOGGER.warning("``%s`` does not contain a ``bucket_name``"\
-" field, using ``slug`` instead.", account.__class__)
-                bucket_name = account.slug
-        else:
-            bucket_name = settings.AWS_STORAGE_BUCKET_NAME
+        if not account:
+            return settings.AWS_STORAGE_BUCKET_NAME
+        try:
+            bucket_name = account.bucket_name
+        except AttributeError:
+            LOGGER.debug("``%s`` does not contain a ``bucket_name``"\
+                " field, using ``slug`` instead.", account.__class__)
+            bucket_name = None
+        if not bucket_name:
+            # We always need a non-empty bucket_name in order
+            # to partition the namespace.
+            bucket_name = account.slug
         return bucket_name
 
     @staticmethod
     def get_media_prefix(account=None):
-        if account:
-            try:
-                return account.media_prefix
-            except AttributeError:
-                LOGGER.warning("``%s`` does not contain a ``media_prefix``"\
-" field.", account.__class__)
-        return settings.MEDIA_PREFIX
+        if not account:
+            return settings.MEDIA_PREFIX
+        try:
+            return account.media_prefix
+        except AttributeError:
+            LOGGER.debug("``%s`` does not contain a ``media_prefix``"\
+                " field.", account.__class__)
+        return ""
 
     def get_default_storage(self, account=None):
-        if get_storage_class() != FileSystemStorage:
-            return get_storage_class()(
+        storage_class = get_storage_class()
+        try:
+            bucket_name = storage_class.bucket_name
+            return storage_class(
                 bucket=self.get_bucket_name(account),
                 location=self.get_media_prefix(account))
+        except AttributeError:
+            LOGGER.debug("``%s`` does not contain a ``bucket_name``"\
+                " field, default to FileSystemStorage.", storage_class)
         return self.get_cache_storage(account)
 
     def get_cache_storage(self, account=None):
