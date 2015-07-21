@@ -22,7 +22,7 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import logging, os
+import logging, os, shutil, tempfile
 
 from django.conf import settings as django_settings
 from django.utils._os import safe_join
@@ -42,29 +42,59 @@ def install_theme(theme_name, zip_file):
     static_dir = safe_join(os.path.dirname(django_settings.APP_STATIC_ROOT),
         theme_name)
     templates_dir = safe_join(django_settings.TEMPLATE_DIRS[0], theme_name)
-    extracts = []
-    for name in zip_file.namelist():
-        full_path = None
-        test_parts = safe_join(static_dir, name).replace(
-            static_dir + os.sep, '').split(os.sep)[1:] # remove topdir
-        base = test_parts.pop(0)
-        if base == 'public':
-            if settings.PUBLIC_WHITELIST is not None:
-                if os.path.join(*test_parts) in settings.PUBLIC_WHITELIST:
-                    full_path = safe_join(static_dir, *test_parts)
-            else:
-                full_path = safe_join(static_dir, *test_parts)
-        elif base == 'templates':
-            if settings.TEMPLATES_WHITELIST is not None:
-                if os.path.join(*test_parts) in settings.TEMPLATES_WHITELIST:
-                    full_path = safe_join(templates_dir, *test_parts)
-            else:
-                full_path = safe_join(templates_dir, *test_parts)
-        if full_path and not os.path.isdir(os.path.dirname(full_path)):
-            extracts += [(name, full_path)]
+    # We rely on the assumption that ``static_dir`` and ``templates_dir``
+    # are on the same filesystem. We create a temporary directory on that
+    # common filesystem, which guarentees that:
+    #   1. If the disk is full, we will find on extract, not when we try
+    #      to move the directory in place.
+    #   2. If the filesystem is encrypted, we don't inadvertently leak
+    #      information by creating "temporary" files.
+    tmp_base = safe_join(
+        os.path.commonprefix([static_dir, templates_dir]), '.cache')
+    if not os.path.exists(tmp_base):
+        os.makedirs(tmp_base)
+    tmp_dir = tempfile.mkdtemp(dir=tmp_base)
+    try:
+        for info in zip_file.infolist():
+            if info.file_size == 0:
+                # Crude way to detect directories
+                continue
+            name = info.filename
+            tmp_path = None
+            test_parts = safe_join(static_dir, name).replace(
+                static_dir + os.sep, '').split(os.sep)[1:] # remove topdir
+            if len(test_parts) > 0:
+                base = test_parts.pop(0)
+                if base == 'public':
+                    if settings.PUBLIC_WHITELIST is not None:
+                        if (os.path.join(*test_parts)
+                            in settings.PUBLIC_WHITELIST):
+                            tmp_path = safe_join(tmp_dir, base, *test_parts)
+                    else:
+                        tmp_path = safe_join(tmp_dir, base, *test_parts)
+                elif base == 'templates':
+                    if settings.TEMPLATES_WHITELIST is not None:
+                        if (os.path.join(*test_parts)
+                            in settings.TEMPLATES_WHITELIST):
+                            tmp_path = safe_join(tmp_dir, base, *test_parts)
+                    else:
+                        tmp_path = safe_join(tmp_dir, base, *test_parts)
+                if tmp_path:
+                    if not os.path.isdir(os.path.dirname(tmp_path)):
+                        os.makedirs(os.path.dirname(tmp_path))
+                    with open(tmp_path, 'wb') as extracted_file:
+                        extracted_file.write(zip_file.read(name))
 
-    for name, full_path in extracts:
-        if not os.path.isdir(os.path.dirname(full_path)):
-            os.makedirs(os.path.dirname(full_path))
-        with open(full_path, 'wb') as extracted_file:
-            extracted_file.write(zip_file.read(name))
+        # Should be safe to move in-place at this point.
+        # Templates are necessary while public resources (css, js)
+        # are optional.
+        tmp_public = safe_join(tmp_dir, 'public')
+        tmp_templates = safe_join(tmp_dir, 'templates')
+        if os.path.exists(tmp_templates):
+            os.rename(tmp_templates, templates_dir)
+            if os.path.exists(tmp_public):
+                os.rename(tmp_public, static_dir)
+    finally:
+        # Always delete the temporary directory, exception raised or not.
+        shutil.rmtree(tmp_dir)
+
