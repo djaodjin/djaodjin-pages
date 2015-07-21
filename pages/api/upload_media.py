@@ -51,15 +51,7 @@ class MediaListAPIView(AccountMixin,
                 .values_list('media_url', flat=True)
         account = self.get_account()
         storage = self.get_default_storage(account)
-        storage_cache = self.get_cache_storage(account)
-        if storage:
-            return Response(
-                self.list_media(
-                    storage, tags, self.get_media_prefix(account)))
-        else:
-            return Response(
-                self.list_media(
-                    storage_cache, tags, self.get_media_prefix(account)))
+        return Response(self.list_media(storage, tags))
 
     def post(self, request, *args, **kwargs):
         #pylint: disable=unused-argument,too-many-locals
@@ -70,18 +62,17 @@ class MediaListAPIView(AccountMixin,
         file_name = force_text(uploaded_file.name.replace('\\', '/'))
         sha1_filename = sha1 + os.path.splitext(file_name)[1]
         account = self.get_account()
-        sha1_path = os.path.join(self.get_media_prefix(account), sha1_filename)
         storage = self.get_default_storage(account)
         storage_cache = self.get_cache_storage(account)
         result = {}
-        if storage.exists(sha1_path) or storage_cache.exists(sha1_path):
+        if storage.exists(sha1_filename) or storage_cache.exists(sha1_filename):
             result = {
                 "message": "%s is already in the gallery." % file_name}
             response_status = status.HTTP_200_OK
         else:
-            storage_cache.save(sha1_path, uploaded_file)
+            storage_cache.save(sha1_filename, uploaded_file)
             response_status = status.HTTP_201_CREATED
-        result.update({'file_src': storage_cache.url(sha1_path)})
+        result.update({'file_src': storage_cache.url(sha1_filename)})
         return Response(result, status=response_status)
 
 
@@ -92,22 +83,20 @@ class MediaUpdateDestroyAPIView(
 
     lookup_url_kwarg = 'slug'
 
-    def patch(self, request, *args, **kwargs):
+    def put(self, request, *args, **kwargs):
         #pylint: disable=unused-argument
         file_obj = self.kwargs.get(self.lookup_url_kwarg)
         account = self.get_account()
         storage = self.get_default_storage(self.get_account())
-        tags = self.request.DATA['tags']
+        tags = request.data.get('tags', "")
         media_obj = None
         for tag in tags.split(" "):
             if storage:
-                media_obj = self.get_media(
-                    storage, [file_obj], self.get_media_prefix(account))
+                media_obj = self.get_media(storage, [file_obj])
             else:
                 cache_storage = self.get_cache_storage(account)
                 if cache_storage:
-                    media_obj = self.get_media(
-                        storage, [file_obj], self.get_media_prefix(account))
+                    media_obj = self.get_media(storage, [file_obj])
             MediaTag.objects.get_or_create(
                 tag=tag, media_url=media_obj['file_src'])
         return Response({}, status=status.HTTP_200_OK)
@@ -117,8 +106,7 @@ class MediaUpdateDestroyAPIView(
         account = self.get_account()
         storage = self.get_default_storage(self.get_account())
         if storage:
-            media_obj = self.get_media(
-                storage, [file_obj], self.get_media_prefix(account))
+            media_obj = self.get_media(storage, [file_obj])
             tags = MediaTag.objects.filter(media_url=media_obj['file_src'])\
                     .values_list('tag', flat=True)
             media_obj['tags'] = " ".join(tags)
@@ -126,8 +114,7 @@ class MediaUpdateDestroyAPIView(
         else:
             cache_storage = self.get_cache_storage(account)
             if cache_storage:
-                media_obj = self.get_media(
-                    storage, [file_obj], self.get_media_prefix(account))
+                media_obj = self.get_media(storage, [file_obj])
                 tags = MediaTag.objects.filter(media_url=media_obj['file_src'])\
                     .values_list('tag', flat=True)
                 media_obj['tags'] = "".join(tags)
@@ -143,8 +130,7 @@ class MediaUpdateDestroyAPIView(
         media_obj = None
         deleted = False
         if storage:
-            media_obj = self.get_media(
-                storage, [file_obj], self.get_media_prefix(account))
+            media_obj = self.get_media(storage, [file_obj])
             if media_obj and storage.exists(media_obj['media']):
                 media_url = media_obj['file_src']
                 storage.delete(media_obj['media'])
@@ -153,8 +139,7 @@ class MediaUpdateDestroyAPIView(
         if not deleted:
             cache_storage = self.get_cache_storage(account)
             if cache_storage:
-                media_obj = self.get_media(
-                    cache_storage, [file_obj], self.get_media_prefix(account))
+                media_obj = self.get_media(cache_storage, [file_obj])
                 if media_obj and cache_storage.exists(media_obj['media']):
                     media_url = media_obj['file_src']
                     cache_storage.delete(media_obj['media'])

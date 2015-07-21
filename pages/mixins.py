@@ -33,12 +33,6 @@ from .compat import import_string
 
 LOGGER = logging.getLogger(__name__)
 
-def is_in_array(item, filter_list):
-    for filter_item in filter_list:
-        if filter_item in item:
-            return True
-    return False
-
 
 class AccountMixin(object):
 
@@ -53,59 +47,77 @@ class AccountMixin(object):
 
 class UploadedImageMixin(object):
 
-    def get_media(self, storage, filter_list, media_prefix):
-        list_media = self.list_media(
-            storage, filter_list, media_prefix)
+    def get_media(self, storage, filter_list):
+        list_media = self.list_media(storage, filter_list)
         if len(list_media) == 1:
             return list_media[0]
         return None
 
     @staticmethod
-    def list_media(storage, filter_list, media_prefix):
+    def list_media(storage, filter_list):
         list_media = []
-        for media in storage.listdir(media_prefix)[1]:
-            if not media.endswith('/') and media != "":
-                if not filter_list or is_in_array(
-                        media_prefix + media, filter_list):
-                    media_url = storage.url(media_prefix + media).split('?')[0]
-                    sha1 = os.path.splitext(os.path.basename(media_url))[0]
-                    list_media += [
-                        {'file_src': media_url,
-                        'sha1': sha1,
-                        'media': media_prefix + media}]
+        try:
+            for media in storage.listdir('')[1]:
+                if not media.endswith('/') and media != "":
+                    media_url = storage.url(media).split('?')[0]
+                    if not filter_list or media_url in filter_list:
+                        sha1 = os.path.splitext(os.path.basename(media_url))[0]
+                        list_media += [
+                            {'file_src': media_url,
+                            'sha1': sha1,
+                            'media': media}]
+        except OSError:
+            LOGGER.warning("Unable to list objects in FileSystemStorage.")
         return list_media
 
     @staticmethod
     def get_bucket_name(account=None):
-        if account:
-            try:
-                bucket_name = account.bucket_name
-            except AttributeError:
-                LOGGER.warning("``%s`` does not contain a ``bucket_name``"\
-" field, using ``slug`` instead.", account.__class__)
-                bucket_name = account.slug
-        else:
-            bucket_name = settings.AWS_STORAGE_BUCKET_NAME
+        if not account:
+            return settings.AWS_STORAGE_BUCKET_NAME
+        try:
+            bucket_name = account.bucket_name
+        except AttributeError:
+            LOGGER.debug("``%s`` does not contain a ``bucket_name``"\
+                " field, using ``slug`` instead.", account.__class__)
+            bucket_name = None
+        if not bucket_name:
+            # We always need a non-empty bucket_name in order
+            # to partition the namespace.
+            bucket_name = account.slug
         return bucket_name
 
     @staticmethod
     def get_media_prefix(account=None):
-        if account:
-            try:
-                return account.media_prefix
-            except AttributeError:
-                LOGGER.warning("``%s`` does not contain a ``media_prefix``"\
-" field.", account.__class__)
-        return settings.MEDIA_PREFIX
+        if not account:
+            return settings.MEDIA_PREFIX
+        try:
+            return account.media_prefix
+        except AttributeError:
+            LOGGER.debug("``%s`` does not contain a ``media_prefix``"\
+                " field.", account.__class__)
+        return ""
 
     def get_default_storage(self, account=None):
-        bucket_name = self.get_bucket_name(account)
-        if get_storage_class() != FileSystemStorage:
-            return get_storage_class()(bucket=bucket_name)
+        storage_class = get_storage_class()
+        try:
+            _ = storage_class.bucket_name
+            return storage_class(
+                bucket=self.get_bucket_name(account),
+                location=self.get_media_prefix(account))
+        except AttributeError:
+            LOGGER.debug("``%s`` does not contain a ``bucket_name``"\
+                " field, default to FileSystemStorage.", storage_class)
         return self.get_cache_storage(account)
 
     def get_cache_storage(self, account=None):
+        location = settings.MEDIA_ROOT
+        base_url = settings.MEDIA_URL
         bucket_name = self.get_bucket_name(account)
-        return FileSystemStorage(
-            location=os.path.join(settings.MEDIA_ROOT, bucket_name),
-            base_url=urljoin(settings.MEDIA_URL, bucket_name))
+        if bucket_name:
+            location = os.path.join(location, bucket_name)
+            base_url = urljoin(base_url, bucket_name + '/')
+        prefix = self.get_media_prefix(account)
+        if prefix:
+            location = os.path.join(location, prefix)
+            base_url = urljoin(base_url, prefix)
+        return FileSystemStorage(location=location, base_url=base_url)

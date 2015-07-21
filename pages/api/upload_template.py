@@ -62,7 +62,7 @@ class UploadedTemplateListAPIView(UploadedTemplateMixin,
             # If we do not have an instance at this point, the directory
             # might still exist and belong to someone else when pages
             # tables are split amongst multiple databases.
-            raise PermissionDenied()
+            raise PermissionDenied("Theme %s already exists." % theme_name)
         if zipfile.is_zipfile(file_obj):
             with zipfile.ZipFile(file_obj) as zip_file:
                 install_theme(theme_name, zip_file)
