@@ -43,7 +43,7 @@ class PageElement(models.Model):
 
 class MediaTag(models.Model):
 
-    media_url = models.CharField(max_length=250)
+    location = models.CharField(max_length=250)
     tag = models.CharField(max_length=50)
 
     def __unicode__(self):
