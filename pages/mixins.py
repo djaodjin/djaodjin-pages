@@ -24,13 +24,12 @@
 
 import logging, os
 
-from django.core.files.storage import get_storage_class
+from django.core.files.storage import get_storage_class, FileSystemStorage
 #pylint:disable=no-name-in-module,import-error
 from django.utils.six.moves.urllib.parse import urljoin
 
 from . import settings
 from .compat import import_string
-from .storage import FileSystemStorage
 from .models import MediaTag, PageElement
 
 LOGGER = logging.getLogger(__name__)
