@@ -47,12 +47,12 @@
         },
 
         initDocument: function(){
-            $(document).on("click", "#delete_media", sidebarGallery.deleteMedia);
-            $(document).on("click", "#tag_media", sidebarGallery.tagMedia);
-            $(document).on("click", "#preview_media", sidebarGallery.previewMedia);
-            $(document).on("click", "#btn-toggle", sidebarGallery.toggleSidebar);
-            $(document).on("keyup", "#gallery-filter", sidebarGallery.loadImage);
-            $(document).on("click", "#add-tag", function(){
+            $("#sidebar-container").on("click", "#delete_media", sidebarGallery.deleteMedia);
+            $("#sidebar-container").on("click", "#tag_media", sidebarGallery.tagMedia);
+            $("#sidebar-container").on("click", "#preview_media", sidebarGallery.previewMedia);
+            $("body").on("click", "#btn-toggle", sidebarGallery.toggleSidebar);
+            $("#sidebar-container").on("keyup", "#gallery-filter", sidebarGallery.loadImage);
+            $("#sidebar-container").on("click", "#add-tag", function(){
                 var tags = $("#input-tag").val().replace(/\s+/g, "");
                 tags = tags.split(",");
                 if (tags !== sidebarGallery.originalTags){
@@ -72,7 +72,7 @@
                 $("#media-info").empty().append(sidebarGallery.currentInfo);
             });
 
-            $(document).on("click", ".media-single-container", function(){
+            $("#sidebar-container").on("click", ".media-single-container", function(){
                 sidebarGallery.initMediaInfo();
                 $(".media-single-container").not($(this)).removeClass("active-media");
                 if (!$(this).hasClass("active-media")){
@@ -88,7 +88,7 @@
                 }
             });
 
-            $(document).on("click", ".closeModal", function(event){
+            $("body").on("click", ".closeModal", function(event){
                 event.preventDefault();
                 $("#openModal").remove();
             });
@@ -138,7 +138,7 @@
                 dropzoneUrl = sidebarGallery.options.S3DirectUploadUrl;
             }
 
-            var DocDropzone = new Dropzone("#media-container", { // Make the whole body a dropzone
+            var DocDropzone = new Dropzone("body", {
                 paramName: "file",
                 url: dropzoneUrl,
                 maxFilesize: 50,
