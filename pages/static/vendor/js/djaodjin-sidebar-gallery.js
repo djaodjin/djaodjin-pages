@@ -166,8 +166,8 @@
             });
 
             DocDropzone.on("success", function(file, response){
+                $("#progress-div").remove();
                 var status = file.xhr.status;
-                $(".progress-text").remove();
                 $(".dz-preview").remove();
                 var lastIndex = $("#list-media").children().last().children().attr("id");
                 if (lastIndex){
@@ -185,6 +185,13 @@
                 if (!$("#sidebar-container").hasClass("active")){
                     sidebarGallery.openSidebar();
                 }
+            });
+
+            DocDropzone.on("uploadprogress", function(file, progress){
+                if ($("#progress-div").length === 0){
+                    $("#list-media").prepend("<div id=\"progress-div\"><em id=\"progress-text\"></em></div>");
+                }
+                $("#progress-text").text(progress.toFixed(1) + "%");
             });
         },
 
@@ -242,10 +249,12 @@
                 search = $("#gallery-filter").val();
             }
             $("#list-media").empty();
+            $("#list-media").text("loading...");
             $.ajax({
                 method: "GET",
                 url: sidebarGallery.options.requestMediaUrl + "?q=" + search,
                 success: function(data){
+                    $("#list-media").empty();
                     $.each(data.results, function(index, file){
                         sidebarGallery.addMediaItem(file, index);
                     });
