@@ -75,12 +75,8 @@ class UploadedImageMixin(object):
             PageElement.objects.filter(text=item['location']).delete()
 
     @staticmethod
-    def build_filter_list(request):
-        items = request.DATA.get('items')
-
-        if not items and request.DATA.get('location'):
-            items = [{'location': request.DATA.get('location')}]
-
+    def build_filter_list(validated_data):
+        items = validated_data.get('items')
         filter_list = []
         if items:
             for item in items:
@@ -88,10 +84,9 @@ class UploadedImageMixin(object):
         return filter_list
 
     @staticmethod
-    def list_media(storage, filter_list, delete=False):
+    def list_media(storage, filter_list):
         """
         Return a list of media from default storage
-        if delete=True, return media with media path
         """
         results = []
         total = 0
@@ -100,19 +95,31 @@ class UploadedImageMixin(object):
                 if not media.endswith('/') and media != "":
                     location = storage.url(media).split('?')[0]
                     total += 1
-                    if (not filter_list and not delete)\
-                        or location in filter_list:
-                        if delete:
+                    if not filter_list or location in filter_list:
+                        results += [
+                            {'location': location,
+                            'tags': MediaTag.objects.filter(
+                                location=location).values_list(
+                                'tag', flat=True)
+                            }]
+        except OSError:
+            LOGGER.warning("Unable to list objects in FileSystemStorage.")
+        return {'count': total, 'results': results}
+
+    @staticmethod
+    def list_delete_media(storage, filter_list):
+
+        results = []
+        total = 0
+        try:
+            for media in storage.listdir('.')[1]:
+                if not media.endswith('/') and media != "":
+                    location = storage.url(media).split('?')[0]
+                    total += 1
+                    if filter_list and location in filter_list:
                             results += [
                                 {'location': location,
                                 'media': media}]
-                        else:
-                            results += [
-                                {'location': location,
-                                'tags': MediaTag.objects.filter(
-                                    location=location).values_list(
-                                    'tag', flat=True)
-                                }]
         except OSError:
             LOGGER.warning("Unable to list objects in FileSystemStorage.")
         return {'count': total, 'results': results}

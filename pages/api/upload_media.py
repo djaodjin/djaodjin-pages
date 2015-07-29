@@ -34,6 +34,7 @@ from rest_framework.response import Response
 
 from ..models import MediaTag
 from ..mixins import AccountMixin, UploadedImageMixin
+from ..serializers import MediaItemListSerializer
 
 
 class MediaListAPIView(AccountMixin,
@@ -79,10 +80,14 @@ class MediaListAPIView(AccountMixin,
         #pylint: disable=unused-argument
         account = self.get_account()
         storage = self.get_default_storage(account)
-        filter_list = self.build_filter_list(request)
-        list_media = self.list_media(storage, filter_list, delete=True)
-        if list_media['count'] > 0:
-            self.delete_media_items(storage, list_media)
+        serializer = MediaItemListSerializer(data=request.data)
+        serializer.is_valid()
+        validated_data = serializer.validated_data
+        filter_list = self.build_filter_list(validated_data)
+
+        list_delete_media = self.list_delete_media(storage, filter_list)
+        if list_delete_media['count'] > 0:
+            self.delete_media_items(storage, list_delete_media)
             return Response({}, status=status.HTTP_200_OK)
         else:
             return Response({}, status=status.HTTP_404_NOT_FOUND)
@@ -90,10 +95,13 @@ class MediaListAPIView(AccountMixin,
 
     def put(self, request, *args, **kwargs):
         #pylint: disable=unused-argument
-        tags = request.data.get('tags')
         account = self.get_account()
         storage = self.get_default_storage(account)
-        filter_list = self.build_filter_list(request)
+        serializer = MediaItemListSerializer(data=request.data)
+        serializer.is_valid()
+        validated_data = serializer.validated_data
+        filter_list = self.build_filter_list(validated_data)
+        tags = validated_data.get('tags')
 
         list_media = self.list_media(storage, filter_list)
         if list_media['count'] > 0:

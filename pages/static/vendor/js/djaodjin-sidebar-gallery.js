@@ -293,7 +293,9 @@
             $.ajax({
                 method: "DELETE",
                 url: sidebarGallery.options.requestMediaUrl,
-                data: {"location": sidebarGallery.selectedMedia.attr("src")},
+                data: JSON.stringify({"items": [{"location": sidebarGallery.selectedMedia.attr("src")}]}),
+                datatype: "json",
+                contentType: "application/json; charset=utf-8",
                 success: function(){
                     $("[src=\"" + sidebarGallery.selectedMedia.attr("src") + "\"]").parent(".media-single-container").remove();
                 }
