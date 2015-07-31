@@ -27,6 +27,7 @@ import logging, os
 from django.core.files.storage import get_storage_class, FileSystemStorage
 #pylint:disable=no-name-in-module,import-error
 from django.utils.six.moves.urllib.parse import urljoin
+from boto.exception import S3ResponseError
 
 from . import settings
 from .compat import import_string
@@ -103,7 +104,11 @@ class UploadedImageMixin(object):
                                 'tag', flat=True)
                             }]
         except OSError:
-            LOGGER.warning("Unable to list objects in FileSystemStorage.")
+            LOGGER.error(
+                "Unable to list objects in %s.", storage.__class__.__name__)
+        except S3ResponseError:
+            LOGGER.error(
+                "Unable to list objects in %s bucket.", storage.bucket_name)
         return {'count': total, 'results': results}
 
     @staticmethod
@@ -121,7 +126,11 @@ class UploadedImageMixin(object):
                                 {'location': location,
                                 'media': media}]
         except OSError:
-            LOGGER.warning("Unable to list objects in FileSystemStorage.")
+            LOGGER.error(
+                "Unable to list objects in %s.", storage.__class__.__name__)
+        except S3ResponseError:
+            LOGGER.error(
+                "Unable to list objects in %s bucket.", storage.bucket_name)
         return {'count': total, 'results': results}
 
     @staticmethod
