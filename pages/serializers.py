@@ -25,11 +25,10 @@
 
 from rest_framework import serializers
 
-from pages.models import (
-    PageElement,
-    UploadedTemplate)
-#pylint: disable=no-init
-#pylint: disable=old-style-class
+from .models import PageElement, UploadedTemplate
+
+#pylint: disable=no-init,old-style-class
+
 
 class PageElementSerializer(serializers.ModelSerializer):
 
@@ -46,11 +45,25 @@ class UploadedTemplateSerializer(serializers.ModelSerializer):
 
 
 class MediaItemSerializer(serializers.Serializer):
+
     location = serializers.CharField()
 
+    def update(self, instance, validated_data):
+        pass
+
+    def create(self, validated_data):
+        pass
+
+
 class MediaItemListSerializer(serializers.Serializer):
+
     items = MediaItemSerializer(many=True)
     tags = serializers.ListField(
         child=serializers.CharField(allow_blank=True),
-        required=False,
-    )
+        required=False)
+
+    def update(self, instance, validated_data):
+        pass
+
+    def create(self, validated_data):
+        pass
