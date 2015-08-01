@@ -143,7 +143,7 @@
                 url: dropzoneUrl,
                 maxFilesize: 50,
                 parallelUploads: 2,
-                clickable: false,
+                clickable: true,
                 createImageThumbnails: false
             });
 
@@ -161,7 +161,7 @@
                         sidebarGallery.options.signature);
                 } else {
                     formData.append("csrfmiddlewaretoken",
-                        sidebarGallery.options.csrf_token);
+                        sidebarGallery.options.csrfToken);
                 }
             });
 
