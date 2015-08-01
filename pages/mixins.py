@@ -113,7 +113,6 @@ class UploadedImageMixin(object):
 
     @staticmethod
     def list_delete_media(storage, filter_list):
-
         results = []
         total = 0
         try:
@@ -122,9 +121,8 @@ class UploadedImageMixin(object):
                     location = storage.url(media).split('?')[0]
                     total += 1
                     if filter_list and location in filter_list:
-                            results += [
-                                {'location': location,
-                                'media': media}]
+                        results += [
+                            {'location': location, 'media': media}]
         except OSError:
             LOGGER.error(
                 "Unable to list objects in %s.", storage.__class__.__name__)
