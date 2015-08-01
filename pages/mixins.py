@@ -27,9 +27,11 @@ import logging, os
 from django.core.files.storage import get_storage_class, FileSystemStorage
 #pylint:disable=no-name-in-module,import-error
 from django.utils.six.moves.urllib.parse import urljoin
+from boto.exception import S3ResponseError
 
 from . import settings
 from .compat import import_string
+from .models import MediaTag, PageElement
 
 LOGGER = logging.getLogger(__name__)
 
@@ -47,28 +49,89 @@ class AccountMixin(object):
 
 class UploadedImageMixin(object):
 
-    def get_media(self, storage, filter_list):
-        list_media = self.list_media(storage, filter_list)
-        if len(list_media) == 1:
-            return list_media[0]
-        return None
+    @staticmethod
+    def update_media_tag(tags, list_media):
+        for item in list_media['results']:
+            media_tags = MediaTag.objects.filter(location=item['location'])
+            new_media_tags = []
+            if tags:
+                for tag in tags:
+                    if tag != "":
+                        new_media_tag, _ = MediaTag.objects.get_or_create(
+                            tag=tag, location=item['location'])
+                        new_media_tags += [new_media_tag]
+
+            # compare new list and delete removed tags.
+            for tag in media_tags:
+                if not tag in new_media_tags:
+                    tag.delete()
+
+    @staticmethod
+    def delete_media_items(storage, list_media):
+        for item in list_media['results']:
+            storage.delete(item['media'])
+
+            # Delete all MediaTag and PageElement using this location
+            MediaTag.objects.filter(location=item['location']).delete()
+            PageElement.objects.filter(text=item['location']).delete()
+
+    @staticmethod
+    def build_filter_list(validated_data):
+        items = validated_data.get('items')
+        filter_list = []
+        if items:
+            for item in items:
+                filter_list = item['location']
+        return filter_list
 
     @staticmethod
     def list_media(storage, filter_list):
-        list_media = []
+        """
+        Return a list of media from default storage
+        """
+        results = []
+        total = 0
         try:
-            for media in storage.listdir('')[1]:
+            for media in storage.listdir('.')[1]:
                 if not media.endswith('/') and media != "":
-                    media_url = storage.url(media).split('?')[0]
-                    if not filter_list or media_url in filter_list:
-                        sha1 = os.path.splitext(os.path.basename(media_url))[0]
-                        list_media += [
-                            {'file_src': media_url,
-                            'sha1': sha1,
-                            'media': media}]
+                    location = storage.url(media).split('?')[0]
+                    total += 1
+                    if not filter_list or location in filter_list:
+                        results += [
+                            {'location': location,
+                            'tags': MediaTag.objects.filter(
+                                location=location).values_list(
+                                'tag', flat=True)
+                            }]
         except OSError:
-            LOGGER.warning("Unable to list objects in FileSystemStorage.")
-        return list_media
+            LOGGER.error(
+                "Unable to list objects in %s.", storage.__class__.__name__)
+        except S3ResponseError:
+            LOGGER.error(
+                "Unable to list objects in %s bucket.", storage.bucket_name)
+        return {'count': total, 'results': results}
+
+    @staticmethod
+    def list_delete_media(storage, filter_list):
+
+        results = []
+        total = 0
+        try:
+            for media in storage.listdir('.')[1]:
+                if not media.endswith('/') and media != "":
+                    location = storage.url(media).split('?')[0]
+                    total += 1
+                    if filter_list and location in filter_list:
+                            results += [
+                                {'location': location,
+                                'media': media}]
+        except OSError:
+            LOGGER.error(
+                "Unable to list objects in %s.", storage.__class__.__name__)
+        except S3ResponseError:
+            LOGGER.error(
+                "Unable to list objects in %s bucket.", storage.bucket_name)
+        return {'count': total, 'results': results}
 
     @staticmethod
     def get_bucket_name(account=None):
@@ -107,9 +170,9 @@ class UploadedImageMixin(object):
         except AttributeError:
             LOGGER.debug("``%s`` does not contain a ``bucket_name``"\
                 " field, default to FileSystemStorage.", storage_class)
-        return self.get_cache_storage(account)
+        return self.get_file_system_storage(account)
 
-    def get_cache_storage(self, account=None):
+    def get_file_system_storage(self, account=None):
         location = settings.MEDIA_ROOT
         base_url = settings.MEDIA_URL
         bucket_name = self.get_bucket_name(account)

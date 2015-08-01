@@ -44,3 +44,13 @@ class UploadedTemplateSerializer(serializers.ModelSerializer):
     class Meta:
         model = UploadedTemplate
 
+
+class MediaItemSerializer(serializers.Serializer):
+    location = serializers.CharField()
+
+class MediaItemListSerializer(serializers.Serializer):
+    items = MediaItemSerializer(many=True)
+    tags = serializers.ListField(
+        child=serializers.CharField(allow_blank=True),
+        required=False,
+    )

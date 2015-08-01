@@ -26,8 +26,7 @@ from django.conf.urls import patterns, url
 
 from .. import settings
 from ..api.edition import PageElementDetail, PagesElementListAPIView
-from ..api.upload_media import (upload_progress, MediaUpdateDestroyAPIView,
-    MediaListAPIView)
+from ..api.upload_media import upload_progress, MediaListAPIView
 from ..api.upload_template import (UploadedTemplateListAPIView,
     UploadedTemplateAPIView)
 
@@ -35,8 +34,6 @@ from ..api.upload_template import (UploadedTemplateListAPIView,
 urlpatterns = patterns('',
     url(r'^uploaded-media/get-progress/upload/',
         upload_progress),
-    url(r'^uploaded-media/(?P<slug>[\w-]+)/',
-        MediaUpdateDestroyAPIView.as_view(), name='media_element'),
     url(r'^uploaded-media/',
         MediaListAPIView.as_view(), name='uploaded_media_elements'),
     url(r'^editables/(?P<slug>[\w-]+)/',

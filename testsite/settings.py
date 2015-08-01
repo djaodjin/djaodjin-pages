@@ -12,9 +12,6 @@ https://docs.djangoproject.com/en/1.7/ref/settings/
 import os
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 
-import djcelery
-djcelery.setup_loader()
-
 def load_config(confpath):
     '''
     Given a path to a file, parse its lines in ini-like format, and then
@@ -80,13 +77,9 @@ INSTALLED_APPS = (
     'rest_framework',
     'pages',
     'storages',
-    'djcelery',
-    'kombu.transport.django',
     'debug_toolbar',
     'testsite',
 )
-
-BROKER_URL = 'django://'
 
 FILE_UPLOAD_HANDLERS = (
     "pages.uploadhandler.ProgressBarUploadHandler",

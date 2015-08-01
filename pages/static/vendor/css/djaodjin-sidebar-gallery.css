@@ -72,24 +72,31 @@
     margin-top:0px;
 }
 
-.clickable-menu{
-    cursor: pointer;
-}
-
-
 .media-single-container{
     float:left;
     height:50px;
     min-width: 50px;
     max-width:70px;
-    padding-top: 5px;
     margin:0;
     border:1px solid transparent;
     border-radius: 3px;
+    cursor: pointer;
+    padding:3px;
+}
+
+.media-single-container > img,
+.media-single-container > img
+{
+    height: 100%;
+    width:100%;
 }
 
 .media-single-container:hover{
     border-color: #CCC;
+}
+
+.media-single-container.active-media{
+    border-color: #000;
 }
 
 .image{

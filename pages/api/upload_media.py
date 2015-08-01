@@ -30,27 +30,25 @@ from django.http import HttpResponse
 from django.utils.encoding import force_text
 from rest_framework import status
 from rest_framework.views import APIView
-from rest_framework.parsers import FileUploadParser
 from rest_framework.response import Response
 
-from ..models import  PageElement, MediaTag
+from ..models import MediaTag
 from ..mixins import AccountMixin, UploadedImageMixin
+from ..serializers import MediaItemListSerializer
 
 
 class MediaListAPIView(AccountMixin,
     UploadedImageMixin,
     APIView):
 
-    parser_classes = (FileUploadParser,)
-
     def get(self, request, *args, **kwargs):
+        account = self.get_account()
+        storage = self.get_default_storage(account)
         search = request.GET.get('q')
         tags = None
         if search != '':
             tags = MediaTag.objects.filter(tag__startswith=search)\
-                .values_list('media_url', flat=True)
-        account = self.get_account()
-        storage = self.get_default_storage(account)
+                .values_list('location', flat=True)
         return Response(self.list_media(storage, tags))
 
     def post(self, request, *args, **kwargs):
@@ -63,90 +61,54 @@ class MediaListAPIView(AccountMixin,
         sha1_filename = sha1 + os.path.splitext(file_name)[1]
         account = self.get_account()
         storage = self.get_default_storage(account)
-        storage_cache = self.get_cache_storage(account)
+
         result = {}
-        if storage.exists(sha1_filename) or storage_cache.exists(sha1_filename):
+        if storage.exists(sha1_filename):
             result = {
                 "message": "%s is already in the gallery." % file_name}
             response_status = status.HTTP_200_OK
         else:
-            storage_cache.save(sha1_filename, uploaded_file)
+            storage.save(sha1_filename, uploaded_file)
             response_status = status.HTTP_201_CREATED
-        result.update({'file_src': storage_cache.url(sha1_filename)})
+        result.update({
+            'location': storage.url(sha1_filename),
+            'tags': []
+            })
         return Response(result, status=response_status)
-
-
-class MediaUpdateDestroyAPIView(
-    AccountMixin,
-    UploadedImageMixin,
-    APIView):
-
-    lookup_url_kwarg = 'slug'
-
-    def put(self, request, *args, **kwargs):
-        #pylint: disable=unused-argument
-        file_obj = self.kwargs.get(self.lookup_url_kwarg)
-        account = self.get_account()
-        storage = self.get_default_storage(self.get_account())
-        tags = request.data.get('tags', "")
-        media_obj = None
-        for tag in tags.split(" "):
-            if storage:
-                media_obj = self.get_media(storage, [file_obj])
-            else:
-                cache_storage = self.get_cache_storage(account)
-                if cache_storage:
-                    media_obj = self.get_media(storage, [file_obj])
-            MediaTag.objects.get_or_create(
-                tag=tag, media_url=media_obj['file_src'])
-        return Response({}, status=status.HTTP_200_OK)
-
-    def get(self, request, *args, **kwargs):
-        file_obj = self.kwargs.get(self.lookup_url_kwarg)
-        account = self.get_account()
-        storage = self.get_default_storage(self.get_account())
-        if storage:
-            media_obj = self.get_media(storage, [file_obj])
-            tags = MediaTag.objects.filter(media_url=media_obj['file_src'])\
-                    .values_list('tag', flat=True)
-            media_obj['tags'] = " ".join(tags)
-            return Response(media_obj)
-        else:
-            cache_storage = self.get_cache_storage(account)
-            if cache_storage:
-                media_obj = self.get_media(storage, [file_obj])
-                tags = MediaTag.objects.filter(media_url=media_obj['file_src'])\
-                    .values_list('tag', flat=True)
-                media_obj['tags'] = "".join(tags)
-                return Response(media_obj)
-        return Response({})
 
     def delete(self, request, *args, **kwargs):
         #pylint: disable=unused-argument
-        file_obj = self.kwargs.get(self.lookup_url_kwarg)
         account = self.get_account()
-        storage = self.get_default_storage(self.get_account())
-        media_url = ""
-        media_obj = None
-        deleted = False
-        if storage:
-            media_obj = self.get_media(storage, [file_obj])
-            if media_obj and storage.exists(media_obj['media']):
-                media_url = media_obj['file_src']
-                storage.delete(media_obj['media'])
-                deleted = True
+        storage = self.get_default_storage(account)
+        serializer = MediaItemListSerializer(data=request.data)
+        serializer.is_valid()
+        validated_data = serializer.validated_data
+        filter_list = self.build_filter_list(validated_data)
 
-        if not deleted:
-            cache_storage = self.get_cache_storage(account)
-            if cache_storage:
-                media_obj = self.get_media(cache_storage, [file_obj])
-                if media_obj and cache_storage.exists(media_obj['media']):
-                    media_url = media_obj['file_src']
-                    cache_storage.delete(media_obj['media'])
+        list_delete_media = self.list_delete_media(storage, filter_list)
+        if list_delete_media['count'] > 0:
+            self.delete_media_items(storage, list_delete_media)
+            return Response({}, status=status.HTTP_200_OK)
+        else:
+            return Response({}, status=status.HTTP_404_NOT_FOUND)
 
-        MediaTag.objects.filter(media_url=media_url).delete()
-        PageElement.objects.filter(text=media_url).delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    def put(self, request, *args, **kwargs):
+        #pylint: disable=unused-argument
+        account = self.get_account()
+        storage = self.get_default_storage(account)
+        serializer = MediaItemListSerializer(data=request.data)
+        serializer.is_valid()
+        validated_data = serializer.validated_data
+        filter_list = self.build_filter_list(validated_data)
+        tags = validated_data.get('tags')
+
+        list_media = self.list_media(storage, filter_list)
+        if list_media['count'] > 0:
+            self.update_media_tag(tags, list_media)
+            return Response(list_media, status=status.HTTP_200_OK)
+        else:
+            return Response({}, status=status.HTTP_404_NOT_FOUND)
 
 
 def upload_progress(request, account_slug=None):
