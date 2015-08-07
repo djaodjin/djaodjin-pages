@@ -44,7 +44,7 @@ class UploadedTemplateMixin(AccountMixin):
 
     def get_queryset(self):
         queryset = UploadedTemplate.objects.filter(
-            Q(account=self.get_account())|Q(account=None))
+            Q(account=self.account)|Q(account=None))
         return queryset
 
 
@@ -67,7 +67,7 @@ class UploadedTemplateListAPIView(UploadedTemplateMixin,
             with zipfile.ZipFile(file_obj) as zip_file:
                 install_theme(theme_name, zip_file)
             UploadedTemplate.objects.create(
-                name=theme_name, account=self.get_account())
+                name=theme_name, account=self.account)
             return Response({}, status=status.HTTP_204_NO_CONTENT)
         return Response({'info': "Invalid archive"},
             status=status.HTTP_400_BAD_REQUEST)

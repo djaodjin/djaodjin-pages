@@ -40,11 +40,14 @@ class AccountMixin(object):
 
     account_url_kwarg = settings.ACCOUNT_URL_KWARG
 
-    @staticmethod
-    def get_account():
-        if settings.GET_CURRENT_ACCOUNT:
-            return import_string(settings.GET_CURRENT_ACCOUNT)()
-        return None
+    @property
+    def account(self):
+        if not hasattr(self, '_account'):
+            if settings.GET_CURRENT_ACCOUNT:
+                self._account = import_string(settings.GET_CURRENT_ACCOUNT)()
+            else:
+                self._account = None
+        return self._account
 
 
 class UploadedImageMixin(object):

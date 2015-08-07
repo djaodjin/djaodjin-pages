@@ -37,8 +37,7 @@ from pages.mixins import AccountMixin
 class PagesElementListAPIView(AccountMixin, generics.ListCreateAPIView):
 
     def get_queryset(self):
-        return PageElement.objects.filter(
-            account=self.get_account())
+        return PageElement.objects.filter(account=self.account)
 
 
 class PageElementDetail(AccountMixin, CreateModelMixin,
@@ -53,7 +52,7 @@ class PageElementDetail(AccountMixin, CreateModelMixin,
     def get_queryset(self):
         kwargs = {self.lookup_field: self.kwargs.get(self.lookup_url_kwarg)}
         return PageElement.objects.filter(
-            account=self.get_account(), **kwargs)
+            account=self.account, **kwargs)
 
     def perform_update(self, serializer):
         serializer.save()
@@ -61,7 +60,7 @@ class PageElementDetail(AccountMixin, CreateModelMixin,
     def perform_create(self, serializer):
         return serializer.save(
             slug=self.kwargs.get(self.lookup_url_kwarg),
-            account=self.get_account())
+            account=self.account)
 
     def update_or_create(self, request, *args, **kwargs):
         #pylint: disable=unused-argument

@@ -42,8 +42,7 @@ class MediaListAPIView(AccountMixin,
     APIView):
 
     def get(self, request, *args, **kwargs):
-        account = self.get_account()
-        storage = self.get_default_storage(account)
+        storage = self.get_default_storage(self.account)
         search = request.GET.get('q')
         tags = None
         if search != '':
@@ -59,8 +58,7 @@ class MediaListAPIView(AccountMixin,
         # Store filenames with forward slashes, even on Windows
         file_name = force_text(uploaded_file.name.replace('\\', '/'))
         sha1_filename = sha1 + os.path.splitext(file_name)[1]
-        account = self.get_account()
-        storage = self.get_default_storage(account)
+        storage = self.get_default_storage(self.account)
 
         result = {}
         if storage.exists(sha1_filename):
@@ -78,8 +76,7 @@ class MediaListAPIView(AccountMixin,
 
     def delete(self, request, *args, **kwargs):
         #pylint: disable=unused-argument
-        account = self.get_account()
-        storage = self.get_default_storage(account)
+        storage = self.get_default_storage(self.account)
         serializer = MediaItemListSerializer(data=request.data)
         serializer.is_valid()
         validated_data = serializer.validated_data
@@ -95,8 +92,7 @@ class MediaListAPIView(AccountMixin,
 
     def put(self, request, *args, **kwargs):
         #pylint: disable=unused-argument
-        account = self.get_account()
-        storage = self.get_default_storage(account)
+        storage = self.get_default_storage(self.account)
         serializer = MediaItemListSerializer(data=request.data)
         serializer.is_valid()
         validated_data = serializer.validated_data
