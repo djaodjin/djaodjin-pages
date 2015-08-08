@@ -107,10 +107,10 @@ class UploadedImageMixin(object):
                                 'tag', flat=True)
                             }]
         except OSError:
-            LOGGER.error(
+            LOGGER.exception(
                 "Unable to list objects in %s.", storage.__class__.__name__)
         except S3ResponseError:
-            LOGGER.error(
+            LOGGER.exception(
                 "Unable to list objects in %s bucket.", storage.bucket_name)
         return {'count': total, 'results': results}
 
@@ -127,10 +127,10 @@ class UploadedImageMixin(object):
                         results += [
                             {'location': location, 'media': media}]
         except OSError:
-            LOGGER.error(
+            LOGGER.exception(
                 "Unable to list objects in %s.", storage.__class__.__name__)
         except S3ResponseError:
-            LOGGER.error(
+            LOGGER.exception(
                 "Unable to list objects in %s bucket.", storage.bucket_name)
         return {'count': total, 'results': results}
 
