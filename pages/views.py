@@ -42,14 +42,20 @@ class PageMixin(AccountMixin):
     """
     edition_tools_template_name = 'pages/edition_tools.html'
 
-    def add_edition_tools(self, soup, context=None):
+    def add_edition_tools(self, content, context=None):
+        """
+        Inject the edition tools into the html *content* and return
+        a BeautifulSoup object of the resulting content + tools.
+        """
         if context is None:
             context = {}
         context.update(csrf(self.request))
         template = loader.get_template(self.edition_tools_template_name)
-        content = template.render(Context(context))
-        soup.body.append(BeautifulSoup(content))
-        return soup
+        soup = BeautifulSoup(content)
+        if soup and soup.body:
+            soup.body.append(BeautifulSoup(template.render(Context(context))))
+            return soup
+        return None
 
     def get(self, request, *args, **kwargs):
         #pylint: disable=too-many-statements, too-many-locals
@@ -59,19 +65,19 @@ class PageMixin(AccountMixin):
 
         content_type = response.get('content-type', '')
         if content_type.startswith('text/html'):
-            account = self.get_account()
-            if account:
-                page_elements = PageElement.objects.filter(account=account)
-            else:
-                page_elements = PageElement.objects.all()
-            soup = BeautifulSoup(response.content)
-            for editable in soup.find_all(class_="editable"):
-                try:
-                    id_element = editable['id']
-                except KeyError:
-                    continue
-                try:
-                    edit = page_elements.get(slug=id_element)
+            soup = self.add_edition_tools(response.content)
+            if soup:
+                editable_ids = set([])
+                for editable in soup.find_all(class_="editable"):
+                    try:
+                        editable_ids |= set([editable['id']])
+                    except KeyError:
+                        continue
+                kwargs = {'slug__in': editable_ids}
+                if self.account:
+                    kwargs.update({'account': self.account})
+                for edit in PageElement.objects.filter(**kwargs):
+                    editable = soup.find(id=edit.slug)
                     new_text = re.sub(r'[\ ]{2,}', '', edit.text)
                     if 'edit-markdown' in editable['class']:
                         new_text = markdown.markdown(new_text)
@@ -90,25 +96,11 @@ class PageMixin(AccountMixin):
                                         children_done += [sub_el]
                                 if not element in children_done:
                                     editable.append(element)
+                    elif 'droppable-image' in editable['class']:
+                        editable['src'] = edit.text
                     else:
                         editable.string = new_text
-                except PageElement.DoesNotExist:
-                    pass
-
-            #load all media pageelemeny
-            db_medias = page_elements.filter(slug__startswith='djmedia-')
-            for media in soup.find_all(class_="droppable-image"):
-                try:
-                    id_element = media['id']
-                except KeyError:
-                    continue
-                try:
-                    db_media = db_medias.get(slug=id_element)
-                    media['src'] = db_media.text
-                except PageElement.DoesNotExist:
-                    continue
-            soup = self.add_edition_tools(soup)
-            response.content = soup.prettify()
+                response.content = soup.prettify()
         return response
 
 
