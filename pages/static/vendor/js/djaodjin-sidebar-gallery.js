@@ -3,260 +3,243 @@
 /* relies on:
     - jquery-ui.js
     - dropzone.js
+
+Media request:
+
+GET mediaUrl:
+
+    - request
+
+    - response: 200 OK
+    {
+        ...,
+        "results":[
+            {"location": "/media/item/url1.jpg", "tags" : []},
+            {"location": "/media/item/url2.jpg", "tags" : ["html", "django"]}
+        ],
+        ...
+    }
+
+POST mediaUrl:
+    - request: {<paramNameUpload>: uploaded_file}
+
+    - response: 201 CREATED
+    {"location":"/media/item/url1.jpg","tags":[]}
+
+
+PUT mediaUrl:
+
+    - request: {items: [{location: "/media/item/url1.jpg"}, {location: "/media/item/url2.jpg"}], tags: ["tag1", "tag2"]}
+
+    - response: 200 OK
+    {
+        ...,
+        "results":[
+            {"location": "/media/item/url1.jpg", "tags" : ["tag1", "tag2"]},
+            {"location": "/media/item/url2.jpg", "tags" : ["tag1", "tag2"]}
+        ],
+        ...
+    }
+
+DELETE mediaUrl 200 OK
+    - request: {items: [{location: "/media/item/url1.jpg"}, {location: "/media/item/url2.jpg"}]}
+    - response: 200 OK
+
+Options:
+
+    mediaUrl :                          default: null, type: String, url to get, post, put and delete media from backend
+    csrfToken :                         default: null, type: String, security token
+
+    // AWS S3 Direct upload settings
+    S3DirectUploadUrl :                 default: null, type: String, A S3 url
+    mediaPrefix :                       default: null, type: String, S3 folder ex: media/
+    accessKey :                         default: null, type: String, S3 Temporary credentials
+    securityToken :                     default: null, type: String, S3 Temporary credentials
+    policy :                            default: null, type: String, S3 Temporary credentials
+    signature :                         default: null, type: String, S3 Temporary credentials
+    amzCredential :                     default: null, type: String, S3 Temporary credentials
+    amzDate :                           default: null, type: String, S3 Temporary credentials
+
+    // Custom gallery callback and templates
+    paramNameUpload :                   default: "file", type: String, Custom param name for uploaded file
+    maxFilesizeUpload :                 default: 50, type: Integer
+    acceptedImages :                    default: [".jpg", ".png", ".gif"], type: Array
+    acceptedVideos :                    default: [".mp4"], type: Array
+    buttonClass :                       type: String
+    galleryItemOptionsTemplate :        type: String, template used when a media item is selected
+    selectedMediaClass :                type: String, class when a media item is selected
+    startLoad :                         type: Boolean, if true load image on document ready
+    itemUploadProgress :                type:function, params:progress, return the progress on upload
+    galleryMessage :                    type:function, params:message, notification of the gallery
+
+    // Custom droppable media item and callback
+    mediaPlaceholder :                  type:string, seclector to init droppable placeholder
+    saveDroppedMediaUrl :               type:string, Url to send request when media is dropped in placeholder
+    droppedMediaCallback :              type:function, params:response, Callback on succeeded dropped media item
+
 */
 
 (function ($) {
     "use strict";
 
-    var sidebarGallery = null;
+    var djGallery = null;
 
-    var sidebarHtml = "\
-        <div id=\"sidebar-container\">\
-            <div id=\"sidebar-gallery\">\
-                <h1>Media</h1>\
-                <input placeholder=\"Search...\" id=\"gallery-filter\" type=\"text\" class=\"form-control\">\
-                <div id=\"media-container\">\
-                    <div class=\"col-xs-12\">Drag and drop or click to upload Media</div>\
-                    <div id=\"list-media\"></div>\
-                </div>\
-                <div id=\"media-info\" class=\"placeholder\">Click on an item to view more options</div>\
-            </div>\
-        </div>";
-
-    function SidebarGallery(options){
+    function Djgallery(options){
         this.options = options;
         this.init();
         Dropzone.autoDiscover = false;
     }
 
-    SidebarGallery.prototype = {
+    Djgallery.prototype = {
         init: function(){
-            sidebarGallery = this;
-            sidebarGallery.originalTags = [];
-            sidebarGallery.selectedMediaLocation = "";
-            sidebarGallery.currentInfo = "";
-            sidebarGallery.selectedMedia = null;
-            sidebarGallery.initSidebar();
-            sidebarGallery.initDocument();
-            sidebarGallery.initDropzone();
+            djGallery = this;
+            djGallery.originalTags = [];
+            djGallery.selectedMediaLocation = "";
+            djGallery.currentInfo = "";
+            djGallery.selectedMedia = null;
+            djGallery.initGallery();
+            djGallery.initDocument();
+            djGallery.initDropzone();
+            djGallery.initMediaInfo();
+            if (djGallery.options.startLoad){
+                djGallery.loadImage();
+            }
         },
 
-        initSidebar: function(){
-            $("body").append(sidebarHtml);
-            $("body").append(sidebarGallery.options.toggle);
+        initGallery: function(){
+            if ($(".dj-gallery").length === 0){
+                $("body").append(djGallery.options.galleryTemplate);
+            }
         },
 
         initDocument: function(){
-            $("#sidebar-container").on("click", "#delete_media", sidebarGallery.deleteMedia);
-            $("#sidebar-container").on("click", "#tag_media", sidebarGallery.tagMedia);
-            $("#sidebar-container").on("click", "#preview_media", sidebarGallery.previewMedia);
-            $("body").on("click", "#btn-toggle", sidebarGallery.toggleSidebar);
-            $("#sidebar-container").on("keyup", "#gallery-filter", sidebarGallery.loadImage);
-            $("#sidebar-container").on("click", "#add-tag", function(){
-                var tags = $("#input-tag").val().replace(/\s+/g, "");
-                tags = tags.split(",");
-                if (tags !== sidebarGallery.originalTags){
-                    $.ajax({
-                        type: "PUT",
-                        url: sidebarGallery.options.requestMediaUrl,
-                        data: JSON.stringify({"items": [{"location": sidebarGallery.selectedMediaLocation}], "tags": tags}),
-                        datatype: "json",
-                        contentType: "application/json; charset=utf-8",
-                        success: function(response){
-                            $.each(response.results, function(index, element) {
-                                $("[src=\"" + element.location + "\"]").attr("tags", element.tags);
-                            });
-                        }
-                    });
-                }
-                $("#media-info").empty().append(sidebarGallery.currentInfo);
-            });
-
-            $("#sidebar-container").on("click", ".media-single-container", function(){
-                sidebarGallery.initMediaInfo();
-                $(".media-single-container").not($(this)).removeClass("active-media");
-                if (!$(this).hasClass("active-media")){
-                    sidebarGallery.selectedMedia = $(this).children(".clickable-menu");
-                    $("#media-info").removeClass("placeholder").text("");
-                    $(this).addClass("active-media");
-                    $("#media-info").append("<div class=\"url_info\"><textarea style=\"width:98%\" rows=\"4\" readonly>" + sidebarGallery.selectedMedia.attr("src") + "</textarea></div>");
-                    sidebarGallery.initMenuMedia(sidebarGallery.selectedMedia);
-
-                }else{
-                    $(this).removeClass("active-media");
-                    sidebarGallery.selectedMedia = null;
-                }
-            });
+            $(".dj-gallery").on("click", ".dj-gallery-delete-item", djGallery.deleteMedia);
+            $(".dj-gallery").on("click", ".dj-gallery-preview-item", djGallery.previewMedia);
+            $(".dj-gallery").on("keyup", ".dj-gallery-filter", djGallery.loadImage);
+            $(".dj-gallery").on("click", ".dj-gallery-tag-item", djGallery.tagMedia);
+            $(".dj-gallery").on("click", ".dj-gallery-item-container", djGallery.selectMedia);
 
             $("body").on("click", ".closeModal", function(event){
                 event.preventDefault();
                 $("#openModal").remove();
             });
 
-            $(".droppable-image").droppable({
+            $(djGallery.options.mediaPlaceholder).droppable({
                 drop: function( event, ui ) {
                     var droppable = $(this);
                     var source = ui.draggable.attr("src").toLowerCase();
                     if (droppable.prop("tagName") === "IMG"){
-                        if (sidebarGallery.options.acceptedImages.some(function(v) { return source.indexOf(v) >= 0; })){
+                        if (djGallery.options.acceptedImages.some(function(v) { return source.indexOf(v) >= 0; })){
                             droppable.attr("src", ui.draggable.attr("src"));
                             $(ui.helper).remove();
-                            sidebarGallery.saveDropMedia(droppable);
+                            djGallery.saveDroppedMedia(droppable);
                         }else{
-                            console.log("This placeholder accepts only: " + sidebarGallery.options.acceptedImages.join(", ") + " files.");
+                            djGallery.options.galleryMessage("This placeholder accepts only: " + djGallery.options.acceptedImages.join(", ") + " files.");
                         }
                     }else if (droppable.prop("tagName") === "VIDEO"){
-                        if (sidebarGallery.options.acceptedVideos.some(function(v) { return source.indexOf(v) >= 0; })){
+                        if (djGallery.options.acceptedVideos.some(function(v) { return source.indexOf(v) >= 0; })){
                             droppable.attr("src", ui.draggable.attr("src"));
                             $(ui.helper).remove();
-                            sidebarGallery.saveDropMedia(droppable);
+                            djGallery.saveDroppedMedia(droppable);
                         }else{
-                            console.log("This placeholder accepts only: " + sidebarGallery.options.acceptedVideos.join(", ") + " files.");
+                            djGallery.options.galleryMessage("This placeholder accepts only: " + djGallery.options.acceptedVideos.join(", ") + " files.");
                         }
                     }
-              }
+                }
             });
         },
 
-        initMenuMedia: function(item){
-            var menu = "\
-                <button id=\"tag_media\" location=\"" + item.attr("src") + "\" class=\"" + sidebarGallery.options.buttonClass + "\">Update tags</button>\
-                <button id=\"delete_media\" location=\"" + item.attr("src") + "\" class=\"" + sidebarGallery.options.buttonClass + "\">Delete</button>";
-            if (item.prop("tagName") === "VIDEO"){
-                menu += "<button id=\"preview_media\" location=\"" + item.attr("src") + "\"  class=\"" + sidebarGallery.options.buttonClass + "\">Preview</button>";
-            }
-            $("#media-info").append(menu);
+        initMenuMedia: function(){
+            $(".dj-gallery-info-item").html(djGallery.options.galleryItemOptionsTemplate);
+            $("[data-dj-gallery-media-src]").attr("src", djGallery.selectedMedia.attr("src"));
+            $("[data-dj-gallery-media-location]").attr("location", djGallery.selectedMedia.attr("src"));
+            $("[data-dj-gallery-media-url]").val(djGallery.selectedMedia.attr("src"));
+            $("[data-dj-gallery-media-tag]").val(djGallery.orginalTags.join(", "));
         },
 
         initMediaInfo: function(){
-            $("#media-info").addClass("placeholder").text("Click on an item to view more options");
+            $(".dj-gallery-info-item").text("Click on an item to view more options");
         },
 
         initDropzone: function(){
-            var dropzoneUrl = sidebarGallery.options.requestMediaUrl;
-            if (sidebarGallery.options.accessKey){
-                dropzoneUrl = sidebarGallery.options.S3DirectUploadUrl;
+            var dropzoneUrl = djGallery.options.mediaUrl;
+            if (djGallery.options.accessKey){
+                dropzoneUrl = djGallery.options.S3DirectUploadUrl;
             }
 
-            var DocDropzone = new Dropzone("body", {
-                paramName: "file",
+            if (!dropzoneUrl){
+                djGallery.options.galleryMessage("No media URL. Provide either mediaUrl or S3DirectUploadUrl", "error");
+                throw new Error("No media URL. Provide either mediaUrl or S3DirectUploadUrl");
+            }
+
+            var djDropzone = new Dropzone("body", {
+                paramName: djGallery.options.paramNameUpload,
                 url: dropzoneUrl,
-                maxFilesize: 50,
+                maxFilesize: djGallery.options.maxFilesizeUpload,
                 parallelUploads: 2,
                 clickable: true,
                 createImageThumbnails: false
             });
 
-            DocDropzone.on("sending", function(file, xhr, formData){
-                if( sidebarGallery.options.accessKey) {
-                    formData.append("key", sidebarGallery.options.mediaPrefix + file.name);
-                    formData.append("policy", sidebarGallery.options.policy);
+            djDropzone.on("sending", function(file, xhr, formData){
+                if( djGallery.options.accessKey) {
+                    if (!djGallery.options.mediaPrefix.match(/\/$/)){
+                        djGallery.options.mediaPrefix += "/";
+                    }
+                    formData.append("key", djGallery.options.mediaPrefix + file.name);
+                    formData.append("policy", djGallery.options.policy);
                     formData.append("x-amz-algorithm", "AWS4-HMAC-SHA256");
                     formData.append("x-amz-credential",
-                        sidebarGallery.options.amzCredential);
-                    formData.append("x-amz-date", sidebarGallery.options.amzDate);
+                        djGallery.options.amzCredential);
+                    formData.append("x-amz-date", djGallery.options.amzDate);
                     formData.append("x-amz-security-token",
-                        sidebarGallery.options.securityToken);
+                        djGallery.options.securityToken);
                     formData.append("x-amz-signature",
-                        sidebarGallery.options.signature);
+                        djGallery.options.signature);
                 } else {
                     formData.append("csrfmiddlewaretoken",
-                        sidebarGallery.options.csrfToken);
+                        djGallery.options.csrfToken);
                 }
             });
 
-            DocDropzone.on("success", function(file, response){
-                $("#progress-div").remove();
+            djDropzone.on("success", function(file, response){
                 var status = file.xhr.status;
                 $(".dz-preview").remove();
-                var lastIndex = $("#list-media").children().last().children().attr("id");
+                var lastIndex = $(".dj-gallery-items").children().last().children().attr("id");
                 if (lastIndex){
                     lastIndex = parseInt(lastIndex.split("image_")[1]) + 1;
                 }else{
                     lastIndex = 0;
                 }
-                if ([200, 201, 204].indexOf(status) >= 0){
-                    if (sidebarGallery.options.accessKey){
-                        sidebarGallery.loadImage();
+                if ([201, 204].indexOf(status) >= 0){
+                    if (djGallery.options.accessKey){
+                        djGallery.loadImage();
                     }else{
-                        sidebarGallery.addMediaItem(response, lastIndex);
+                        djGallery.addMediaItem(response, lastIndex);
                     }
-                }
-                if (!$("#sidebar-container").hasClass("active")){
-                    sidebarGallery.openSidebar();
+                    djGallery.options.galleryMessage("Media correctly uploaded.");
+                }else if (status === 200){
+                    djGallery.options.galleryMessage(response.message);
                 }
             });
 
-            DocDropzone.on("uploadprogress", function(file, progress){
-                if ($("#progress-div").length === 0){
-                    $("#list-media").prepend("<div id=\"progress-div\"><em id=\"progress-text\"></em></div>");
-                }
-                $("#progress-text").text(progress.toFixed(1) + "%");
-            });
-        },
-
-        toggleSidebar: function(){
-            if ($("#sidebar-container").hasClass("active")){
-                sidebarGallery.closeSidebar();
-            }else{
-                sidebarGallery.openSidebar();
-            }
-        },
-
-        openSidebar: function(){
-            $("#btn-toggle").addClass("active");
-            sidebarGallery.initResizeSidebar();
-            $("#sidebar-container").addClass("active");
-            sidebarGallery.loadImage();
-        },
-
-        closeSidebar: function(){
-            $("#sidebar-container").removeClass("active").attr("style", "");
-            $("#btn-toggle").removeClass("active").attr("style", "");
-            $("#btn-toggle").draggable("destroy");
-            $(".image-gallery").remove();
-        },
-
-        initResizeSidebar: function(){
-            $("#btn-toggle").draggable({
-                axis: "x",
-                cursor: "move",
-                containment: "window",
-                drag: function(event, ui){
-                    var viewWidth = $(window).width();
-                    if (viewWidth - ui.position.left - $(ui.helper).outerWidth() >= 300){
-                        $("#sidebar-container").css("right", "0px").css("width", viewWidth - ui.position.left - $(ui.helper).outerWidth());
-                    }else{
-                        $("#btn-toggle").css("left", viewWidth - 300 - $(ui.helper).outerWidth());
-                        return false;
-                    }
-                },
-                stop: function(event, ui){
-                    var viewWidth = $(window).width();
-                    if (viewWidth - ui.position.left - $(ui.helper).outerWidth() >= 300){
-                        $("#sidebar-container").css("right", "0px").css("width", viewWidth - ui.position.left - $(ui.helper).outerWidth());
-                    }else{
-                        $("#sidebar-container").css("right", "0px").css("width", 300);
-                    }
-                    $( event.toElement ).one("click", function(e){ e.stopImmediatePropagation(); } );
-                }
+            djDropzone.on("uploadprogress", function(file, progress){
+                djGallery.options.itemUploadProgress(progress);
             });
         },
 
         loadImage: function(){
             var search = "";
-            if ($("#gallery-filter").val() !== ""){
-                search = $("#gallery-filter").val();
+            if ($(".dj-gallery-filter").val() !== ""){
+                search = $(".dj-gallery-filter").val();
             }
-            $("#list-media").empty();
-            $("#list-media").text("loading...");
+            $(".dj-gallery-items").empty();
             $.ajax({
                 method: "GET",
-                url: sidebarGallery.options.requestMediaUrl + "?q=" + search,
+                url: djGallery.options.mediaUrl + "?q=" + search,
                 success: function(data){
-                    $("#list-media").empty();
                     $.each(data.results, function(index, file){
-                        sidebarGallery.addMediaItem(file, index);
+                        djGallery.addMediaItem(file, index);
                     });
                 }
             });
@@ -264,92 +247,125 @@
 
         addMediaItem: function(file, index){
             var mediaItem = "";
-            if (file.location.indexOf(".mp4") > 0){
-                mediaItem = "<div class=\"media-single-container\"><video id=\"image_ " + index + "\" class=\"image clickable-menu image_media\" src=\"" + file.location + "\" tags=\"" + file.tags + "\"></video></div>";
+            if (file.location.toLowerCase().indexOf(".mp4") > 0){
+                mediaItem = "<div class=\"dj-gallery-item-container " + djGallery.options.mediaClass + " \"><video id=\"image_" + index + "\" class=\"image dj-gallery-item image_media\" src=\"" + file.location + "\" tags=\"" + file.tags + "\"></video></div>";
             }else{
-                mediaItem = "<div class=\"media-single-container\"><img id=\"image_" + index + "\" class=\"image clickable-menu image_media\" src=\"" + file.location + "\" tags=\"" + file.tags + "\"></div>";
+                mediaItem = "<div class=\"dj-gallery-item-container " + djGallery.options.mediaClass + " \"><img id=\"image_" + index + "\" class=\"image dj-gallery-item image_media\" src=\"" + file.location + "\" tags=\"" + file.tags + "\"></div>";
             }
-            $("#list-media").append(mediaItem);
+            $(".dj-gallery-items").prepend(mediaItem);
             $("#image_" + index).draggable({
                 helper: "clone",
                 revert: true,
                 appendTo: "body",
-                zIndex: 10000,
+                zIndex: 1000000,
                 start: function(event, ui) {
                     ui.helper.css({
-                        // height: 50,
-                        width: 50
+                        width: 65
                     });
                 }
             });
         },
 
-        tagMedia: function(event){
-            event.preventDefault();
+        selectMedia: function(){
+            djGallery.initMediaInfo();
 
-            sidebarGallery.orginalTags = sidebarGallery.selectedMedia.attr("tags").split(",");
-            sidebarGallery.selectedMediaLocation = sidebarGallery.selectedMedia.attr("src");
+            $(".dj-gallery-item-container").not($(this)).removeClass(djGallery.options.selectedMediaClass);
 
-            sidebarGallery.currentInfo = $("#media-info").html();
-            $("#media-info").empty().append("<h4>Update media tag</h4><input id=\"input-tag\" type=\"text\" value=\"" + sidebarGallery.orginalTags.join(", ") + "\" placeholder=\"Please enter tag.\" class=\"form-control\"><button id=\"add-tag\" class=\"" + sidebarGallery.options.buttonClass + "\">Update tags</button>");
-            $("#input-tag").focus();
-
+            if (!$(this).hasClass(djGallery.options.selectedMediaClass)){
+                djGallery.selectedMedia = $(this).children(".dj-gallery-item");
+                $(this).addClass(djGallery.options.selectedMediaClass);
+                djGallery.orginalTags = djGallery.selectedMedia.attr("tags").split(",");
+                djGallery.selectedMediaLocation = djGallery.selectedMedia.attr("src");
+                djGallery.initMenuMedia();
+            }else{
+                $(this).removeClass(djGallery.options.selectedMediaClass);
+                djGallery.selectedMedia = null;
+            }
         },
 
         deleteMedia: function(event){
             event.preventDefault();
-
             $.ajax({
                 method: "DELETE",
-                url: sidebarGallery.options.requestMediaUrl,
-                data: JSON.stringify({"items": [{"location": sidebarGallery.selectedMedia.attr("src")}]}),
+                url: djGallery.options.mediaUrl,
+                data: JSON.stringify({"items": [{"location": djGallery.selectedMedia.attr("src")}]}),
                 datatype: "json",
                 contentType: "application/json; charset=utf-8",
                 success: function(){
-                    $("[src=\"" + sidebarGallery.selectedMedia.attr("src") + "\"]").parent(".media-single-container").remove();
+                    $("[src=\"" + djGallery.selectedMedia.attr("src") + "\"]").parent(".dj-gallery-item-container").remove();
+                    $(".dj-gallery-info-item").empty();
+                    djGallery.options.galleryMessage("Media correctly deleted.");
                 }
             });
-            $("#media-info").empty();
+        },
+
+        tagMedia: function(){
+            var tags = $(".dj-gallery-tag-input").val().replace(/\s+/g, "");
+            tags = tags.split(",");
+            if (tags !== djGallery.originalTags){
+                $.ajax({
+                    type: "PUT",
+                    url: djGallery.options.mediaUrl,
+                    data: JSON.stringify({"items": [{"location": djGallery.selectedMediaLocation}], "tags": tags}),
+                    datatype: "json",
+                    contentType: "application/json; charset=utf-8",
+                    success: function(response){
+                        $.each(response.results, function(index, element) {
+                            $("[src=\"" + element.location + "\"]").attr("tags", element.tags);
+                        });
+                        djGallery.options.galleryMessage("Tags correctly updated.");
+                    }
+                });
+            }
         },
 
         previewMedia: function(event){
             event.preventDefault();
-            var modal = "<div id=\"openModal\" class=\"modalDialog\">\
-                    <div>\
-                        <a href=\"#close\" title=\"Close\" class=\"closeModal\">X</a>\
-                        <video src=\"" + sidebarGallery.selectedMedia.attr("src") + "\" width=\"500px\" controls></video>\
-                    </div>\
-                </div>";
+            var modal = "<div id=\"openModal\" class=\"modalDialog\">\n<div>\n<a href=\"#close\" title=\"Close\" class=\"closeModal\">X</a>\n<video src=\"" + djGallery.selectedMedia.attr("src") + "\" width=\"500px\" controls></video>\n</div>\n</div>";
             $("body").append(modal);
         },
 
-        saveDropMedia: function(element){
+        saveDroppedMedia: function(element){
             var idElement = element.attr("id");
             var data = {text: element.attr("src")};
             $.ajax({
                 method: "PUT",
                 async: false,
-                url: sidebarGallery.options.saveDropMediaUrl + idElement + "/",
+                url: djGallery.options.saveDroppedMediaUrl + idElement + "/",
                 data: data,
-                success: function(data){
-                    console.log("saved");
+                success: function(response){
+                    djGallery.options.droppedMediaCallback(response);
                 }
             });
         }
-
     };
 
-    $.sidebargallery = function(options) {
-        var opts = $.extend( {}, $.sidebargallery.defaults, options );
-        return new SidebarGallery(opts);
+    $.djgallery = function(options) {
+        var opts = $.extend( {}, $.djgallery.defaults, options );
+        return new Djgallery(opts);
     };
 
-    $.sidebargallery.defaults = {
-        saveDropMediaUrl: null, // Url to send request to server
-        requestMediaUrl: "",
+    $.djgallery.defaults = {
+
+        // Djaodjin gallery required options
+        mediaUrl: null, // Url to get list of media and upload, update and delete a media item
+        csrfToken: "", //
+
+        // Customize djaodjin gallery.
+        buttonClass: "",
+        galleryTemplate: "<div class=\"dj-gallery\">\n  <div class=\"sidebar-gallery\">\n    <h1>Media</h1>\n    <input placeholder=\"Search...\" class=\"dj-gallery-filter\" type=\"text\" >\n    <div class=\"dj-gallery-items\">\n    </div>\n    <div class=\"dj-gallery-info-item\"></div>\n  </div>\n</div>",
+        galleryItemOptionsTemplate: "<textarea rows=\"4\" style=\"width:100%;\" readonly data-dj-gallery-media-url></textarea>\n<button data-dj-gallery-media-location class=\"dj-gallery-delete-item\">Delete</button>\n<button data-dj-gallery-media-location class=\"dj-gallery-preview-item\">Preview</button>\n<br>\n<input data-dj-gallery-media-tag class=\"dj-gallery-tag-input\" type=\"text\" placeholder=\"Please enter tag.\"><button class=\"dj-gallery-tag-item\">Update tags</button>",
+        mediaClass: "",
+        selectedMediaClass: "dj-gallery-active-item",
+        startLoad: true,
+        itemUploadProgress: function(progress){ return true; },
+        galleryMessage: function(message, type){ return true; },
         acceptedImages: [".jpg", ".png", ".gif"],
         acceptedVideos: [".mp4"],
-        csrfToken: "",
+        maxFilesizeUpload: 50,
+        paramNameUpload: "file",
+
+        // S3 direct upload
         S3DirectUploadUrl: null,
         accessKey: null,
         mediaPrefix: null,
@@ -358,8 +374,12 @@
         signature: null,
         amzCredential: null,
         amzDate: null,
-        toggle: "<button class=\"btn btn-default\" id=\"btn-toggle\">Gallery</button>",
-        buttonClass: ""
+
+
+        // Custom droppable media item and callback
+        mediaPlaceholder: ".droppable-image",
+        saveDroppedMediaUrl: null,
+        droppedMediaCallback: function(reponse) { return true; }
     };
 
 })(jQuery);

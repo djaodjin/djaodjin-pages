@@ -46,7 +46,8 @@
             });
 
             if (self.options.prevent_change_editor_selectors !== ""){
-                $(document).on("click", self.options.prevent_change_editor_selectors, function(){
+                $(document).on("mousedown", self.options.prevent_change_editor_selectors, function(event){
+                    event.stopPropagation();
                     preventclick = true;
                 });
             }
@@ -113,7 +114,22 @@
             self.toogleStartOptional();
             var originText = self.getOriginText();
             self.$el.replaceWith(self.inputEditable);
-            $(document).trigger("editInputVisible");
+            if (self.options.enableMarkdownMedia){
+                console.log(jQuery.ui)
+                $("textarea").droppable({
+                    drop: function(event, ui){
+                        var droppable = $(this);
+                        var draggable = ui.draggable;
+                        droppable.focus();
+                        droppable.selection("insert", {
+                            text: "![Alt text](" + draggable.attr("src") + ")",
+                            mode: "before"
+                        });
+                        $(ui.helper).remove();
+                        $("#input_editor").trigger("autosize.resize");
+                    }
+                });
+            }
             $("#input_editor").focus();
             $("#input_editor").val(originText);
             $("#input_editor").css(self.cssVar);
@@ -330,6 +346,7 @@
         unique_identifier: 'id',
         container_tool_class:'',
         btn_tool_class: '',
+        enableMarkdownMedia: true,
         onSuccess: function(){
             return true;
         },
