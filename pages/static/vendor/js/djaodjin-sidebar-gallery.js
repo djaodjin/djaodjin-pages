@@ -183,7 +183,7 @@ Options:
 
             djDropzone.on("sending", function(file, xhr, formData){
                 if( djGallery.options.accessKey) {
-                    if (!djGallery.options.mediaPrefix.match(/\/$/)){
+                    if (djGallery.options.mediaPrefix !== "" && !djGallery.options.mediaPrefix.match(/\/$/)){
                         djGallery.options.mediaPrefix += "/";
                     }
                     formData.append("key", djGallery.options.mediaPrefix + file.name);
@@ -238,6 +238,7 @@ Options:
                 method: "GET",
                 url: djGallery.options.mediaUrl + "?q=" + search,
                 success: function(data){
+                    $(".dj-gallery-items").empty();
                     $.each(data.results, function(index, file){
                         djGallery.addMediaItem(file, index);
                     });
