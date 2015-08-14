@@ -129,7 +129,7 @@ Options:
                     var droppable = $(this);
                     var source = ui.draggable.attr("src").toLowerCase();
                     if (droppable.prop("tagName") === "IMG"){
-                        if (djGallery.options.acceptedImages.some(function(v) { return source.indexOf(v) >= 0; })){
+                        if (djGallery.options.acceptedImages.some(function(v) { return source.toLowerCase().indexOf(v) >= 0; })){
                             droppable.attr("src", ui.draggable.attr("src"));
                             $(ui.helper).remove();
                             djGallery.saveDroppedMedia(droppable);
@@ -137,7 +137,7 @@ Options:
                             djGallery.options.galleryMessage("This placeholder accepts only: " + djGallery.options.acceptedImages.join(", ") + " files.");
                         }
                     }else if (droppable.prop("tagName") === "VIDEO"){
-                        if (djGallery.options.acceptedVideos.some(function(v) { return source.indexOf(v) >= 0; })){
+                        if (djGallery.options.acceptedVideos.some(function(v) { return source.toLowerCase().indexOf(v) >= 0; })){
                             droppable.attr("src", ui.draggable.attr("src"));
                             $(ui.helper).remove();
                             djGallery.saveDroppedMedia(droppable);
@@ -322,8 +322,12 @@ Options:
 
         previewMedia: function(event){
             event.preventDefault();
-            var modal = "<div id=\"openModal\" class=\"modalDialog\">\n<div>\n<a href=\"#close\" title=\"Close\" class=\"closeModal\">X</a>\n<video src=\"" + djGallery.selectedMedia.attr("src") + "\" width=\"500px\" controls></video>\n</div>\n</div>";
-            $("body").append(modal);
+            var src = djGallery.selectedMedia.attr("src");
+            var type = "image";
+            if (djGallery.options.acceptedVideos.some(function(v) { return src.toLowerCase().indexOf(v) >= 0; })){
+                type = "video";
+            }
+            djGallery.options.previewMediaItem(djGallery.selectedMedia.attr("src"), type);
         },
 
         saveDroppedMedia: function(element){
@@ -361,6 +365,7 @@ Options:
         startLoad: true,
         itemUploadProgress: function(progress){ return true; },
         galleryMessage: function(message, type){ return true; },
+        previewMediaItem: function(src){ return true; },
         acceptedImages: [".jpg", ".png", ".gif"],
         acceptedVideos: [".mp4"],
         maxFilesizeUpload: 50,
