@@ -62,7 +62,7 @@ Options:
 
     // Custom gallery callback and templates
     paramNameUpload :                   default: "file", type: String, Custom param name for uploaded file
-    maxFilesizeUpload :                 default: 50, type: Integer
+    maxFilesizeUpload :                 default: 256, type: Integer
     acceptedImages :                    default: [".jpg", ".png", ".gif"], type: Array
     acceptedVideos :                    default: [".mp4"], type: Array
     buttonClass :                       type: String
@@ -223,6 +223,10 @@ Options:
                 }
             });
 
+            djDropzone.on("error", function(file, message){
+                djGallery.options.galleryMessage(message, "error");
+            });
+
             djDropzone.on("uploadprogress", function(file, progress){
                 djGallery.options.itemUploadProgress(progress);
             });
@@ -368,7 +372,7 @@ Options:
         previewMediaItem: function(src){ return true; },
         acceptedImages: [".jpg", ".png", ".gif"],
         acceptedVideos: [".mp4"],
-        maxFilesizeUpload: 50,
+        maxFilesizeUpload: 256,
         paramNameUpload: "file",
 
         // S3 direct upload
