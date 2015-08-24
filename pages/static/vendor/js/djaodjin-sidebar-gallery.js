@@ -177,7 +177,7 @@ Options:
                 url: dropzoneUrl,
                 maxFilesize: djGallery.options.maxFilesizeUpload,
                 parallelUploads: 2,
-                clickable: true,
+                clickable: djGallery.options.clickableArea,
                 createImageThumbnails: false
             });
 
@@ -374,6 +374,7 @@ Options:
         acceptedVideos: [".mp4"],
         maxFilesizeUpload: 256,
         paramNameUpload: "file",
+        clickableArea: false,
 
         // S3 direct upload
         S3DirectUploadUrl: null,
