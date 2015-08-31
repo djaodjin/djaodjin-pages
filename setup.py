@@ -33,7 +33,9 @@ setup(
     packages=[
         'pages',
         'pages.api',
-        'pages.urls'],
+        'pages.urls',
+        'pages.management',
+        'pages.management.commands'],
     package_data={'pages': [
         'static/vendor/css/*', 'static/vendor/js/*',
         'templates/pages/*.html']},
