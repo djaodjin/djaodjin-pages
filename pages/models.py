@@ -53,7 +53,7 @@ class UploadedTemplate(models.Model):
     """
     This model allow to record uploaded template.
     """
-
+    slug = models.SlugField(unique=True)
     account = models.ForeignKey(
         settings.ACCOUNT_MODEL,
         related_name='account_template', null=True, blank=True)

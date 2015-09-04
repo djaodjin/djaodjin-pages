@@ -23,10 +23,9 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-import os, zipfile
+import os, zipfile, hashlib
 
 from django.conf import settings as django_settings
-from django.core.exceptions import PermissionDenied
 from django.http import Http404
 from django.db.models import Q
 from django.utils._os import safe_join
@@ -44,7 +43,7 @@ class UploadedTemplateMixin(AccountMixin):
 
     def get_queryset(self):
         queryset = UploadedTemplate.objects.filter(
-            Q(account=self.account)|Q(account=None))
+            Q(account=self.account)|Q(account=None)).order_by('-created_at')
         return queryset
 
 
@@ -57,18 +56,22 @@ class UploadedTemplateListAPIView(UploadedTemplateMixin,
     def post(self, request, *args, **kwargs):
         file_obj = request.data['file']
         theme_name = os.path.splitext(os.path.basename(file_obj.name))[0]
-        templates_dir = safe_join(django_settings.TEMPLATE_DIRS[0], theme_name)
+        theme_slug = theme_name + '-' + hashlib.sha1(file_obj.read()).hexdigest()
+        templates_dir = safe_join(django_settings.TEMPLATE_DIRS[0], theme_slug)
         if os.path.exists(templates_dir):
             # If we do not have an instance at this point, the directory
             # might still exist and belong to someone else when pages
             # tables are split amongst multiple databases.
-            raise PermissionDenied("Theme %s already exists." % theme_name)
+            return Response(
+                {'message': "Theme already exists."},
+                status=status.HTTP_403_FORBIDDEN)
         if zipfile.is_zipfile(file_obj):
             with zipfile.ZipFile(file_obj) as zip_file:
-                install_theme(theme_name, zip_file)
-            UploadedTemplate.objects.create(
-                name=theme_name, account=self.account)
-            return Response({}, status=status.HTTP_204_NO_CONTENT)
+                install_theme(theme_slug, zip_file)
+            theme = UploadedTemplate.objects.create(
+                slug=theme_slug, name=theme_name, account=self.account)
+            serializer = UploadedTemplateSerializer(theme)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response({'info': "Invalid archive"},
             status=status.HTTP_400_BAD_REQUEST)
 

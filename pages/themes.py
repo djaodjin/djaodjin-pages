@@ -39,8 +39,7 @@ def install_theme(theme_name, zip_file):
     logic in ``template_loader.Loader.get_template_sources``.
     """
     LOGGER.info("install theme %s", theme_name)
-    static_dir = safe_join(os.path.dirname(django_settings.APP_STATIC_ROOT),
-        theme_name)
+    static_dir = safe_join(settings.PUBLIC_ROOT, theme_name)
     templates_dir = safe_join(django_settings.TEMPLATE_DIRS[0], theme_name)
     # We rely on the assumption that ``static_dir`` and ``templates_dir``
     # are on the same filesystem. We create a temporary directory on that
@@ -67,11 +66,11 @@ def install_theme(theme_name, zip_file):
                 base = test_parts.pop(0)
                 if base == 'public':
                     if settings.PUBLIC_WHITELIST is not None:
-                        if (os.path.join(*test_parts)
+                        if (os.path.join('static', *test_parts)
                             in settings.PUBLIC_WHITELIST):
                             tmp_path = safe_join(tmp_dir, base, *test_parts)
                     else:
-                        tmp_path = safe_join(tmp_dir, base, *test_parts)
+                        tmp_path = safe_join(tmp_dir, base, 'static', *test_parts)
                 elif base == 'templates':
                     if settings.TEMPLATES_WHITELIST is not None:
                         if (os.path.join(*test_parts)
