@@ -27,8 +27,7 @@ from django.conf.urls import patterns, url
 from .. import settings
 from ..api.edition import PageElementDetail, PagesElementListAPIView
 from ..api.upload_media import upload_progress, MediaListAPIView
-from ..api.upload_template import (UploadedTemplateListAPIView,
-    UploadedTemplateAPIView)
+from ..api.upload_template import UploadedTemplateListAPIView
 
 
 urlpatterns = patterns('',
@@ -40,9 +39,6 @@ urlpatterns = patterns('',
         PageElementDetail.as_view(), name='edit_page_element'),
     url(r'^editables/',
         PagesElementListAPIView.as_view(), name='page_elements'),
-    url(r'^theme/(?P<theme>%s)/' % settings.SLUG_RE,
-        UploadedTemplateAPIView.as_view(),
-        name='update_uploaded_template'),
     url(r'^theme/',
         UploadedTemplateListAPIView.as_view(),
         name='pages_api_theme_base'),

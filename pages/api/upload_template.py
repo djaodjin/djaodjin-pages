@@ -23,7 +23,7 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-import os, zipfile, hashlib
+import os, zipfile, hashlib, tempfile, shutil
 
 from django.conf import settings as django_settings
 from django.http import Http404
@@ -32,8 +32,9 @@ from django.utils._os import safe_join
 from rest_framework import status, generics
 from rest_framework.parsers import FileUploadParser
 from rest_framework.response import Response
+from boto.s3.connection import S3Connection
 
-from ..mixins import AccountMixin
+from ..mixins import AccountMixin, UploadedImageMixin
 from ..models import UploadedTemplate
 from ..serializers import UploadedTemplateSerializer
 from ..themes import install_theme
@@ -46,22 +47,66 @@ class UploadedTemplateMixin(AccountMixin):
             Q(account=self.account)|Q(account=None)).order_by('-created_at')
         return queryset
 
+    @staticmethod
+    def get_file_from_s3(bucket, orig, dest):
+        conn = S3Connection()
+        bucket = conn.get_bucket(bucket)
+        key = bucket.get_key(orig)
 
-class UploadedTemplateListAPIView(UploadedTemplateMixin,
+        if not key:
+            return None
+        else:# Save file from S3 into tmp_dir
+            key.get_contents_to_filename(dest)
+            return dest
+
+class UploadedTemplateListAPIView(UploadedImageMixin, UploadedTemplateMixin,
                                   generics.ListCreateAPIView):
 
     parser_classes = (FileUploadParser,)
     serializer_class = UploadedTemplateSerializer
 
     def post(self, request, *args, **kwargs):
-        file_obj = request.data['file']
-        theme_name = os.path.splitext(os.path.basename(file_obj.name))[0]
-        theme_slug = theme_name + '-' + hashlib.sha1(file_obj.read()).hexdigest()
+        tmp_dir = None
+        if 'file' in request.data.keys():
+            file_obj = request.data['file']
+            theme_name = os.path.splitext(
+                os.path.basename(file_obj.name))[0]
+            theme_slug = theme_name + '-' +\
+                hashlib.sha1(file_obj.read()).hexdigest()
+        else:
+            # Get zip file from S3 and install theme
+            tmp_dir = tempfile.mkdtemp()
+            file_obj = os.path.join(tmp_dir,
+                request.data['file_name'])
+            orig = os.path.join(request.data['s3prefix'],
+                request.data['file_name'])
+
+            file_obj = self.get_file_from_s3(
+                self.get_bucket_name(self.account),
+                orig,
+                file_obj)
+
+            if not file_obj:
+                if tmp_dir:
+                    shutil.rmtree(tmp_dir)
+                return Response(
+                    {'message': "Theme not found"},
+                    status=status.HTTP_404_NOT_FOUND)
+
+            theme_name = os.path.splitext(
+                os.path.basename(file_obj))[0]
+            with open(file_obj) as readable_file:
+                theme_slug = theme_name + '-' +\
+                    hashlib.sha1(readable_file.read()).hexdigest()
+
         templates_dir = safe_join(django_settings.TEMPLATE_DIRS[0], theme_slug)
+
         if os.path.exists(templates_dir):
             # If we do not have an instance at this point, the directory
             # might still exist and belong to someone else when pages
             # tables are split amongst multiple databases.
+            if tmp_dir:
+                shutil.rmtree(tmp_dir)
             return Response(
                 {'message': "Theme already exists."},
                 status=status.HTTP_403_FORBIDDEN)
@@ -71,7 +116,11 @@ class UploadedTemplateListAPIView(UploadedTemplateMixin,
             theme = UploadedTemplate.objects.create(
                 slug=theme_slug, name=theme_name, account=self.account)
             serializer = UploadedTemplateSerializer(theme)
+
+            if tmp_dir:
+                shutil.rmtree(tmp_dir)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
+
         return Response({'info': "Invalid archive"},
             status=status.HTTP_400_BAD_REQUEST)
 

@@ -166,69 +166,49 @@ Options:
             if (djGallery.options.accessKey){
                 dropzoneUrl = djGallery.options.S3DirectUploadUrl;
             }
+            $.djupload({
+                uploadUrl: dropzoneUrl,
+                csrfToken: djGallery.options.csrfToken,
+                uploadZone: "body",
+                uploadClickableZone: true,
+                uploadParamName: "file",
 
-            if (!dropzoneUrl){
-                djGallery.options.galleryMessage("No media URL. Provide either mediaUrl or S3DirectUploadUrl", "error");
-                throw new Error("No media URL. Provide either mediaUrl or S3DirectUploadUrl");
-            }
+                // S3 direct upload
+                accessKey: djGallery.options.accessKey,
+                mediaPrefix: djGallery.options.mediaPrefix,
+                securityToken: djGallery.options.securityToken,
+                policy: djGallery.options.policy,
+                signature: djGallery.options.signature,
+                amzCredential: djGallery.options.amzCredential,
+                amzDate: djGallery.options.amzDate,
 
-            var djDropzone = new Dropzone("body", {
-                paramName: djGallery.options.paramNameUpload,
-                url: dropzoneUrl,
-                maxFilesize: djGallery.options.maxFilesizeUpload,
-                parallelUploads: 2,
-                clickable: djGallery.options.clickableArea,
-                createImageThumbnails: false
-            });
-
-            djDropzone.on("sending", function(file, xhr, formData){
-                if( djGallery.options.accessKey) {
-                    if (djGallery.options.mediaPrefix !== "" && !djGallery.options.mediaPrefix.match(/\/$/)){
-                        djGallery.options.mediaPrefix += "/";
-                    }
-                    formData.append("key", djGallery.options.mediaPrefix + file.name);
-                    formData.append("policy", djGallery.options.policy);
-                    formData.append("x-amz-algorithm", "AWS4-HMAC-SHA256");
-                    formData.append("x-amz-credential",
-                        djGallery.options.amzCredential);
-                    formData.append("x-amz-date", djGallery.options.amzDate);
-                    formData.append("x-amz-security-token",
-                        djGallery.options.securityToken);
-                    formData.append("x-amz-signature",
-                        djGallery.options.signature);
-                } else {
-                    formData.append("csrfmiddlewaretoken",
-                        djGallery.options.csrfToken);
-                }
-            });
-
-            djDropzone.on("success", function(file, response){
-                var status = file.xhr.status;
-                $(".dz-preview").remove();
-                var lastIndex = $(".dj-gallery-items").children().last().children().attr("id");
-                if (lastIndex){
-                    lastIndex = parseInt(lastIndex.split("image_")[1]) + 1;
-                }else{
-                    lastIndex = 0;
-                }
-                if ([201, 204].indexOf(status) >= 0){
-                    if (djGallery.options.accessKey){
-                        djGallery.loadImage();
+                // callback
+                uploadSuccess: function(file, response){
+                    var status = file.xhr.status;
+                    $(".dz-preview").remove();
+                    var lastIndex = $(".dj-gallery-items").children().last().children().attr("id");
+                    if (lastIndex){
+                        lastIndex = parseInt(lastIndex.split("image_")[1]) + 1;
                     }else{
-                        djGallery.addMediaItem(response, lastIndex);
+                        lastIndex = 0;
                     }
-                    djGallery.options.galleryMessage("Media correctly uploaded.");
-                }else if (status === 200){
-                    djGallery.options.galleryMessage(response.message);
+                    if ([201, 204].indexOf(status) >= 0){
+                        if (djGallery.options.accessKey){
+                            djGallery.loadImage();
+                        }else{
+                            djGallery.addMediaItem(response, lastIndex);
+                        }
+                        djGallery.options.galleryMessage("Media correctly uploaded.");
+                    }else if (status === 200){
+                        djGallery.options.galleryMessage(response.message);
+                    }
+                },
+                uploadError: function(file, message){
+                    djGallery.options.galleryMessage(message, "error");
+                },
+                uploadProgress: function(file, progress){
+                    djGallery.options.itemUploadProgress(progress);
                 }
-            });
-
-            djDropzone.on("error", function(file, message){
-                djGallery.options.galleryMessage(message, "error");
-            });
-
-            djDropzone.on("uploadprogress", function(file, progress){
-                djGallery.options.itemUploadProgress(progress);
             });
         },
 
