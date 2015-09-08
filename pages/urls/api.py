@@ -24,7 +24,6 @@
 
 from django.conf.urls import patterns, url
 
-from .. import settings
 from ..api.edition import PageElementDetail, PagesElementListAPIView
 from ..api.upload_media import upload_progress, MediaListAPIView
 from ..api.upload_template import UploadedTemplateListAPIView

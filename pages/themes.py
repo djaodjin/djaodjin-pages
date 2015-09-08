@@ -70,7 +70,8 @@ def install_theme(theme_name, zip_file):
                             in settings.PUBLIC_WHITELIST):
                             tmp_path = safe_join(tmp_dir, base, *test_parts)
                     else:
-                        tmp_path = safe_join(tmp_dir, base, 'static', *test_parts)
+                        tmp_path = safe_join(
+                            tmp_dir, base, 'static', *test_parts)
                 elif base == 'templates':
                     if settings.TEMPLATES_WHITELIST is not None:
                         if (os.path.join(*test_parts)
