@@ -121,7 +121,7 @@ class UploadedTemplateListAPIView(UploadedImageMixin, UploadedTemplateMixin,
                 shutil.rmtree(tmp_dir)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-        return Response({'info': "Invalid archive"},
+        return Response({'message': "Invalid archive"},
             status=status.HTTP_400_BAD_REQUEST)
 
 
