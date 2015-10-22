@@ -36,7 +36,8 @@ _SETTINGS = {
         settings, 'AWS_STORAGE_BUCKET_NAME', None),
     'PUBLIC_ROOT': getattr(settings, 'STATIC_ROOT'),
     'PUBLIC_WHITELIST': None,
-    'TEMPLATES_ROOT': getattr(settings, 'TEMPLATE_DIRS')[0],
+    'TEMPLATES_ROOT': (getattr(settings, 'TEMPLATE_DIRS', [])[0]
+        if len(getattr(settings, 'TEMPLATE_DIRS')) > 0 else None),
     'TEMPLATES_WHITELIST': None
 }
 
