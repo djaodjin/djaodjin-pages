@@ -27,18 +27,60 @@ from django.db import models
 from . import settings
 
 
+class RelationShip(models.Model):
+    orig_element = models.ForeignKey(
+        "PageElement", related_name='from_element')
+    dest_element = models.ForeignKey(
+        "PageElement", related_name='to_element', blank=True, null=True)
+    tag = models.SlugField()
+
+    def __unicode__(self):
+        return "%s to %s" % (
+            self.orig_element.slug, self.dest_element.slug) #pylint: disable=no-member
+
 class PageElement(models.Model):
     """
     Elements of an editable HTML page.
     """
 
-    slug = models.CharField(max_length=50)
+    slug = models.SlugField(unique=True)
+    title = models.CharField(max_length=150, null=True, blank=True)
     text = models.TextField(blank=True)
     account = models.ForeignKey(
         settings.ACCOUNT_MODEL, related_name='account_page_element', null=True)
+    relationships = models.ManyToManyField("self",
+        related_name='related_to', through='RelationShip', symmetrical=False)
+    tag = models.SlugField()
+
+    def add_relationship(self, element, tag):
+        relationship, created = RelationShip.objects.get_or_create(
+            orig_element=self,
+            dest_element=element,
+            tag=tag)
+        return relationship, created
+
+    def remove_relationship(self, element):
+        RelationShip.objects.filter(
+            orig_element=self,
+            dest_element=element).delete()
+        return True
+
+    def get_relationships(self, tag=None):
+        if not tag:
+            return self.relationships.filter(
+                to_element__orig_element=self)
+        else:
+            return self.relationships.filter(
+                to_element__tag=tag,
+                to_element__orig_element=self)
+
+    def get_related_to(self, tag):
+        return self.related_to.filter(
+            from_element__tag=tag,
+            from_element__dest_element=self)
 
     def __unicode__(self):
-        return unicode(self.slug)
+        return self.slug
 
 
 class MediaTag(models.Model):

@@ -22,11 +22,9 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import re
-
-import markdown
 from bs4 import BeautifulSoup
 from django.core.context_processors import csrf
+from django.views.generic import ListView, DetailView
 from django.template import loader, Context
 from django.template.response import TemplateResponse
 from django.views.generic import TemplateView
@@ -51,11 +49,27 @@ class PageMixin(AccountMixin):
             context = {}
         context.update(csrf(self.request))
         template = loader.get_template(self.edition_tools_template_name)
-        soup = BeautifulSoup(content)
+        soup = BeautifulSoup(content, 'html5lib')
         if soup and soup.body:
-            soup.body.append(BeautifulSoup(template.render(Context(context))))
+            soup.body.append(
+                BeautifulSoup(template.render(Context(context)), 'html.parser'))
             return soup
         return None
+
+    @staticmethod
+    def insert_formatted(editable, new_text):
+        new_text = BeautifulSoup(new_text, 'html.parser')
+
+        for image in new_text.find_all('img'):
+            image['style'] = "max-width:100%"
+        editable.name = 'div'
+        editable.clear()
+        editable.append(new_text)
+
+    @staticmethod
+    def insert_currency(editable, new_text):
+        amount = float(new_text)
+        editable.string = "$%.2f" % (amount/100)
 
     def get(self, request, *args, **kwargs):
         #pylint: disable=too-many-statements, too-many-locals
@@ -78,28 +92,17 @@ class PageMixin(AccountMixin):
                     kwargs.update({'account': self.account})
                 for edit in PageElement.objects.filter(**kwargs):
                     editable = soup.find(id=edit.slug)
-                    new_text = re.sub(r'[\ ]{2,}', '', edit.text)
-                    if 'edit-markdown' in editable['class']:
-                        new_text = markdown.markdown(new_text)
-                        new_text = BeautifulSoup(new_text)
-                        for image in new_text.find_all('img'):
-                            image['style'] = "max-width:100%"
-                        editable.name = 'div'
-                        editable.string = ''
-                        children_done = []
-                        for element in new_text.find_all():
-                            if element.name != 'html' and\
-                                element.name != 'body':
-                                if len(element.findChildren()) > 0:
-                                    for sub_el in element.findChildren():
-                                        element.append(sub_el)
-                                        children_done += [sub_el]
-                                if not element in children_done:
-                                    editable.append(element)
-                    elif 'droppable-image' in editable['class']:
-                        editable['src'] = edit.text
-                    else:
-                        editable.string = new_text
+                    new_text = edit.text
+                    if editable:
+                        if 'edit-formatted' in editable['class']:
+                            self.insert_formatted(
+                                editable, new_text)
+                        elif 'edit-currency' in editable['class']:
+                            self.insert_currency(editable, new_text)
+                        elif 'droppable-image' in editable['class']:
+                            editable['src'] = edit.text
+                        else:
+                            editable.string = new_text
                 response.content = soup.prettify()
         return response
 
@@ -107,6 +110,21 @@ class PageMixin(AccountMixin):
 class PageView(PageMixin, TemplateView):
 
     http_method_names = ['get']
+
+
+class PageElementListView(ListView):
+    model = PageElement
+    tag = None
+
+    def get_queryset(self):
+        queryset = self.model.objects.all()
+        if self.tag:
+            queryset = queryset.filter(tag=self.tag)
+        return queryset
+
+
+class PageElementDetailView(DetailView):
+    model = PageElement
 
 
 class UploadedTemplatesView(TemplateView):

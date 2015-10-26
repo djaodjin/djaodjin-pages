@@ -22,20 +22,65 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-
+import random, string
+from django.template.defaultfilters import slugify
 from rest_framework import serializers
 
-from .models import PageElement, UploadedTemplate
+from .models import PageElement, UploadedTemplate, RelationShip
 
 #pylint: disable=no-init,old-style-class
 
-
-class PageElementSerializer(serializers.ModelSerializer):
+class PageElementSlugSerializer(serializers.ModelSerializer):
+    slug = serializers.SlugField(required=False)
 
     class Meta:
         model = PageElement
-        fields = ('slug', 'text')
-        read_only_fields = ('slug',)
+        fields = ('slug',)
+
+class PageElementSerializer(serializers.ModelSerializer):
+    tag = serializers.SlugField(required=False)
+    orig_element = PageElementSlugSerializer(many=True, required=False)
+    dest_element = PageElementSlugSerializer(many=True, required=False)
+
+    class Meta:
+        model = PageElement
+        fields = ('slug', 'title', 'text',
+            'tag', 'orig_element', 'dest_element')
+
+    def update(self, instance, validated_data):
+        if 'title' in validated_data:
+            instance.title = validated_data['title']
+        if 'text' in validated_data:
+            instance.text = validated_data['text']
+        instance.save()
+        return instance
+
+    def create(self, validated_data):
+        model_class = self.Meta.model
+        instance = model_class()
+        if 'title' in validated_data:
+            instance.title = validated_data['title']
+        if 'text' in validated_data:
+            instance.text = validated_data['text']
+        if 'slug' in validated_data:
+            instance.slug = validated_data['slug']
+        if 'account' in validated_data:
+            instance.account = validated_data['account']
+        elif instance.title:
+            instance.slug = slugify(instance.title)
+        else:
+            instance.slug = ''.join(
+                random.choice(string.letters) for count in range(5))
+        instance.save()
+        return instance
+
+
+class RelationShipSerializer(serializers.ModelSerializer):
+    title = serializers.CharField(required=False)
+
+    class Meta:
+        model = RelationShip
+        fields = ('title', 'orig_element', 'dest_element', 'tag')
 
 
 class UploadedTemplateSerializer(serializers.ModelSerializer):

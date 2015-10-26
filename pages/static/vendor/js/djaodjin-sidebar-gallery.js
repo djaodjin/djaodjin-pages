@@ -170,7 +170,7 @@ Options:
                 uploadUrl: dropzoneUrl,
                 csrfToken: djGallery.options.csrfToken,
                 uploadZone: "body",
-                uploadClickableZone: true,
+                uploadClickableZone: djGallery.options.clickableArea,
                 uploadParamName: "file",
 
                 // S3 direct upload

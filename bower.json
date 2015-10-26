@@ -1,0 +1,13 @@
+{
+  "name": "djaodjin-pages",
+  "version" : "0.1",
+  "dependencies": {
+    "dropzone": "4.2.0",
+    "jqueryui-touch-punch": "latest",
+    "hallo": "https://github.com/bergie/hallo.git",
+    "font-awesome": "~4.4.0"
+  },
+  "resolutions": {
+    "font-awesome": "4.4.0"
+  }
+}
