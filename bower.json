@@ -1,0 +1,9 @@
+{
+  "name": "djaodjin-annotate",
+  "version" : "0.1",
+  "dependencies": {
+    "dropzone": "4.2.0",
+    "jqueryui-touch-punch": "latest",
+    "hallo": "https://github.com/bergie/hallo.git"
+  }
+}

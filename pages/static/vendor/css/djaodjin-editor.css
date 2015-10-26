@@ -60,3 +60,15 @@
 	border:1px solid #7f0000;
 	color: #7f0000;
 }
+
+[contenteditable=true]:empty:before{
+  content: attr(placeholder);
+  display: block; /* For Firefox */
+  color: #9D140E;
+}
+
+.inEditMode,
+.hover-editable{
+    outline:1px solid #DDD;
+    background: #EEE;
+}

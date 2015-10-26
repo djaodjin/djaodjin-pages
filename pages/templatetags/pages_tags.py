@@ -23,47 +23,12 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-from rest_framework import serializers
+from django import template
+from django.core.urlresolvers import reverse
+from django.utils.safestring import mark_safe
 
-from .models import PageElement, UploadedTemplate
+register = template.Library()
 
-#pylint: disable=no-init,old-style-class
-
-
-class PageElementSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = PageElement
-        fields = ('slug', 'title', 'body')
-        read_only_fields = ('slug',)
-
-
-class UploadedTemplateSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = UploadedTemplate
-
-
-class MediaItemSerializer(serializers.Serializer):
-
-    location = serializers.CharField()
-
-    def update(self, instance, validated_data):
-        pass
-
-    def create(self, validated_data):
-        pass
-
-
-class MediaItemListSerializer(serializers.Serializer):
-
-    items = MediaItemSerializer(many=True)
-    tags = serializers.ListField(
-        child=serializers.CharField(allow_blank=True),
-        required=False)
-
-    def update(self, instance, validated_data):
-        pass
-
-    def create(self, validated_data):
-        pass
+@register.filter
+def get_relationships(element, tag=None):
+    return element.get_relationships(tag).all()

@@ -6,3 +6,4 @@
 .timestamp
 pages/migrations/
 docs/build/
+testsite/static/vendor/bower

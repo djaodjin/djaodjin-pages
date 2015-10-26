@@ -56,3 +56,31 @@ PUBLIC_ROOT = _SETTINGS.get('PUBLIC_ROOT')
 TEMPLATES_ROOT = _SETTINGS.get('TEMPLATES_ROOT')
 PUBLIC_WHITELIST = _SETTINGS.get('PUBLIC_WHITELIST')
 TEMPLATES_WHITELIST = _SETTINGS.get('TEMPLATES_WHITELIST')
+
+# Sanitizer settings
+ALLOWED_TAGS = [
+    'a',
+    'h1',
+    'h2',
+    'h3',
+    'b',
+    'pre',
+    'em',
+    'li',
+    'ol',
+    'strong',
+    'ul',
+    'i',
+    'div',
+    'br',
+    'p',
+    'img'
+]
+
+ALLOWED_ATTRIBUTES = {
+    '*': ['style'],
+    'a': ['href', 'title'],
+    'img': ['src', 'title', 'style']
+}
+
+ALLOWED_STYLES = ['text-align']

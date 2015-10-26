@@ -8,3 +8,4 @@ django-storages-redux==1.2.3
 django-celery>=3.1.16
 html5lib>=0.999
 pycrypto>=2.6.1
+bleach==1.4.2

@@ -24,7 +24,7 @@
 
 #pylint: disable=no-init,no-member
 #pylint: disable=old-style-class,maybe-no-member
-
+import bleach
 
 from django.http import Http404
 from rest_framework.mixins import CreateModelMixin
@@ -33,6 +33,8 @@ from rest_framework import generics
 from pages.models import PageElement
 from pages.serializers import PageElementSerializer
 from pages.mixins import AccountMixin
+from pages.settings import ALLOWED_TAGS, ALLOWED_ATTRIBUTES, ALLOWED_STYLES
+
 
 class PagesElementListAPIView(AccountMixin, generics.ListCreateAPIView):
 
@@ -49,15 +51,26 @@ class PageElementDetail(AccountMixin, CreateModelMixin,
     lookup_field = 'slug'
     lookup_url_kwarg = 'slug'
 
+    @staticmethod
+    def sanitize(serializer):
+        # Save a clean version of html.
+        serializer.validated_data['body'] = bleach.clean(
+            serializer.validated_data['body'],
+            tags=ALLOWED_TAGS, attributes=ALLOWED_ATTRIBUTES,
+            styles=ALLOWED_STYLES, strip=False)
+        return serializer
+
     def get_queryset(self):
         kwargs = {self.lookup_field: self.kwargs.get(self.lookup_url_kwarg)}
         return PageElement.objects.filter(
             account=self.account, **kwargs)
 
     def perform_update(self, serializer):
+        serializer = self.sanitize(serializer)
         serializer.save()
 
     def perform_create(self, serializer):
+        serializer = self.sanitize(serializer)
         return serializer.save(
             slug=self.kwargs.get(self.lookup_url_kwarg),
             account=self.account)
