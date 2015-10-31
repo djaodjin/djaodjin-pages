@@ -110,15 +110,14 @@
 
             var data = {};
             var method = "PUT";
+
             if (self.$el.attr("data-key")){
-                data[self.$el.attr("data-key")] = $.trim(savedText);
                 method = "PATCH";
+                data[self.$el.attr("data-key")] = $.trim(savedText);
             } else {
                 data = {
                     slug: self.getId(),
-                    body: $.trim(savedText),
-                    oldBody: self.originText,
-                    tag: self.$el.prop("tagName")
+                    body: $.trim(savedText)
                 };
             }
 

@@ -25,6 +25,7 @@
 import markdown
 from bs4 import BeautifulSoup
 from django.core.context_processors import csrf
+from django.views.generic import ListView, DetailView
 from django.template import loader, Context
 from django.template.response import TemplateResponse
 from django.views.generic import TemplateView
@@ -116,6 +117,19 @@ class PageMixin(AccountMixin):
 class PageView(PageMixin, TemplateView):
 
     http_method_names = ['get']
+
+
+class PageElementListView(ListView):
+    model = PageElement
+    root = False
+
+    def get_queryset(self):
+        queryset = self.model.objects.filter(root=self.root)
+        return queryset
+
+
+class PageElementDetailView(DetailView):
+    model = PageElement
 
 
 class UploadedTemplatesView(TemplateView):

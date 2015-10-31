@@ -25,17 +25,27 @@
 
 from rest_framework import serializers
 
-from .models import PageElement, UploadedTemplate
+from .models import PageElement, UploadedTemplate, RelationShip
 
 #pylint: disable=no-init,old-style-class
 
 
 class PageElementSerializer(serializers.ModelSerializer):
+    tag = serializers.SlugField(required=False)
+    orig_element = serializers.CharField(required=False)
 
     class Meta:
         model = PageElement
-        fields = ('slug', 'title', 'body')
-        read_only_fields = ('slug',)
+        fields = ('slug', 'title', 'body', 'tag', 'orig_element')
+
+
+class RelationShipSerializer(serializers.ModelSerializer):
+    title = serializers.CharField(required=False)
+
+
+    class Meta:
+        model = RelationShip
+        fields = ('title', 'orig_element', 'dest_element', 'tag')
 
 
 class UploadedTemplateSerializer(serializers.ModelSerializer):

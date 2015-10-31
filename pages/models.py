@@ -29,7 +29,7 @@ from . import settings
 
 class RelationShip(models.Model):
     orig_element = models.ForeignKey("PageElement", related_name='from_element')
-    dest_element = models.ForeignKey("PageElement", related_name='to_element')
+    dest_element = models.ForeignKey("PageElement", related_name='to_element', blank=True, null=True)
     tag = models.SlugField()
 
     def __unicode__(self):
@@ -41,21 +41,23 @@ class PageElement(models.Model):
     Elements of an editable HTML page.
     """
 
-    slug = models.CharField(max_length=50)
+    slug = models.SlugField(unique=True)
     title = models.CharField(max_length=150, null=True, blank=True)
     body = models.TextField(blank=True)
     account = models.ForeignKey(
         settings.ACCOUNT_MODEL, related_name='account_page_element', null=True)
     relationships = models.ManyToManyField("self",
         related_name='related_to', through='RelationShip', symmetrical=False)
+    tag = models.SlugField()
     root = models.BooleanField(default=False)
 
+
     def add_relationship(self, element, tag):
-        relationship, _ = RelationShip.objects.get_or_create(
+        relationship, created = RelationShip.objects.get_or_create(
             orig_element=self,
             dest_element=element,
             tag=tag)
-        return relationship
+        return relationship, created
 
     def remove_relationship(self, element, tag):
         RelationShip.objects.filter(

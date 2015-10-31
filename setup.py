@@ -34,6 +34,7 @@ setup(
         'pages',
         'pages.api',
         'pages.urls',
+        'pages.templatetags',
         'pages.management',
         'pages.management.commands'],
     package_data={'pages': [

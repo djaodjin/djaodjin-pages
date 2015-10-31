@@ -32,3 +32,7 @@ register = template.Library()
 @register.filter
 def get_relationships(element, tag=None):
     return element.get_relationships(tag).all()
+
+@register.filter
+def common_elements(elements1, elements2):
+    return elements1
