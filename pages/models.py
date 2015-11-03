@@ -59,11 +59,10 @@ class PageElement(models.Model):
             tag=tag)
         return relationship, created
 
-    def remove_relationship(self, element, tag):
+    def remove_relationship(self, element):
         RelationShip.objects.filter(
             orig_element=self,
-            dest_element=element,
-            status=tag).delete()
+            dest_element=element).delete()
         return True
 
     def get_relationships(self, tag=None):

@@ -29,19 +29,33 @@ from .models import PageElement, UploadedTemplate, RelationShip
 
 #pylint: disable=no-init,old-style-class
 
-
-class PageElementSerializer(serializers.ModelSerializer):
-    tag = serializers.SlugField(required=False)
-    orig_element = serializers.CharField(required=False)
+class PageElementSlugSerializer(serializers.ModelSerializer):
+    slug = serializers.SlugField(required=False)
 
     class Meta:
         model = PageElement
-        fields = ('slug', 'title', 'body', 'tag', 'orig_element')
+        fields = ('slug',)
+
+class PageElementSerializer(serializers.ModelSerializer):
+    tag = serializers.SlugField(required=False)
+    orig_element = PageElementSlugSerializer(many=True, required=False)
+    dest_element = PageElementSlugSerializer(many=True, required=False)
+
+    class Meta:
+        model = PageElement
+        fields = ('slug', 'title', 'body', 'tag', 'orig_element', 'dest_element')
+
+    def update(self, instance, validated_data):
+        if 'title' in validated_data:
+            instance.title = validated_data['title']
+        if 'body' in validated_data:
+            instance.body = validated_data['body']
+        instance.save()
+        return instance
 
 
 class RelationShipSerializer(serializers.ModelSerializer):
     title = serializers.CharField(required=False)
-
 
     class Meta:
         model = RelationShip
