@@ -24,15 +24,9 @@
 
 
 from django import template
-from django.core.urlresolvers import reverse
-from django.utils.safestring import mark_safe
 
 register = template.Library()
 
 @register.filter
 def get_relationships(element, tag=None):
     return element.get_relationships(tag).all()
-
-@register.filter
-def common_elements(elements1, elements2):
-    return elements1

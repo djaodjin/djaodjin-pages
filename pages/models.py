@@ -28,13 +28,15 @@ from . import settings
 
 
 class RelationShip(models.Model):
-    orig_element = models.ForeignKey("PageElement", related_name='from_element')
-    dest_element = models.ForeignKey("PageElement", related_name='to_element', blank=True, null=True)
+    orig_element = models.ForeignKey(
+        "PageElement", related_name='from_element')
+    dest_element = models.ForeignKey(
+        "PageElement", related_name='to_element', blank=True, null=True)
     tag = models.SlugField()
 
     def __unicode__(self):
         return "%s to %s" % (
-            self.orig_element.slug, self.dest_element.slug)
+            self.orig_element.slug, self.dest_element.slug) #pylint: disable=no-member
 
 class PageElement(models.Model):
     """

@@ -43,7 +43,8 @@ class PageElementSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = PageElement
-        fields = ('slug', 'title', 'body', 'tag', 'orig_element', 'dest_element')
+        fields = ('slug', 'title', 'body',
+            'tag', 'orig_element', 'dest_element')
 
     def update(self, instance, validated_data):
         if 'title' in validated_data:

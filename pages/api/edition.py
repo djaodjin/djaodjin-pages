@@ -33,8 +33,8 @@ from rest_framework import generics
 from rest_framework import status
 from rest_framework.response import Response
 
-from pages.models import PageElement, RelationShip
-from pages.serializers import PageElementSerializer, RelationShipSerializer
+from pages.models import PageElement
+from pages.serializers import PageElementSerializer
 from pages.mixins import AccountMixin
 from pages.settings import ALLOWED_TAGS, ALLOWED_ATTRIBUTES, ALLOWED_STYLES
 
@@ -50,7 +50,7 @@ class PageElementMixin(object):
             slug = "%s-%s" % (slug_base, suffix)
         return slug
 
-    def sanitize(self, serializer, slugify=True):
+    def sanitize(self, serializer, slugit=True):
         # Save a clean version of html.
         if 'body' in serializer.validated_data:
             serializer.validated_data['body'] = bleach.clean(
@@ -63,7 +63,7 @@ class PageElementMixin(object):
                 serializer.validated_data['title'],
                 tags=[], attributes={},
                 styles=[], strip=True)
-            if slugify:
+            if slugit:
                 serializer.validated_data['slug'] = self.slugify_title(
                     serializer.validated_data['title'])
         return serializer
@@ -93,7 +93,8 @@ class PagesElementListAPIView(
                 title=serializer.validated_data['title'],
                 tag=serializer.validated_data['tag'],
                 defaults={
-                    'slug': self.slugify_title(serializer.validated_data['title']),
+                    'slug': self.slugify_title(
+                        serializer.validated_data['title']),
                     'body': "Edit description"
                 }
             )
@@ -145,7 +146,7 @@ class PageElementDetail(PageElementMixin, AccountMixin, CreateModelMixin,
             account=self.account, **kwargs)
 
     def perform_update(self, serializer):
-        serializer = self.sanitize(serializer, slugify=False)
+        serializer = self.sanitize(serializer, slugit=False)
         serializer.save()
 
     def perform_create(self, serializer):

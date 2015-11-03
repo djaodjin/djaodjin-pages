@@ -22,7 +22,6 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import markdown
 from bs4 import BeautifulSoup
 from django.core.context_processors import csrf
 from django.views.generic import ListView, DetailView
