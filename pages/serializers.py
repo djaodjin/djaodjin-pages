@@ -64,6 +64,8 @@ class PageElementSerializer(serializers.ModelSerializer):
             instance.text = validated_data['text']
         if 'slug' in validated_data:
             instance.slug = validated_data['slug']
+        if 'account' in validated_data:
+            instance.account = validated_data['account']
         elif instance.title:
             instance.slug = slugify(instance.title)
         else:

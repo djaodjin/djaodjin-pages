@@ -62,6 +62,7 @@ class PageMixin(AccountMixin):
 
         for image in new_text.find_all('img'):
             image['style'] = "max-width:100%"
+        editable.name = 'div'
         editable.clear()
         editable.append(new_text)
 
