@@ -52,9 +52,9 @@ class PageElementMixin(object):
 
     def sanitize(self, serializer, slugit=True):
         # Save a clean version of html.
-        if 'body' in serializer.validated_data:
-            serializer.validated_data['body'] = bleach.clean(
-                serializer.validated_data['body'],
+        if 'text' in serializer.validated_data:
+            serializer.validated_data['text'] = bleach.clean(
+                serializer.validated_data['text'],
                 tags=ALLOWED_TAGS, attributes=ALLOWED_ATTRIBUTES,
                 styles=ALLOWED_STYLES, strip=False)
         if 'title' in serializer.validated_data:
@@ -95,7 +95,7 @@ class PagesElementListAPIView(
                 defaults={
                     'slug': self.slugify_title(
                         serializer.validated_data['title']),
-                    'body': "Edit description"
+                    'text': "Edit description"
                 }
             )
         relation_created = self.create_relationships(serializer)

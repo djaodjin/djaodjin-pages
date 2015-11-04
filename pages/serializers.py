@@ -22,7 +22,8 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-
+import random, string
+from django.template.defaultfilters import slugify
 from rest_framework import serializers
 
 from .models import PageElement, UploadedTemplate, RelationShip
@@ -43,14 +44,31 @@ class PageElementSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = PageElement
-        fields = ('slug', 'title', 'body',
+        fields = ('slug', 'title', 'text',
             'tag', 'orig_element', 'dest_element')
 
     def update(self, instance, validated_data):
         if 'title' in validated_data:
             instance.title = validated_data['title']
-        if 'body' in validated_data:
-            instance.body = validated_data['body']
+        if 'text' in validated_data:
+            instance.text = validated_data['text']
+        instance.save()
+        return instance
+
+    def create(self, validated_data):
+        ModelClass = self.Meta.model
+        instance = ModelClass()
+        if 'title' in validated_data:
+            instance.title = validated_data['title']
+        if 'text' in validated_data:
+            instance.text = validated_data['text']
+        if 'slug' in validated_data:
+            instance.slug = validated_data['slug']
+        elif instance.title:
+            instance.slug = slugify(instance.title)
+        else:
+            instance.slug = ''.join(
+                random.choice(string.letters) for count in range(5))
         instance.save()
         return instance
 

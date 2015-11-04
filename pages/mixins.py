@@ -76,7 +76,7 @@ class UploadedImageMixin(object):
 
             # Delete all MediaTag and PageElement using this location
             MediaTag.objects.filter(location=item['location']).delete()
-            PageElement.objects.filter(body=item['location']).delete()
+            PageElement.objects.filter(text=item['location']).delete()
 
     @staticmethod
     def build_filter_list(validated_data):

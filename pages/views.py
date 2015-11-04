@@ -57,20 +57,13 @@ class PageMixin(AccountMixin):
         return None
 
     @staticmethod
-    def insert_formatted(soup, editable, new_text):
+    def insert_formatted(editable, new_text):
         new_text = BeautifulSoup(new_text, 'html.parser')
 
         for image in new_text.find_all('img'):
             image['style'] = "max-width:100%"
-        editable.name = 'div'
         editable.clear()
         editable.append(new_text)
-
-        # XXX - Rebuild soup For some reason
-        # soup is not good anymore after ```append```
-        # and some ids can't be found
-        soup = BeautifulSoup(soup.prettify(), 'html.parser')
-        return soup
 
     @staticmethod
     def insert_currency(editable, new_text):
@@ -87,10 +80,10 @@ class PageMixin(AccountMixin):
         if content_type.startswith('text/html'):
             soup = self.add_edition_tools(response.content)
             if soup:
-                editable_ids = []
+                editable_ids = set([])
                 for editable in soup.find_all(class_="editable"):
                     try:
-                        editable_ids += [editable['id']]
+                        editable_ids |= set([editable['id']])
                     except KeyError:
                         continue
                 kwargs = {'slug__in': editable_ids}
@@ -98,11 +91,11 @@ class PageMixin(AccountMixin):
                     kwargs.update({'account': self.account})
                 for edit in PageElement.objects.filter(**kwargs):
                     editable = soup.find(id=edit.slug)
-                    new_text = edit.body
+                    new_text = edit.text
                     if editable:
                         if 'edit-formatted' in editable['class']:
-                            soup = self.insert_formatted(
-                                soup, editable, new_text)
+                            self.insert_formatted(
+                                editable, new_text)
                         elif 'edit-currency' in editable['class']:
                             self.insert_currency(editable, new_text)
                         elif 'droppable-image' in editable['class']:
@@ -120,10 +113,12 @@ class PageView(PageMixin, TemplateView):
 
 class PageElementListView(ListView):
     model = PageElement
-    root = False
+    tag = None
 
     def get_queryset(self):
-        queryset = self.model.objects.filter(root=self.root)
+        queryset = self.model.objects.all()
+        if self.tag:
+            queryset = queryset.filter(tag=self.tag)
         return queryset
 
 

@@ -117,7 +117,7 @@
             } else {
                 data = {
                     slug: self.getId(),
-                    body: $.trim(savedText)
+                    text: $.trim(savedText)
                 };
             }
 

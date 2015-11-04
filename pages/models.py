@@ -45,14 +45,12 @@ class PageElement(models.Model):
 
     slug = models.SlugField(unique=True)
     title = models.CharField(max_length=150, null=True, blank=True)
-    body = models.TextField(blank=True)
+    text = models.TextField(blank=True)
     account = models.ForeignKey(
         settings.ACCOUNT_MODEL, related_name='account_page_element', null=True)
     relationships = models.ManyToManyField("self",
         related_name='related_to', through='RelationShip', symmetrical=False)
     tag = models.SlugField()
-    root = models.BooleanField(default=False)
-
 
     def add_relationship(self, element, tag):
         relationship, created = RelationShip.objects.get_or_create(

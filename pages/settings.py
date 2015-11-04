@@ -83,4 +83,4 @@ ALLOWED_ATTRIBUTES = {
     'img': ['src', 'title', 'style']
 }
 
-ALLOWED_STYLES = ['text-align']
+ALLOWED_STYLES = ['text-align', 'max-width']
