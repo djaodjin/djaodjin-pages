@@ -60,6 +60,7 @@ TEMPLATES_WHITELIST = _SETTINGS.get('TEMPLATES_WHITELIST')
 # Sanitizer settings
 ALLOWED_TAGS = [
     'a',
+    'span',
     'h1',
     'h2',
     'h3',
@@ -83,4 +84,4 @@ ALLOWED_ATTRIBUTES = {
     'img': ['src', 'title', 'style']
 }
 
-ALLOWED_STYLES = ['text-align', 'max-width']
+ALLOWED_STYLES = ['text-align', 'max-width', 'line-height']
