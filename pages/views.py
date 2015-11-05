@@ -21,6 +21,7 @@
 # WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+import markdown
 
 from bs4 import BeautifulSoup
 from django.core.context_processors import csrf
@@ -58,8 +59,7 @@ class PageMixin(AccountMixin):
 
     @staticmethod
     def insert_formatted(editable, new_text):
-        new_text = BeautifulSoup(new_text, 'html.parser')
-
+        new_text = BeautifulSoup(new_text, 'html5lib')
         for image in new_text.find_all('img'):
             image['style'] = "max-width:100%"
         editable.name = 'div'
@@ -71,12 +71,30 @@ class PageMixin(AccountMixin):
         amount = float(new_text)
         editable.string = "$%.2f" % (amount/100)
 
+    @staticmethod
+    def insert_markdown(editable, new_text):
+        new_text = markdown.markdown(new_text,)
+        new_text = BeautifulSoup(new_text, 'html.parser')
+        for image in new_text.find_all('img'):
+            image['style'] = "max-width:100%"
+        editable.name = 'div'
+        editable.string = ''
+        children_done = []
+        for element in new_text.find_all():
+            if element.name != 'html' and\
+                element.name != 'body':
+                if len(element.findChildren()) > 0:
+                    for sub_el in element.findChildren():
+                        element.append(sub_el)
+                        children_done += [sub_el]
+                if not element in children_done:
+                    editable.append(element)
+
     def get(self, request, *args, **kwargs):
         #pylint: disable=too-many-statements, too-many-locals
         response = super(PageMixin, self).get(request, *args, **kwargs)
         if self.template_name and isinstance(response, TemplateResponse):
             response.render()
-
         content_type = response.get('content-type', '')
         if content_type.startswith('text/html'):
             soup = self.add_edition_tools(response.content)
@@ -87,6 +105,7 @@ class PageMixin(AccountMixin):
                         editable_ids |= set([editable['id']])
                     except KeyError:
                         continue
+
                 kwargs = {'slug__in': editable_ids}
                 if self.account:
                     kwargs.update({'account': self.account})
@@ -97,6 +116,8 @@ class PageMixin(AccountMixin):
                         if 'edit-formatted' in editable['class']:
                             self.insert_formatted(
                                 editable, new_text)
+                        elif 'edit-markdown' in editable['class']:
+                            self.insert_markdown(editable, new_text)
                         elif 'edit-currency' in editable['class']:
                             self.insert_currency(editable, new_text)
                         elif 'droppable-image' in editable['class']:

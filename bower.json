@@ -5,7 +5,9 @@
     "dropzone": "4.2.0",
     "jqueryui-touch-punch": "latest",
     "hallo": "https://github.com/bergie/hallo.git",
-    "font-awesome": "~4.4.0"
+    "font-awesome": "~4.4.0",
+    "textarea-autosize": "0.4.1",
+    "jquery-selection": "https://github.com/madapaja/jquery.selection.git#1.0.1"
   },
   "resolutions": {
     "font-awesome": "4.4.0"

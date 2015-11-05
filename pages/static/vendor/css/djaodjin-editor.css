@@ -24,7 +24,7 @@
 	opacity: 1;
 }
 
-#input_editor{
+textarea.djaodjin-editor{
    display: block;
    /*width: 100%;*/
    overflow: visible !important;
@@ -41,12 +41,12 @@
    transition: border-color ease-in-out .15s, box-shadow ease-in-out .15s;
 }
 
-#input_editor:focus{
+textarea.djaodjin-editor:focus{
     outline: none;
 	/*outline-offset: 0px;*/
 }
 
-#tool_markdown{
+[id^="markdown_tool_"]{
 	position: absolute;
     z-index:1000;
 }

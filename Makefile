@@ -8,6 +8,7 @@ binDir        ?= $(installTop)/bin
 
 PYTHON        := $(binDir)/python
 installDirs   ?= install -d
+installFiles  := install -p -m 644
 
 ASSETS_DIR    := $(srcDir)/testsite/static/
 
@@ -25,17 +26,20 @@ doc:
 	cd $(srcDir) && sphinx-build -b html ./docs $(PWD)/docs
 
 bower-prerequisites: $(srcDir)/bower.json
-	install $^ .
+	$(installFiles) $^ .
 	bower install --verbose --config.cwd="$(PWD)"
-	install -d $(ASSETS_DIR)/fonts $(ASSETS_DIR)/vendor/fonts $(ASSETS_DIR)/vendor/css $(ASSETS_DIR)/vendor/js
-	install bower_components/jquery/jquery.js $(ASSETS_DIR)/vendor/js
-	install bower_components/jqueryui-touch-punch/jquery.ui.touch-punch.js $(ASSETS_DIR)/vendor/js
-	install bower_components/dropzone/dist/dropzone.css $(ASSETS_DIR)/vendor/css
-	install bower_components/dropzone/dist/dropzone.js $(ASSETS_DIR)/vendor/js
-	install bower_components/font-awesome/css/font-awesome.css $(ASSETS_DIR)/vendor/css
-	install bower_components/font-awesome/fonts/* $(ASSETS_DIR)/fonts
-	install bower_components/font-awesome/fonts/* $(ASSETS_DIR)/vendor/fonts
-	install bower_components/hallo/dist/hallo.js $(ASSETS_DIR)/vendor/js
-	install bower_components/rangy-official/rangy-core.js $(ASSETS_DIR)/vendor/js
-	install bower_components/jquery-ui/themes/base/jquery-ui.css $(ASSETS_DIR)/vendor/css
-	install bower_components/jquery-ui/ui/jquery-ui.js $(ASSETS_DIR)/vendor/js
+	$(installDirs) -d $(ASSETS_DIR)/fonts $(ASSETS_DIR)/vendor/fonts $(ASSETS_DIR)/vendor/css $(ASSETS_DIR)/vendor/js
+	$(installFiles) bower_components/jquery/jquery.js $(ASSETS_DIR)/vendor/js
+	$(installFiles) bower_components/jqueryui-touch-punch/jquery.ui.touch-punch.js $(ASSETS_DIR)/vendor/js
+	$(installFiles) bower_components/dropzone/dist/dropzone.css $(ASSETS_DIR)/vendor/css
+	$(installFiles) bower_components/dropzone/dist/dropzone.js $(ASSETS_DIR)/vendor/js
+	$(installFiles) bower_components/font-awesome/css/font-awesome.css $(ASSETS_DIR)/vendor/css
+	$(installFiles) bower_components/font-awesome/fonts/* $(ASSETS_DIR)/fonts
+	$(installFiles) bower_components/font-awesome/fonts/* $(ASSETS_DIR)/vendor/fonts
+	$(installFiles) bower_components/hallo/dist/hallo.js $(ASSETS_DIR)/vendor/js
+	$(installFiles) bower_components/rangy-official/rangy-core.js $(ASSETS_DIR)/vendor/js
+	$(installFiles) bower_components/jquery-ui/themes/base/jquery-ui.css $(ASSETS_DIR)/vendor/css
+	$(installFiles) bower_components/jquery-ui/ui/jquery-ui.js $(ASSETS_DIR)/vendor/js
+	$(installFiles) bower_components/textarea-autosize/dist/jquery.textarea_autosize.js $(ASSETS_DIR)/vendor/js
+	$(installFiles) bower_components/jquery-selection/src/jquery.selection.js $(ASSETS_DIR)/vendor/js
+

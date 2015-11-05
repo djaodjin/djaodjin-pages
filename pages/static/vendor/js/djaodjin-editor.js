@@ -1,7 +1,8 @@
-/* global jQuery: true*/
+/* global jQuery Markdown document: true*/
 
 (function ($) {
     "use strict";
+    var preventClick = false;
 
     function Editor(element, options){
         var self = this;
@@ -32,6 +33,12 @@
                 $("#modified").html("Editables modified");
             });
 
+            if (self.options.preventBlurOnClick !== ""){
+                $(document).on("mousedown", self.options.preventBlurOnClick, function(event){
+                    event.stopPropagation();
+                    preventClick = true;
+                });
+            }
         },
 
         hoverElement: function(event){
@@ -234,12 +241,186 @@
         }
     });
 
+    function MarkdownEditor(element, options){
+        var self = this;
+        self.$el = $(element);
+        self.options = options;
+        self.init();
+        return self;
+    }
+
+    MarkdownEditor.prototype = $.extend({}, Editor.prototype, {
+
+        markdownTools: function(){
+            var self = this;
+            self.$mardownToolHtml = $("<div id=\"markdown_tool_" + self.getId() + "\" class=\"" + self.options.container_tool_class + "\">\
+                                <button type=\"button\" class=\"" + self.options.btn_tool_class + " markdown-h3\">H3</button>\
+                                <button type=\"button\" class=\"" + self.options.btn_tool_class + " markdown-h4\">H4</button>\
+                                <button type=\"button\" class=\"" + self.options.btn_tool_class + " markdown-bold\"><strong>B</strong></button>\
+                                <button type=\"button\" class=\"" + self.options.btn_tool_class + " markdown-italic\"><em>I</em></button>\
+                                <button type=\"button\" class=\"" + self.options.btn_tool_class + " markdown-list-ul\">List</button>\
+                                <button type=\"button\" class=\"" + self.options.btn_tool_class + " markdown-link\">Link</button></div>");
+            return self.$mardownToolHtml;
+        },
+
+        textArea: function(){
+            var self = this;
+            self.$textarea = $("<textarea placeholder=\"" + self.options.emptyInputText + "\" class=\"djaodjin-editor\" id=\"textarea_" + self.getId() + "\" style=\"\"></textarea>");
+            return self.$textarea;
+        },
+
+        checkInput: function(){
+            var self = this;
+            if (self.$textarea.val() === ""){
+                return false;
+            }else{
+                return true;
+            }
+        },
+
+        getElementProperties: function(){
+            var self = this;
+            if (self.$el.prop("tagName") === "DIV"){
+                if (self.$el.children("p").length > 0){
+                    return self.$el.children("p");
+                }else{
+                    return $("p");
+                }
+            }else{
+                return self.$el;
+            }
+        },
+
+        getProperties: function(){
+            var self = this;
+            self.classElement = self.$el.attr("class");
+            var element = self.getElementProperties();
+            self.cssVar = {
+                "font-size": element.css("font-size"),
+                "line-height": element.css("line-height"),
+                "height": parseInt(element.css("height").split("px")) + (parseInt(element.css("line-height").split("px")) - parseInt(element.css("font-size").split("px"))) + "px",
+                "margin-top": element.css("margin-top"),
+                "font-family": element.css("font-family"),
+                "font-weight": element.css("font-weight"),
+                "text-align": element.css("text-align"),
+                "padding-top": -(parseInt(element.css("line-height").split("px")) - parseInt(element.css("font-size").split("px"))) + "px",
+                "color": element.css("color"),
+                "width": element.css("width")
+            };
+        },
+
+        toggleEdition: function(){
+            var self = this;
+            self.getOriginText();
+            self.initEditor();
+        },
+
+        initEditor: function(){
+            var self = this;
+            self.getProperties();
+            self.markdownTools();
+            $("body").append(self.$mardownToolHtml);
+            self.$mardownToolHtml.css({
+                top: (self.$el.offset().top - 45) + "px",
+                left: self.$el.offset().left + "px"
+            });
+            self.$el.replaceWith(self.textArea());
+            self.$textarea.css(self.cssVar).val(self.originText).textareaAutoSize().focus();
+            if (!self.eventAttached){
+                $("body").on("blur", "#" + self.$textarea.attr("id"), function(){
+                    if (!preventClick){
+                        self.saveEdition();
+                    }else{
+                        $("#" + self.$textarea.attr("id")).focus();
+                        preventClick = false;
+                    }
+                });
+                $("body").on("mousedown", "#" + self.$mardownToolHtml.attr("id"), function(event){
+                    event.preventDefault();
+                    var $target = $(event.target);
+                    if ($target.hasClass("markdown-h3")){
+                        $("#" + self.$textarea.attr("id")).selection("insert", {text: "###", mode: "before"}).selection("insert", {text: "", mode: "after"});
+                    }else if($target.hasClass("markdown-h4")){
+                        $("#" + self.$textarea.attr("id")).selection("insert", {text: "####", mode: "before"}).selection("insert", {text: "", mode: "after"});
+                    }else if($target.hasClass("markdown-bold")||$target.parent().hasClass("markdown-bold")){
+                        $("#" + self.$textarea.attr("id")).selection("insert", {text: "**", mode: "before"}).selection("insert", {text: "**", mode: "after"});
+                    }else if($target.hasClass("markdown-list-ul")){
+                        $("#" + self.$textarea.attr("id")).selection("insert", {text: "* ", mode: "before"}).selection("insert", {text: "", mode: "after"});
+                    }else if($target.hasClass("markdown-link")){
+                        var text = $("#" + self.$textarea.attr("id")).selection();
+                        if (text.indexOf("http://") >= 0){
+                            $("#" + self.$textarea.attr("id")).selection("insert", {text: "[" + text + "](", mode: "before"}).selection("insert", {text: ")", mode: "after"});
+                        }else{
+                            $("#" + self.$textarea.attr("id")).selection("insert", {text: "[http://" + text + "](http://", mode: "before"}).selection("insert", {text: ")", mode: "after"});
+                        }
+                    }else if($target.attr("id") === "italic"){
+                        $("#" + self.$textarea.attr("id")).selection("insert", {text: "*", mode: "before"}).selection("insert", {text: "*", mode: "after"});
+                    }
+                });
+            }
+            $("#" + self.$textarea.attr("id")).droppable({
+                drop: function(event, ui){
+                    var droppable = $(this);
+                    var draggable = ui.draggable;
+                    droppable.focus();
+                    droppable.selection("insert", {
+                        text: "![Alt text](" + draggable.attr("src") + ")",
+                        mode: "before"
+                    });
+                    $(ui.helper).remove();
+                }
+            });
+            self.eventAttached = true;
+        },
+
+        getSavedText: function(){
+            var self = this;
+            return self.$textarea.val();
+        },
+
+        formatDisplayedValue: function(){
+            var self = this;
+            var convert = new Markdown.getSanitizingConverter().makeHtml;
+            var newHtml = convert(self.getSavedText()).replace("<img ", "<img style=\"max-width:100%\" ");
+            self.$textarea.replaceWith(self.$el.html(newHtml));
+            self.$textarea.remove();
+            self.$mardownToolHtml.remove();
+            self.init();
+        },
+
+        getOriginText: function(){
+            var self = this;
+            self.originText = "";
+            if (self.options.baseUrl){
+                $.ajax({
+                    method: "GET",
+                    async: false,
+                    url: self.options.baseUrl + self.getId() + "/",
+                    success: function(data){
+                        if (self.$el.attr("data-key")){
+                            self.originText = data[self.$el.attr("data-key")];
+                        }else{
+                            self.originText = data.text;
+                        }
+                    },
+                    error: function(){
+                        self.originText = $.trim(self.$el.text());
+                    }
+                });
+            }
+            return self.originText;
+        }
+
+    });
+
     $.fn.editor = function(options, custom){
         var opts = $.extend( {}, $.fn.editor.defaults, options );
         return this.each(function() {
             if (!$.data($(this), "editor")) {
                 if ($(this).hasClass("edit-formatted")){
                     $.data($(this), "editor", new FormattedEditor($(this), opts));
+                }else if ($(this).hasClass("edit-markdown")){
+                    $.data($(this), "editor", new MarkdownEditor($(this), opts));
                 }else if ($(this).hasClass("edit-currency")){
                     $.data($(this), "editor", new CurrencyEditor($(this), opts));
                 }else{
@@ -253,6 +434,7 @@
         baseUrl: null, // Url to send request to server
         emptyInputText: "Impossible to save an empty element.",
         uniqueIdentifier: "id",
+        preventBlurOnClick: "",
         onSuccess: function(){
             return true;
         },
