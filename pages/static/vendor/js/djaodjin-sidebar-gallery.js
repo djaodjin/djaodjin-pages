@@ -316,7 +316,7 @@ Options:
 
         saveDroppedMedia: function(element){
             var idElement = element.attr("id");
-            var data = {text: element.attr("src")};
+            var data = {slug: idElement, text: element.attr("src")};
             $.ajax({
                 method: "PUT",
                 async: false,
