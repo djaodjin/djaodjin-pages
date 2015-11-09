@@ -413,6 +413,71 @@
 
     });
 
+    function RangeEditor(element, options){
+        var self = this;
+        self.$el = $(element);
+        self.options = options;
+        self.init();
+        return self;
+    }
+
+    RangeEditor.prototype = $.extend({}, Editor.prototype, {
+        valueSelector: function(){
+            var self = this;
+            self.$valueSelector = $("<input class=\"djaodjin-editor\" id=\"value_selector_" + self.getId() + "\" style=\"width:auto;\"/ type=\"range\">");
+            return self.$valueSelector;
+        },
+
+        getOriginText: function(){
+            var self = this;
+            if (self.$el.data("range-value") !== "undefined"){
+                self.originText = self.$el.data("range-value");
+            }else{
+                self.originText = $.trim(self.$el.text());
+            }
+            return self.originText;
+        },
+
+        getSavedText: function(){
+            var self = this;
+            return self.$valueSelector.val();
+        },
+
+        toggleEdition: function(){
+            var self = this;
+            if (self.$valueSelector){
+                self.$valueSelector.trigger("mouseup");
+            }else{
+                self.getOriginText();
+                $("body").append(self.valueSelector());
+                self.$valueSelector.attr("min", self.$el.data("range-min"))
+                    .attr("max", self.$el.data("range-max"))
+                    .attr("step", self.$el.data("range-step"))
+                    .val(self.originText).css({
+                        position: "absolute",
+                        "max-width": self.$el.width(),
+                        top: (self.$el.offset().top - 5) + "px",
+                        left: self.$el.offset().left + "px"
+                    });
+
+                self.$valueSelector.on("input", function(event){
+                    self.options.rangeUpdate(self.$el, $(this).val());
+                    if (self.$el.data("range-value") !== "undefined"){
+                        self.$el.data("range-value", $(this).val());
+                    }
+                    event.stopPropagation();
+                });
+
+                self.$valueSelector.on("mouseup", function(event){
+                    self.saveEdition();
+                    self.$valueSelector.remove();
+                    self.$valueSelector = null;
+                    event.stopPropagation();
+                });
+            }
+        }
+    });
+
     $.fn.editor = function(options, custom){
         var opts = $.extend( {}, $.fn.editor.defaults, options );
         return this.each(function() {
@@ -423,6 +488,8 @@
                     $.data($(this), "editor", new MarkdownEditor($(this), opts));
                 }else if ($(this).hasClass("edit-currency")){
                     $.data($(this), "editor", new CurrencyEditor($(this), opts));
+                }else if ($(this).hasClass("edit-range")){
+                    $.data($(this), "editor", new RangeEditor($(this), opts));
                 }else{
                     $.data($(this), "editor", new Editor($(this), opts));
                 }
@@ -440,6 +507,9 @@
         },
         onError: function(){
             return true;
+        },
+        rangeUpdate: function(editable, newVal){
+            editable.text(newVal);
         },
         debug: false
     };
