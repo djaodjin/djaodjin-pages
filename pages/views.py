@@ -26,7 +26,7 @@ import markdown
 from bs4 import BeautifulSoup
 from django.core.context_processors import csrf
 from django.views.generic import ListView, DetailView
-from django.template import loader, Context
+from django.template import loader, RequestContext
 from django.template.response import TemplateResponse
 from django.views.generic import TemplateView
 
@@ -47,7 +47,8 @@ def inject_edition_tools(response, request=None, context=None,
             context = {}
         context.update(csrf(request))
         template = loader.get_template(edition_tools_template_name)
-        edition_tools = template.render(Context(context)).strip()
+        edition_tools = template.render(
+            RequestContext(request, context)).strip()
         if edition_tools:
             soup = BeautifulSoup(response.content, 'html5lib')
             if soup and soup.body:

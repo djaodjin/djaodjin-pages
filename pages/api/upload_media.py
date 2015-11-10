@@ -37,18 +37,16 @@ from ..mixins import AccountMixin, UploadedImageMixin
 from ..serializers import MediaItemListSerializer
 
 
-class MediaListAPIView(AccountMixin,
-    UploadedImageMixin,
-    APIView):
+class MediaListAPIView(AccountMixin, UploadedImageMixin, APIView):
 
     def get(self, request, *args, **kwargs):
-        storage = self.get_default_storage(self.account)
-        search = request.GET.get('q')
         tags = None
-        if search != '':
+        search = request.GET.get('q')
+        if search:
             tags = MediaTag.objects.filter(tag__startswith=search)\
                 .values_list('location', flat=True)
-        return Response(self.list_media(storage, tags))
+        return Response(self.list_media(
+            self.get_default_storage(self.account), tags))
 
     def post(self, request, *args, **kwargs):
         #pylint: disable=unused-argument,too-many-locals

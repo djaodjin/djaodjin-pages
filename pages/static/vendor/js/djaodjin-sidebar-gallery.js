@@ -221,6 +221,8 @@ Options:
             $.ajax({
                 method: "GET",
                 url: djGallery.options.mediaUrl + "?q=" + search,
+                datatype: "json",
+                contentType: "application/json; charset=utf-8",
                 success: function(data){
                     $(".dj-gallery-items").empty();
                     $.each(data.results, function(index, file){
