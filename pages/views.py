@@ -34,6 +34,29 @@ from .mixins import AccountMixin
 from .models import PageElement
 
 
+def inject_edition_tools(response, request=None, context=None,
+                    edition_tools_template_name="pages/edition_tools.html"):
+    """
+    Inject the edition tools into the html *content* and return
+    a BeautifulSoup object of the resulting content + tools.
+    """
+    soup = None
+    content_type = response.get('content-type', '')
+    if content_type.startswith('text/html'):
+        if context is None:
+            context = {}
+        context.update(csrf(request))
+        template = loader.get_template(edition_tools_template_name)
+        edition_tools = template.render(Context(context)).strip()
+        if edition_tools:
+            soup = BeautifulSoup(response.content, 'html5lib')
+            if soup and soup.body:
+                # The following line prevents the "testing" header to show up
+                #soup.body.append(BeautifulSoup(edition_tools, 'html.parser'))
+                soup.body.insert(1, BeautifulSoup(edition_tools, 'html.parser'))
+    return soup
+
+
 class PageMixin(AccountMixin):
     """
     Display or Edit a ``Page`` of a ``Project``.
@@ -41,21 +64,10 @@ class PageMixin(AccountMixin):
     """
     edition_tools_template_name = 'pages/edition_tools.html'
 
-    def add_edition_tools(self, content, context=None):
-        """
-        Inject the edition tools into the html *content* and return
-        a BeautifulSoup object of the resulting content + tools.
-        """
-        if context is None:
-            context = {}
-        context.update(csrf(self.request))
-        template = loader.get_template(self.edition_tools_template_name)
-        soup = BeautifulSoup(content, 'html5lib')
-        if soup and soup.body:
-            soup.body.append(
-                BeautifulSoup(template.render(Context(context)), 'html.parser'))
-            return soup
-        return None
+    def add_edition_tools(self, response, context=None):
+        return inject_edition_tools(
+            response, request=self.request, context=context,
+            edition_tools_template_name=self.edition_tools_template_name)
 
     @staticmethod
     def insert_formatted(editable, new_text):
@@ -95,36 +107,38 @@ class PageMixin(AccountMixin):
         response = super(PageMixin, self).get(request, *args, **kwargs)
         if self.template_name and isinstance(response, TemplateResponse):
             response.render()
-        content_type = response.get('content-type', '')
-        if content_type.startswith('text/html'):
-            soup = self.add_edition_tools(response.content)
-            if soup:
-                editable_ids = set([])
-                for editable in soup.find_all(class_="editable"):
-                    try:
-                        editable_ids |= set([editable['id']])
-                    except KeyError:
-                        continue
+        soup = self.add_edition_tools(response)
+        if not soup:
+            content_type = response.get('content-type', '')
+            if content_type.startswith('text/html'):
+                soup = BeautifulSoup(response.content, 'html5lib')
+        if soup:
+            editable_ids = set([])
+            for editable in soup.find_all(class_="editable"):
+                try:
+                    editable_ids |= set([editable['id']])
+                except KeyError:
+                    continue
 
-                kwargs = {'slug__in': editable_ids}
-                if self.account:
-                    kwargs.update({'account': self.account})
-                for edit in PageElement.objects.filter(**kwargs):
-                    editable = soup.find(id=edit.slug)
-                    new_text = edit.text
-                    if editable:
-                        if 'edit-formatted' in editable['class']:
-                            self.insert_formatted(
-                                editable, new_text)
-                        elif 'edit-markdown' in editable['class']:
-                            self.insert_markdown(editable, new_text)
-                        elif 'edit-currency' in editable['class']:
-                            self.insert_currency(editable, new_text)
-                        elif 'droppable-image' in editable['class']:
-                            editable['src'] = edit.text
-                        else:
-                            editable.string = new_text
-                response.content = soup.prettify()
+            kwargs = {'slug__in': editable_ids}
+            if self.account:
+                kwargs.update({'account': self.account})
+            for edit in PageElement.objects.filter(**kwargs):
+                editable = soup.find(id=edit.slug)
+                new_text = edit.text
+                if editable:
+                    if 'edit-formatted' in editable['class']:
+                        self.insert_formatted(
+                            editable, new_text)
+                    elif 'edit-markdown' in editable['class']:
+                        self.insert_markdown(editable, new_text)
+                    elif 'edit-currency' in editable['class']:
+                        self.insert_currency(editable, new_text)
+                    elif 'droppable-image' in editable['class']:
+                        editable['src'] = edit.text
+                    else:
+                        editable.string = new_text
+            response.content = soup.prettify()
         return response
 
 

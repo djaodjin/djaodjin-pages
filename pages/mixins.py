@@ -134,54 +134,54 @@ class UploadedImageMixin(object):
                 "Unable to list objects in %s bucket.", storage.bucket_name)
         return {'count': total, 'results': results}
 
-    @staticmethod
-    def get_bucket_name(account=None):
-        if not account:
-            return settings.AWS_STORAGE_BUCKET_NAME
-        try:
-            bucket_name = account.bucket_name
-        except AttributeError:
-            LOGGER.debug("``%s`` does not contain a ``bucket_name``"\
-                " field, using ``slug`` instead.", account.__class__)
-            bucket_name = None
-        if not bucket_name:
-            # We always need a non-empty bucket_name in order
-            # to partition the namespace.
-            bucket_name = account.slug
-        return bucket_name
-
-    @staticmethod
-    def get_media_prefix(account=None):
-        if not account:
-            return settings.MEDIA_PREFIX
-        try:
-            return account.media_prefix
-        except AttributeError:
-            LOGGER.debug("``%s`` does not contain a ``media_prefix``"\
-                " field.", account.__class__)
-        return ""
-
     def get_default_storage(self, account=None):
         storage_class = get_storage_class()
         try:
             _ = storage_class.bucket_name
             return storage_class(
-                bucket=self.get_bucket_name(account),
-                location=self.get_media_prefix(account))
+                bucket=get_bucket_name(account),
+                location=get_media_prefix(account))
         except AttributeError:
             LOGGER.debug("``%s`` does not contain a ``bucket_name``"\
                 " field, default to FileSystemStorage.", storage_class)
         return self.get_file_system_storage(account)
 
-    def get_file_system_storage(self, account=None):
+    @staticmethod
+    def get_file_system_storage(account=None):
         location = settings.MEDIA_ROOT
         base_url = settings.MEDIA_URL
-        bucket_name = self.get_bucket_name(account)
+        bucket_name = get_bucket_name(account)
         if bucket_name:
             location = os.path.join(location, bucket_name)
             base_url = urljoin(base_url, bucket_name + '/')
-        prefix = self.get_media_prefix(account)
+        prefix = get_media_prefix(account)
         if prefix:
             location = os.path.join(location, prefix)
             base_url = urljoin(base_url, prefix)
         return FileSystemStorage(location=location, base_url=base_url)
+
+
+def get_bucket_name(account=None):
+    if not account:
+        return settings.AWS_STORAGE_BUCKET_NAME
+    try:
+        bucket_name = account.bucket_name
+    except AttributeError:
+        LOGGER.debug("``%s`` does not contain a ``bucket_name``"\
+            " field, using ``slug`` instead.", account.__class__)
+        bucket_name = None
+    if not bucket_name:
+        # We always need a non-empty bucket_name in order
+        # to partition the namespace.
+        bucket_name = account.slug
+    return bucket_name
+
+def get_media_prefix(account=None):
+    if not account:
+        return settings.MEDIA_PREFIX
+    try:
+        return account.media_prefix
+    except AttributeError:
+        LOGGER.debug("``%s`` does not contain a ``media_prefix``"\
+            " field.", account.__class__)
+    return ""

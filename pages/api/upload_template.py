@@ -34,7 +34,7 @@ from rest_framework.parsers import FileUploadParser
 from rest_framework.response import Response
 from boto.s3.connection import S3Connection
 
-from ..mixins import AccountMixin, UploadedImageMixin
+from ..mixins import AccountMixin, UploadedImageMixin, get_bucket_name
 from ..models import UploadedTemplate
 from ..serializers import UploadedTemplateSerializer
 from ..themes import install_theme
@@ -81,10 +81,8 @@ class UploadedTemplateListAPIView(UploadedImageMixin, UploadedTemplateMixin,
             orig = os.path.join(request.data['s3prefix'],
                 request.data['file_name'])
 
-            file_obj = self.get_file_from_s3(
-                self.get_bucket_name(self.account),
-                orig,
-                file_obj)
+            file_obj = self.get_file_from_s3(get_bucket_name(self.account),
+                orig, file_obj)
 
             if not file_obj:
                 if tmp_dir:
