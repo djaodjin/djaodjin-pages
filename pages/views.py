@@ -53,7 +53,7 @@ def inject_edition_tools(response, request=None, context=None,
             if soup and soup.body:
                 # The following line prevents the "testing" header to show up
                 #soup.body.append(BeautifulSoup(edition_tools, 'html.parser'))
-                soup.body.insert(1, BeautifulSoup(edition_tools, 'html.parser'))
+                soup.body.insert(1, BeautifulSoup(edition_tools, 'html5lib'))
     return soup
 
 
@@ -74,9 +74,16 @@ class PageMixin(AccountMixin):
         new_text = BeautifulSoup(new_text, 'html5lib')
         for image in new_text.find_all('img'):
             image['style'] = "max-width:100%"
-        editable.name = 'div'
-        editable.clear()
-        editable.append(new_text)
+        if editable.name == 'div':
+            editable.clear()
+            editable.append(new_text)
+        else:
+            editable.string = "ERROR : Impossible to insert HTML into \
+                \"<%s></%s>\" element. It should be \"<div></div>\"." %\
+                (editable.name, editable.name)
+            editable['style'] = "color:red;"
+            # Prevent edition of error notification
+            editable['class'] = editable['class'].remove("editable")
 
     @staticmethod
     def insert_currency(editable, new_text):
