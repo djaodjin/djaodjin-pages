@@ -26,7 +26,7 @@ import markdown
 from bs4 import BeautifulSoup
 from django.core.context_processors import csrf
 from django.views.generic import ListView, DetailView
-from django.template import loader, Context
+from django.template import loader, Context, RequestContext
 from django.template.response import TemplateResponse
 from django.views.generic import TemplateView
 
@@ -35,7 +35,8 @@ from .models import PageElement
 
 
 def inject_edition_tools(response, request=None, context=None,
-                    edition_tools_template_name="pages/edition_tools.html"):
+                    body_top_template_name="pages/_body_top.html",
+                    body_bottom_template_name="pages/_body_bottom.html"):
     """
     Inject the edition tools into the html *content* and return
     a BeautifulSoup object of the resulting content + tools.
@@ -46,14 +47,29 @@ def inject_edition_tools(response, request=None, context=None,
         if context is None:
             context = {}
         context.update(csrf(request))
-        template = loader.get_template(edition_tools_template_name)
-        edition_tools = template.render(Context(context)).strip()
-        if edition_tools:
-            soup = BeautifulSoup(response.content, 'html5lib')
+        if not isinstance(context, Context):
+            context = RequestContext(request, context)
+        template = loader.get_template(body_top_template_name)
+        body_top = template.render(context).strip()
+        if body_top:
+            if not soup:
+                soup = BeautifulSoup(response.content, 'html5lib')
             if soup and soup.body:
-                # The following line prevents the "testing" header to show up
-                #soup.body.append(BeautifulSoup(edition_tools, 'html.parser'))
-                soup.body.insert(1, BeautifulSoup(edition_tools, 'html5lib'))
+                # Implementation Note: we have to use ``.body.next`` here
+                # because html5lib "fixes" our HTML by adding missing
+                # html/body tags. Furthermore if we use
+                #``soup.body.insert(1, BeautifulSoup(body_top, 'html.parser'))``
+                # instead, later on ``soup.find_all(class_=...)`` returns
+                # an empty set though ``soup.prettify()`` outputs the full
+                # expected HTML text.
+                soup.body.insert(1, BeautifulSoup(body_top).body.next)
+        template = loader.get_template(body_bottom_template_name)
+        body_bottom = template.render(context).strip()
+        if body_bottom:
+            if not soup:
+                soup = BeautifulSoup(response.content, 'html5lib')
+            if soup and soup.body:
+                soup.body.append(BeautifulSoup(body_bottom, 'html.parser'))
     return soup
 
 
@@ -62,12 +78,14 @@ class PageMixin(AccountMixin):
     Display or Edit a ``Page`` of a ``Project``.
 
     """
-    edition_tools_template_name = 'pages/edition_tools.html'
+    body_top_template_name = "pages/_body_top.html"
+    body_bottom_template_name = "pages/_body_bottom.html"
 
     def add_edition_tools(self, response, context=None):
         return inject_edition_tools(
             response, request=self.request, context=context,
-            edition_tools_template_name=self.edition_tools_template_name)
+            body_top_template_name=self.body_top_template_name,
+            body_bottom_template_name=self.body_bottom_template_name)
 
     @staticmethod
     def insert_formatted(editable, new_text):
