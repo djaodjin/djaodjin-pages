@@ -1,79 +1,81 @@
 (function ($) {
     "use strict";
 
-    var djUpload = null;
-
-    function Djupload(options){
+    function Djupload(el, options){
+        this.element = $(el);
         this.options = options;
         this.init();
-        Dropzone.autoDiscover = false;
     }
 
     Djupload.prototype = {
         init: function(){
-            djUpload = this;
-            djUpload.initDropzone();
+            var self = this;
+            this.initDropzone();
         },
 
         initDropzone: function(){
-            var dropzoneUrl = djUpload.options.uploadUrl;
+            var self = this;
+            var dropzoneUrl = self.options.uploadUrl;
 
             if (!dropzoneUrl){
                 alert("No upload URL provided.", "error");
                 throw new Error("No upload URL provided.");
             }
 
-            var djDropzone = new Dropzone("body", {
-                paramName: djUpload.options.uploadParamName,
+//            var djDropzone = new Dropzone(self.element, {
+            self.element.dropzone({
+                paramName: self.options.uploadParamName,
                 url: dropzoneUrl,
-                maxFilesize: djUpload.options.uploadMaxFileSize,
-                clickable: djUpload.options.uploadClickableZone,
-                createImageThumbnails: false
-            });
+                maxFilesize: self.options.uploadMaxFileSize,
+                clickable: self.options.uploadClickableZone,
+                createImageThumbnails: false,
+                init: function() {
 
-            djDropzone.on("sending", function(file, xhr, formData){
-                if( djUpload.options.accessKey) {
-                    if (djUpload.options.mediaPrefix !== "" && !djUpload.options.mediaPrefix.match(/\/$/)){
-                        djUpload.options.mediaPrefix += "/";
-                    }
-                    formData.append("key", djUpload.options.mediaPrefix + file.name);
-                    formData.append("policy", djUpload.options.policy);
-                    formData.append("x-amz-algorithm", "AWS4-HMAC-SHA256");
-                    formData.append("x-amz-credential",
-                        djUpload.options.amzCredential);
-                    formData.append("x-amz-date", djUpload.options.amzDate);
-                    formData.append("x-amz-security-token",
-                        djUpload.options.securityToken);
-                    formData.append("x-amz-signature",
-                        djUpload.options.signature);
-                } else {
-                    formData.append("csrfmiddlewaretoken",
-                        djUpload.options.csrfToken);
+                    this.on("sending", function(file, xhr, formData){
+                        if( self.options.accessKey) {
+                            if (self.options.mediaPrefix !== "" && !self.options.mediaPrefix.match(/\/$/)){
+                                self.options.mediaPrefix += "/";
+                            }
+                            formData.append("key", self.options.mediaPrefix + file.name);
+                            formData.append("policy", self.options.policy);
+                            formData.append("x-amz-algorithm", "AWS4-HMAC-SHA256");
+                            formData.append("x-amz-credential",
+                                            self.options.amzCredential);
+                            formData.append("x-amz-date", self.options.amzDate);
+                            formData.append("x-amz-security-token",
+                                            self.options.securityToken);
+                            formData.append("x-amz-signature",
+                                            self.options.signature);
+                        } else {
+                            formData.append("csrfmiddlewaretoken",
+                                            self.options.csrfToken);
+                        }
+                    });
+
+                    this.on("success", function(file, response){
+                        $(".dz-preview").remove();
+                        self.options.uploadSuccess(file, response);
+                    });
+
+                    this.on("error", function(file, message){
+                        $(".dz-preview").remove();
+                        self.options.uploadError(file, message);
+                    });
+
+                    this.on("uploadprogress", function(file, progress){
+                        self.options.uploadProgress(file, progress);
+                    });
                 }
-            });
-
-            djDropzone.on("success", function(file, response){
-                $(".dz-preview").remove();
-                djUpload.options.uploadSuccess(file, response);
-            });
-
-            djDropzone.on("error", function(file, message){
-                $(".dz-preview").remove();
-                djUpload.options.uploadError(file, message);
-            });
-
-            djDropzone.on("uploadprogress", function(file, progress){
-                djUpload.options.uploadProgress(file, progress);
             });
         }
     };
 
-    $.djupload = function(options) {
-        var opts = $.extend( {}, $.djupload.defaults, options );
-        return new Djupload(opts);
+    $.fn.djupload = function(options) {
+        var opts = $.extend({}, $.fn.djupload.defaults, options);
+        return new Djupload($(this), opts);
     };
 
-    $.djupload.defaults = {
+    $.fn.djupload.defaults = {
 
         uploadUrl: null,
         csrfToken: "",
@@ -97,6 +99,8 @@
         uploadProgress: function(progress){ return true; },
 
     };
+
+    Dropzone.autoDiscover = false;
 
 })(jQuery);
 
