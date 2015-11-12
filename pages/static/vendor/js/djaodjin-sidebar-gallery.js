@@ -113,12 +113,16 @@ Options:
 
         initDocument: function(){
             var self = this;
-            $(".dj-gallery").on("click", ".dj-gallery-delete-item", self.deleteMedia);
-            $(".dj-gallery").on("click", ".dj-gallery-preview-item", self.previewMedia);
-            $(".dj-gallery").on("keyup", ".dj-gallery-filter", self.loadImage);
-            $(".dj-gallery").on("click", ".dj-gallery-tag-item", self.tagMedia);
-            $(".dj-gallery").on("click", ".dj-gallery-item-container", self.selectMedia);
-
+            $(".dj-gallery").on("click", ".dj-gallery-delete-item",
+                function(event) { self.deleteMedia(); });
+            $(".dj-gallery").on("click", ".dj-gallery-preview-item",
+                function(event) { self.previewMedia(); });
+            $(".dj-gallery").on("keyup", ".dj-gallery-filter",
+                function(event) { self.loadImage(); });
+            $(".dj-gallery").on("click", ".dj-gallery-tag-item",
+                function(event) { self.tagMedia(); });
+            $(".dj-gallery").on("click", ".dj-gallery-item-container",
+                function(event) { self.selectMedia($(this)); });
             $("body").on("click", ".closeModal", function(event){
                 event.preventDefault();
                 $("#openModal").remove();
@@ -258,20 +262,19 @@ Options:
             });
         },
 
-        selectMedia: function(){
+        selectMedia: function(item) {
             var self = this;
             self.initMediaInfo();
 
-            $(".dj-gallery-item-container").not($(this)).removeClass(self.options.selectedMediaClass);
-
-            if (!$(this).hasClass(self.options.selectedMediaClass)){
-                self.selectedMedia = $(this).children(".dj-gallery-item");
-                $(this).addClass(self.options.selectedMediaClass);
+            $(".dj-gallery-item-container").not(item).removeClass(self.options.selectedMediaClass);
+            if (!item.hasClass(self.options.selectedMediaClass)){
+                self.selectedMedia = item.children(".dj-gallery-item");
+                item.addClass(self.options.selectedMediaClass);
                 self.orginalTags = self.selectedMedia.attr("tags").split(",");
                 self.selectedMediaLocation = self.selectedMedia.attr("src");
                 self.initMenuMedia();
             }else{
-                $(this).removeClass(self.options.selectedMediaClass);
+                item.removeClass(self.options.selectedMediaClass);
                 self.selectedMedia = null;
             }
         },

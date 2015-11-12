@@ -22,7 +22,6 @@
                 throw new Error("No upload URL provided.");
             }
 
-//            var djDropzone = new Dropzone(self.element, {
             self.element.dropzone({
                 paramName: self.options.uploadParamName,
                 url: dropzoneUrl,
