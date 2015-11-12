@@ -82,67 +82,71 @@ Options:
 (function ($) {
     "use strict";
 
-    var djGallery = null;
-
-    function Djgallery(options){
+    function Djgallery(el, options){
+        this.element = $(el);
         this.options = options;
         this.init();
-        Dropzone.autoDiscover = false;
     }
 
     Djgallery.prototype = {
         init: function(){
-            djGallery = this;
-            djGallery.originalTags = [];
-            djGallery.selectedMediaLocation = "";
-            djGallery.currentInfo = "";
-            djGallery.selectedMedia = null;
-            djGallery.initGallery();
-            djGallery.initDocument();
-            djGallery.initDropzone();
-            djGallery.initMediaInfo();
-            if (djGallery.options.startLoad){
-                djGallery.loadImage();
+            var self = this;
+            self.originalTags = [];
+            self.selectedMediaLocation = "";
+            self.currentInfo = "";
+            self.selectedMedia = null;
+            self.initGallery();
+            self.initDocument();
+            self.initDropzone();
+            self.initMediaInfo();
+            if (self.options.startLoad){
+                self.loadImage();
             }
         },
 
         initGallery: function(){
+            var self = this;
             if ($(".dj-gallery").length === 0){
-                $("body").append(djGallery.options.galleryTemplate);
+                $("body").append(self.options.galleryTemplate);
             }
         },
 
         initDocument: function(){
-            $(".dj-gallery").on("click", ".dj-gallery-delete-item", djGallery.deleteMedia);
-            $(".dj-gallery").on("click", ".dj-gallery-preview-item", djGallery.previewMedia);
-            $(".dj-gallery").on("keyup", ".dj-gallery-filter", djGallery.loadImage);
-            $(".dj-gallery").on("click", ".dj-gallery-tag-item", djGallery.tagMedia);
-            $(".dj-gallery").on("click", ".dj-gallery-item-container", djGallery.selectMedia);
-
+            var self = this;
+            $(".dj-gallery").on("click", ".dj-gallery-delete-item",
+                function(event) { self.deleteMedia(event); });
+            $(".dj-gallery").on("click", ".dj-gallery-preview-item",
+                function(event) { self.previewMedia(event); });
+            $(".dj-gallery").on("keyup", ".dj-gallery-filter",
+                function(event) { self.loadImage(); });
+            $(".dj-gallery").on("click", ".dj-gallery-tag-item",
+                function(event) { self.tagMedia(); });
+            $(".dj-gallery").on("click", ".dj-gallery-item-container",
+                function(event) { self.selectMedia($(this)); });
             $("body").on("click", ".closeModal", function(event){
                 event.preventDefault();
                 $("#openModal").remove();
             });
 
-            $(djGallery.options.mediaPlaceholder).droppable({
+            $(self.options.mediaPlaceholder).droppable({
                 drop: function( event, ui ) {
                     var droppable = $(this);
                     var source = ui.draggable.attr("src").toLowerCase();
                     if (droppable.prop("tagName") === "IMG"){
-                        if (djGallery.options.acceptedImages.some(function(v) { return source.toLowerCase().indexOf(v) >= 0; })){
+                        if (self.options.acceptedImages.some(function(v) { return source.toLowerCase().indexOf(v) >= 0; })){
                             droppable.attr("src", ui.draggable.attr("src"));
                             $(ui.helper).remove();
-                            djGallery.saveDroppedMedia(droppable);
+                            self.saveDroppedMedia(droppable);
                         }else{
-                            djGallery.options.galleryMessage("This placeholder accepts only: " + djGallery.options.acceptedImages.join(", ") + " files.");
+                            self.options.galleryMessage("This placeholder accepts only: " + self.options.acceptedImages.join(", ") + " files.");
                         }
                     }else if (droppable.prop("tagName") === "VIDEO"){
-                        if (djGallery.options.acceptedVideos.some(function(v) { return source.toLowerCase().indexOf(v) >= 0; })){
+                        if (self.options.acceptedVideos.some(function(v) { return source.toLowerCase().indexOf(v) >= 0; })){
                             droppable.attr("src", ui.draggable.attr("src"));
                             $(ui.helper).remove();
-                            djGallery.saveDroppedMedia(droppable);
+                            self.saveDroppedMedia(droppable);
                         }else{
-                            djGallery.options.galleryMessage("This placeholder accepts only: " + djGallery.options.acceptedVideos.join(", ") + " files.");
+                            self.options.galleryMessage("This placeholder accepts only: " + self.options.acceptedVideos.join(", ") + " files.");
                         }
                     }
                 }
@@ -150,37 +154,40 @@ Options:
         },
 
         initMenuMedia: function(){
-            $(".dj-gallery-info-item").html(djGallery.options.galleryItemOptionsTemplate);
-            $("[data-dj-gallery-media-src]").attr("src", djGallery.selectedMedia.attr("src"));
-            $("[data-dj-gallery-media-location]").attr("location", djGallery.selectedMedia.attr("src"));
-            $("[data-dj-gallery-media-url]").val(djGallery.selectedMedia.attr("src"));
-            $("[data-dj-gallery-media-tag]").val(djGallery.orginalTags.join(", "));
+            var self = this;
+            $(".dj-gallery-info-item").html(self.options.galleryItemOptionsTemplate);
+            $("[data-dj-gallery-media-src]").attr("src", self.selectedMedia.attr("src"));
+            $("[data-dj-gallery-media-location]").attr("location", self.selectedMedia.attr("src"));
+            $("[data-dj-gallery-media-url]").val(self.selectedMedia.attr("src"));
+            $("[data-dj-gallery-media-tag]").val(self.orginalTags.join(", "));
         },
 
         initMediaInfo: function(){
+            var self = this;
             $(".dj-gallery-info-item").text("Click on an item to view more options");
         },
 
         initDropzone: function(){
-            var dropzoneUrl = djGallery.options.mediaUrl;
-            if (djGallery.options.accessKey){
-                dropzoneUrl = djGallery.options.S3DirectUploadUrl;
+            var self = this;
+            var dropzoneUrl = self.options.mediaUrl;
+            if (self.options.accessKey){
+                dropzoneUrl = self.options.S3DirectUploadUrl;
             }
-            $.djupload({
+            self.element.djupload({
                 uploadUrl: dropzoneUrl,
-                csrfToken: djGallery.options.csrfToken,
+                csrfToken: self.options.csrfToken,
                 uploadZone: "body",
-                uploadClickableZone: djGallery.options.clickableArea,
+                uploadClickableZone: self.options.clickableArea,
                 uploadParamName: "file",
 
                 // S3 direct upload
-                accessKey: djGallery.options.accessKey,
-                mediaPrefix: djGallery.options.mediaPrefix,
-                securityToken: djGallery.options.securityToken,
-                policy: djGallery.options.policy,
-                signature: djGallery.options.signature,
-                amzCredential: djGallery.options.amzCredential,
-                amzDate: djGallery.options.amzDate,
+                accessKey: self.options.accessKey,
+                mediaPrefix: self.options.mediaPrefix,
+                securityToken: self.options.securityToken,
+                policy: self.options.policy,
+                signature: self.options.signature,
+                amzCredential: self.options.amzCredential,
+                amzDate: self.options.amzDate,
 
                 // callback
                 uploadSuccess: function(file, response){
@@ -193,26 +200,27 @@ Options:
                         lastIndex = 0;
                     }
                     if ([201, 204].indexOf(status) >= 0){
-                        if (djGallery.options.accessKey){
-                            djGallery.loadImage();
+                        if (self.options.accessKey){
+                            self.loadImage();
                         }else{
-                            djGallery.addMediaItem(response, lastIndex);
+                            self.addMediaItem(response, lastIndex);
                         }
-                        djGallery.options.galleryMessage("Media correctly uploaded.");
+                        self.options.galleryMessage("Media correctly uploaded.");
                     }else if (status === 200){
-                        djGallery.options.galleryMessage(response.message);
+                        self.options.galleryMessage(response.message);
                     }
                 },
                 uploadError: function(file, message){
-                    djGallery.options.galleryMessage(message, "error");
+                    self.options.galleryMessage(message, "error");
                 },
                 uploadProgress: function(file, progress){
-                    djGallery.options.itemUploadProgress(progress);
+                    self.options.itemUploadProgress(progress);
                 }
             });
         },
 
         loadImage: function(){
+            var self = this;
             var search = "";
             if ($(".dj-gallery-filter").val() !== ""){
                 search = $(".dj-gallery-filter").val();
@@ -220,24 +228,25 @@ Options:
             $(".dj-gallery-items").empty();
             $.ajax({
                 method: "GET",
-                url: djGallery.options.mediaUrl + "?q=" + search,
+                url: self.options.mediaUrl + "?q=" + search,
                 datatype: "json",
                 contentType: "application/json; charset=utf-8",
                 success: function(data){
                     $(".dj-gallery-items").empty();
                     $.each(data.results, function(index, file){
-                        djGallery.addMediaItem(file, index);
+                        self.addMediaItem(file, index);
                     });
                 }
             });
         },
 
         addMediaItem: function(file, index){
+            var self = this;
             var mediaItem = "";
             if (file.location.toLowerCase().indexOf(".mp4") > 0){
-                mediaItem = "<div class=\"dj-gallery-item-container " + djGallery.options.mediaClass + " \"><video id=\"image_" + index + "\" class=\"image dj-gallery-item image_media\" src=\"" + file.location + "\" tags=\"" + file.tags + "\"></video></div>";
+                mediaItem = "<div class=\"dj-gallery-item-container " + self.options.mediaClass + " \"><video id=\"image_" + index + "\" class=\"image dj-gallery-item image_media\" src=\"" + file.location + "\" tags=\"" + file.tags + "\"></video></div>";
             }else{
-                mediaItem = "<div class=\"dj-gallery-item-container " + djGallery.options.mediaClass + " \"><img id=\"image_" + index + "\" class=\"image dj-gallery-item image_media\" src=\"" + file.location + "\" tags=\"" + file.tags + "\"></div>";
+                mediaItem = "<div class=\"dj-gallery-item-container " + self.options.mediaClass + " \"><img id=\"image_" + index + "\" class=\"image dj-gallery-item image_media\" src=\"" + file.location + "\" tags=\"" + file.tags + "\"></div>";
             }
             $(".dj-gallery-items").prepend(mediaItem);
             $("#image_" + index).draggable({
@@ -253,90 +262,94 @@ Options:
             });
         },
 
-        selectMedia: function(){
-            djGallery.initMediaInfo();
+        selectMedia: function(item) {
+            var self = this;
+            self.initMediaInfo();
 
-            $(".dj-gallery-item-container").not($(this)).removeClass(djGallery.options.selectedMediaClass);
-
-            if (!$(this).hasClass(djGallery.options.selectedMediaClass)){
-                djGallery.selectedMedia = $(this).children(".dj-gallery-item");
-                $(this).addClass(djGallery.options.selectedMediaClass);
-                djGallery.orginalTags = djGallery.selectedMedia.attr("tags").split(",");
-                djGallery.selectedMediaLocation = djGallery.selectedMedia.attr("src");
-                djGallery.initMenuMedia();
+            $(".dj-gallery-item-container").not(item).removeClass(self.options.selectedMediaClass);
+            if (!item.hasClass(self.options.selectedMediaClass)){
+                self.selectedMedia = item.children(".dj-gallery-item");
+                item.addClass(self.options.selectedMediaClass);
+                self.orginalTags = self.selectedMedia.attr("tags").split(",");
+                self.selectedMediaLocation = self.selectedMedia.attr("src");
+                self.initMenuMedia();
             }else{
-                $(this).removeClass(djGallery.options.selectedMediaClass);
-                djGallery.selectedMedia = null;
+                item.removeClass(self.options.selectedMediaClass);
+                self.selectedMedia = null;
             }
         },
 
         deleteMedia: function(event){
+            var self = this;
             event.preventDefault();
             $.ajax({
                 method: "DELETE",
-                url: djGallery.options.mediaUrl,
-                data: JSON.stringify({"items": [{"location": djGallery.selectedMedia.attr("src")}]}),
+                url: self.options.mediaUrl,
+                data: JSON.stringify({"items": [{"location": self.selectedMedia.attr("src")}]}),
                 datatype: "json",
                 contentType: "application/json; charset=utf-8",
                 success: function(){
-                    $("[src=\"" + djGallery.selectedMedia.attr("src") + "\"]").parent(".dj-gallery-item-container").remove();
+                    $("[src=\"" + self.selectedMedia.attr("src") + "\"]").parent(".dj-gallery-item-container").remove();
                     $(".dj-gallery-info-item").empty();
-                    djGallery.options.galleryMessage("Media correctly deleted.");
+                    self.options.galleryMessage("Media correctly deleted.");
                 }
             });
         },
 
         tagMedia: function(){
+            var self = this;
             var tags = $(".dj-gallery-tag-input").val().replace(/\s+/g, "");
             tags = tags.split(",");
-            if (tags !== djGallery.originalTags){
+            if (tags !== self.originalTags){
                 $.ajax({
                     type: "PUT",
-                    url: djGallery.options.mediaUrl,
-                    data: JSON.stringify({"items": [{"location": djGallery.selectedMediaLocation}], "tags": tags}),
+                    url: self.options.mediaUrl,
+                    data: JSON.stringify({"items": [{"location": self.selectedMediaLocation}], "tags": tags}),
                     datatype: "json",
                     contentType: "application/json; charset=utf-8",
                     success: function(response){
                         $.each(response.results, function(index, element) {
                             $("[src=\"" + element.location + "\"]").attr("tags", element.tags);
                         });
-                        djGallery.options.galleryMessage("Tags correctly updated.");
+                        self.options.galleryMessage("Tags correctly updated.");
                     }
                 });
             }
         },
 
         previewMedia: function(event){
+            var self = this;
             event.preventDefault();
-            var src = djGallery.selectedMedia.attr("src");
+            var src = self.selectedMedia.attr("src");
             var type = "image";
-            if (djGallery.options.acceptedVideos.some(function(v) { return src.toLowerCase().indexOf(v) >= 0; })){
+            if (self.options.acceptedVideos.some(function(v) { return src.toLowerCase().indexOf(v) >= 0; })){
                 type = "video";
             }
-            djGallery.options.previewMediaItem(djGallery.selectedMedia.attr("src"), type);
+            self.options.previewMediaItem(self.selectedMedia.attr("src"), type);
         },
 
         saveDroppedMedia: function(element){
+            var self = this;
             var idElement = element.attr("id");
             var data = {slug: idElement, text: element.attr("src")};
             $.ajax({
                 method: "PUT",
                 async: false,
-                url: djGallery.options.saveDroppedMediaUrl + idElement + "/",
+                url: self.options.saveDroppedMediaUrl + idElement + "/",
                 data: data,
                 success: function(response){
-                    djGallery.options.droppedMediaCallback(response);
+                    self.options.droppedMediaCallback(response);
                 }
             });
         }
     };
 
-    $.djgallery = function(options) {
-        var opts = $.extend( {}, $.djgallery.defaults, options );
-        return new Djgallery(opts);
+    $.fn.djgallery = function(options) {
+        var opts = $.extend( {}, $.fn.djgallery.defaults, options );
+        return new Djgallery($(this), opts);
     };
 
-    $.djgallery.defaults = {
+    $.fn.djgallery.defaults = {
 
         // Djaodjin gallery required options
         mediaUrl: null, // Url to get list of media and upload, update and delete a media item
@@ -374,5 +387,7 @@ Options:
         saveDroppedMediaUrl: null,
         droppedMediaCallback: function(reponse) { return true; }
     };
+
+    Dropzone.autoDiscover = false;
 
 })(jQuery);
