@@ -114,9 +114,9 @@ Options:
         initDocument: function(){
             var self = this;
             $(".dj-gallery").on("click", ".dj-gallery-delete-item",
-                function(event) { self.deleteMedia(); });
+                function(event) { self.deleteMedia(event); });
             $(".dj-gallery").on("click", ".dj-gallery-preview-item",
-                function(event) { self.previewMedia(); });
+                function(event) { self.previewMedia(event); });
             $(".dj-gallery").on("keyup", ".dj-gallery-filter",
                 function(event) { self.loadImage(); });
             $(".dj-gallery").on("click", ".dj-gallery-tag-item",
