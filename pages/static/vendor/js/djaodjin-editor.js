@@ -455,8 +455,8 @@
                     .attr("step", self.$el.data("range-step"))
                     .val(self.originText).css({
                         position: "absolute",
-                        "max-width": self.$el.width(),
-                        top: (self.$el.offset().top - 5) + "px",
+                        width: self.$el.outerWidth(),
+                        top: (self.$el.offset().top + (self.$el.height() / 2)) + "px",
                         left: self.$el.offset().left + "px"
                     });
 
