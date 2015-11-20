@@ -26,12 +26,12 @@ import random, string
 from django.template.defaultfilters import slugify
 from rest_framework import serializers
 
-from .models import PageElement, UploadedTemplate, RelationShip
+from .models import PageElement, UploadedTemplate
 
 #pylint: disable=no-init,old-style-class
 
 
-class RelationShipSerializer(serializers.Serializer):
+class RelationShipSerializer(serializers.Serializer): #pylint: disable=abstract-method
     orig_elements = serializers.ListField(
         child=serializers.SlugField(), required=False
         )

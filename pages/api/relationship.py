@@ -36,7 +36,7 @@ class RelationShipListAPIView(DestroyModelMixin, generics.ListCreateAPIView):
     serializer_class = RelationShipSerializer
     queryset = RelationShip.objects.all()
 
-    def delete(self, request, *args, **kwargs):
+    def delete(self, request, *args, **kwargs):#pylint: disable=unused-argument
         print request.data
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid()
