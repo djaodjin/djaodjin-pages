@@ -27,9 +27,12 @@ from django.conf.urls import patterns, url
 from ..api.edition import PageElementDetail, PagesElementListAPIView
 from ..api.upload_media import upload_progress, MediaListAPIView
 from ..api.upload_template import UploadedTemplateListAPIView
+from ..api.relationship import RelationShipListAPIView
 
 
 urlpatterns = patterns('',
+    url(r'^editable/relationship/',
+        RelationShipListAPIView.as_view(), name='relationships'),
     url(r'^uploaded-media/get-progress/upload/',
         upload_progress),
     url(r'^uploaded-media/',

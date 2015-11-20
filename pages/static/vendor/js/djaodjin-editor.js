@@ -133,7 +133,6 @@
             }else{
                 $.ajax({
                     method: method,
-                    async: false,
                     url: self.options.baseUrl + self.getId() + "/",
                     data: data,
                     success: function(response) {

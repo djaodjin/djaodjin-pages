@@ -85,47 +85,59 @@ class PagesElementListAPIView(
             queryset = queryset.filter(tag=tag, title__contains=search_string)
         return queryset
 
+    def post_get_or_create_page_element(self, serializer):
+        serializer = self.serializer_class(self.new_element)
+        return serializer.data
+
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer = self.sanitize(serializer)
+        serializer.is_valid(raise_exception=False)
+        serializer = self.sanitize(serializer, slugit=False)
+        if 'slug' in serializer.validated_data:
+            slug = serializer.validated_data['slug']
+        else:
+            slug = self.slugify_title(
+                serializer.validated_data['title'])
         self.new_element, created = PageElement.objects.get_or_create(
-                title=serializer.validated_data['title'],
-                tag=serializer.validated_data['tag'],
+                slug=slug,
                 defaults={
                     'slug': self.slugify_title(
                         serializer.validated_data['title']),
-                    'text': "Edit description"
+                    'title': serializer.validated_data['title'],
+                    'text': "No description.",
+                    'tag': serializer.validated_data['tag']
                 }
             )
+
         relation_created = self.create_relationships(serializer)
         if created or relation_created:
             response_status = status.HTTP_201_CREATED
         else:
             response_status = status.HTTP_200_OK
 
-        serializer = self.serializer_class(self.new_element)
-        headers = self.get_success_headers(serializer.data)
+        # headers = self.get_success_headers(serializer.data)
+        data = self.post_get_or_create_page_element(serializer)
         return Response(
-            serializer.data, status=response_status, headers=headers)
+            data, status=response_status)
 
     def create_relationships(self, serializer):
         created = False
-        if 'orig_element' in serializer.validated_data:
-            orig_elements = serializer.validated_data['orig_element']
+        if 'orig_elements' in serializer.validated_data:
+            orig_elements = serializer.validated_data['orig_elements']
+            print orig_elements
             for orig_element in orig_elements:
                 orig_element = PageElement.objects.get(
-                    slug=orig_element['slug'])
+                    slug=orig_element)
                 _, relation_created = orig_element.add_relationship(
                     self.new_element, serializer.validated_data['tag']
                     )
                 created = created or relation_created
 
-        if 'dest_element' in serializer.validated_data:
-            dest_elements = serializer.validated_data['dest_element']
+        if 'dest_elements' in serializer.validated_data:
+            dest_elements = serializer.validated_data['dest_elements']
             for dest_element in dest_elements:
                 dest_element = orig_element = PageElement.objects.get(
-                    slug=dest_element['slug'])
+                    slug=dest_element)
                 _, relation_created = self.new_element.add_relationship(
                     dest_element, serializer.validated_data['tag'])
         return created
@@ -154,16 +166,6 @@ class PageElementDetail(PageElementMixin, AccountMixin, CreateModelMixin,
         return serializer.save(
             slug=self.kwargs.get(self.lookup_url_kwarg),
             account=self.account)
-
-    def destroy(self, request, *args, **kwargs):
-        dest_element = self.get_object()
-        orig_elements = self.request.data.get('orig_element', None)
-        for orig_element in orig_elements:
-            orig_element = PageElement.objects.get(
-                slug=orig_element['slug'])
-            orig_element.remove_relationship(
-                dest_element)
-        return Response(status=status.HTTP_204_NO_CONTENT)
 
     def update_or_create(self, request, *args, **kwargs):
         #pylint: disable=unused-argument
