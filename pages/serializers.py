@@ -26,7 +26,7 @@ import random, string
 from django.template.defaultfilters import slugify
 from rest_framework import serializers
 
-from .models import PageElement, UploadedTemplate, RelationShip
+from .models import PageElement, ThemePackage, RelationShip
 
 #pylint: disable=no-init,old-style-class
 
@@ -83,10 +83,10 @@ class RelationShipSerializer(serializers.ModelSerializer):
         fields = ('title', 'orig_element', 'dest_element', 'tag')
 
 
-class UploadedTemplateSerializer(serializers.ModelSerializer):
+class ThemePackageSerializer(serializers.ModelSerializer):
 
     class Meta:
-        model = UploadedTemplate
+        model = ThemePackage
 
 
 class MediaItemSerializer(serializers.Serializer):
@@ -112,3 +112,9 @@ class MediaItemListSerializer(serializers.Serializer):
 
     def create(self, validated_data):
         pass
+
+
+class EditionFileSerializer(serializers.Serializer):
+    themepackage = serializers.SlugField()
+    filepath = serializers.CharField()
+    body = serializers.CharField(allow_blank=True)

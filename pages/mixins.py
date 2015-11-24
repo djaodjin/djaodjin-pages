@@ -27,11 +27,13 @@ import logging, os
 from django.core.files.storage import get_storage_class, FileSystemStorage
 #pylint:disable=no-name-in-module,import-error
 from django.utils.six.moves.urllib.parse import urljoin
+from django.db.models import Q
+from boto.s3.connection import S3Connection
 from boto.exception import S3ResponseError
 
 from . import settings
 from .compat import import_string
-from .models import MediaTag, PageElement
+from .models import MediaTag, PageElement, ThemePackage
 
 LOGGER = logging.getLogger(__name__)
 
@@ -185,3 +187,44 @@ def get_media_prefix(account=None):
         LOGGER.debug("``%s`` does not contain a ``media_prefix``"\
             " field.", account.__class__)
     return ""
+
+
+class ThemePackageMixin(AccountMixin):
+
+    @staticmethod
+    def get_file_tree(root_path):
+        tree = {}
+        root_path = root_path.rstrip(os.sep)
+        start = root_path.rfind(os.sep) + 1
+        for (dirpath, _, filenames) in os.walk(root_path):
+            folders = dirpath[start:].split(os.sep)
+            subdir = dict.fromkeys(filenames)
+            parent = reduce(dict.get, folders[:-1], tree)
+            parent[folders[-1]] = subdir
+        return tree
+
+    @staticmethod
+    def get_file_path(root_path, file_path):
+        abs_file_path = None
+        for (dirpath, _, filenames) in os.walk(root_path):
+            for filename in filenames:
+                if file_path in os.path.join(dirpath, filename):
+                    abs_file_path = os.path.join(dirpath, filename)
+        return abs_file_path
+
+    def get_queryset(self):
+        queryset = ThemePackage.objects.filter(
+            Q(account=self.account)|Q(account=None)).order_by('-created_at')
+        return queryset
+
+    @staticmethod
+    def get_file_from_s3(bucket, orig, dest):
+        conn = S3Connection()
+        bucket = conn.get_bucket(bucket)
+        key = bucket.get_key(orig)
+
+        if not key:
+            return None
+        else:# Save file from S3 into tmp_dir
+            key.get_contents_to_filename(dest)
+            return dest

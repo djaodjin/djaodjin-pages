@@ -21,17 +21,17 @@
 # WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-import markdown
+import markdown, os
 
 from bs4 import BeautifulSoup
 from django.core.context_processors import csrf
-from django.views.generic import ListView, DetailView
+from django.views.generic import ListView, DetailView, TemplateView
 from django.template import loader, Context, RequestContext
 from django.template.response import TemplateResponse
-from django.views.generic import TemplateView
 
-from .mixins import AccountMixin
-from .models import PageElement
+from .mixins import AccountMixin, ThemePackageMixin
+from .models import PageElement, ThemePackage
+from . import settings
 
 
 def inject_edition_tools(response, request=None, context=None,
@@ -187,6 +187,24 @@ class PageElementDetailView(DetailView):
     model = PageElement
 
 
-class UploadedTemplatesView(TemplateView):
+class ThemePackagesView(TemplateView):
 
-    template_name = "pages/uploaded_template_list.html"
+    template_name = "pages/package_list.html"
+
+
+class ThemePackagesEditView(ThemePackageMixin, DetailView):
+
+    model = ThemePackage
+    template_name = "pages/file_edition.html"
+
+    def get_context_data(self, **kwargs):
+        context = super(ThemePackagesEditView, self).get_context_data(**kwargs)
+        themepackage = context['themepackage']
+        static_dir = os.path.join(settings.PUBLIC_ROOT, themepackage.slug)
+        templates_dir = os.path.join(settings.TEMPLATES_ROOT, themepackage.slug)
+        templates = self.get_file_tree(templates_dir)
+        statics = self.get_file_tree(static_dir)
+        context.update({
+            'templates': templates[themepackage.slug],
+            'statics': statics[themepackage.slug]})
+        return context

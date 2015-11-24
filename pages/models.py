@@ -91,7 +91,8 @@ class MediaTag(models.Model):
     def __unicode__(self):
         return unicode(self.tag)
 
-class UploadedTemplate(models.Model):
+
+class ThemePackage(models.Model):
     """
     This model allow to record uploaded template.
     """

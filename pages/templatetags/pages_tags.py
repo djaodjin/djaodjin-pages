@@ -30,3 +30,20 @@ register = template.Library()
 @register.filter
 def get_relationships(element, tag=None):
     return element.get_relationships(tag).all()
+
+@register.simple_tag
+def print_tree(tree, excludes=None):
+    html = print_dict(tree, "<ul>", excludes) + "</ul>"
+    return html
+
+def print_dict(dictionary, html="", excludes=None):
+    for key, value in dictionary.iteritems():
+        if value:
+            if not excludes or (excludes and not key in excludes):
+                html += "<li>%s/</li>" % key
+                html += print_dict(
+                    value, "<ul data-folder=\"%s\">" % key) + "</ul>"
+        else:
+            html += "<li><a class=\"pages-edit-file\"\
+                href=\"\" data-filename=\"%s\">%s</a></li>" % (key, key)
+    return html

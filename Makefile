@@ -28,7 +28,7 @@ doc:
 bower-prerequisites: $(srcDir)/bower.json
 	$(installFiles) $^ .
 	bower install --verbose --config.cwd="$(PWD)"
-	$(installDirs) -d $(ASSETS_DIR)/fonts $(ASSETS_DIR)/vendor/fonts $(ASSETS_DIR)/vendor/css $(ASSETS_DIR)/vendor/js
+	$(installDirs) -d $(ASSETS_DIR)/fonts $(ASSETS_DIR)/vendor/fonts $(ASSETS_DIR)/vendor/css $(ASSETS_DIR)/vendor/js $(ASSETS_DIR)/vendor/js/ace
 	$(installFiles) bower_components/jquery/jquery.js $(ASSETS_DIR)/vendor/js
 	$(installFiles) bower_components/jqueryui-touch-punch/jquery.ui.touch-punch.js $(ASSETS_DIR)/vendor/js
 	$(installFiles) bower_components/dropzone/dist/dropzone.css $(ASSETS_DIR)/vendor/css
@@ -42,4 +42,7 @@ bower-prerequisites: $(srcDir)/bower.json
 	$(installFiles) bower_components/jquery-ui/ui/jquery-ui.js $(ASSETS_DIR)/vendor/js
 	$(installFiles) bower_components/textarea-autosize/dist/jquery.textarea_autosize.js $(ASSETS_DIR)/vendor/js
 	$(installFiles) bower_components/jquery-selection/src/jquery.selection.js $(ASSETS_DIR)/vendor/js
+	$(installFiles) bower_components/requirejs/require.js $(ASSETS_DIR)/vendor/js
+	$(installFiles) bower_components/angular/angular.js $(ASSETS_DIR)/vendor/js
+	cp -r bower_components/ace/lib/ace/ $(ASSETS_DIR)/vendor/js/ace
 
