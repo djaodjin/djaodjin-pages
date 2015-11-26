@@ -33,17 +33,29 @@ def get_relationships(element, tag=None):
 
 @register.simple_tag
 def print_tree(tree, excludes=None):
-    html = print_dict(tree, "<ul>", excludes) + "</ul>"
+    html = print_dict(tree, "<ul>", None, excludes) + "</ul>"
     return html
 
-def print_dict(dictionary, html="", excludes=None):
+def print_dict(dictionary, html="", parent=None, excludes=None):
     for key, value in dictionary.iteritems():
         if value:
             if not excludes or (excludes and not key in excludes):
                 html += "<li>%s/</li>" % key
-                html += print_dict(
-                    value, "<ul data-folder=\"%s\">" % key) + "</ul>"
+                if parent:
+                    html += print_dict(
+                        value, "<ul data-folder=\"%s\">" % key, "%s/%s" %\
+                        (parent, key), excludes) + "</ul>"
+                else:
+                    html += print_dict(
+                        value, "<ul data-folder=\"%s\">" %\
+                        key, key, excludes) + "</ul>"
         else:
-            html += "<li><a class=\"pages-edit-file\"\
-                href=\"\" data-filename=\"%s\">%s</a></li>" % (key, key)
+            if parent:
+                html += "<li><a class=\"pages-edit-file\"\"\
+                    href=\"\" data-filepath=\"%s/%s\">%s</a></li>" %\
+                    (parent, key, key)
+            else:
+                html += "<li><a class=\"pages-edit-file\"\"\
+                    href=\"\" data-filepath=\"%s\">%s</a></li>" %\
+                    (key, key)
     return html

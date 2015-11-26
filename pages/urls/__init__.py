@@ -29,5 +29,5 @@ from pages.api.upload_media import upload_progress
 urlpatterns = patterns('',
     url(r'^api/', include('pages.urls.api')),
     url(r'^get-progress/', upload_progress, name="upload_progress"),
-    url(r'^', include('pages.urls.uploaded_template')),
+    url(r'^', include('pages.urls.uploaded_package')),
 )

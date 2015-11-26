@@ -38,7 +38,9 @@ setup(
         'pages.management',
         'pages.management.commands'],
     package_data={'pages': [
-        'static/vendor/css/*', 'static/vendor/js/*',
+        'static/js/*',
+        'static/vendor/css/*',
+        'static/vendor/js/*',
         'templates/pages/*.html']},
     license='BSD',
     description='Pages Django app',

@@ -21,16 +21,18 @@
 # WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-import markdown, os
+import markdown, os, random, string, shutil
 
 from bs4 import BeautifulSoup
 from django.core.context_processors import csrf
-from django.views.generic import ListView, DetailView, TemplateView
+from django.http import HttpResponseRedirect
+from django.core.urlresolvers import reverse
+from django.views.generic import ListView, DetailView, TemplateView, CreateView
 from django.template import loader, Context, RequestContext
 from django.template.response import TemplateResponse
 
 from .mixins import AccountMixin, ThemePackageMixin
-from .models import PageElement, ThemePackage
+from .models import PageElement, ThemePackage, get_active_theme
 from . import settings
 
 
@@ -132,7 +134,9 @@ class PageMixin(AccountMixin):
         response = super(PageMixin, self).get(request, *args, **kwargs)
         if self.template_name and isinstance(response, TemplateResponse):
             response.render()
-        soup = self.add_edition_tools(response)
+        soup = self.add_edition_tools(response,
+            {'redirect_url': request.path,
+            'template_loaded': self.template_name})
         if not soup:
             content_type = response.get('content-type', '')
             if content_type.startswith('text/html'):
@@ -192,6 +196,87 @@ class ThemePackagesView(TemplateView):
     template_name = "pages/package_list.html"
 
 
+class ThemePackagesCreateView(ThemePackageMixin, CreateView):
+
+    model = ThemePackage
+    template_name = "pages/create_package.html"
+
+    def copy_default_template(self):
+        if self.template_loaded:
+            templates_dir = os.path.join(
+                settings.TEMPLATES_ROOT, self.theme.slug)
+            template_path = loader.get_template(
+                self.template_loaded).origin.name
+            if not os.path.exists(
+                os.path.dirname(os.path.join(
+                    templates_dir, self.template_loaded))):
+                os.makedirs(os.path.dirname(
+                    os.path.join(templates_dir, self.template_loaded)))
+            if not os.path.exists(
+                os.path.join(templates_dir, self.template_loaded)):
+                shutil.copyfile(
+                    template_path,
+                    os.path.join(templates_dir, self.template_loaded))
+
+    def create_package(self):
+        static_dir = os.path.join(settings.PUBLIC_ROOT, self.theme.slug)
+        templates_dir = os.path.join(settings.TEMPLATES_ROOT, self.theme.slug)
+        if not os.path.exists(static_dir):
+            os.mkdir(static_dir)
+        if not os.path.exists(templates_dir):
+            os.mkdir(templates_dir)
+        self.copy_default_template()
+
+    @staticmethod
+    def random_slug():
+        return ''.join(
+            random.choice(string.ascii_lowercase + string.digits)\
+                for count in range(20))
+
+    def get_success_url(self):
+        return "%s?redirect_url=%s&template_loaded=%s" % (
+            reverse('uploaded_theme_edition', kwargs={'slug': self.theme.slug}),
+            self.redirect_url,
+            self.template_loaded)
+
+
+    def get(self, request, *args, **kwargs):
+        self.theme = get_active_theme()
+        # Check active theme here
+        # If active theme skip and redirect to file edition
+        # with themepackage objects
+        if self.theme:
+            self.copy_default_template()
+            return HttpResponseRedirect(self.get_success_url())
+        else:
+            self.theme = None
+            # otherwise create one with selected templates
+            return super(
+                ThemePackagesCreateView, self).get(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        account = self.account
+        slug = self.random_slug()
+        while ThemePackage.objects.filter(slug=slug).count() > 0:
+            slug = self.random_slug()
+        name = ""
+        if account:
+            name += account.slug
+        name += "-%s" % slug
+        self.theme = ThemePackage.objects.create(
+            slug=slug,
+            account=self.account,
+            name=name)
+        self.create_package()
+        return HttpResponseRedirect(self.get_success_url())
+
+    def dispatch(self, request, *args, **kwargs):
+
+        self.template_loaded = request.GET.get('template_loaded', None)
+        self.redirect_url = request.GET.get('redirect_url', None)
+        return super(ThemePackagesCreateView, self).dispatch(
+            request, *args, **kwargs)
+
 class ThemePackagesEditView(ThemePackageMixin, DetailView):
 
     model = ThemePackage
@@ -206,5 +291,13 @@ class ThemePackagesEditView(ThemePackageMixin, DetailView):
         statics = self.get_file_tree(static_dir)
         context.update({
             'templates': templates[themepackage.slug],
-            'statics': statics[themepackage.slug]})
+            'statics': statics[themepackage.slug],
+            'template_loaded': self.template_loaded,
+            'redirect_url': self.redirect_url})
         return context
+
+    def dispatch(self, request, *args, **kwargs):
+        self.template_loaded = request.GET.get('template_loaded', None)
+        self.redirect_url = request.GET.get('redirect_url', None)
+        return super(ThemePackagesEditView, self).dispatch(
+            request, *args, **kwargs)
