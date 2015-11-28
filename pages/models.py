@@ -120,8 +120,7 @@ def get_active_theme():
     """
     if settings.ACTIVE_THEME_CALLABLE:
         from pages.compat import import_string
-        theme_slug, account = str(
-            import_string(settings.ACTIVE_THEME_CALLABLE)())
+        theme_slug, account = import_string(settings.ACTIVE_THEME_CALLABLE)()
         LOGGER.debug("pages: get_active_theme('%s')", theme_slug)
         try:
             return ThemePackage.objects.get(

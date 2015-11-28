@@ -265,13 +265,19 @@ class ThemePackagesCreateView(ThemePackageMixin, CreateView):
         name += "-%s" % slug
         self.theme = ThemePackage.objects.create(
             slug=slug,
-            account=self.account,
+            account=account,
             name=name)
         self.create_package()
         return HttpResponseRedirect(self.get_success_url())
 
-    def dispatch(self, request, *args, **kwargs):
+    def get_context_data(self, **kwargs):
+        context = super(ThemePackagesCreateView, self).get_context_data(**kwargs)
+        context.update({
+            'template_loaded': self.template_loaded,
+            'redirect_url': self.redirect_url})
+        return context
 
+    def dispatch(self, request, *args, **kwargs):
         self.template_loaded = request.GET.get('template_loaded', None)
         self.redirect_url = request.GET.get('redirect_url', None)
         return super(ThemePackagesCreateView, self).dispatch(

@@ -34,6 +34,8 @@ def get_relationships(element, tag=None):
 @register.simple_tag
 def print_tree(tree, excludes=None):
     html = print_dict(tree, "<ul>", None, excludes) + "</ul>"
+    if html == "<ul></ul>":
+        html = "<em>No file yet.</em>"
     return html
 
 def print_dict(dictionary, html="", parent=None, excludes=None):
