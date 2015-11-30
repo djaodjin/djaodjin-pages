@@ -28,7 +28,7 @@ doc:
 bower-prerequisites: $(srcDir)/bower.json
 	$(installFiles) $^ .
 	bower install --verbose --config.cwd="$(PWD)"
-	$(installDirs) -d $(ASSETS_DIR)/fonts $(ASSETS_DIR)/vendor/fonts $(ASSETS_DIR)/vendor/css $(ASSETS_DIR)/vendor/js $(ASSETS_DIR)/vendor/js/ace
+	$(installDirs) -d $(ASSETS_DIR)/fonts $(ASSETS_DIR)/vendor/fonts $(ASSETS_DIR)/vendor/css $(ASSETS_DIR)/vendor/js
 	$(installFiles) bower_components/jquery/jquery.js $(ASSETS_DIR)/vendor/js
 	$(installFiles) bower_components/jqueryui-touch-punch/jquery.ui.touch-punch.js $(ASSETS_DIR)/vendor/js
 	$(installFiles) bower_components/dropzone/dist/dropzone.css $(ASSETS_DIR)/vendor/css
@@ -42,7 +42,14 @@ bower-prerequisites: $(srcDir)/bower.json
 	$(installFiles) bower_components/jquery-ui/ui/jquery-ui.js $(ASSETS_DIR)/vendor/js
 	$(installFiles) bower_components/textarea-autosize/dist/jquery.textarea_autosize.js $(ASSETS_DIR)/vendor/js
 	$(installFiles) bower_components/jquery-selection/src/jquery.selection.js $(ASSETS_DIR)/vendor/js
-	$(installFiles) bower_components/requirejs/require.js $(ASSETS_DIR)/vendor/js
+	$(installFiles) bower_components/ace-builds/src/ace.js $(ASSETS_DIR)/vendor/js
+	$(installFiles) bower_components/ace-builds/src/ext-language_tools.js $(ASSETS_DIR)/vendor/js
+	$(installFiles) bower_components/ace-builds/src/ext-modelist.js $(ASSETS_DIR)/vendor/js
+	$(installFiles) bower_components/ace-builds/src/ext-emmet.js $(ASSETS_DIR)/vendor/js
+	$(installFiles) bower_components/ace-builds/src/theme-monokai.js $(ASSETS_DIR)/vendor/js
+	$(installFiles) bower_components/ace-builds/src/mode-html.js $(ASSETS_DIR)/vendor/js
+	$(installFiles) bower_components/ace-builds/src/mode-django.js $(ASSETS_DIR)/vendor/js
+	$(installFiles) bower_components/ace-builds/src/mode-css.js $(ASSETS_DIR)/vendor/js
+	$(installFiles) bower_components/ace-builds/src/mode-javascript.js $(ASSETS_DIR)/vendor/js
 	$(installFiles) bower_components/angular/angular.js $(ASSETS_DIR)/vendor/js
-	cp -r bower_components/ace/lib/ace/ $(ASSETS_DIR)/vendor/js/ace
 
