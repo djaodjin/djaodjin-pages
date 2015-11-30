@@ -24,6 +24,9 @@
 import markdown, os, random, string, shutil
 
 from bs4 import BeautifulSoup
+from django.conf import settings as django_settings
+from django.template.loader import find_template_loader
+from django.template.base import TemplateDoesNotExist
 from django.core.context_processors import csrf
 from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse
@@ -205,18 +208,28 @@ class ThemePackagesCreateView(ThemePackageMixin, CreateView):
         if self.template_loaded:
             templates_dir = os.path.join(
                 settings.TEMPLATES_ROOT, self.theme.slug)
-            template_path = loader.get_template(
-                self.template_loaded).origin.name
-            if not os.path.exists(
-                os.path.dirname(os.path.join(
-                    templates_dir, self.template_loaded))):
-                os.makedirs(os.path.dirname(
-                    os.path.join(templates_dir, self.template_loaded)))
-            if not os.path.exists(
-                os.path.join(templates_dir, self.template_loaded)):
-                shutil.copyfile(
-                    template_path,
-                    os.path.join(templates_dir, self.template_loaded))
+            loaders = []
+            for loader_name in django_settings.TEMPLATE_LOADERS:
+                loader = find_template_loader(loader_name)
+                if loader is not None:
+                    loaders.append(loader)
+            template_source_loaders = tuple(loaders)
+            for loader in template_source_loaders:
+                try:
+                    _, template_path = loader.load_template_source(self.template_loaded, None)
+                    if not os.path.exists(
+                        os.path.dirname(os.path.join(
+                            templates_dir, self.template_loaded))):
+                        os.makedirs(os.path.dirname(
+                            os.path.join(templates_dir, self.template_loaded)))
+                    if not os.path.exists(
+                        os.path.join(templates_dir, self.template_loaded)):
+                        shutil.copyfile(
+                            template_path,
+                            os.path.join(templates_dir, self.template_loaded))
+                    return
+                except TemplateDoesNotExist:
+                    pass
 
     def create_package(self):
         static_dir = os.path.join(settings.PUBLIC_ROOT, self.theme.slug)
