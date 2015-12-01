@@ -25,8 +25,9 @@ import markdown, os, random, string, shutil
 
 from bs4 import BeautifulSoup
 from django.conf import settings as django_settings
-from django.template.loader import find_template_loader
+from django.template.loader import find_template_loader, get_template
 from django.template.base import TemplateDoesNotExist
+from django.template.loader_tags import ExtendsNode
 from django.core.context_processors import csrf
 from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse
@@ -204,32 +205,54 @@ class ThemePackagesCreateView(ThemePackageMixin, CreateView):
     model = ThemePackage
     template_name = "pages/create_package.html"
 
+    @staticmethod
+    def copy_file(from_path, to_path):
+        if not os.path.exists(os.path.dirname(to_path)):
+            os.makedirs(os.path.dirname(to_path))
+        if not os.path.exists(to_path):
+            shutil.copyfile(
+                from_path,
+                to_path)
+
+    @staticmethod
+    def create_file(to_path):
+        if not os.path.exists(os.path.dirname(to_path)):
+            os.makedirs(os.path.dirname(to_path))
+        if not os.path.exists(to_path):
+            open(to_path, 'w').close()
+
     def copy_default_template(self):
         if self.template_loaded:
             templates_dir = os.path.join(
                 settings.TEMPLATES_ROOT, self.theme.slug)
             loaders = []
             for loader_name in django_settings.TEMPLATE_LOADERS:
-                loader = find_template_loader(loader_name)
-                if loader is not None:
-                    loaders.append(loader)
+                template_loader = find_template_loader(loader_name)
+                if template_loader is not None:
+                    loaders.append(template_loader)
             template_source_loaders = tuple(loaders)
-            for loader in template_source_loaders:
+            to_path = os.path.join(templates_dir, self.template_loaded)
+            for template_loader in template_source_loaders:
                 try:
-                    _, template_path = loader.load_template_source(self.template_loaded, None)
-                    if not os.path.exists(
-                        os.path.dirname(os.path.join(
-                            templates_dir, self.template_loaded))):
-                        os.makedirs(os.path.dirname(
-                            os.path.join(templates_dir, self.template_loaded)))
-                    if not os.path.exists(
-                        os.path.join(templates_dir, self.template_loaded)):
-                        shutil.copyfile(
-                            template_path,
-                            os.path.join(templates_dir, self.template_loaded))
-                    return
+                    _, from_path = template_loader.load_template_source(
+                        self.template_loaded, None)
+                    self.copy_file(from_path, to_path)
+
+                    # Check if template has ExtendsNodes
+                    template_nodelist = get_template(
+                        self.template_loaded).nodelist
+                    for node in template_nodelist:
+                        if isinstance(node, ExtendsNode):
+                            compiled_parent = node.get_parent({})
+                            to_path = os.path.join(
+                                templates_dir, compiled_parent.name)
+                            _, from_path = template_loader.load_template_source(
+                                compiled_parent.name, None)
+                            self.copy_file(from_path, to_path)
+                            break
                 except TemplateDoesNotExist:
                     pass
+                    #self.create_file(to_path)
 
     def create_package(self):
         static_dir = os.path.join(settings.PUBLIC_ROOT, self.theme.slug)
@@ -284,7 +307,8 @@ class ThemePackagesCreateView(ThemePackageMixin, CreateView):
         return HttpResponseRedirect(self.get_success_url())
 
     def get_context_data(self, **kwargs):
-        context = super(ThemePackagesCreateView, self).get_context_data(**kwargs)
+        context = super(ThemePackagesCreateView,
+            self).get_context_data(**kwargs)
         context.update({
             'template_loaded': self.template_loaded,
             'redirect_url': self.redirect_url})
