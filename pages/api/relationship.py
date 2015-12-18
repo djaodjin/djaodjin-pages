@@ -27,7 +27,7 @@ from rest_framework import generics
 from rest_framework import status
 from rest_framework.response import Response
 
-from pages.models import RelationShip
+from pages.models import RelationShip, PageElement
 from pages.serializers import RelationShipSerializer
 
 class RelationShipListAPIView(DestroyModelMixin, generics.ListCreateAPIView):
@@ -36,13 +36,17 @@ class RelationShipListAPIView(DestroyModelMixin, generics.ListCreateAPIView):
     serializer_class = RelationShipSerializer
     queryset = RelationShip.objects.all()
 
+    def delete_relationship(self, dest_elements):
+        pass
+
     def delete(self, request, *args, **kwargs):#pylint: disable=unused-argument
-        print request.data
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid()
-        print serializer.validated_data
+        dest_elements = PageElement.objects.filter(
+            slug__in=serializer.validated_data['dest_elements'])
         elements = self.queryset.filter(
             orig_element__slug__in=serializer.validated_data['orig_elements'],
             dest_element__slug__in=serializer.validated_data['dest_elements'])
+        self.delete_relationship(dest_elements)
         elements.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
