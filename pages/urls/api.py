@@ -26,8 +26,8 @@ from django.conf.urls import patterns, url
 
 from ..api.edition import PageElementDetail, PagesElementListAPIView
 from ..api.upload_media import upload_progress, MediaListAPIView
-from ..api.upload_template import UploadedTemplateListAPIView
 from ..api.relationship import RelationShipListAPIView
+from ..api.upload_package import ThemePackageListAPIView, FileDetailView
 
 
 urlpatterns = patterns('',
@@ -41,7 +41,10 @@ urlpatterns = patterns('',
         PageElementDetail.as_view(), name='edit_page_element'),
     url(r'^editables/',
         PagesElementListAPIView.as_view(), name='page_elements'),
+    url(r'^theme/file/',
+        FileDetailView.as_view(),
+        name='pages_api_theme_file'),
     url(r'^theme/',
-        UploadedTemplateListAPIView.as_view(),
-        name='pages_api_theme_base'),
+        ThemePackageListAPIView.as_view(),
+        name='pages_api_themes'),
 )

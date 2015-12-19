@@ -21,49 +21,29 @@
 # WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
+#pylint: disable=no-member
 
 import os, zipfile, hashlib, tempfile, shutil
 
 from django.conf import settings as django_settings
 from django.http import Http404
-from django.db.models import Q
 from django.utils._os import safe_join
-from rest_framework import status, generics
+from rest_framework import status, generics, views
 from rest_framework.parsers import FileUploadParser
 from rest_framework.response import Response
-from boto.s3.connection import S3Connection
 
-from ..mixins import AccountMixin, UploadedImageMixin, get_bucket_name
-from ..models import UploadedTemplate
-from ..serializers import UploadedTemplateSerializer
+from ..mixins import UploadedImageMixin, get_bucket_name, ThemePackageMixin
+from ..models import ThemePackage
+from ..serializers import ThemePackageSerializer, EditionFileSerializer
 from ..themes import install_theme
+from .. import settings
 
 
-class UploadedTemplateMixin(AccountMixin):
-
-    def get_queryset(self):
-        queryset = UploadedTemplate.objects.filter(
-            Q(account=self.account)|Q(account=None)).order_by('-created_at')
-        return queryset
-
-    @staticmethod
-    def get_file_from_s3(bucket, orig, dest):
-        conn = S3Connection()
-        bucket = conn.get_bucket(bucket)
-        key = bucket.get_key(orig)
-
-        if not key:
-            return None
-        else:# Save file from S3 into tmp_dir
-            key.get_contents_to_filename(dest)
-            return dest
-
-class UploadedTemplateListAPIView(UploadedImageMixin, UploadedTemplateMixin,
+class ThemePackageListAPIView(UploadedImageMixin, ThemePackageMixin,
                                   generics.ListCreateAPIView):
 
     parser_classes = (FileUploadParser,)
-    serializer_class = UploadedTemplateSerializer
+    serializer_class = ThemePackageSerializer
 
     def post(self, request, *args, **kwargs):
         tmp_dir = None
@@ -111,9 +91,9 @@ class UploadedTemplateListAPIView(UploadedImageMixin, UploadedTemplateMixin,
         if zipfile.is_zipfile(file_obj):
             with zipfile.ZipFile(file_obj) as zip_file:
                 install_theme(theme_slug, zip_file)
-            theme = UploadedTemplate.objects.create(
+            theme = ThemePackage.objects.create(
                 slug=theme_slug, name=theme_name, account=self.account)
-            serializer = UploadedTemplateSerializer(theme)
+            serializer = ThemePackageSerializer(theme)
 
             if tmp_dir:
                 shutil.rmtree(tmp_dir)
@@ -123,16 +103,79 @@ class UploadedTemplateListAPIView(UploadedImageMixin, UploadedTemplateMixin,
             status=status.HTTP_400_BAD_REQUEST)
 
 
-class UploadedTemplateAPIView(UploadedTemplateMixin,
+class ThemePackageAPIView(ThemePackageMixin,
                               generics.RetrieveUpdateAPIView):
 
-    serializer_class = UploadedTemplateSerializer
+    serializer_class = ThemePackageSerializer
     slug_url_kwarg = 'theme'
 
     def get_object(self):
         try:
             return self.get_queryset().get(
                 name=self.kwargs.get(self.slug_url_kwarg))
-        except UploadedTemplate.DoesNotExist:
+        except ThemePackage.DoesNotExist:
             raise Http404("theme %s not found"
                 % self.kwargs.get(self.slug_url_kwarg))
+
+
+class FileDetailView(ThemePackageMixin, views.APIView):
+
+    @staticmethod
+    def validate_theme_package(themepackage, account=None):
+        try:
+            themepackage = ThemePackage.objects.get(
+                slug=themepackage,
+                account=account)
+            return themepackage
+        except ThemePackage.DoesNotExist:
+            return Response({}, status=status.HTTP_404_NOT_FOUND)
+
+    def get(self, request):
+
+        filepath = request.GET.get('filepath', None)
+        themepackage = self.validate_theme_package(
+            request.GET.get('themepackage', None),
+            self.account)
+
+        if themepackage and filepath:
+            static_dir = os.path.join(
+                settings.PUBLIC_ROOT, themepackage.slug)
+            templates_dir = os.path.join(
+                settings.TEMPLATES_ROOT, themepackage.slug)
+            abspath = self.get_file_path(
+                templates_dir, filepath)
+            if not abspath:
+                abspath = self.get_file_path(
+                    static_dir, filepath)
+            with open(abspath, 'r') as read_file:
+                text = read_file.read()
+        return Response({'text': text})
+
+    def put(self, request):
+        serializer = EditionFileSerializer(data=request.data)
+        serializer.is_valid()
+        themepackage = self.validate_theme_package(
+            serializer.validated_data['themepackage'],
+            self.account)
+
+        filepath = serializer.validated_data['filepath']
+        if themepackage and filepath:
+            static_dir = os.path.join(
+                settings.PUBLIC_ROOT, themepackage.slug)
+            templates_dir = os.path.join(
+                settings.TEMPLATES_ROOT, themepackage.slug)
+
+            abspath = self.get_file_path(
+                templates_dir, filepath)
+            if not abspath:
+                abspath = self.get_file_path(
+                    static_dir, filepath)
+            file_descriptor, temp_path = tempfile.mkstemp()
+            with open(temp_path, 'w') as temp_file:
+                temp_file.write(serializer.validated_data['body'])
+            os.close(file_descriptor)
+            os.remove(abspath)
+            shutil.move(temp_path, abspath)
+        return Response({}, status=status.HTTP_200_OK)
+
+

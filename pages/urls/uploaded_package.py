@@ -23,8 +23,17 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from django.conf.urls import patterns, url
-from pages.views import UploadedTemplatesView
+from pages.views import (ThemePackagesView,
+    ThemePackagesEditView, ThemePackagesCreateView)
 
 urlpatterns = patterns('',
-    url(r'^templates/', UploadedTemplatesView.as_view()),
+    url(r'^themes/create/$',
+        ThemePackagesCreateView.as_view(),
+        name="create_default_theme"),
+    url(r'^themes/(?P<slug>[\w-]+)',
+        ThemePackagesEditView.as_view(),
+        name="uploaded_theme_edition"),
+    url(r'^themes/',
+        ThemePackagesView.as_view(),
+        name="uploaded_themes"),
 )

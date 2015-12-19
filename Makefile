@@ -42,4 +42,14 @@ bower-prerequisites: $(srcDir)/bower.json
 	$(installFiles) bower_components/jquery-ui/ui/jquery-ui.js $(ASSETS_DIR)/vendor/js
 	$(installFiles) bower_components/textarea-autosize/dist/jquery.textarea_autosize.js $(ASSETS_DIR)/vendor/js
 	$(installFiles) bower_components/jquery-selection/src/jquery.selection.js $(ASSETS_DIR)/vendor/js
+	$(installFiles) bower_components/ace-builds/src/ace.js $(ASSETS_DIR)/vendor/js
+	$(installFiles) bower_components/ace-builds/src/ext-language_tools.js $(ASSETS_DIR)/vendor/js
+	$(installFiles) bower_components/ace-builds/src/ext-modelist.js $(ASSETS_DIR)/vendor/js
+	$(installFiles) bower_components/ace-builds/src/ext-emmet.js $(ASSETS_DIR)/vendor/js
+	$(installFiles) bower_components/ace-builds/src/theme-monokai.js $(ASSETS_DIR)/vendor/js
+	$(installFiles) bower_components/ace-builds/src/mode-html.js $(ASSETS_DIR)/vendor/js
+	$(installFiles) bower_components/ace-builds/src/mode-django.js $(ASSETS_DIR)/vendor/js
+	$(installFiles) bower_components/ace-builds/src/mode-css.js $(ASSETS_DIR)/vendor/js
+	$(installFiles) bower_components/ace-builds/src/mode-javascript.js $(ASSETS_DIR)/vendor/js
+	$(installFiles) bower_components/angular/angular.js $(ASSETS_DIR)/vendor/js
 

@@ -22,10 +22,13 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import logging
+
 from django.db import models
 
 from . import settings
 
+LOGGER = logging.getLogger(__name__)
 
 class RelationShip(models.Model):
     orig_element = models.ForeignKey(
@@ -91,7 +94,8 @@ class MediaTag(models.Model):
     def __unicode__(self):
         return unicode(self.tag)
 
-class UploadedTemplate(models.Model):
+
+class ThemePackage(models.Model):
     """
     This model allow to record uploaded template.
     """
@@ -109,3 +113,19 @@ class UploadedTemplate(models.Model):
             return '%s-%s' % (self.account, self.name)
         else:
             return self.name
+
+def get_active_theme():
+    """
+    Returns the active theme from a request.
+    """
+    if settings.ACTIVE_THEME_CALLABLE:
+        from pages.compat import import_string
+        theme_slug, account = import_string(settings.ACTIVE_THEME_CALLABLE)()
+        LOGGER.debug("pages: get_active_theme('%s')", theme_slug)
+        try:
+            return ThemePackage.objects.get(
+                slug=theme_slug,
+                account=account)
+        except ThemePackage.DoesNotExist:
+            return None
+    return ThemePackage.objects.all().first()
