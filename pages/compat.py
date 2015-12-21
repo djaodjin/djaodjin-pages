@@ -56,7 +56,7 @@ except ImportError:
 def get_loaders():
     loaders = []
     try:
-        from django.template.loader import _engine_list
+        from django.template.loader import _engine_list #pylint: disable=no-name-in-module
         engines = _engine_list()
         for engine in engines:
             loaders += engine.engine.template_loaders

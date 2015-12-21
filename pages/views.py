@@ -237,7 +237,7 @@ class ThemePackagesCreateView(ThemePackageMixin, CreateView):
                     # Check if template has ExtendsNodes
                     try:
                         template_nodelist = get_template(
-                            self.template_loaded).template.nodelist
+                            self.template_loaded).template.nodelist #pylint:disbable=no-member
                     except AttributeError: # django < 1.8
                         template_nodelist = get_template(
                             self.template_loaded).nodelist

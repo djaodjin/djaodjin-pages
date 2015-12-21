@@ -29,7 +29,7 @@ from rest_framework import serializers
 
 from .models import PageElement, ThemePackage, RelationShip
 
-#pylint: disable=no-init,old-style-class
+#pylint: disable=no-init,old-style-class,abstract-method
 
 
 class RelationShipSerializer(serializers.Serializer): #pylint: disable=abstract-method
@@ -81,14 +81,6 @@ class PageElementSerializer(serializers.ModelSerializer):
                 random.choice(string.letters) for count in range(5))
         instance.save()
         return instance
-
-
-class RelationShipSerializer(serializers.ModelSerializer):
-    title = serializers.CharField(required=False)
-
-    class Meta:
-        model = RelationShip
-        fields = ('title', 'orig_element', 'dest_element', 'tag')
 
 
 class ThemePackageSerializer(serializers.ModelSerializer):
