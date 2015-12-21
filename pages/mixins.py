@@ -96,24 +96,25 @@ class UploadedImageMixin(object):
         """
         results = []
         total = 0
-        try:
-            for media in storage.listdir('.')[1]:
-                if not media.endswith('/') and media != "":
-                    location = storage.url(media).split('?')[0]
-                    total += 1
-                    if not filter_list or location in filter_list:
-                        results += [
-                            {'location': location,
-                            'tags': MediaTag.objects.filter(
-                                location=location).values_list(
-                                'tag', flat=True)
-                            }]
-        except OSError:
-            LOGGER.exception(
-                "Unable to list objects in %s.", storage.__class__.__name__)
-        except S3ResponseError:
-            LOGGER.exception(
-                "Unable to list objects in %s bucket.", storage.bucket_name)
+        if storage.exists('.'):
+            try:
+                for media in storage.listdir('.')[1]:
+                    if not media.endswith('/') and media != "":
+                        location = storage.url(media).split('?')[0]
+                        total += 1
+                        if not filter_list or location in filter_list:
+                            results += [
+                                {'location': location,
+                                'tags': MediaTag.objects.filter(
+                                    location=location).values_list(
+                                    'tag', flat=True)
+                                }]
+            except OSError:
+                LOGGER.exception(
+                    "Unable to list objects in %s.", storage.__class__.__name__)
+            except S3ResponseError:
+                LOGGER.exception(
+                    "Unable to list objects in %s bucket.", storage.bucket_name)
         return {'count': total, 'results': results}
 
     @staticmethod
