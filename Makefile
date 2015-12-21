@@ -12,6 +12,12 @@ installFiles  := install -p -m 644
 
 ASSETS_DIR    := $(srcDir)/testsite/static/
 
+# Django 1.7,1.8 sync tables without migrations by default while Django 1.9
+# requires a --run-syncdb argument.
+ifneq (,$(findstring --run-syncdb,$(shell cd $(srcDir) && $(PYTHON) manage.py migrate --help)))
+RUNSYNCDB     := --run-syncdb
+endif
+
 install::
 	cd $(srcDir) && $(PYTHON) ./setup.py --quiet \
 		build -b $(CURDIR)/build install
@@ -19,7 +25,7 @@ install::
 initdb:
 	-rm -rf testsite/media/pages
 	-rm -f db.sqlite3
-	cd $(srcDir) && $(PYTHON) ./manage.py migrate --noinput
+	cd $(srcDir) && $(PYTHON) ./manage.py migrate $(RUNSYNCDB) --noinput
 
 doc:
 	$(installDirs) docs
@@ -48,7 +54,6 @@ bower-prerequisites: $(srcDir)/bower.json
 	$(installFiles) bower_components/ace-builds/src/ext-emmet.js $(ASSETS_DIR)/vendor/js
 	$(installFiles) bower_components/ace-builds/src/theme-monokai.js $(ASSETS_DIR)/vendor/js
 	$(installFiles) bower_components/ace-builds/src/mode-html.js $(ASSETS_DIR)/vendor/js
-	$(installFiles) bower_components/ace-builds/src/mode-django.js $(ASSETS_DIR)/vendor/js
 	$(installFiles) bower_components/ace-builds/src/mode-css.js $(ASSETS_DIR)/vendor/js
 	$(installFiles) bower_components/ace-builds/src/mode-javascript.js $(ASSETS_DIR)/vendor/js
 	$(installFiles) bower_components/angular/angular.js $(ASSETS_DIR)/vendor/js

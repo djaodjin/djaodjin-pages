@@ -24,11 +24,8 @@
 import markdown, os, random, string, shutil
 
 from bs4 import BeautifulSoup
-from django.conf import settings as django_settings
-from django.template.loader import find_template_loader, get_template
-from django.template.base import TemplateDoesNotExist
+from django.template.loader import get_template
 from django.template.loader_tags import ExtendsNode
-from django.core.context_processors import csrf
 from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse
 from django.views.generic import ListView, DetailView, TemplateView, CreateView
@@ -37,6 +34,7 @@ from django.template.response import TemplateResponse
 
 from .mixins import AccountMixin, ThemePackageMixin
 from .models import PageElement, ThemePackage, get_active_theme
+from .compat import csrf, TemplateDoesNotExist, get_loaders
 from . import settings
 
 
@@ -204,6 +202,7 @@ class ThemePackagesCreateView(ThemePackageMixin, CreateView):
 
     model = ThemePackage
     template_name = "pages/create_package.html"
+    fields = []
 
     @staticmethod
     def copy_file(from_path, to_path):
@@ -225,13 +224,10 @@ class ThemePackagesCreateView(ThemePackageMixin, CreateView):
         if self.template_loaded:
             templates_dir = os.path.join(
                 settings.TEMPLATES_ROOT, self.theme.slug)
-            loaders = []
-            for loader_name in django_settings.TEMPLATE_LOADERS:
-                template_loader = find_template_loader(loader_name)
-                if template_loader is not None:
-                    loaders.append(template_loader)
-            template_source_loaders = tuple(loaders)
             to_path = os.path.join(templates_dir, self.template_loaded)
+
+            loaders = get_loaders()
+            template_source_loaders = tuple(loaders)
             for template_loader in template_source_loaders:
                 try:
                     _, from_path = template_loader.load_template_source(
@@ -239,15 +235,23 @@ class ThemePackagesCreateView(ThemePackageMixin, CreateView):
                     self.copy_file(from_path, to_path)
 
                     # Check if template has ExtendsNodes
-                    template_nodelist = get_template(
-                        self.template_loaded).nodelist
+                    try:
+                        template_nodelist = get_template(
+                            self.template_loaded).template.nodelist
+                    except AttributeError: # django < 1.8
+                        template_nodelist = get_template(
+                            self.template_loaded).nodelist
+                    print template_nodelist
                     for node in template_nodelist:
                         if isinstance(node, ExtendsNode):
-                            compiled_parent = node.get_parent({})
+                            try:
+                                extend_name = node.parent_name.resolve({})
+                            except AttributeError: # django < 1.8
+                                extend_name = node.get_parent({}).name
                             to_path = os.path.join(
-                                templates_dir, compiled_parent.name)
+                                templates_dir, extend_name)
                             _, from_path = template_loader.load_template_source(
-                                compiled_parent.name, None)
+                                extend_name, None)
                             self.copy_file(from_path, to_path)
                             break
                 except TemplateDoesNotExist:

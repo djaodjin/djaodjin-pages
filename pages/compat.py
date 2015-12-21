@@ -22,6 +22,7 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+from django.conf import settings as django_settings
 
 try:
     from django.contrib.auth import get_user_model
@@ -37,3 +38,32 @@ try:
 except ImportError: # django < 1.7
     #pylint: disable=unused-import
     from django.utils.module_loading import import_by_path as import_string
+
+
+try:
+    #pylint: disable=no-name-in-module, unused-import
+    from django.template.context_processors import csrf
+except ImportError: # django < 1.8
+    from django.core.context_processors import csrf #pylint: disable=unused-import
+
+try:
+    #pylint: disable=no-name-in-module, unused-import
+    from django.template.exceptions import TemplateDoesNotExist
+except ImportError:
+    from django.template.base import TemplateDoesNotExist #pylint: disable=unused-import
+
+
+def get_loaders():
+    loaders = []
+    try:
+        from django.template.loader import _engine_list
+        engines = _engine_list()
+        for engine in engines:
+            loaders += engine.engine.template_loaders
+    except ImportError:# django < 1.8
+        from django.template.loader import find_template_loader
+        for loader_name in django_settings.TEMPLATE_LOADERS:
+            template_loader = find_template_loader(loader_name)
+            if template_loader is not None:
+                loaders.append(template_loader)
+    return loaders

@@ -22,11 +22,11 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from django.conf.urls import patterns, url
+from django.conf.urls import url
 from pages.views import (ThemePackagesView,
     ThemePackagesEditView, ThemePackagesCreateView)
 
-urlpatterns = patterns('',
+urlpatterns = [
     url(r'^themes/create/$',
         ThemePackagesCreateView.as_view(),
         name="create_default_theme"),
@@ -36,4 +36,4 @@ urlpatterns = patterns('',
     url(r'^themes/',
         ThemePackagesView.as_view(),
         name="uploaded_themes"),
-)
+]

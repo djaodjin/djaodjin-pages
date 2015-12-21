@@ -22,7 +22,7 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from django.conf.urls import patterns, url
+from django.conf.urls import url
 
 from ..api.edition import PageElementDetail, PagesElementListAPIView
 from ..api.upload_media import upload_progress, MediaListAPIView
@@ -30,7 +30,7 @@ from ..api.relationship import RelationShipListAPIView
 from ..api.upload_package import ThemePackageListAPIView, FileDetailView
 
 
-urlpatterns = patterns('',
+urlpatterns = [
     url(r'^editable/relationship/',
         RelationShipListAPIView.as_view(), name='relationships'),
     url(r'^uploaded-media/get-progress/upload/',
@@ -47,4 +47,4 @@ urlpatterns = patterns('',
     url(r'^theme/',
         ThemePackageListAPIView.as_view(),
         name='pages_api_themes'),
-)
+]

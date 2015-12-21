@@ -45,27 +45,55 @@ def load_config(confpath):
         sys.stderr.write('warning: config file %s does not exist.\n' % confpath)
 
 load_config(os.path.join(BASE_DIR, 'credentials'))
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/1.7/howto/deployment/checklist/
-
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = '+y7)-@(_3hs5tejg0vdh=gck(kyv#hgx)n#efvwv7dj#ooohx6'
+load_config(os.path.join(BASE_DIR, 'site.conf'))
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
+if os.getenv('DEBUG'):
+    # Enable override on command line.
+    DEBUG = True if int(os.getenv('DEBUG')) > 0 else False
 
+#
+# Templates
+# ---------
 TEMPLATE_DEBUG = True
 
-ALLOWED_HOSTS = []
+# Django 1.7 and below
+#TEMPLATE_LOADERS = (
+#    'django.template.loaders.filesystem.Loader',
+#    'django.template.loaders.app_directories.Loader',
+#)
 
-TEMPLATE_LOADERS = (
-    'django.template.loaders.filesystem.Loader',
-    'django.template.loaders.app_directories.Loader',
-#     'django.template.loaders.eggs.Loader',
+TEMPLATE_CONTEXT_PROCESSORS = (
+    'django.contrib.auth.context_processors.auth',
+    'django.contrib.messages.context_processors.messages',
+    'django.core.context_processors.media',
+    'django.core.context_processors.static',
+    'django.core.context_processors.request'
 )
 
-# Application definition
+TEMPLATE_DIRS = (
+    BASE_DIR + '/testsite/templates',
+)
 
+# Django 1.8+
+TEMPLATES = [
+    {
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': TEMPLATE_DIRS,
+        'APP_DIRS': True,
+        'OPTIONS': {
+            'debug': TEMPLATE_DEBUG,
+            'context_processors': [proc.replace(
+                'django.core.context_processors',
+                'django.template.context_processors')
+                for proc in TEMPLATE_CONTEXT_PROCESSORS]},
+    },
+]
+
+
+# Applications
+# ------------
 INSTALLED_APPS = (
     'django_extensions',
     'django.contrib.admin',
@@ -101,6 +129,7 @@ ROOT_URLCONF = 'testsite.urls'
 
 WSGI_APPLICATION = 'testsite.wsgi.application'
 
+ALLOWED_HOSTS = []
 
 # Database
 # https://docs.djangoproject.com/en/1.7/ref/settings/#databases
@@ -111,11 +140,6 @@ DATABASES = {
         'NAME': os.path.join(BASE_DIR, 'db.sqlite3')
     }
 }
-
-TEMPLATE_DIRS = (
-    BASE_DIR + '/testsite/templates',
-)
-
 
 # Internationalization
 # https://docs.djangoproject.com/en/1.7/topics/i18n/

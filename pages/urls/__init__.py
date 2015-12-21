@@ -22,12 +22,12 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from django.conf.urls import patterns, url, include
+from django.conf.urls import url, include
 
 from pages.api.upload_media import upload_progress
 
-urlpatterns = patterns('',
+urlpatterns = [
     url(r'^api/', include('pages.urls.api')),
     url(r'^get-progress/', upload_progress, name="upload_progress"),
     url(r'^', include('pages.urls.uploaded_package')),
-)
+]

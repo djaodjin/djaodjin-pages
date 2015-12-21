@@ -29,7 +29,7 @@ from django.conf import settings as django_settings
 from django.http import Http404
 from django.utils._os import safe_join
 from rest_framework import status, generics, views
-from rest_framework.parsers import FileUploadParser
+from rest_framework.parsers import MultiPartParser
 from rest_framework.response import Response
 
 from ..mixins import UploadedImageMixin, get_bucket_name, ThemePackageMixin
@@ -42,7 +42,7 @@ from .. import settings
 class ThemePackageListAPIView(UploadedImageMixin, ThemePackageMixin,
                                   generics.ListCreateAPIView):
 
-    parser_classes = (FileUploadParser,)
+    parser_classes = (MultiPartParser,)
     serializer_class = ThemePackageSerializer
 
     def post(self, request, *args, **kwargs):

@@ -24,6 +24,7 @@
 
 
 from django import template
+from django.utils.safestring import mark_safe
 
 register = template.Library()
 
@@ -36,7 +37,7 @@ def print_tree(tree, excludes=None):
     html = print_dict(tree, "<ul>", None, excludes) + "</ul>"
     if html == "<ul></ul>":
         html = "<em>No file yet.</em>"
-    return html
+    return mark_safe(html)
 
 def print_dict(dictionary, html="", parent=None, excludes=None):
     for key, value in dictionary.iteritems():

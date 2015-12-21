@@ -4,6 +4,8 @@
 *.xcodeproj
 .DS_Store
 .timestamp
+credentials
+site.conf
 pages/migrations/
 docs/build/
 testsite/static/vendor/bower
