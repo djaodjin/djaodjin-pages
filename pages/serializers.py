@@ -27,7 +27,7 @@ from django.template.defaultfilters import slugify
 from rest_framework import serializers
 
 
-from .models import PageElement, ThemePackage, RelationShip
+from .models import PageElement, ThemePackage
 
 #pylint: disable=no-init,old-style-class,abstract-method
 
