@@ -302,8 +302,8 @@ class ThemePackagesCreateView(ThemePackageMixin, CreateView):
             slug = self.random_slug()
         name = ""
         if account:
-            name += account.slug
-        name += "-%s" % slug
+            name = account.slug
+            slug = "%s-%s" % (name, slug)
         self.theme = ThemePackage.objects.create(
             slug=slug,
             account=account,

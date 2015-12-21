@@ -59,7 +59,15 @@ def get_loaders():
         from django.template.loader import _engine_list #pylint: disable=no-name-in-module
         engines = _engine_list()
         for engine in engines:
-            loaders += engine.engine.template_loaders
+            try:
+                loaders += engine.engine.template_loaders
+            except AttributeError:
+                pass
+            try:
+                loaders += engine.template_loaders
+            except AttributeError:
+                pass
+
     except ImportError:# django < 1.8
         from django.template.loader import find_template_loader
         for loader_name in django_settings.TEMPLATE_LOADERS:
