@@ -21,21 +21,29 @@
 # WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-import markdown, os, random, string, shutil
+import markdown, os, tempfile, zipfile, shutil
 
+from StringIO import StringIO
 from bs4 import BeautifulSoup
 from django.template.loader import get_template
 from django.template.loader_tags import ExtendsNode
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, HttpResponse
 from django.core.urlresolvers import reverse
-from django.views.generic import ListView, DetailView, TemplateView, CreateView
+from django.views.generic import (
+    ListView,
+    DetailView,
+    TemplateView,
+    CreateView,
+    View)
 from django.template import loader, Context, RequestContext
 from django.template.response import TemplateResponse
 
 from .mixins import AccountMixin, ThemePackageMixin
 from .models import PageElement, ThemePackage, get_active_theme
 from .compat import csrf, TemplateDoesNotExist, get_loaders
+from .utils import random_slug
 from . import settings
+
 
 
 def inject_edition_tools(response, request=None, context=None,
@@ -204,22 +212,6 @@ class ThemePackagesCreateView(ThemePackageMixin, CreateView):
     template_name = "pages/create_package.html"
     fields = []
 
-    @staticmethod
-    def copy_file(from_path, to_path):
-        if not os.path.exists(os.path.dirname(to_path)):
-            os.makedirs(os.path.dirname(to_path))
-        if not os.path.exists(to_path):
-            shutil.copyfile(
-                from_path,
-                to_path)
-
-    @staticmethod
-    def create_file(to_path):
-        if not os.path.exists(os.path.dirname(to_path)):
-            os.makedirs(os.path.dirname(to_path))
-        if not os.path.exists(to_path):
-            open(to_path, 'w').close()
-
     def copy_default_template(self):
         if self.template_loaded:
             templates_dir = os.path.join(
@@ -242,7 +234,6 @@ class ThemePackagesCreateView(ThemePackageMixin, CreateView):
                     except AttributeError: # django < 1.8
                         template_nodelist = get_template(
                             self.template_loaded).nodelist
-                    print template_nodelist
                     for node in template_nodelist:
                         if isinstance(node, ExtendsNode):
                             try:
@@ -260,19 +251,28 @@ class ThemePackagesCreateView(ThemePackageMixin, CreateView):
                     #self.create_file(to_path)
 
     def create_package(self):
-        static_dir = os.path.join(settings.PUBLIC_ROOT, self.theme.slug)
-        templates_dir = os.path.join(settings.TEMPLATES_ROOT, self.theme.slug)
-        if not os.path.exists(static_dir):
-            os.mkdir(static_dir)
-        if not os.path.exists(templates_dir):
-            os.mkdir(templates_dir)
-        self.copy_default_template()
+        from_static_dir = os.path.join(
+            settings.PUBLIC_ROOT, self.active_theme.slug)
+        from_templates_dir = os.path.join(
+            settings.TEMPLATES_ROOT, self.active_theme.slug)
 
-    @staticmethod
-    def random_slug():
-        return ''.join(
-            random.choice(string.ascii_lowercase + string.digits)\
-                for count in range(20))
+        to_static_dir = os.path.join(
+            settings.PUBLIC_ROOT, self.theme.slug)
+        to_templates_dir = os.path.join(
+            settings.TEMPLATES_ROOT, self.theme.slug)
+
+        if not os.path.exists(to_static_dir):
+            os.mkdir(to_static_dir)
+        if not os.path.exists(to_templates_dir):
+            os.mkdir(to_templates_dir)
+
+        # Copy files from active theme
+        self.copy_files(from_static_dir, to_static_dir)
+        self.copy_files(from_templates_dir, to_templates_dir)
+
+        # Copy template user wants to edit
+        # this template is not necessary in theme
+        self.copy_default_template()
 
     def get_success_url(self):
         return "%s?redirect_url=%s&template_loaded=%s" % (
@@ -280,33 +280,28 @@ class ThemePackagesCreateView(ThemePackageMixin, CreateView):
             self.redirect_url,
             self.template_loaded)
 
-
     def get(self, request, *args, **kwargs):
-        self.theme = get_active_theme()
         # Check active theme here
         # If active theme skip and redirect to file edition
         # with themepackage objects
-        if self.theme:
-            self.copy_default_template()
+        if self.active_theme.account == self.account:
+            self.theme = self.active_theme
             return HttpResponseRedirect(self.get_success_url())
         else:
             self.theme = None
-            # otherwise create one with selected templates
+            # otherwise create a new theme from active_theme
             return super(
                 ThemePackagesCreateView, self).get(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
-        account = self.account
-        slug = self.random_slug()
+        slug = random_slug()
         while ThemePackage.objects.filter(slug=slug).count() > 0:
-            slug = self.random_slug()
-        name = ""
-        if account:
-            name = account.slug
-            slug = "%s-%s" % (name, slug)
+            slug = random_slug()
+        name = self.active_theme.name
+        slug = "%s-%s" % (name, slug)
         self.theme = ThemePackage.objects.create(
             slug=slug,
-            account=account,
+            account=self.account,
             name=name)
         self.create_package()
         return HttpResponseRedirect(self.get_success_url())
@@ -322,6 +317,7 @@ class ThemePackagesCreateView(ThemePackageMixin, CreateView):
     def dispatch(self, request, *args, **kwargs):
         self.template_loaded = request.GET.get('template_loaded', None)
         self.redirect_url = request.GET.get('redirect_url', None)
+        self.active_theme = get_active_theme()
         return super(ThemePackagesCreateView, self).dispatch(
             request, *args, **kwargs)
 
@@ -349,3 +345,27 @@ class ThemePackagesEditView(ThemePackageMixin, DetailView):
         self.redirect_url = request.GET.get('redirect_url', None)
         return super(ThemePackagesEditView, self).dispatch(
             request, *args, **kwargs)
+
+
+class ThemePackageDownloadView(ThemePackageMixin, View):
+
+    def get(self, *args, **kwargs):
+        theme = ThemePackage.objects.get(slug=self.kwargs.get('slug'))
+        from_static_dir = os.path.join(
+            settings.PUBLIC_ROOT, theme.slug)
+        from_templates_dir = os.path.join(
+            settings.TEMPLATES_ROOT, theme.slug)
+
+        content = StringIO()
+        zipf = zipfile.ZipFile(content, mode="w")
+
+        zipf = self.write_zipfile(zipf, from_static_dir, 'public')
+        zipf = self.write_zipfile(zipf, from_templates_dir, 'templates')
+
+        zipf.close()
+        content.seek(0)
+
+        resp = HttpResponse(content.read(), content_type='application/x-zip')
+        resp['Content-Disposition'] = 'attachment; filename="{}"'.format(
+                "%s.zip" % theme.slug)
+        return resp

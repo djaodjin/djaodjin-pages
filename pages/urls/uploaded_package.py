@@ -24,9 +24,13 @@
 
 from django.conf.urls import url
 from pages.views import (ThemePackagesView,
-    ThemePackagesEditView, ThemePackagesCreateView)
+    ThemePackagesEditView, ThemePackagesCreateView,
+    ThemePackageDownloadView)
 
 urlpatterns = [
+    url(r'^themes/(?P<slug>[\w-]+)/download/',
+        ThemePackageDownloadView.as_view(),
+        name="download_theme"),
     url(r'^themes/create/$',
         ThemePackagesCreateView.as_view(),
         name="create_default_theme"),

@@ -22,7 +22,7 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import logging, os
+import logging, os, shutil
 
 from django.core.files.storage import get_storage_class, FileSystemStorage
 #pylint:disable=no-name-in-module,import-error
@@ -229,3 +229,44 @@ class ThemePackageMixin(AccountMixin):
         else:# Save file from S3 into tmp_dir
             key.get_contents_to_filename(dest)
             return dest
+
+    @staticmethod
+    def create_file(to_path):
+        if not os.path.exists(os.path.dirname(to_path)):
+            os.makedirs(os.path.dirname(to_path))
+        if not os.path.exists(to_path):
+            open(to_path, 'w').close()
+
+    @staticmethod
+    def copy_file(from_path, to_path):
+        if not os.path.exists(os.path.dirname(to_path)):
+            os.makedirs(os.path.dirname(to_path))
+        if not os.path.exists(to_path):
+            shutil.copyfile(
+                from_path,
+                to_path)
+
+    def copy_files(self, from_dir, to_dir):
+        for (dirpath, _, filenames) in os.walk(from_dir):
+            for filename in filenames:
+                from_path = os.path.join(dirpath, filename)
+                to_path = os.path.join(
+                    to_dir,
+                    from_path.replace(os.path.join(from_dir, ''), ''))
+                self.copy_file(
+                    from_path,
+                    to_path)
+
+    @staticmethod
+    def write_zipfile(zipf, dir_path, dir_option=""):
+        for dirname, _, files in os.walk(dir_path):
+            for filename in files:
+                abs_file_path = os.path.join(
+                    dirname, filename)
+                rel_file_path = os.path.join(
+                    dir_option,
+                    abs_file_path.replace("%s/" % dir_path, ''))
+
+                zipf.write(abs_file_path,
+                    rel_file_path)
+        return zipf
