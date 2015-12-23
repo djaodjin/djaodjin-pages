@@ -12,11 +12,12 @@ installFiles  := install -p -m 644
 
 ASSETS_DIR    := $(srcDir)/testsite/static/
 
+# XXX temporarly disabled because it breaks the install target.
 # Django 1.7,1.8 sync tables without migrations by default while Django 1.9
 # requires a --run-syncdb argument.
-ifneq (,$(findstring --run-syncdb,$(shell cd $(srcDir) && $(PYTHON) manage.py migrate --help)))
-RUNSYNCDB     := --run-syncdb
-endif
+#ifneq (,$(findstring --run-syncdb,$(shell cd $(srcDir) && $(PYTHON) manage.py migrate --help)))
+#RUNSYNCDB     := --run-syncdb
+#endif
 
 install::
 	cd $(srcDir) && $(PYTHON) ./setup.py --quiet \
