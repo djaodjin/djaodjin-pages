@@ -28,6 +28,8 @@ import bleach, random
 
 from django.http import Http404
 from django.template.defaultfilters import slugify
+from django.core.exceptions import ImproperlyConfigured
+
 from rest_framework.mixins import CreateModelMixin
 from rest_framework import generics
 from rest_framework import status
@@ -36,9 +38,29 @@ from rest_framework.response import Response
 from pages.models import PageElement
 from pages.serializers import PageElementSerializer
 from pages.mixins import AccountMixin
-from pages.settings import ALLOWED_TAGS, ALLOWED_ATTRIBUTES, ALLOWED_STYLES
+from pages.compat import import_string
+from pages.settings import (
+    ALLOWED_TAGS,
+    ALLOWED_ATTRIBUTES,
+    ALLOWED_STYLES,
+    PAGELEMENT_SERIALIZER)
 
 class PageElementMixin(object):
+
+    def get_serializer_class(self):
+        try:
+            serializer_class = import_string(PAGELEMENT_SERIALIZER)
+            if issubclass(serializer_class, PageElementSerializer):
+                return serializer_class
+            else:
+                raise ImproperlyConfigured(
+                    '"%s" should be a subclass of \
+                    pages.serializers.PageElementSerializer' % (
+                        PAGELEMENT_SERIALIZER))
+        except ImportError  as err:
+            raise ImproperlyConfigured(
+                'Error importing serializer %s: "%s"' % (
+                    PAGELEMENT_SERIALIZER, err))
 
     @staticmethod
     def slugify_title(title):
@@ -74,8 +96,6 @@ class PagesElementListAPIView(
     AccountMixin,
     generics.ListCreateAPIView):
 
-    serializer_class = PageElementSerializer
-
     def get_queryset(self):
         # Typeahead query
         queryset = PageElement.objects.filter(account=self.account)
@@ -85,8 +105,8 @@ class PagesElementListAPIView(
             queryset = queryset.filter(tag=tag, title__contains=search_string)
         return queryset
 
-    def post_get_or_create_page_element(self, serializer):
-        serializer = self.serializer_class(self.new_element)
+    def get_response_data(self, serializer):
+        serializer = self.get_serializer_class()(self.new_element)
         return serializer.data
 
     def create(self, request, *args, **kwargs):
@@ -116,7 +136,7 @@ class PagesElementListAPIView(
             response_status = status.HTTP_200_OK
 
         # headers = self.get_success_headers(serializer.data)
-        data = self.post_get_or_create_page_element(serializer)
+        data = self.get_response_data(serializer)
         return Response(
             data, status=response_status)
 
@@ -136,7 +156,7 @@ class PagesElementListAPIView(
         if 'dest_elements' in serializer.validated_data:
             dest_elements = serializer.validated_data['dest_elements']
             for dest_element in dest_elements:
-                dest_element = orig_element = PageElement.objects.get(
+                dest_element = PageElement.objects.get(
                     slug=dest_element)
                 _, relation_created = self.new_element.add_relationship(
                     dest_element, serializer.validated_data['tag'])
@@ -148,7 +168,6 @@ class PageElementDetail(PageElementMixin, AccountMixin, CreateModelMixin,
     """
     Create or Update an editable element on a ``PageElement``.
     """
-    serializer_class = PageElementSerializer
     lookup_field = 'slug'
     lookup_url_kwarg = 'slug'
 

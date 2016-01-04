@@ -52,8 +52,14 @@ class PageElementSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = PageElement
-        fields = ('slug', 'title', 'text',
-            'tag', 'orig_elements', 'dest_elements')
+
+    def get_field_names(self, declared_fields, info):
+        fields = super(PageElementSerializer, self).get_field_names(
+            declared_fields, info)
+        for field, _ in declared_fields.iteritems():
+            if not field in fields:
+                fields.append(field)
+        return fields
 
     def update(self, instance, validated_data):
         if 'title' in validated_data:

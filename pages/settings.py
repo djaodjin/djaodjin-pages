@@ -24,7 +24,6 @@
 
 from django.conf import settings
 
-
 _SETTINGS = {
     'ACCOUNT_MODEL': settings.AUTH_USER_MODEL,
     'GET_CURRENT_ACCOUNT': '',
@@ -39,7 +38,10 @@ _SETTINGS = {
     'TEMPLATES_ROOT': (getattr(settings, 'TEMPLATE_DIRS', [])[0]
         if len(getattr(settings, 'TEMPLATE_DIRS')) > 0 else None),
     'TEMPLATES_WHITELIST': None,
-    'ACTIVE_THEME_CALLABLE': None
+    'ACTIVE_THEME_CALLABLE': None,
+    'PAGELEMENT_SERIALIZER': getattr(
+        settings, 'PAGELEMENT_SERIALIZER',
+        'pages.serializers.PageElementSerializer'),
 }
 
 SLUG_RE = r'[a-zA-Z0-9_\-]+'
@@ -58,6 +60,7 @@ TEMPLATES_ROOT = _SETTINGS.get('TEMPLATES_ROOT')
 PUBLIC_WHITELIST = _SETTINGS.get('PUBLIC_WHITELIST')
 TEMPLATES_WHITELIST = _SETTINGS.get('TEMPLATES_WHITELIST')
 ACTIVE_THEME_CALLABLE = _SETTINGS.get('ACTIVE_THEME_CALLABLE')
+PAGELEMENT_SERIALIZER = _SETTINGS.get('PAGELEMENT_SERIALIZER')
 
 # Sanitizer settings
 ALLOWED_TAGS = [
