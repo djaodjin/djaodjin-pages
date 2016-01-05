@@ -47,7 +47,7 @@ from pages.settings import (
 
 class PageElementMixin(object):
 
-    def get_serializer_class(self):
+    def get_serializer_class(self): #pylint:disable=no-self-use
         try:
             serializer_class = import_string(PAGELEMENT_SERIALIZER)
             if issubclass(serializer_class, PageElementSerializer):
