@@ -1,4 +1,4 @@
-# Copyright (c) 2015, DjaoDjin inc.
+# Copyright (c) 2016, DjaoDjin inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -22,6 +22,8 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import os
+
 from django.conf import settings
 
 _SETTINGS = {
@@ -35,13 +37,12 @@ _SETTINGS = {
         settings, 'AWS_STORAGE_BUCKET_NAME', None),
     'PUBLIC_ROOT': getattr(settings, 'STATIC_ROOT'),
     'PUBLIC_WHITELIST': None,
-    'TEMPLATES_ROOT': (getattr(settings, 'TEMPLATE_DIRS', [])[0]
-        if len(getattr(settings, 'TEMPLATE_DIRS')) > 0 else None),
     'TEMPLATES_WHITELIST': None,
     'ACTIVE_THEME_CALLABLE': None,
     'PAGELEMENT_SERIALIZER': getattr(
         settings, 'PAGELEMENT_SERIALIZER',
         'pages.serializers.PageElementSerializer'),
+    'THEMES_DIR': os.path.join(settings.BASE_DIR, 'themes')
 }
 
 SLUG_RE = r'[a-zA-Z0-9_\-]+'
@@ -56,11 +57,11 @@ MEDIA_URL = _SETTINGS.get('MEDIA_URL')
 MEDIA_ROOT = _SETTINGS.get('MEDIA_ROOT')
 AWS_STORAGE_BUCKET_NAME = _SETTINGS.get('AWS_STORAGE_BUCKET_NAME')
 PUBLIC_ROOT = _SETTINGS.get('PUBLIC_ROOT')
-TEMPLATES_ROOT = _SETTINGS.get('TEMPLATES_ROOT')
 PUBLIC_WHITELIST = _SETTINGS.get('PUBLIC_WHITELIST')
 TEMPLATES_WHITELIST = _SETTINGS.get('TEMPLATES_WHITELIST')
 ACTIVE_THEME_CALLABLE = _SETTINGS.get('ACTIVE_THEME_CALLABLE')
 PAGELEMENT_SERIALIZER = _SETTINGS.get('PAGELEMENT_SERIALIZER')
+THEMES_DIR = _SETTINGS.get('THEMES_DIR')
 
 # Sanitizer settings
 ALLOWED_TAGS = [

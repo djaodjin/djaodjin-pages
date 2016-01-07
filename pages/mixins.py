@@ -1,4 +1,4 @@
-# Copyright (c) 2015, DjaoDjin inc.
+# Copyright (c) 2016, DjaoDjin inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -28,6 +28,7 @@ from django.core.files.storage import get_storage_class, FileSystemStorage
 #pylint:disable=no-name-in-module,import-error
 from django.utils.six.moves.urllib.parse import urljoin
 from django.db.models import Q
+from django.utils._os import safe_join
 from boto.s3.connection import S3Connection
 from boto.exception import S3ResponseError
 
@@ -109,7 +110,7 @@ class UploadedImageMixin(object):
                                 'tag', flat=True)
                             }]
         except OSError:
-            if storage.exist('.'):
+            if storage.exists('.'):
                 LOGGER.exception(
                     "Unable to list objects in %s.", storage.__class__.__name__)
         except S3ResponseError:
@@ -191,6 +192,10 @@ def get_media_prefix(account=None):
 
 
 class ThemePackageMixin(AccountMixin):
+
+    @staticmethod
+    def get_templates_dir(theme):
+        return safe_join(settings.THEMES_DIR, theme.slug, 'templates')
 
     @staticmethod
     def get_file_tree(root_path):

@@ -39,7 +39,7 @@ def install_theme(theme_name, zip_file):
     """
     LOGGER.info("install theme %s", theme_name)
     static_dir = safe_join(settings.PUBLIC_ROOT, theme_name)
-    templates_dir = safe_join(settings.TEMPLATES_ROOT, theme_name)
+    templates_dir = safe_join(settings.THEMES_DIR, theme_name, 'templates')
     # We rely on the assumption that ``static_dir`` and ``templates_dir``
     # are on the same filesystem. We create a temporary directory on that
     # common filesystem, which guarentees that:

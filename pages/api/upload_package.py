@@ -1,4 +1,4 @@
-# Copyright (c) 2015, Djaodjin Inc.
+# Copyright (c) 2016, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -25,9 +25,7 @@
 
 import os, zipfile, hashlib, tempfile, shutil
 
-from django.conf import settings as django_settings
 from django.http import Http404
-from django.utils._os import safe_join
 from rest_framework import status, generics, views
 from rest_framework.parsers import MultiPartParser
 from rest_framework.response import Response
@@ -77,7 +75,7 @@ class ThemePackageListAPIView(UploadedImageMixin, ThemePackageMixin,
                 theme_slug = theme_name + '-' +\
                     hashlib.sha1(readable_file.read()).hexdigest()
 
-        templates_dir = safe_join(django_settings.TEMPLATE_DIRS[0], theme_slug)
+        templates_dir = self.get_templates_dir(ThemePackage(slug=theme_slug))
 
         if os.path.exists(templates_dir):
             # If we do not have an instance at this point, the directory
@@ -140,8 +138,7 @@ class FileDetailView(ThemePackageMixin, views.APIView):
         if themepackage and filepath:
             static_dir = os.path.join(
                 settings.PUBLIC_ROOT, themepackage.slug)
-            templates_dir = os.path.join(
-                settings.TEMPLATES_ROOT, themepackage.slug)
+            templates_dir = self.get_templates_dir(themepackage)
             abspath = self.get_file_path(
                 templates_dir, filepath)
             if not abspath:
@@ -162,9 +159,7 @@ class FileDetailView(ThemePackageMixin, views.APIView):
         if themepackage and filepath:
             static_dir = os.path.join(
                 settings.PUBLIC_ROOT, themepackage.slug)
-            templates_dir = os.path.join(
-                settings.TEMPLATES_ROOT, themepackage.slug)
-
+            templates_dir = self.get_templates_dir(themepackage)
             abspath = self.get_file_path(
                 templates_dir, filepath)
             if not abspath:

@@ -1,7 +1,7 @@
 /* global $ angular Dropzone:true */
 
 
-var app = angular.module("UploaderApp",[]);
+var app = angular.module("UploaderApp", []);
 var url = null;
 
 app.config(function($interpolateProvider,$locationProvider,$httpProvider) {
@@ -64,7 +64,6 @@ app.controller("UploaderCtrl", function($scope, UploadedTemplateFactory, urls, c
    $scope.init = function(){
 
       UploadedTemplateFactory.getUploadedPackages(urls.get_uploaded_templates).success(function(data){
-        console.log(data)
          $scope.uploadedPackagelist = data;
       });
    };

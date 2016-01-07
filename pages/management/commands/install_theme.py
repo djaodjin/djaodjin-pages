@@ -1,4 +1,4 @@
-# Copyright (c) 2015, Djaodjin Inc.
+# Copyright (c) 2016, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -36,7 +36,7 @@ class Command(BaseCommand):
     """
     Install resources and templates into a multi-tier environment.
 
-    Templates are installed into ``MULTITIER_TEMPLATES_ROOT/APP_NAME``.
+    Templates are installed into ``MULTITIER_THEMES_DIR/APP_NAME/templates/``.
     Resources include CSS, JS, images and other files which can be accessed
     anonymously over HTTP and are necessary for the functionality of the site.
     They are copied into ``MULTITIER_RESOURCES_ROOT/APP_NAME``

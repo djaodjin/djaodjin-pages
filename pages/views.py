@@ -217,8 +217,7 @@ class ThemePackagesCreateView(ThemePackageMixin, CreateView):
 
     def copy_default_template(self):
         if self.template_loaded:
-            templates_dir = os.path.join(
-                settings.TEMPLATES_ROOT, self.theme.slug)
+            templates_dir = self.get_templates_dir(self.theme)
             to_path = os.path.join(templates_dir, self.template_loaded)
 
             loaders = get_loaders()
@@ -256,13 +255,11 @@ class ThemePackagesCreateView(ThemePackageMixin, CreateView):
     def create_package(self):
         from_static_dir = os.path.join(
             settings.PUBLIC_ROOT, self.active_theme.slug)
-        from_templates_dir = os.path.join(
-            settings.TEMPLATES_ROOT, self.active_theme.slug)
+        from_templates_dir = self.get_templates_dir(self.active_theme)
 
         to_static_dir = os.path.join(
             settings.PUBLIC_ROOT, self.theme.slug)
-        to_templates_dir = os.path.join(
-            settings.TEMPLATES_ROOT, self.theme.slug)
+        to_templates_dir = self.get_templates_dir(self.theme)
 
         if not os.path.exists(to_static_dir):
             os.mkdir(to_static_dir)
@@ -333,7 +330,7 @@ class ThemePackagesEditView(ThemePackageMixin, DetailView):
         context = super(ThemePackagesEditView, self).get_context_data(**kwargs)
         themepackage = context['themepackage']
         static_dir = os.path.join(settings.PUBLIC_ROOT, themepackage.slug)
-        templates_dir = os.path.join(settings.TEMPLATES_ROOT, themepackage.slug)
+        templates_dir = self.get_templates_dir(themepackage)
         templates = self.get_file_tree(templates_dir)
         statics = self.get_file_tree(static_dir)
         context.update({
@@ -356,8 +353,7 @@ class ThemePackageDownloadView(ThemePackageMixin, View):
         theme = ThemePackage.objects.get(slug=self.kwargs.get('slug'))
         from_static_dir = os.path.join(
             settings.PUBLIC_ROOT, theme.slug)
-        from_templates_dir = os.path.join(
-            settings.TEMPLATES_ROOT, theme.slug)
+        from_templates_dir = self.get_templates_dir(theme)
 
         content = StringIO()
         zipf = zipfile.ZipFile(content, mode="w")
