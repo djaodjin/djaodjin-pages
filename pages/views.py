@@ -253,18 +253,16 @@ class ThemePackagesCreateView(ThemePackageMixin, CreateView):
                     #self.create_file(to_path)
 
     def create_package(self):
-        from_static_dir = os.path.join(
-            settings.PUBLIC_ROOT, self.active_theme.slug)
+        from_static_dir = self.get_statics_dir(self.active_theme)
         from_templates_dir = self.get_templates_dir(self.active_theme)
 
-        to_static_dir = os.path.join(
-            settings.PUBLIC_ROOT, self.theme.slug)
+        to_static_dir = self.get_statics_dir(self.theme)
         to_templates_dir = self.get_templates_dir(self.theme)
 
         if not os.path.exists(to_static_dir):
-            os.mkdir(to_static_dir)
+            os.makedirs(to_static_dir)
         if not os.path.exists(to_templates_dir):
-            os.mkdir(to_templates_dir)
+            os.makedirs(to_templates_dir)
 
         # Copy files from active theme
         self.copy_files(from_static_dir, to_static_dir)
@@ -286,6 +284,7 @@ class ThemePackagesCreateView(ThemePackageMixin, CreateView):
         # with themepackage objects
         if self.active_theme.account == self.account:
             self.theme = self.active_theme
+            self.copy_default_template()
             return HttpResponseRedirect(self.get_success_url())
         else:
             self.theme = None
@@ -329,13 +328,13 @@ class ThemePackagesEditView(ThemePackageMixin, DetailView):
     def get_context_data(self, **kwargs):
         context = super(ThemePackagesEditView, self).get_context_data(**kwargs)
         themepackage = context['themepackage']
-        static_dir = os.path.join(settings.PUBLIC_ROOT, themepackage.slug)
+        static_dir = self.get_statics_dir(themepackage)
         templates_dir = self.get_templates_dir(themepackage)
         templates = self.get_file_tree(templates_dir)
         statics = self.get_file_tree(static_dir)
         context.update({
-            'templates': templates[themepackage.slug],
-            'statics': statics[themepackage.slug],
+            'templates': templates['templates'],
+            'statics': statics['static'],
             'template_loaded': self.template_loaded,
             'redirect_url': self.redirect_url})
         return context
@@ -351,8 +350,7 @@ class ThemePackageDownloadView(ThemePackageMixin, View):
 
     def get(self, *args, **kwargs):
         theme = ThemePackage.objects.get(slug=self.kwargs.get('slug'))
-        from_static_dir = os.path.join(
-            settings.PUBLIC_ROOT, theme.slug)
+        from_static_dir = self.get_statics_dir(theme)
         from_templates_dir = self.get_templates_dir(theme)
 
         content = StringIO()

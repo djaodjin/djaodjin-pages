@@ -84,6 +84,18 @@ $(document).ready(function() {
         loadFile(filepath);
     });
 
+    $(".pages-show-file").click(function(event){
+        event.preventDefault();
+        var $i = $(this).prev();
+        if ($i.hasClass("fa-folder")){
+            $(this).prev().addClass("fa-folder-open").removeClass("fa-folder");
+        }else{
+            $(this).prev().addClass("fa-folder").removeClass("fa-folder-open");
+        }
+        var $ul = $(this).parent().next();
+        $ul.toggle();
+    });
+
     $(".pages-edit-file[data-filepath=\"" + loadedTemplate + "\"]").trigger("click");
 
     $("#edit-file-by-name").click(function(event){

@@ -38,8 +38,11 @@ def install_theme(theme_name, zip_file):
     logic in ``template_loader.Loader.get_template_sources``.
     """
     LOGGER.info("install theme %s", theme_name)
-    static_dir = safe_join(settings.PUBLIC_ROOT, theme_name)
-    templates_dir = safe_join(settings.THEMES_DIR, theme_name, 'templates')
+    theme_dir = safe_join(settings.THEMES_DIR, theme_name)
+    public_dir = safe_join(settings.PUBLIC_ROOT, theme_name)
+    static_dir = safe_join(public_dir, 'static')
+    templates_dir = safe_join(theme_dir, 'templates')
+
     # We rely on the assumption that ``static_dir`` and ``templates_dir``
     # are on the same filesystem. We create a temporary directory on that
     # common filesystem, which guarentees that:
@@ -89,6 +92,10 @@ def install_theme(theme_name, zip_file):
         # are optional.
         tmp_public = safe_join(tmp_dir, 'public')
         tmp_templates = safe_join(tmp_dir, 'templates')
+        if not os.path.exists(theme_dir):
+            os.makedirs(theme_dir)
+        if not os.path.exists(public_dir):
+            os.makedirs(public_dir)
         if os.path.exists(tmp_templates):
             os.rename(tmp_templates, templates_dir)
             if os.path.exists(tmp_public):

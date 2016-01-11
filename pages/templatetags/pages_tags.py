@@ -34,7 +34,7 @@ def get_relationships(element, tag=None):
 
 @register.simple_tag
 def print_tree(tree, excludes=None):
-    html = print_dict(tree, "<ul>", None, excludes) + "</ul>"
+    html = print_dict(tree, "<ul class=\"fa-ul\">", None, excludes) + "</ul>"
     if html == "<ul></ul>":
         html = "<em>No file yet.</em>"
     return mark_safe(html)
@@ -43,22 +43,23 @@ def print_dict(dictionary, html="", parent=None, excludes=None):
     for key, value in dictionary.iteritems():
         if value:
             if not excludes or (excludes and not key in excludes):
-                html += "<li>%s/</li>" % key
+                html += "<li><i class=\"fa-li fa fa-folder\"></i> <a class=\"pages-show-file\"\"\
+                    href=\"\">%s/</a></li>" % key
                 if parent:
                     html += print_dict(
-                        value, "<ul data-folder=\"%s\">" % key, "%s/%s" %\
+                        value, "<ul style=\"display:none;\" class=\"fa-ul\" data-folder=\"%s\">" % key, "%s/%s" %\
                         (parent, key), excludes) + "</ul>"
                 else:
                     html += print_dict(
-                        value, "<ul data-folder=\"%s\">" %\
+                        value, "<ul style=\"display:none;\" class=\"fa-ul\" data-folder=\"%s\">" %\
                         key, key, excludes) + "</ul>"
         else:
             if parent:
-                html += "<li><a class=\"pages-edit-file\"\"\
+                html += "<li><i class=\"fa-li fa fa-file-code-o\"></i> <a class=\"pages-edit-file\"\"\
                     href=\"\" data-filepath=\"%s/%s\">%s</a></li>" %\
                     (parent, key, key)
             else:
-                html += "<li><a class=\"pages-edit-file\"\"\
+                html += "<li><i class=\"fa-li fa fa-file-code-o\"></i> <a class=\"pages-edit-file\"\"\
                     href=\"\" data-filepath=\"%s\">%s</a></li>" %\
                     (key, key)
     return html

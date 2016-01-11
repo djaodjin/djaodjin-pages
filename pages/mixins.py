@@ -23,6 +23,7 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import logging, os, shutil
+from collections import OrderedDict
 
 from django.core.files.storage import get_storage_class, FileSystemStorage
 #pylint:disable=no-name-in-module,import-error
@@ -198,15 +199,19 @@ class ThemePackageMixin(AccountMixin):
         return safe_join(settings.THEMES_DIR, theme.slug, 'templates')
 
     @staticmethod
+    def get_statics_dir(theme):
+        return safe_join(settings.PUBLIC_ROOT, theme.slug, 'static')
+
+    @staticmethod
     def get_file_tree(root_path):
-        tree = {}
+        tree = OrderedDict()
         root_path = root_path.rstrip(os.sep)
         start = root_path.rfind(os.sep) + 1
         for (dirpath, _, filenames) in os.walk(root_path):
             folders = dirpath[start:].split(os.sep)
             subdir = dict.fromkeys(filenames)
             parent = reduce(dict.get, folders[:-1], tree)
-            parent[folders[-1]] = subdir
+            parent[folders[-1]] = OrderedDict(subdir)
         return tree
 
     @staticmethod
