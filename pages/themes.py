@@ -54,6 +54,8 @@ def install_theme(theme_name, zip_file):
         os.path.commonprefix([static_dir, templates_dir]), '.cache')
     if not os.path.exists(tmp_base):
         os.makedirs(tmp_base)
+    if not os.path.isdir(os.path.dirname(templates_dir)):
+        os.makedirs(os.path.dirname(templates_dir))
     tmp_dir = tempfile.mkdtemp(dir=tmp_base)
     try:
         for info in zip_file.infolist():
