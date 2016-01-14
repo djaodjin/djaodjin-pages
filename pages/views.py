@@ -45,8 +45,6 @@ from .mixins import AccountMixin, ThemePackageMixin
 from .models import PageElement, ThemePackage, get_active_theme
 from .compat import csrf, TemplateDoesNotExist, get_loaders
 from .utils import random_slug
-from . import settings
-
 
 
 def inject_edition_tools(response, request=None, context=None,

@@ -31,7 +31,7 @@ from . import settings
 LOGGER = logging.getLogger(__name__)
 
 
-def install_theme(theme_name, zip_file):
+def install_theme(theme_name, zip_file): #pylint:disable=too-many-locals
     """
     Extract resources and templates from an opened ``ZipFile``
     and install them at a place they can be picked by the multitier

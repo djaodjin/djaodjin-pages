@@ -43,23 +43,28 @@ def print_dict(dictionary, html="", parent=None, excludes=None):
     for key, value in dictionary.iteritems():
         if value:
             if not excludes or (excludes and not key in excludes):
-                html += "<li><i class=\"fa-li fa fa-folder\"></i> <a class=\"pages-show-file\"\"\
+                html += "<li><i class=\"fa-li fa fa-folder\"></i> \
+                    <a class=\"pages-show-file\"\"\
                     href=\"\">%s/</a></li>" % key
                 if parent:
                     html += print_dict(
-                        value, "<ul style=\"display:none;\" class=\"fa-ul\" data-folder=\"%s\">" % key, "%s/%s" %\
+                        value, "<ul style=\"display:none;\"\
+                        class=\"fa-ul\" data-folder=\"%s\">" % key, "%s/%s" %\
                         (parent, key), excludes) + "</ul>"
                 else:
                     html += print_dict(
-                        value, "<ul style=\"display:none;\" class=\"fa-ul\" data-folder=\"%s\">" %\
+                        value, "<ul style=\"display:none;\"\
+                        class=\"fa-ul\" data-folder=\"%s\">" %\
                         key, key, excludes) + "</ul>"
         else:
             if parent:
-                html += "<li><i class=\"fa-li fa fa-file-code-o\"></i> <a class=\"pages-edit-file\"\"\
+                html += "<li><i class=\"fa-li fa fa-file-code-o\"></i> \
+                    <a class=\"pages-edit-file\"\"\
                     href=\"\" data-filepath=\"%s/%s\">%s</a></li>" %\
                     (parent, key, key)
             else:
-                html += "<li><i class=\"fa-li fa fa-file-code-o\"></i> <a class=\"pages-edit-file\"\"\
+                html += "<li><i class=\"fa-li fa fa-file-code-o\"></i> \
+                    <a class=\"pages-edit-file\"\"\
                     href=\"\" data-filepath=\"%s\">%s</a></li>" %\
                     (key, key)
     return html
