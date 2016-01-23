@@ -97,7 +97,6 @@ class MediaListAPIView(UploadedImageMixin, AccountMixin, GenericAPIView):
         serializer.is_valid()
         validated_data = serializer.validated_data
         filter_list = self.build_filter_list(validated_data)
-        print filter_list
         list_delete_media = self.list_delete_media(storage, filter_list)
         if list_delete_media['count'] > 0:
             self.delete_media_items(storage, list_delete_media)
@@ -124,7 +123,6 @@ class MediaListAPIView(UploadedImageMixin, AccountMixin, GenericAPIView):
         serializer.is_valid()
         validated_data = serializer.validated_data
         filter_list = self.build_filter_list(validated_data)
-        print filter_list
         tags = validated_data.get('tags')
 
         list_media = self.list_media(storage, filter_list)

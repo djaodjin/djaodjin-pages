@@ -278,7 +278,6 @@ Options:
             if (!item.hasClass(self.options.selectedMediaClass)){
                 self.selectedMedia = item.children(".dj-gallery-item");
                 item.addClass(self.options.selectedMediaClass);
-                console.log(item.attr("class"))
                 self.orginalTags = self.selectedMedia.attr("tags").split(",");
                 self.selectedMediaLocation = self.selectedMedia.attr("src");
                 self.initMenuMedia();
