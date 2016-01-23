@@ -22,14 +22,29 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import random, string
+import random, string, bleach
 from django.template.defaultfilters import slugify
 from rest_framework import serializers
 
-
 from .models import PageElement, ThemePackage
+from .settings import ALLOWED_TAGS, ALLOWED_ATTRIBUTES, ALLOWED_STYLES
 
 #pylint: disable=no-init,old-style-class,abstract-method
+
+
+class HTMLField(serializers.CharField):
+
+    def __init__(self, **kwargs):
+        self.html_tags = kwargs.pop('html_tags', [])
+        self.html_attributes = kwargs.pop('html_attributes', {})
+        self.html_styles = kwargs.pop('html_styles', [])
+        self.html_strip = kwargs.pop('html_strip', False)
+        super(HTMLField, self).__init__(**kwargs)
+
+    def to_internal_value(self, data):
+        return bleach.clean(data, tags=self.html_tags,
+            attributes=self.html_attributes, styles=self.html_styles,
+            strip=self.html_strip)
 
 
 class RelationShipSerializer(serializers.Serializer): #pylint: disable=abstract-method
@@ -42,12 +57,15 @@ class RelationShipSerializer(serializers.Serializer): #pylint: disable=abstract-
 
 class PageElementSerializer(serializers.ModelSerializer):
     slug = serializers.SlugField(required=False)
+    title = HTMLField(html_strip=True, required=False)
+    text = HTMLField(html_tags=ALLOWED_TAGS, html_attributes=ALLOWED_ATTRIBUTES,
+        html_styles=ALLOWED_STYLES, required=False)
     tag = serializers.SlugField(required=False)
     orig_elements = serializers.ListField(
-        child=serializers.SlugField(), required=False
+        child=serializers.SlugField(required=False), required=False
         )
     dest_elements = serializers.ListField(
-        child=serializers.SlugField(), required=False
+        child=serializers.SlugField(required=False), required=False
         )
 
     class Meta:
@@ -121,6 +139,4 @@ class MediaItemListSerializer(serializers.Serializer):
 
 
 class EditionFileSerializer(serializers.Serializer):
-    themepackage = serializers.SlugField()
-    filepath = serializers.CharField()
-    body = serializers.CharField(allow_blank=True)
+    text = serializers.CharField(allow_blank=True)

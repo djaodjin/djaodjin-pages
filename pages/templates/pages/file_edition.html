@@ -33,7 +33,7 @@
 <script src="{% static 'vendor/js/ext-emmet.js' %}"></script>
 
 <script>
-var fileEditionUrl =  "{% url 'pages_api_theme_file' %}";
+var fileEditionUrl =  "{% url 'pages_api_theme' themepackage.slug %}";
 var themePackageSlug = "{{themepackage.slug}}";
 var loadedTemplate = "{{template_loaded}}";
 var redirectUrl = "{{redirect_url}}";

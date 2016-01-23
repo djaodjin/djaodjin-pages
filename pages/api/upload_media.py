@@ -23,34 +23,42 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-import json, hashlib, os
+import hashlib, os
 
-from django.core.cache import cache
-from django.http import HttpResponse
 from django.utils.encoding import force_text
 from rest_framework import status
-from rest_framework.views import APIView
+from rest_framework.generics import GenericAPIView
 from rest_framework.response import Response
+from rest_framework.pagination import PageNumberPagination
 
 from ..models import MediaTag
 from ..mixins import AccountMixin, UploadedImageMixin
 from ..serializers import MediaItemListSerializer
+from ..utils import validate_title
 
 
-class MediaListAPIView(AccountMixin, UploadedImageMixin, APIView):
+class MediaListAPIView(UploadedImageMixin, AccountMixin, GenericAPIView):
+
+    serializer_class = MediaItemListSerializer
+    pagination_class = PageNumberPagination
 
     def get(self, request, *args, **kwargs):
         tags = None
-        search = request.GET.get('q')
+        search = self.request.GET.get('q')
         if search:
+            validate_title(search)
             tags = MediaTag.objects.filter(tag__startswith=search)\
                 .values_list('location', flat=True)
-        return Response(self.list_media(
-            self.get_default_storage(self.account), tags))
+        queryset = self.list_media(
+            self.get_default_storage(self.account), tags)
+        page = self.paginate_queryset(queryset['results'])
+        if page is not None:
+            queryset = {'count': len(page), 'results' : page}
+        return Response(queryset)
 
     def post(self, request, *args, **kwargs):
         #pylint: disable=unused-argument,too-many-locals
-        uploaded_file = request.FILES['file']
+        uploaded_file = request.data['file']
         sha1 = hashlib.sha1(uploaded_file.read()).hexdigest()
 
         # Store filenames with forward slashes, even on Windows
@@ -73,13 +81,23 @@ class MediaListAPIView(AccountMixin, UploadedImageMixin, APIView):
         return Response(result, status=response_status)
 
     def delete(self, request, *args, **kwargs):
+        """
+        Delete media
+        {
+            items: [
+                {location: "/media/item/url1.jpg"},
+                {location: "/media/item/url2.jpg"},
+                ....
+            ]
+        }
+        """
         #pylint: disable=unused-argument
         storage = self.get_default_storage(self.account)
         serializer = MediaItemListSerializer(data=request.data)
         serializer.is_valid()
         validated_data = serializer.validated_data
         filter_list = self.build_filter_list(validated_data)
-
+        print filter_list
         list_delete_media = self.list_delete_media(storage, filter_list)
         if list_delete_media['count'] > 0:
             self.delete_media_items(storage, list_delete_media)
@@ -87,14 +105,26 @@ class MediaListAPIView(AccountMixin, UploadedImageMixin, APIView):
         else:
             return Response({}, status=status.HTTP_404_NOT_FOUND)
 
-
     def put(self, request, *args, **kwargs):
+        """
+        Update media tag
+        {
+            items: [
+                {location: "/media/item/url1.jpg"},
+                {location: "/media/item/url2.jpg"},
+                ....
+            ],
+            tags: ['tag1', 'tag2']
+        }
+        will apply tag1 and tag2 to both media location
+        """
         #pylint: disable=unused-argument
         storage = self.get_default_storage(self.account)
         serializer = MediaItemListSerializer(data=request.data)
         serializer.is_valid()
         validated_data = serializer.validated_data
         filter_list = self.build_filter_list(validated_data)
+        print filter_list
         tags = validated_data.get('tags')
 
         list_media = self.list_media(storage, filter_list)
@@ -103,20 +133,3 @@ class MediaListAPIView(AccountMixin, UploadedImageMixin, APIView):
             return Response(list_media, status=status.HTTP_200_OK)
         else:
             return Response({}, status=status.HTTP_404_NOT_FOUND)
-
-
-def upload_progress(request, account_slug=None):
-    #pylint: disable=unused-argument
-    """
-    Used by Ajax calls
-
-    Return the upload progress and total length values
-    """
-    if 'X-Progress-ID' in request.GET:
-        progress_id = request.GET['X-Progress-ID']
-    elif 'X-Progress-ID' in request.META:
-        progress_id = request.META['X-Progress-ID']
-    if progress_id:
-        cache_key = "%s_%s" % (request.META['REMOTE_ADDR'], progress_id)
-        data = cache.get(cache_key)
-        return HttpResponse(json.dumps(data))

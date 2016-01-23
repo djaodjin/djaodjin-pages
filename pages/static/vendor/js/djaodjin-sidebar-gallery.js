@@ -1,4 +1,5 @@
 /* jshint multistr: true */
+/* global Dropzone jQuery :true */
 
 /* relies on:
     - jquery-ui.js
@@ -123,6 +124,11 @@ Options:
                 function(event) { self.tagMedia(); });
             $(".dj-gallery").on("click", ".dj-gallery-item-container",
                 function(event) { self.selectMedia($(this)); });
+            $(".dj-gallery").on("djgallery.loadimages",
+                function(event) { self.loadImage(); });
+            $(".dj-gallery-load").on("click",
+                function(event) { self.loadImage(); });
+
             $("body").on("click", ".closeModal", function(event){
                 event.preventDefault();
                 $("#openModal").remove();
@@ -200,11 +206,7 @@ Options:
                         lastIndex = 0;
                     }
                     if ([201, 204].indexOf(status) >= 0){
-                        if (self.options.accessKey){
-                            self.loadImage();
-                        }else{
-                            self.addMediaItem(response, lastIndex);
-                        }
+                        self.addMediaItem(response, lastIndex, false);
                         self.options.galleryMessage("Media correctly uploaded.");
                     }else if (status === 200){
                         self.options.galleryMessage(response.message);
@@ -234,21 +236,25 @@ Options:
                 success: function(data){
                     $(".dj-gallery-items").empty();
                     $.each(data.results, function(index, file){
-                        self.addMediaItem(file, index);
+                        self.addMediaItem(file, index, true);
                     });
                 }
             });
         },
 
-        addMediaItem: function(file, index){
+        addMediaItem: function(file, index, init){
             var self = this;
-            var mediaItem = "";
-            if (file.location.toLowerCase().indexOf(".mp4") > 0){
-                mediaItem = "<div class=\"dj-gallery-item-container " + self.options.mediaClass + " \"><video id=\"image_" + index + "\" class=\"image dj-gallery-item image_media\" src=\"" + file.location + "\" tags=\"" + file.tags + "\"></video></div>";
-            }else{
-                mediaItem = "<div class=\"dj-gallery-item-container " + self.options.mediaClass + " \"><img id=\"image_" + index + "\" class=\"image dj-gallery-item image_media\" src=\"" + file.location + "\" tags=\"" + file.tags + "\"></div>";
+            var $mediaItem = null;
+            var tags = file.tags;
+            if (typeof tags === "undefined"){
+                tags = "";
             }
-            $(".dj-gallery-items").prepend(mediaItem);
+            if (file.location.toLowerCase().indexOf(".mp4") > 0){
+                $mediaItem = $("<div class=\"dj-gallery-item-container " + self.options.mediaClass + " \"><video id=\"image_" + index + "\" class=\"image dj-gallery-item image_media\" src=\"" + file.location + "\" tags=\"" + tags + "\"></video></div>");
+            }else{
+                $mediaItem = $("<div class=\"dj-gallery-item-container " + self.options.mediaClass + " \"><img id=\"image_" + index + "\" class=\"image dj-gallery-item image_media\" src=\"" + file.location + "\" tags=\"" + tags + "\"></div>");
+            }
+            $(".dj-gallery-items").prepend($mediaItem);
             $("#image_" + index).draggable({
                 helper: "clone",
                 revert: true,
@@ -260,16 +266,19 @@ Options:
                     });
                 }
             });
+            if (!init){
+                self.selectMedia($mediaItem);
+            }
         },
 
         selectMedia: function(item) {
             var self = this;
             self.initMediaInfo();
-
             $(".dj-gallery-item-container").not(item).removeClass(self.options.selectedMediaClass);
             if (!item.hasClass(self.options.selectedMediaClass)){
                 self.selectedMedia = item.children(".dj-gallery-item");
                 item.addClass(self.options.selectedMediaClass);
+                console.log(item.attr("class"))
                 self.orginalTags = self.selectedMedia.attr("tags").split(",");
                 self.selectedMediaLocation = self.selectedMedia.attr("src");
                 self.initMenuMedia();
@@ -361,7 +370,7 @@ Options:
         galleryItemOptionsTemplate: "<textarea rows=\"4\" style=\"width:100%;\" readonly data-dj-gallery-media-url></textarea>\n<button data-dj-gallery-media-location class=\"dj-gallery-delete-item\">Delete</button>\n<button data-dj-gallery-media-location class=\"dj-gallery-preview-item\">Preview</button>\n<br>\n<input data-dj-gallery-media-tag class=\"dj-gallery-tag-input\" type=\"text\" placeholder=\"Please enter tag.\"><button class=\"dj-gallery-tag-item\">Update tags</button>",
         mediaClass: "",
         selectedMediaClass: "dj-gallery-active-item",
-        startLoad: true,
+        startLoad: false,
         itemUploadProgress: function(progress){ return true; },
         galleryMessage: function(message, type){ return true; },
         previewMediaItem: function(src){ return true; },

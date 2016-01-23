@@ -22,6 +22,10 @@
                 throw new Error("No upload URL provided.");
             }
 
+            if (self.options.mediaPrefix !== "" && !self.options.mediaPrefix.match(/\/$/)){
+                self.options.mediaPrefix += "/";
+            }
+
             self.element.dropzone({
                 paramName: self.options.uploadParamName,
                 url: dropzoneUrl,
@@ -32,9 +36,6 @@
 
                     this.on("sending", function(file, xhr, formData){
                         if( self.options.accessKey) {
-                            if (self.options.mediaPrefix !== "" && !self.options.mediaPrefix.match(/\/$/)){
-                                self.options.mediaPrefix += "/";
-                            }
                             formData.append("key", self.options.mediaPrefix + file.name);
                             formData.append("policy", self.options.policy);
                             formData.append("x-amz-algorithm", "AWS4-HMAC-SHA256");
@@ -53,6 +54,13 @@
 
                     this.on("success", function(file, response){
                         $(".dz-preview").remove();
+                        if( self.options.accessKey) {
+                            // If Direct upload to S3 no response on successful upload
+                            // Let's build a custom response with location url info
+                            response = {
+                                location: self.options.uploadUrl + self.options.mediaPrefix + file.name
+                            };
+                        }
                         self.options.uploadSuccess(file, response);
                     });
 

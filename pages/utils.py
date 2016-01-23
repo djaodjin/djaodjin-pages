@@ -24,7 +24,18 @@
 
 import random, string
 
+from django.core.validators import RegexValidator
+from django.utils.translation import ugettext_lazy as _
+
 def random_slug():
     return ''.join(
         random.choice(string.ascii_lowercase + string.digits)\
             for count in range(20))
+
+
+validate_title = RegexValidator(#pylint: disable=invalid-name
+    r'^[a-zA-Z0-9- ]+$',
+    _("Enter a valid 'Title' consisting of letters, "
+        "numbers, space, underscores or hyphens."),
+        'invalid'
+)

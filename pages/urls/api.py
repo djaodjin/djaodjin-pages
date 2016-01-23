@@ -25,26 +25,28 @@
 from django.conf.urls import url
 
 from ..api.edition import PageElementDetail, PagesElementListAPIView
-from ..api.upload_media import upload_progress, MediaListAPIView
+from ..api.upload_media import MediaListAPIView
 from ..api.relationship import RelationShipListAPIView
-from ..api.upload_package import ThemePackageListAPIView, FileDetailView
+from ..api.upload_package import (ThemePackageListAPIView,
+    ThemePackageAPIView, FileDetailAPIView)
 
 
 urlpatterns = [
     url(r'^editable/relationship/',
         RelationShipListAPIView.as_view(), name='relationships'),
-    url(r'^uploaded-media/get-progress/upload/',
-        upload_progress),
     url(r'^uploaded-media/',
         MediaListAPIView.as_view(), name='uploaded_media_elements'),
     url(r'^editables/(?P<slug>[\w-]+)/',
         PageElementDetail.as_view(), name='edit_page_element'),
     url(r'^editables/',
         PagesElementListAPIView.as_view(), name='page_elements'),
-    url(r'^theme/file/',
-        FileDetailView.as_view(),
-        name='pages_api_theme_file'),
-    url(r'^theme/',
+    url(r'^themes/(?P<theme>[\w-]+)/filepath(?P<filepath>\S+)',
+        FileDetailAPIView.as_view(),
+        name='pages_api_theme_file_detail'),
+    url(r'^themes/(?P<theme>[\w-]+)/',
+        ThemePackageAPIView.as_view(),
+        name='pages_api_theme_detail'),
+    url(r'^themes/',
         ThemePackageListAPIView.as_view(),
         name='pages_api_themes'),
 ]

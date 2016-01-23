@@ -15,11 +15,10 @@ $(document).ready(function() {
 
     var loadFile = function(filePath){
         $.ajax({
-            url: fileEditionUrl,
+            url: fileEditionUrl + "filepath" + filePath,
             method: "GET",
             datatype: "json",
             contentType: "application/json; charset=utf-8",
-            data: {filepath: filePath, themepackage: themePackageSlug},
             success: function(data){
                 oldText = data.text;
                 editor.setValue(data.text);
@@ -40,14 +39,12 @@ $(document).ready(function() {
 
     $("#save-edition").click(function(){
         var newText = editor.getValue();
-        var filepath = $(this).data("filepath");
+        var filePath = $(this).data("filepath");
         $.ajax({
-            url: fileEditionUrl,
+            url: fileEditionUrl + "filepath" + filePath,
             method: "PUT",
             data: JSON.stringify({
-                filepath: filepath,
-                body: newText,
-                themepackage: themePackageSlug}),
+                text: newText}),
             datatype: "json",
             contentType: "application/json; charset=utf-8",
             success: function(){

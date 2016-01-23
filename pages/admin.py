@@ -24,6 +24,8 @@
 
 from django.contrib import admin
 # Register your models here.
-from .models import PageElement
+from .models import PageElement, RelationShip, ThemePackage
 
+admin.site.register(RelationShip)
 admin.site.register(PageElement)
+admin.site.register(ThemePackage)

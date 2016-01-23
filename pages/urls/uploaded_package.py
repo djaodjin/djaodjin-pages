@@ -23,7 +23,7 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from django.conf.urls import url
-from pages.views import (ThemePackagesView,
+from ..views import (ThemePackagesView,
     ThemePackagesEditView, ThemePackagesCreateView,
     ThemePackageDownloadView)
 

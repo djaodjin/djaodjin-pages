@@ -24,25 +24,22 @@
 
 #pylint: disable=no-init,no-member
 #pylint: disable=old-style-class,maybe-no-member
-import bleach, random
+import random
 
 from django.http import Http404
 from django.template.defaultfilters import slugify
 from django.core.exceptions import ImproperlyConfigured
-
+from django.core.validators import validate_slug
+from django.core.exceptions import ValidationError
 from rest_framework.mixins import CreateModelMixin
 from rest_framework import generics
-from rest_framework import status
-from rest_framework.response import Response
 
-from pages.models import PageElement
-from pages.serializers import PageElementSerializer
-from pages.mixins import AccountMixin
-from pages.compat import import_string
-from pages.settings import (
-    ALLOWED_TAGS,
-    ALLOWED_ATTRIBUTES,
-    ALLOWED_STYLES,
+from ..models import PageElement
+from ..serializers import PageElementSerializer
+from ..mixins import AccountMixin
+from ..compat import import_string
+from ..utils import validate_title
+from ..settings import (
     PAGELEMENT_SERIALIZER)
 
 class PageElementMixin(object):
@@ -64,92 +61,32 @@ class PageElementMixin(object):
 
     @staticmethod
     def slugify_title(title):
-        slug_base = slugify(title)
-        slug = slug_base
+        slug_max_length = PageElement._meta.get_field('slug').max_length #pylint: disable=protected-access
+
+        slug = slugify(title)
+        if len(slug) > slug_max_length:
+            slug = slug[:slug_max_length]
+
+        slug_base = slug
+        if len(slug_base) > slug_max_length - 6:
+            slug_base = slug_base[:slug_max_length - 6]
+
         while PageElement.objects.filter(slug=slug).count() > 0:
             suffix = ''.join(
                 random.choice('0123456789') for count in range(5))
             slug = "%s-%s" % (slug_base, suffix)
         return slug
 
-    def sanitize(self, serializer, slugit=True):
-        # Save a clean version of html.
-        if 'text' in serializer.validated_data:
-            serializer.validated_data['text'] = bleach.clean(
-                serializer.validated_data['text'],
-                tags=ALLOWED_TAGS, attributes=ALLOWED_ATTRIBUTES,
-                styles=ALLOWED_STYLES, strip=False)
-        if 'title' in serializer.validated_data:
-            # Sanitize title disallow any tags.
-            serializer.validated_data['title'] = bleach.clean(
-                serializer.validated_data['title'],
-                tags=[], attributes={},
-                styles=[], strip=True)
-            if slugit:
-                serializer.validated_data['slug'] = self.slugify_title(
-                    serializer.validated_data['title'])
-        return serializer
-
-
-class PagesElementListAPIView(
-    PageElementMixin,
-    AccountMixin,
-    generics.ListCreateAPIView):
-
-    def get_queryset(self):
-        # Typeahead query
-        queryset = PageElement.objects.filter(account=self.account)
-        tag = self.request.query_params.get('tag', None)
-        search_string = self.request.query_params.get('q', None)
-        if search_string is not None:
-            queryset = queryset.filter(tag=tag, title__contains=search_string)
-        return queryset
-
-    def get_response_data(self, serializer):
-        serializer = self.get_serializer_class()(self.new_element)
-        return serializer.data
-
-    def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=False)
-        serializer = self.sanitize(serializer, slugit=False)
-        if 'slug' in serializer.validated_data:
-            slug = serializer.validated_data['slug']
-        else:
-            slug = self.slugify_title(
-                serializer.validated_data['title'])
-        self.new_element, created = PageElement.objects.get_or_create(
-                slug=slug,
-                defaults={
-                    'slug': self.slugify_title(
-                        serializer.validated_data['title']),
-                    'title': serializer.validated_data['title'],
-                    'text': "No description.",
-                    'tag': serializer.validated_data['tag']
-                }
-            )
-
-        relation_created = self.create_relationships(serializer)
-        if created or relation_created:
-            response_status = status.HTTP_201_CREATED
-        else:
-            response_status = status.HTTP_200_OK
-
-        # headers = self.get_success_headers(serializer.data)
-        data = self.get_response_data(serializer)
-        return Response(
-            data, status=response_status)
-
-    def create_relationships(self, serializer):
+    @staticmethod
+    def create_relationships(page_element, serializer):
         created = False
         if 'orig_elements' in serializer.validated_data:
             orig_elements = serializer.validated_data['orig_elements']
-            print orig_elements
             for orig_element in orig_elements:
                 orig_element = PageElement.objects.get(
                     slug=orig_element)
                 _, relation_created = orig_element.add_relationship(
-                    self.new_element, serializer.validated_data['tag']
+                    page_element, serializer.validated_data['tag']
                     )
                 created = created or relation_created
 
@@ -158,9 +95,33 @@ class PagesElementListAPIView(
             for dest_element in dest_elements:
                 dest_element = PageElement.objects.get(
                     slug=dest_element)
-                _, relation_created = self.new_element.add_relationship(
+                _, relation_created = page_element.add_relationship(
                     dest_element, serializer.validated_data['tag'])
+
+                created = created or relation_created
         return created
+
+
+class PagesElementListAPIView(PageElementMixin, AccountMixin,
+    generics.ListAPIView):
+
+    def get_queryset(self):
+        try:
+            queryset = PageElement.objects.filter(account=self.account)
+            search_string = self.request.query_params.get('q', None)
+            if search_string is not None:
+                tag = self.request.query_params.get('tag', None)
+                validate_slug(tag)
+                validate_title(search_string)
+                queryset = queryset.filter(tag=tag,
+                    title__contains=search_string)
+                return queryset
+        except ValidationError:
+            return []
+
+    def get_response_data(self, serializer):
+        serializer = self.get_serializer_class()(self.new_element)
+        return serializer.data
 
 
 class PageElementDetail(PageElementMixin, AccountMixin, CreateModelMixin,
@@ -171,20 +132,45 @@ class PageElementDetail(PageElementMixin, AccountMixin, CreateModelMixin,
     lookup_field = 'slug'
     lookup_url_kwarg = 'slug'
 
+    def get_object(self):
+        obj = None
+        try:
+            obj = super(PageElementDetail, self).get_object()
+        except Http404:
+            if hasattr(self, 'serializer_data'):
+                obj = PageElement.objects.get(slug=self.serializer_data['slug'])
+            else:
+                raise Http404
+        return obj
+
     def get_queryset(self):
         kwargs = {self.lookup_field: self.kwargs.get(self.lookup_url_kwarg)}
         return PageElement.objects.filter(
             account=self.account, **kwargs)
 
-    def perform_update(self, serializer):
-        serializer = self.sanitize(serializer, slugit=False)
-        serializer.save()
+    def get_response_data(self, serializer): #pylint: disable=no-self-use
+        return serializer.data
 
     def perform_create(self, serializer):
-        serializer = self.sanitize(serializer)
-        return serializer.save(
-            slug=self.kwargs.get(self.lookup_url_kwarg),
+        if not 'slug' in serializer.validated_data and\
+            'title' in serializer.validated_data:
+            serializer.validated_data['slug'] = self.slugify_title(
+                serializer.validated_data['title'])
+        serializer.save(
             account=self.account)
+        self.serializer_data = serializer.data
+        self.create_relationships(self.get_object(), serializer)
+        self.response_data = self.get_response_data(serializer)
+
+    def perform_update(self, serializer):
+        serializer.save()
+        self.create_relationships(self.get_object(), serializer)
+
+    def create(self, request, *args, **kwargs):
+        response = super(PageElementDetail, self).create(request,
+            *args, **kwargs)
+        response.data = self.response_data
+        return response
 
     def update_or_create(self, request, *args, **kwargs):
         #pylint: disable=unused-argument

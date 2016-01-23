@@ -38,6 +38,25 @@ from .compat import import_string
 from .models import MediaTag, PageElement, ThemePackage
 
 LOGGER = logging.getLogger(__name__)
+from django.core.validators import validate_slug
+from django.core.exceptions import ValidationError
+from .utils import validate_title
+
+class PageElementMixin(object):
+
+    def get_queryset(self): #pylint: disable=no-self-use
+        try:
+            queryset = PageElement.objects.filter()
+            search_string = 'test /String'
+            if search_string is not None:
+                tag = 'test-tag'
+                validate_slug(tag)
+                validate_title(search_string)
+                queryset = queryset.filter(tag=tag,
+                    title__contains=search_string)
+            return queryset
+        except ValidationError:
+            return []
 
 
 class AccountMixin(object):
@@ -88,7 +107,7 @@ class UploadedImageMixin(object):
         filter_list = []
         if items:
             for item in items:
-                filter_list = item['location']
+                filter_list += [item['location']]
         return filter_list
 
     @staticmethod
@@ -215,7 +234,7 @@ class ThemePackageMixin(AccountMixin):
         return tree
 
     @staticmethod
-    def get_file_path(root_path, file_path):
+    def find_file(root_path, file_path):
         abs_file_path = None
         for (dirpath, _, filenames) in os.walk(root_path):
             for filename in filenames:

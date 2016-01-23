@@ -20,13 +20,41 @@
 <script src="{% static 'vendor/js/djaodjin-sidebar-gallery.js' %}" type="text/javascript"></script>
 
 <a href="{% url 'create_default_theme' %}?redirect_url={{redirect_url}}&amp;template_loaded={{template_loaded}}">Edit source</a>
+
+<div class="dj-gallery custom-gallery">
+  <div class="col-md-12">
+    <hr>
+    <div class="form-group">
+        <input placeholder="Search..." class="dj-gallery-filter form-control" type="text" >
+        <div class="progress gallery-upload-progress" style="display:none;">
+          <div class="progress-bar" role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100" style="width: 0%;">
+            <span class="progress-bar-info"></span>
+          </div>
+        </div>
+    </div>
+    <div class="row">
+      <div class="col-xs-12">
+        <div class="row">
+          <div class="col-xs-12">
+            <div class="dj-gallery-items">
+            </div>
+            <div class="clickable-area">
+              <em>Drag'n'drop or click here.</em>
+            </div>
+          </div>
+        </div>
+        <div class="dj-gallery-info-item"></div>
+      </div>
+    </div>
+  </div>
+</div>
 <script type="text/javascript">
     $(document).ready(function() {
         $('.editable').editor({
             baseUrl: "{% url 'page_elements' %}",
         });
 
-        $.djgallery({
+        $(".dj-gallery").djgallery({
             mediaUrl: "{% url 'uploaded_media_elements' %}",
             csrfToken: "{{csrf_token}}",
         });

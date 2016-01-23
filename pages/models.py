@@ -119,7 +119,7 @@ def get_active_theme():
     Returns the active theme from a request.
     """
     if settings.ACTIVE_THEME_CALLABLE:
-        from pages.compat import import_string
+        from .compat import import_string
         theme_slug = import_string(settings.ACTIVE_THEME_CALLABLE)()
         LOGGER.debug("pages: get_active_theme('%s')", theme_slug)
         try:
