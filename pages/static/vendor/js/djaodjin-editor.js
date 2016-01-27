@@ -1,4 +1,4 @@
-/* global jQuery Markdown document: true*/
+/* global jQuery Markdown document setTimeout: true*/
 
 (function ($) {
     "use strict";
@@ -310,8 +310,11 @@
 
         toggleEdition: function(){
             var self = this;
-            self.getOriginText();
-            self.initEditor();
+            setTimeout(function(){
+                self.getOriginText();
+                self.initEditor();
+            }, self.options.delayMarkdownInit);
+
         },
 
         initEditor: function(){
@@ -439,8 +442,16 @@
 
         getSavedText: function(){
             var self = this;
-            return self.$valueSelector.val();
-        },
+            var newVal = self.$valueSelector.val();
+            var values = self.$el.data("range-values");
+            if (values){
+                if (values[String(newVal)]){
+                    newVal = values[String(newVal)];
+                }
+            }
+            return newVal;
+         },
+
 
         toggleEdition: function(){
             var self = this;
@@ -455,9 +466,16 @@
                     .val(self.originText).css({
                         position: "absolute",
                         width: self.$el.outerWidth(),
-                        top: (self.$el.offset().top + (self.$el.height() / 2)) + "px",
                         left: self.$el.offset().left + "px"
                     });
+
+                if (self.options.rangePosition === "middle"){
+                    self.$valueSelector.css({top: (self.$el.offset().top + (self.$el.height() / 2)) + "px"});
+                }else if (self.options.rangePosition === "bottom"){
+                    self.$valueSelector.css({top: (self.$el.offset().top + self.$el.height()) + "px"});
+                }else if (self.options.rangePosition === "top"){
+                    self.$valueSelector.css({top: self.$el.offset().top + "px"});
+                }
 
                 self.$valueSelector.on("input", function(event){
                     self.options.rangeUpdate(self.$el, $(this).val());
@@ -510,6 +528,8 @@
         rangeUpdate: function(editable, newVal){
             editable.text(newVal);
         },
+        rangePosition: "middle", // position of range input from element "middle", "top" or "bottom"
+        delayMarkdownInit: 0, // Add ability to delay the get request for markdown
         debug: false
     };
 
