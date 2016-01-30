@@ -119,10 +119,6 @@ class PagesElementListAPIView(PageElementMixin, AccountMixin,
         except ValidationError:
             return []
 
-    def get_response_data(self, serializer, created):
-        serializer = self.get_serializer_class()(self.new_element)
-        return serializer.data
-
 
 class PageElementDetail(PageElementMixin, AccountMixin, CreateModelMixin,
                         generics.RetrieveUpdateDestroyAPIView):
@@ -148,7 +144,8 @@ class PageElementDetail(PageElementMixin, AccountMixin, CreateModelMixin,
         return PageElement.objects.filter(
             account=self.account, **kwargs)
 
-    def get_response_data(self, serializer): #pylint: disable=no-self-use
+    def get_response_data(self, serializer, created): #pylint: disable=unused-argument
+        serializer = self.get_serializer_class()(self.get_object())
         return serializer.data
 
     def perform_create(self, serializer):
