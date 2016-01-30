@@ -119,7 +119,7 @@ class PagesElementListAPIView(PageElementMixin, AccountMixin,
         except ValidationError:
             return []
 
-    def get_response_data(self, serializer):
+    def get_response_data(self, serializer, created):
         serializer = self.get_serializer_class()(self.new_element)
         return serializer.data
 
@@ -160,11 +160,18 @@ class PageElementDetail(PageElementMixin, AccountMixin, CreateModelMixin,
             account=self.account)
         self.serializer_data = serializer.data
         self.create_relationships(self.get_object(), serializer)
-        self.response_data = self.get_response_data(serializer)
+        self.response_data = self.get_response_data(serializer, True)
 
     def perform_update(self, serializer):
         serializer.save()
         self.create_relationships(self.get_object(), serializer)
+        self.response_data = self.get_response_data(serializer, False)
+
+    def update(self, request, *args, **kwargs):
+        response = super(PageElementDetail, self).update(request,
+            *args, **kwargs)
+        response.data = self.response_data
+        return response
 
     def create(self, request, *args, **kwargs):
         response = super(PageElementDetail, self).create(request,
