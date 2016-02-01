@@ -100,7 +100,7 @@ class UploadedImageMixin(object):
             # Delete all MediaTag and PageElement using this location
             MediaTag.objects.filter(location=item['location']).delete()
             elements = PageElement.objects.filter(text=item['location'])
-            for element in page_elements:
+            for element in elements:
                 element.text = ""
                 element.save()
 
