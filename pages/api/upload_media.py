@@ -51,9 +51,11 @@ class MediaListAPIView(UploadedImageMixin, AccountMixin, GenericAPIView):
                 .values_list('location', flat=True)
         queryset = self.list_media(
             self.get_default_storage(self.account), tags)
-        page = self.paginate_queryset(queryset['results'])
-        if page is not None:
-            queryset = {'count': len(page), 'results' : page}
+        # XXX - Deactivate pagination until not
+        # implemented in djaodjin-sidebar-gallery
+        # page = self.paginate_queryset(queryset['results'])
+        # if page is not None:
+        #     queryset = {'count': len(page), 'results' : page}
         return Response(queryset)
 
     def post(self, request, *args, **kwargs):
