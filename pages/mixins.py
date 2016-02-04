@@ -123,6 +123,7 @@ class UploadedImageMixin(object):
         try:
             for media in storage.listdir('.')[1]:
                 if not media.endswith('/') and media != "":
+                    abs_path = os.path.join(storage.location, media)
                     location = storage.url(media).split('?')[0]
                     total += 1
                     if not filter_list or location in filter_list:
@@ -130,7 +131,8 @@ class UploadedImageMixin(object):
                             {'location': location,
                             'tags': MediaTag.objects.filter(
                                 location=location).values_list(
-                                'tag', flat=True)
+                                'tag', flat=True),
+                            'updated_at': storage.modified_time(media)
                             }]
         except OSError:
             if storage.exists('.'):
@@ -139,7 +141,9 @@ class UploadedImageMixin(object):
         except S3ResponseError:
             LOGGER.exception(
                 "Unable to list objects in %s bucket.", storage.bucket_name)
-        return {'count': total, 'results': results}
+        return {
+            'count': total,
+            'results': sorted(results, key=lambda x: x['updated_at'])}
 
     @staticmethod
     def list_delete_media(storage, filter_list):
