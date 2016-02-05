@@ -141,6 +141,9 @@ class UploadedImageMixin(object):
         except S3ResponseError:
             LOGGER.exception(
                 "Unable to list objects in %s bucket.", storage.bucket_name)
+
+        # sort results by updated_at to sort by created_at.
+        # Media are not updated, so updated_at = created_at
         return {
             'count': total,
             'results': sorted(results, key=lambda x: x['updated_at'])}
