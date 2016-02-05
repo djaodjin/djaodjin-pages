@@ -123,7 +123,6 @@ class UploadedImageMixin(object):
         try:
             for media in storage.listdir('.')[1]:
                 if not media.endswith('/') and media != "":
-                    abs_path = os.path.join(storage.location, media)
                     location = storage.url(media).split('?')[0]
                     total += 1
                     if not filter_list or location in filter_list:
