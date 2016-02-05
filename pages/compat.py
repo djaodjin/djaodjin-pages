@@ -1,4 +1,4 @@
-# Copyright (c) 2015, DjaoDjin inc.
+# Copyright (c) 2016, DjaoDjin inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -22,41 +22,41 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#pylint: disable=no-name-in-module,unused-import
+
+from django import VERSION as DJANGO_VERSION
 from django.conf import settings as django_settings
+from django.template import RequestContext
+
 
 try:
     from django.contrib.auth import get_user_model
 except ImportError: # django < 1.5
-    from django.contrib.auth.models import User #pylint: disable=unused-import
+    from django.contrib.auth.models import User
 else:
-    User = get_user_model()                     #pylint: disable=invalid-name
-
+    User = get_user_model() #pylint:disable=invalid-name
 
 try:
-    #pylint: disable=no-name-in-module, unused-import
     from django.utils.module_loading import import_string
 except ImportError: # django < 1.7
-    #pylint: disable=unused-import
     from django.utils.module_loading import import_by_path as import_string
 
 
 try:
-    #pylint: disable=no-name-in-module, unused-import
     from django.template.context_processors import csrf
 except ImportError: # django < 1.8
-    from django.core.context_processors import csrf #pylint: disable=unused-import
+    from django.core.context_processors import csrf
 
 try:
-    #pylint: disable=no-name-in-module, unused-import
     from django.template.exceptions import TemplateDoesNotExist
 except ImportError:
-    from django.template.base import TemplateDoesNotExist #pylint: disable=unused-import
+    from django.template.base import TemplateDoesNotExist
 
 
 def get_loaders():
     loaders = []
     try:
-        from django.template.loader import _engine_list #pylint: disable=no-name-in-module
+        from django.template.loader import _engine_list
         engines = _engine_list()
         for engine in engines:
             try:
@@ -75,3 +75,15 @@ def get_loaders():
             if template_loader is not None:
                 loaders.append(template_loader)
     return loaders
+
+
+def render_template(template, context, request):
+    """
+    In Django 1.7 django.template.Template.render(self, context)
+    In Django 1.8 django.template.backends.django.Template.render(
+        self, context=None, request=None)
+    """
+    if DJANGO_VERSION[0] == 1 and DJANGO_VERSION[1] < 8:
+        context = RequestContext(request, context)
+        return template.render(context)
+    return template.render(context, request)

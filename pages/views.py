@@ -1,4 +1,4 @@
-# Copyright (c) 2015, DjaoDjin inc.
+# Copyright (c) 2016, DjaoDjin inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -38,12 +38,12 @@ from django.views.generic import (
     TemplateView,
     CreateView,
     View)
-from django.template import loader, Context, RequestContext
+from django.template import loader
 from django.template.response import TemplateResponse
 
 from .mixins import AccountMixin, ThemePackageMixin
 from .models import PageElement, ThemePackage, get_active_theme
-from .compat import csrf, TemplateDoesNotExist, get_loaders
+from .compat import csrf, TemplateDoesNotExist, get_loaders, render_template
 from .utils import random_slug
 
 
@@ -60,10 +60,8 @@ def inject_edition_tools(response, request=None, context=None,
         if context is None:
             context = {}
         context.update(csrf(request))
-        if not isinstance(context, Context):
-            context = RequestContext(request, context)
         template = loader.get_template(body_top_template_name)
-        body_top = template.render(context).strip()
+        body_top = render_template(template, context, request).strip()
         if body_top:
             if not soup:
                 soup = BeautifulSoup(response.content, 'html5lib')
@@ -77,7 +75,7 @@ def inject_edition_tools(response, request=None, context=None,
                 # expected HTML text.
                 soup.body.insert(1, BeautifulSoup(body_top).body.next)
         template = loader.get_template(body_bottom_template_name)
-        body_bottom = template.render(context).strip()
+        body_bottom = render_template(template, context, request).strip()
         if body_bottom:
             if not soup:
                 soup = BeautifulSoup(response.content, 'html5lib')
