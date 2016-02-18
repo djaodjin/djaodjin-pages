@@ -119,7 +119,6 @@
             var method = "PUT";
 
             if (self.$el.attr("data-key")){
-                method = "PATCH";
                 data[self.$el.attr("data-key")] = $.trim(savedText);
             } else {
                 data = {
@@ -128,13 +127,15 @@
                 };
             }
 
-            if (self.options.debug){
+            if( self.options.debug ){
                 console.log(data);
-            }else{
+            } else {
                 $.ajax({
                     method: method,
                     url: self.options.baseUrl + self.getId() + "/",
-                    data: data,
+                    data: JSON.stringify(data),
+                    datatype: "json",
+                    contentType: "application/json; charset=utf-8",
                     success: function(response) {
                         self.options.onSuccess(self, response);
                         self.$el.removeAttr("contenteditable");
