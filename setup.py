@@ -1,4 +1,4 @@
-# Copyright (c) 2014, DjaoDjin inc.
+# Copyright (c) 2016, DjaoDjin inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -23,13 +23,22 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from distutils.core import setup
+
 import pages
+
+requirements = []
+with open('./requirements.txt') as requirements_txt:
+    for line in requirements_txt:
+        prerequisite = line.split('#')[0].strip()
+        if prerequisite:
+            requirements += [prerequisite]
 
 setup(
     name='djaodjin-pages',
     version=pages.__version__,
-    author='The DjaoDjin Team',
+    author='DjaoDjin inc.',
     author_email='support@djaodjin.com',
+    install_requires=requirements,
     packages=[
         'pages',
         'pages.api',
@@ -42,6 +51,10 @@ setup(
         'static/vendor/css/*',
         'static/vendor/js/*',
         'templates/pages/*.html']},
+    url='https://github.com/djaodjin/djaodjin-pages/',
+    download_url='https://github.com/djaodjin/djaodjin-pages/tarball/%s' \
+        % pages.__version__,
     license='BSD',
-    description='Pages Django app',
+    description='Pages Django App',
+    long_description=open('README.md').read(),
 )
