@@ -40,10 +40,9 @@ def install_theme(theme_name, zip_file): #pylint:disable=too-many-locals
     LOGGER.info("install theme %s", theme_name)
     theme_dir = safe_join(settings.THEMES_DIR, theme_name)
     public_dir = safe_join(settings.PUBLIC_ROOT, theme_name)
-    static_dir = safe_join(public_dir, 'static')
     templates_dir = safe_join(theme_dir, 'templates')
 
-    # We rely on the assumption that ``static_dir`` and ``templates_dir``
+    # We rely on the assumption that ``public_dir`` and ``templates_dir``
     # are on the same filesystem. We create a temporary directory on that
     # common filesystem, which guarentees that:
     #   1. If the disk is full, we will find on extract, not when we try
@@ -51,7 +50,7 @@ def install_theme(theme_name, zip_file): #pylint:disable=too-many-locals
     #   2. If the filesystem is encrypted, we don't inadvertently leak
     #      information by creating "temporary" files.
     tmp_base = safe_join(
-        os.path.commonprefix([static_dir, templates_dir]), '.cache')
+        os.path.commonprefix([public_dir, templates_dir]), '.cache')
     if not os.path.exists(tmp_base):
         os.makedirs(tmp_base)
     if not os.path.isdir(os.path.dirname(templates_dir)):
@@ -62,10 +61,8 @@ def install_theme(theme_name, zip_file): #pylint:disable=too-many-locals
             if info.file_size == 0:
                 # Crude way to detect directories
                 continue
-            name = info.filename
             tmp_path = None
-            test_parts = safe_join(static_dir, name).replace(
-                static_dir + os.sep, '').split(os.sep)[1:] # remove topdir
+            test_parts = os.path.normpath(info.filename).split(os.sep)[1:]
             if len(test_parts) > 0:
                 base = test_parts.pop(0)
                 if base == 'public':
@@ -87,7 +84,7 @@ def install_theme(theme_name, zip_file): #pylint:disable=too-many-locals
                     if not os.path.isdir(os.path.dirname(tmp_path)):
                         os.makedirs(os.path.dirname(tmp_path))
                     with open(tmp_path, 'wb') as extracted_file:
-                        extracted_file.write(zip_file.read(name))
+                        extracted_file.write(zip_file.read(info.filename))
 
         # Should be safe to move in-place at this point.
         # Templates are necessary while public resources (css, js)
@@ -101,7 +98,7 @@ def install_theme(theme_name, zip_file): #pylint:disable=too-many-locals
         if os.path.exists(tmp_templates):
             os.rename(tmp_templates, templates_dir)
             if os.path.exists(tmp_public):
-                os.rename(tmp_public, static_dir)
+                os.rename(tmp_public, public_dir)
     finally:
         # Always delete the temporary directory, exception raised or not.
         shutil.rmtree(tmp_dir)
