@@ -1,4 +1,4 @@
-# Copyright (c) 2015, Djaodjin Inc.
+# Copyright (c) 2016, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -22,8 +22,8 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import random, string, bleach
-from django.template.defaultfilters import slugify
+import bleach
+from django.db import transaction
 from rest_framework import serializers
 
 from .models import PageElement, ThemePackage
@@ -70,49 +70,40 @@ class PageElementSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = PageElement
-
-    def get_field_names(self, declared_fields, info):
-        fields = super(PageElementSerializer, self).get_field_names(
-            declared_fields, info)
-        for field, _ in declared_fields.iteritems():
-            if not field in fields:
-                fields.append(field)
-        return fields
-
-    def update(self, instance, validated_data):
-        if 'title' in validated_data:
-            instance.title = validated_data['title']
-        if 'text' in validated_data:
-            instance.text = validated_data['text']
-        instance.save()
-        return instance
+        fields = ('slug', 'title', 'text', 'tag',
+                  'orig_elements', 'dest_elements')
 
     def create(self, validated_data):
-        model_class = self.Meta.model
-        instance = model_class()
-        if 'title' in validated_data:
-            instance.title = validated_data['title']
-        if 'text' in validated_data:
-            instance.text = validated_data['text']
-        if 'slug' in validated_data:
-            instance.slug = validated_data['slug']
-        if 'tag' in validated_data:
-            instance.tag = validated_data['tag']
-        if 'account' in validated_data:
-            instance.account = validated_data['account']
-        elif instance.title:
-            instance.slug = slugify(instance.title)
-        else:
-            instance.slug = ''.join(
-                random.choice(string.letters) for count in range(5))
-        instance.save()
+        orig_elements = validated_data.pop('orig_elements', None)
+        dest_elements = validated_data.pop('dest_elements', None)
+        with transaction.atomic():
+            instance = super(PageElementSerializer, self).create(validated_data)
+            if orig_elements:
+                for orig_element in orig_elements:
+                    orig_element = PageElement.objects.get(slug=orig_element)
+                    orig_element.add_relationship(instance)
+                if dest_elements:
+                    for dest_element in dest_elements:
+                        dest_element = PageElement.objects.get(
+                            slug=dest_element)
+                        instance.add_relationship(dest_element)
         return instance
 
 
 class ThemePackageSerializer(serializers.ModelSerializer):
 
+#XXX    urls = serializers.SerializerMethodField()
+
     class Meta:
         model = ThemePackage
+
+#XXX    def get_urls(self, obj):
+        # Implementation Note: We cannot rely on ``reverse`` here because
+        # it would add an incorrect site prefix.
+#XXX        urls = {
+#XXX            'theme_update': reverse('uploaded_theme_edition', args=(obj,))
+#XXX        }
+#XXX        return urls
 
 
 class MediaItemSerializer(serializers.Serializer):

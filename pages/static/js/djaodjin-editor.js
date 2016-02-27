@@ -15,16 +15,13 @@
 
     Editor.prototype = {
         init: function(){
-
             var self = this;
             self.$el.on("click", function(){
                 self.toggleEdition();
             });
-
             self.$el.on("blur", function(){
                 self.saveEdition();
             });
-
             self.$el.on("mouseover mouseleave", function(event){
                 self.hoverElement(event);
             });
@@ -32,12 +29,14 @@
             $(".editable").bind("hallomodified", function(event, data) {
                 $("#modified").html("Editables modified");
             });
-
             if (self.options.preventBlurOnClick !== ""){
                 $(document).on("mousedown", self.options.preventBlurOnClick, function(event){
                     event.stopPropagation();
                     preventClick = true;
                 });
+            }
+            if( self.options.focus ) {
+                self.toggleEdition();
             }
         },
 
@@ -531,7 +530,8 @@
         },
         rangePosition: "middle", // position of range input from element "middle", "top" or "bottom"
         delayMarkdownInit: 0, // Add ability to delay the get request for markdown
-        debug: false
+        debug: false,
+        focus: false
     };
 
 }( jQuery ));

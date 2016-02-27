@@ -22,40 +22,18 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from distutils.core import setup
+from django.views.generic import RedirectView
 
-import pages
+from ..models import get_current_account
 
-requirements = []
-with open('./requirements.txt') as requirements_txt:
-    for line in requirements_txt:
-        prerequisite = line.split('#')[0].strip()
-        if prerequisite:
-            requirements += [prerequisite]
 
-setup(
-    name='djaodjin-pages',
-    version=pages.__version__,
-    author='DjaoDjin inc.',
-    author_email='support@djaodjin.com',
-    install_requires=requirements,
-    packages=[
-        'pages',
-        'pages.api',
-        'pages.urls',
-        'pages.views',
-        'pages.templatetags',
-        'pages.management',
-        'pages.management.commands'],
-    package_data={'pages': [
-        'static/js/*',
-        'static/vendor/css/*',
-        'static/vendor/js/*',
-        'templates/pages/*.html']},
-    url='https://github.com/djaodjin/djaodjin-pages/',
-    download_url='https://github.com/djaodjin/djaodjin-pages/tarball/%s' \
-        % pages.__version__,
-    license='BSD',
-    description='Pages Django App',
-    long_description=open('README.md').read(),
-)
+class AccountRedirectView(RedirectView):
+    """
+    Redirects to the URL containing the app.
+    """
+    slug_url_kwarg = 'account'
+
+    def get(self, request, *args, **kwargs):
+        app = get_current_account()
+        kwargs.update({self.slug_url_kwarg: app})
+        return super(AccountRedirectView, self).get(request, *args, **kwargs)

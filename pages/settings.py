@@ -39,13 +39,8 @@ _SETTINGS = {
     'PUBLIC_WHITELIST': None,
     'TEMPLATES_WHITELIST': None,
     'ACTIVE_THEME_CALLABLE': None,
-    'PAGELEMENT_SERIALIZER': getattr(
-        settings, 'PAGELEMENT_SERIALIZER',
-        'pages.serializers.PageElementSerializer'),
     'THEMES_DIR': os.path.join(settings.BASE_DIR, 'themes')
 }
-
-SLUG_RE = r'[a-zA-Z0-9_\-]+'
 
 _SETTINGS.update(getattr(settings, 'PAGES', {}))
 
@@ -60,8 +55,9 @@ PUBLIC_ROOT = _SETTINGS.get('PUBLIC_ROOT')
 PUBLIC_WHITELIST = _SETTINGS.get('PUBLIC_WHITELIST')
 TEMPLATES_WHITELIST = _SETTINGS.get('TEMPLATES_WHITELIST')
 ACTIVE_THEME_CALLABLE = _SETTINGS.get('ACTIVE_THEME_CALLABLE')
-PAGELEMENT_SERIALIZER = _SETTINGS.get('PAGELEMENT_SERIALIZER')
 THEMES_DIR = _SETTINGS.get('THEMES_DIR')
+
+SLUG_RE = r'[a-zA-Z0-9_\-]+'
 
 # Sanitizer settings
 ALLOWED_TAGS = [

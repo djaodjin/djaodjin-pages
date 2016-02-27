@@ -22,40 +22,11 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from distutils.core import setup
+'''API URLs for the pages application'''
 
-import pages
+from django.conf.urls import include, url
 
-requirements = []
-with open('./requirements.txt') as requirements_txt:
-    for line in requirements_txt:
-        prerequisite = line.split('#')[0].strip()
-        if prerequisite:
-            requirements += [prerequisite]
-
-setup(
-    name='djaodjin-pages',
-    version=pages.__version__,
-    author='DjaoDjin inc.',
-    author_email='support@djaodjin.com',
-    install_requires=requirements,
-    packages=[
-        'pages',
-        'pages.api',
-        'pages.urls',
-        'pages.views',
-        'pages.templatetags',
-        'pages.management',
-        'pages.management.commands'],
-    package_data={'pages': [
-        'static/js/*',
-        'static/vendor/css/*',
-        'static/vendor/js/*',
-        'templates/pages/*.html']},
-    url='https://github.com/djaodjin/djaodjin-pages/',
-    download_url='https://github.com/djaodjin/djaodjin-pages/tarball/%s' \
-        % pages.__version__,
-    license='BSD',
-    description='Pages Django App',
-    long_description=open('README.md').read(),
-)
+urlpatterns = [
+    url(r'^', include('pages.urls.api.elements')),
+    url(r'^', include('pages.urls.api.themes')),
+]

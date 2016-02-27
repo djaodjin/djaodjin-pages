@@ -22,187 +22,27 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#pylint:disable=unused-argument
-
-import markdown, os, zipfile
-
+import logging, os, zipfile
 from StringIO import StringIO
-from bs4 import BeautifulSoup
+
 from django.template.loader import get_template
 from django.template.loader_tags import ExtendsNode
 from django.http import HttpResponseRedirect, HttpResponse
 from django.core.urlresolvers import reverse
-from django.views.generic import (
-    ListView,
-    DetailView,
-    TemplateView,
-    CreateView,
-    View)
-from django.template import loader
-from django.template.response import TemplateResponse
+from django.views.generic import DetailView, TemplateView, CreateView, View
 
-from .mixins import AccountMixin, ThemePackageMixin
-from .models import PageElement, ThemePackage, get_active_theme
-from .compat import csrf, TemplateDoesNotExist, get_loaders, render_template
-from .utils import random_slug
+from ..mixins import AccountMixin, ThemePackageMixin
+from ..models import ThemePackage, get_active_theme
+from ..compat import TemplateDoesNotExist, get_loaders
+from ..utils import random_slug
 
 
-def inject_edition_tools(response, request=None, context=None,
-                    body_top_template_name="pages/_body_top.html",
-                    body_bottom_template_name="pages/_body_bottom.html"):
-    """
-    Inject the edition tools into the html *content* and return
-    a BeautifulSoup object of the resulting content + tools.
-    """
-    soup = None
-    content_type = response.get('content-type', '')
-    if content_type.startswith('text/html'):
-        if context is None:
-            context = {}
-        context.update(csrf(request))
-        template = loader.get_template(body_top_template_name)
-        body_top = render_template(template, context, request).strip()
-        if body_top:
-            if not soup:
-                soup = BeautifulSoup(response.content, 'html5lib')
-            if soup and soup.body:
-                # Implementation Note: we have to use ``.body.next`` here
-                # because html5lib "fixes" our HTML by adding missing
-                # html/body tags. Furthermore if we use
-                #``soup.body.insert(1, BeautifulSoup(body_top, 'html.parser'))``
-                # instead, later on ``soup.find_all(class_=...)`` returns
-                # an empty set though ``soup.prettify()`` outputs the full
-                # expected HTML text.
-                soup.body.insert(1, BeautifulSoup(body_top).body.next)
-        template = loader.get_template(body_bottom_template_name)
-        body_bottom = render_template(template, context, request).strip()
-        if body_bottom:
-            if not soup:
-                soup = BeautifulSoup(response.content, 'html5lib')
-            if soup and soup.body:
-                soup.body.append(BeautifulSoup(body_bottom, 'html.parser'))
-    return soup
+LOGGER = logging.getLogger(__name__)
 
 
-class PageMixin(AccountMixin):
-    """
-    Display or Edit a ``Page`` of a ``Project``.
+class ThemePackagesView(AccountMixin, TemplateView):
 
-    """
-    body_top_template_name = "pages/_body_top.html"
-    body_bottom_template_name = "pages/_body_bottom.html"
-
-    def add_edition_tools(self, response, context=None):
-        return inject_edition_tools(
-            response, request=self.request, context=context,
-            body_top_template_name=self.body_top_template_name,
-            body_bottom_template_name=self.body_bottom_template_name)
-
-    @staticmethod
-    def insert_formatted(editable, new_text):
-        new_text = BeautifulSoup(new_text, 'html5lib')
-        for image in new_text.find_all('img'):
-            image['style'] = "max-width:100%"
-        if editable.name == 'div':
-            editable.clear()
-            editable.append(new_text)
-        else:
-            editable.string = "ERROR : Impossible to insert HTML into \
-                \"<%s></%s>\" element. It should be \"<div></div>\"." %\
-                (editable.name, editable.name)
-            editable['style'] = "color:red;"
-            # Prevent edition of error notification
-            editable['class'] = editable['class'].remove("editable")
-
-    @staticmethod
-    def insert_currency(editable, new_text):
-        amount = float(new_text)
-        editable.string = "$%.2f" % (amount/100)
-
-    @staticmethod
-    def insert_markdown(editable, new_text):
-        new_text = markdown.markdown(new_text,)
-        new_text = BeautifulSoup(new_text, 'html.parser')
-        for image in new_text.find_all('img'):
-            image['style'] = "max-width:100%"
-        editable.name = 'div'
-        editable.string = ''
-        children_done = []
-        for element in new_text.find_all():
-            if element.name != 'html' and\
-                element.name != 'body':
-                if len(element.findChildren()) > 0:
-                    for sub_el in element.findChildren():
-                        element.append(sub_el)
-                        children_done += [sub_el]
-                if not element in children_done:
-                    editable.append(element)
-
-    def get(self, request, *args, **kwargs):
-        #pylint: disable=too-many-statements, too-many-locals
-        response = super(PageMixin, self).get(request, *args, **kwargs)
-        if self.template_name and isinstance(response, TemplateResponse):
-            response.render()
-        soup = self.add_edition_tools(response,
-            {'redirect_url': request.path,
-            'template_loaded': self.template_name})
-        if not soup:
-            content_type = response.get('content-type', '')
-            if content_type.startswith('text/html'):
-                soup = BeautifulSoup(response.content, 'html5lib')
-        if soup:
-            editable_ids = set([])
-            for editable in soup.find_all(class_="editable"):
-                try:
-                    editable_ids |= set([editable['id']])
-                except KeyError:
-                    continue
-
-            kwargs = {'slug__in': editable_ids}
-            if self.account:
-                kwargs.update({'account': self.account})
-            for edit in PageElement.objects.filter(**kwargs):
-                editable = soup.find(id=edit.slug)
-                new_text = edit.text
-                if editable:
-                    if 'edit-formatted' in editable['class']:
-                        self.insert_formatted(
-                            editable, new_text)
-                    elif 'edit-markdown' in editable['class']:
-                        self.insert_markdown(editable, new_text)
-                    elif 'edit-currency' in editable['class']:
-                        self.insert_currency(editable, new_text)
-                    elif 'droppable-image' in editable['class']:
-                        editable['src'] = edit.text
-                    else:
-                        editable.string = new_text
-            response.content = soup.prettify()
-        return response
-
-
-class PageView(PageMixin, TemplateView):
-
-    http_method_names = ['get']
-
-
-class PageElementListView(ListView):
-    model = PageElement
-    tag = None
-
-    def get_queryset(self):
-        queryset = self.model.objects.all()
-        if self.tag:
-            queryset = queryset.filter(tag=self.tag)
-        return queryset
-
-
-class PageElementDetailView(DetailView):
-    model = PageElement
-
-
-class ThemePackagesView(TemplateView):
-
-    template_name = "pages/package_list.html"
+    template_name = "pages/theme.html"
 
 
 class ThemePackagesCreateView(ThemePackageMixin, CreateView):
@@ -344,7 +184,7 @@ class ThemePackagesEditView(ThemePackageMixin, DetailView):
 
 class ThemePackageDownloadView(ThemePackageMixin, View):
 
-    def get(self, *args, **kwargs):
+    def get(self, *args, **kwargs): #pylint:disable=unused-argument
         theme = ThemePackage.objects.get(slug=self.kwargs.get('slug'))
         from_static_dir = self.get_statics_dir(theme)
         from_templates_dir = self.get_templates_dir(theme)

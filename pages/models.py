@@ -1,4 +1,4 @@
-# Copyright (c) 2015, Djaodjin Inc.
+# Copyright (c) 2016, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -24,18 +24,21 @@
 
 import logging
 
-from django.db import models
+from django.db import IntegrityError, models, transaction
+from django.template.defaultfilters import slugify
 
 from . import settings
 
+
 LOGGER = logging.getLogger(__name__)
+
 
 class RelationShip(models.Model):
     orig_element = models.ForeignKey(
         "PageElement", related_name='from_element')
     dest_element = models.ForeignKey(
         "PageElement", related_name='to_element', blank=True, null=True)
-    tag = models.SlugField()
+    tag = models.SlugField(null=True)
 
     def __unicode__(self):
         return "%s to %s" % (
@@ -55,12 +58,13 @@ class PageElement(models.Model):
         related_name='related_to', through='RelationShip', symmetrical=False)
     tag = models.SlugField(null=True, blank=True)
 
-    def add_relationship(self, element, tag):
-        relationship, created = RelationShip.objects.get_or_create(
-            orig_element=self,
-            dest_element=element,
-            tag=tag)
-        return relationship, created
+    def __unicode__(self):
+        return self.slug
+
+    def add_relationship(self, element, tag=None):
+        return RelationShip.objects.get_or_create(
+            orig_element=self, dest_element=element,
+            defaults={'tag': tag})
 
     def remove_relationship(self, element):
         RelationShip.objects.filter(
@@ -82,8 +86,34 @@ class PageElement(models.Model):
             from_element__tag=tag,
             from_element__dest_element=self)
 
-    def __unicode__(self):
-        return self.slug
+    def save(self, force_insert=False, force_update=False,
+             using=None, update_fields=None):
+        if self.slug: # seriallizer will set created slug to '' instead of None.
+            return super(PageElement, self).save(
+                force_insert=force_insert, force_update=force_update,
+                using=using, update_fields=update_fields)
+        max_length = self._meta.get_field('slug').max_length
+        slug_base = slugify(self.title)
+        if len(slug_base) > max_length:
+            slug_base = slug_base[:max_length]
+        self.slug = slug_base
+        num = 1
+        while num < 10:
+            with transaction.atomic():
+                try:
+                    return super(PageElement, self).save(
+                        force_insert=force_insert, force_update=force_update,
+                        using=using, update_fields=update_fields)
+                except IntegrityError:
+                    suffix = '-%d' % num
+                    if len(slug_base) + len(suffix) > max_length:
+                        self.slug = slug_base[:(max_length-len(suffix))] \
+                            + suffix
+                    else:
+                        self.slug = slug_base + suffix
+                    num = num + 1
+        raise IntegrityError(
+            "Unable to create unique slug for title '%s'" % self.title)
 
 
 class MediaTag(models.Model):
@@ -114,12 +144,20 @@ class ThemePackage(models.Model):
         else:
             return self.name
 
+
+def get_current_account():
+    if settings.GET_CURRENT_ACCOUNT:
+        from .compat import import_string # Because AppRegistryNotReady
+        return import_string(settings.GET_CURRENT_ACCOUNT)()
+    return None
+
+
 def get_active_theme():
     """
     Returns the active theme from a request.
     """
     if settings.ACTIVE_THEME_CALLABLE:
-        from .compat import import_string
+        from .compat import import_string  # Because AppRegistryNotReady
         theme_slug = import_string(settings.ACTIVE_THEME_CALLABLE)()
         LOGGER.debug("pages: get_active_theme('%s')", theme_slug)
         try:

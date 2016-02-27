@@ -27,5 +27,5 @@ from django.conf.urls import url, include
 
 urlpatterns = [
     url(r'^api/', include('pages.urls.api')),
-    url(r'^', include('pages.urls.uploaded_package')),
+    url(r'^', include('pages.urls.themes')),
 ]

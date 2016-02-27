@@ -1,4 +1,4 @@
-# Copyright (c) 2015, Djaodjin Inc.
+# Copyright (c) 2016, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -23,21 +23,27 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from django.conf.urls import url
-from ..views import (ThemePackagesView,
+
+from ..settings import SLUG_RE
+from ..views import AccountRedirectView
+from ..views.themes import (ThemePackagesView,
     ThemePackagesEditView, ThemePackagesCreateView,
     ThemePackageDownloadView)
 
 urlpatterns = [
-    url(r'^themes/(?P<slug>[\w-]+)/download/',
-        ThemePackageDownloadView.as_view(),
-        name="download_theme"),
-    url(r'^themes/create/$',
+    url(r'^themes/library/create/$',
         ThemePackagesCreateView.as_view(),
         name="create_default_theme"),
-    url(r'^themes/(?P<slug>[\w-]+)',
+    url(r'^themes/library/(?P<slug>[\w-]+)/download/',
+        ThemePackageDownloadView.as_view(),
+        name="download_theme"),
+    url(r'^themes/library/(?P<slug>[\w-]+)',
         ThemePackagesEditView.as_view(),
         name="uploaded_theme_edition"),
-    url(r'^themes/',
-        ThemePackagesView.as_view(),
-        name="uploaded_themes"),
+
+    url(r'^themes/(?P<account>%s)/' % SLUG_RE,
+        ThemePackagesView.as_view(), name="theme_update"),
+    url(r'^themes/', AccountRedirectView.as_view(
+        pattern_name='theme_update'),
+        name="theme_account_update"),
 ]

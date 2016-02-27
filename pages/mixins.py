@@ -26,21 +26,24 @@ import logging, os, shutil
 from collections import OrderedDict
 
 from django.core.files.storage import get_storage_class, FileSystemStorage
-#pylint:disable=no-name-in-module,import-error
-from django.utils.six.moves.urllib.parse import urljoin
+from django.core.urlresolvers import reverse
+from django.core.validators import validate_slug
+from django.core.exceptions import ValidationError
 from django.db.models import Q
 from django.utils._os import safe_join
 from boto.s3.connection import S3Connection
 from boto.exception import S3ResponseError
 
 from . import settings
-from .compat import import_string
-from .models import MediaTag, PageElement, ThemePackage
+from .models import MediaTag, PageElement, ThemePackage, get_current_account
+from .utils import validate_title
+
+#pylint:disable=no-name-in-module,import-error
+from django.utils.six.moves.urllib.parse import urljoin
+
 
 LOGGER = logging.getLogger(__name__)
-from django.core.validators import validate_slug
-from django.core.exceptions import ValidationError
-from .utils import validate_title
+
 
 class PageElementMixin(object):
 
@@ -66,11 +69,23 @@ class AccountMixin(object):
     @property
     def account(self):
         if not hasattr(self, '_account'):
-            if settings.GET_CURRENT_ACCOUNT:
-                self._account = import_string(settings.GET_CURRENT_ACCOUNT)()
-            else:
-                self._account = None
+            self._account = get_current_account()
         return self._account
+
+    def get_context_data(self, **kwargs):
+        context = super(AccountMixin, self).get_context_data(**kwargs)
+        urls_pages = {
+            'api_themes': reverse('pages_api_themes'),
+            'theme_base': reverse('theme_account_update')
+        }
+        if 'urls' in context:
+            if 'pages' in context['urls']:
+                context['urls']['pages'].update(urls_pages)
+            else:
+                context['urls'].update({'pages': urls_pages})
+        else:
+            context.update({'urls': {'pages': urls_pages}})
+        return context
 
 
 class UploadedImageMixin(object):

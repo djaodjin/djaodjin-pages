@@ -22,40 +22,22 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from distutils.core import setup
+'''API URLs for the pages application'''
 
-import pages
+from django.conf.urls import url
 
-requirements = []
-with open('./requirements.txt') as requirements_txt:
-    for line in requirements_txt:
-        prerequisite = line.split('#')[0].strip()
-        if prerequisite:
-            requirements += [prerequisite]
+from ...api.edition import PageElementDetail, PagesElementListAPIView
+from ...api.upload_media import MediaListAPIView
+from ...api.relationship import RelationShipListAPIView
 
-setup(
-    name='djaodjin-pages',
-    version=pages.__version__,
-    author='DjaoDjin inc.',
-    author_email='support@djaodjin.com',
-    install_requires=requirements,
-    packages=[
-        'pages',
-        'pages.api',
-        'pages.urls',
-        'pages.views',
-        'pages.templatetags',
-        'pages.management',
-        'pages.management.commands'],
-    package_data={'pages': [
-        'static/js/*',
-        'static/vendor/css/*',
-        'static/vendor/js/*',
-        'templates/pages/*.html']},
-    url='https://github.com/djaodjin/djaodjin-pages/',
-    download_url='https://github.com/djaodjin/djaodjin-pages/tarball/%s' \
-        % pages.__version__,
-    license='BSD',
-    description='Pages Django App',
-    long_description=open('README.md').read(),
-)
+
+urlpatterns = [
+    url(r'^editable/relationship/',
+        RelationShipListAPIView.as_view(), name='relationships'),
+    url(r'^uploaded-media/',
+        MediaListAPIView.as_view(), name='uploaded_media_elements'),
+    url(r'^editables/(?P<slug>[\w-]+)/',
+        PageElementDetail.as_view(), name='edit_page_element'),
+    url(r'^editables/',
+        PagesElementListAPIView.as_view(), name='page_elements'),
+]

@@ -56,6 +56,7 @@ def install_theme(theme_name, zip_file): #pylint:disable=too-many-locals
     if not os.path.isdir(os.path.dirname(templates_dir)):
         os.makedirs(os.path.dirname(templates_dir))
     tmp_dir = tempfile.mkdtemp(dir=tmp_base)
+    #pylint: disable=too-many-nested-blocks
     try:
         for info in zip_file.infolist():
             if info.file_size == 0:

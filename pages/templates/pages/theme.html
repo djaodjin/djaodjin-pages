@@ -16,7 +16,7 @@
                     <td>[% template.name %]<span style="font-size:11px;">[% template.slug.replace(template.name, '')|limitTo:10 %]</span></td>
                     <td>[% template.created_at|date %]</td>
                     <td>[% template.updated_at|date %]</td>
-                    <td><a href="{% url 'uploaded_themes' %}[% template.slug %]/">Edit</a></td>
+                    <td><a href="{% url 'theme_account_update' %}[% template.slug %]/">Edit</a></td>
                 </tr>
             </tbody>
         </table>
