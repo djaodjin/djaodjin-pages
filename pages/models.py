@@ -37,7 +37,7 @@ class RelationShip(models.Model):
     orig_element = models.ForeignKey(
         "PageElement", related_name='from_element')
     dest_element = models.ForeignKey(
-        "PageElement", related_name='to_element', blank=True, null=True)
+        "PageElement", related_name='to_element')
     tag = models.SlugField(null=True)
 
     def __unicode__(self):
