@@ -43,6 +43,7 @@ setup(
         'pages',
         'pages.api',
         'pages.urls',
+        'pages.urls.api',
         'pages.views',
         'pages.templatetags',
         'pages.management',
