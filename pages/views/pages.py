@@ -43,12 +43,14 @@ def inject_edition_tools(response, request=None, context=None,
     Inject the edition tools into the html *content* and return
     a BeautifulSoup object of the resulting content + tools.
     """
-    soup = None
     content_type = response.get('content-type', '')
-    if content_type.startswith('text/html'):
-        if context is None:
-            context = {}
-        context.update(csrf(request))
+    if not content_type.startswith('text/html'):
+        return None
+    if context is None:
+        context = {}
+    context.update(csrf(request))
+    soup = None
+    if body_top_template_name:
         template = loader.get_template(body_top_template_name)
         body_top = render_template(template, context, request).strip()
         if body_top:
@@ -63,6 +65,7 @@ def inject_edition_tools(response, request=None, context=None,
                 # an empty set though ``soup.prettify()`` outputs the full
                 # expected HTML text.
                 soup.body.insert(1, BeautifulSoup(body_top).body.next)
+    if body_bottom_template_name:
         template = loader.get_template(body_bottom_template_name)
         body_bottom = render_template(template, context, request).strip()
         if body_bottom:

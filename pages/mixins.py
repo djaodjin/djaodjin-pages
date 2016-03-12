@@ -72,11 +72,23 @@ class AccountMixin(object):
             self._account = get_current_account()
         return self._account
 
+    def get_url_kwargs(self):
+        """
+        Rebuilds the ``kwargs`` to pass to ``reverse()``.
+        """
+        url_kwargs = {}
+        if self.account_url_kwarg in self.kwargs:
+            url_kwargs.update({
+                self.account_url_kwarg: self.kwargs[self.account_url_kwarg]})
+        return url_kwargs
+
     def get_context_data(self, **kwargs):
         context = super(AccountMixin, self).get_context_data(**kwargs)
         urls_pages = {
-            'api_themes': reverse('pages_api_themes'),
-            'theme_base': reverse('theme_account_update')
+            'api_themes': reverse(
+                'pages_api_themes', kwargs=self.get_url_kwargs()),
+            'theme_base': reverse(
+                'theme_account_update', kwargs=self.get_url_kwargs())
         }
         if 'urls' in context:
             if 'pages' in context['urls']:

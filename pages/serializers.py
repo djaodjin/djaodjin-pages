@@ -92,18 +92,9 @@ class PageElementSerializer(serializers.ModelSerializer):
 
 class ThemePackageSerializer(serializers.ModelSerializer):
 
-#XXX    urls = serializers.SerializerMethodField()
-
     class Meta:
         model = ThemePackage
-
-#XXX    def get_urls(self, obj):
-        # Implementation Note: We cannot rely on ``reverse`` here because
-        # it would add an incorrect site prefix.
-#XXX        urls = {
-#XXX            'theme_update': reverse('uploaded_theme_edition', args=(obj,))
-#XXX        }
-#XXX        return urls
+        fields = ('slug', 'name', 'created_at', 'updated_at', 'is_active')
 
 
 class MediaItemSerializer(serializers.Serializer):
