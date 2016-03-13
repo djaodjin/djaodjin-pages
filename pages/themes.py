@@ -32,19 +32,27 @@ from . import settings
 LOGGER = logging.getLogger(__name__)
 
 
-def install_theme(theme_name, zip_file): #pylint:disable=too-many-locals
+def install_theme(theme_name, zip_file):
     """
     Extract resources and templates from an opened ``ZipFile``
     and install them at a place they can be picked by the multitier
     logic in ``template_loader.Loader.get_template_sources``.
     """
+    #pylint:disable=too-many-statements,too-many-locals
     LOGGER.info("install theme %s", theme_name)
     theme_dir = safe_join(settings.THEMES_DIR, theme_name)
     public_dir = safe_join(settings.PUBLIC_ROOT, theme_name)
     templates_dir = safe_join(theme_dir, 'templates')
 
-    if os.path.exists(public_dir) or os.path.exists(templates_dir):
-        raise PermissionDenied("Theme already exists.")
+    if os.path.exists(public_dir):
+        LOGGER.warning("install theme '%s' but '%s' already exists.",
+            theme_name, public_dir)
+        raise PermissionDenied("Theme public assets already exists.")
+
+    if os.path.exists(templates_dir):
+        LOGGER.warning("install theme '%s' but '%s' already exists.",
+            theme_name, templates_dir)
+        raise PermissionDenied("Theme templates already exists.")
 
     # We rely on the assumption that ``public_dir`` and ``templates_dir``
     # are on the same filesystem. We create a temporary directory on that
