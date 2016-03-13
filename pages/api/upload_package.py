@@ -56,23 +56,17 @@ class ThemePackageListAPIView(UploadedImageMixin, ThemePackageMixin,
         return theme_name, theme_slug
 
     def install_theme(self, file_obj):
-        templates_dir = self.get_templates_dir(
-            ThemePackage(slug=self.theme_slug))
-        if os.path.exists(templates_dir):
-            return Response(
-                {'message': "Theme already exists."},
-                    status=status.HTTP_403_FORBIDDEN)
-        if zipfile.is_zipfile(file_obj):
-            with zipfile.ZipFile(file_obj) as zip_file:
-                install_theme(self.theme_slug, zip_file)
-            theme = ThemePackage.objects.create(
-                slug=self.theme_slug, name=self.theme_name,
-                account=self.account)
-            serializer = ThemePackageSerializer(theme)
-            return Response(serializer.data,
-                status=status.HTTP_201_CREATED)
-        return Response({'message': "Invalid archive"},
-            status=status.HTTP_400_BAD_REQUEST)
+        if not zipfile.is_zipfile(file_obj):
+            return Response({'message': "Invalid archive"},
+                status=status.HTTP_400_BAD_REQUEST)
+        with zipfile.ZipFile(file_obj) as zip_file:
+            install_theme(self.theme_slug, zip_file)
+        theme, _ = ThemePackage.objects.get_or_create(
+            slug=self.theme_slug, account=self.account,
+            defaults={'name': self.theme_name})
+        serializer = ThemePackageSerializer(theme)
+        return Response(serializer.data,
+            status=status.HTTP_201_CREATED)
 
     def upload_theme(self, request):
         file_obj = request.data['file']

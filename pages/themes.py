@@ -24,6 +24,7 @@
 
 import logging, os, shutil, tempfile
 
+from django.core.exceptions import PermissionDenied
 from django.utils._os import safe_join
 
 from . import settings
@@ -41,6 +42,9 @@ def install_theme(theme_name, zip_file): #pylint:disable=too-many-locals
     theme_dir = safe_join(settings.THEMES_DIR, theme_name)
     public_dir = safe_join(settings.PUBLIC_ROOT, theme_name)
     templates_dir = safe_join(theme_dir, 'templates')
+
+    if os.path.exists(public_dir) or os.path.exists(templates_dir):
+        raise PermissionDenied("Theme already exists.")
 
     # We rely on the assumption that ``public_dir`` and ``templates_dir``
     # are on the same filesystem. We create a temporary directory on that
@@ -92,14 +96,18 @@ def install_theme(theme_name, zip_file): #pylint:disable=too-many-locals
         # are optional.
         tmp_public = safe_join(tmp_dir, 'public')
         tmp_templates = safe_join(tmp_dir, 'templates')
-        if not os.path.exists(theme_dir):
-            os.makedirs(theme_dir)
-        if not os.path.exists(public_dir):
-            os.makedirs(public_dir)
-        if os.path.exists(tmp_templates):
-            os.rename(tmp_templates, templates_dir)
-            if os.path.exists(tmp_public):
-                os.rename(tmp_public, public_dir)
+        mkdirs = []
+        renames = []
+        for paths in [(tmp_templates, templates_dir),
+                     (tmp_public, public_dir)]:
+            if os.path.exists(paths[0]):
+                if not os.path.exists(os.path.dirname(paths[1])):
+                    mkdirs += [os.path.exists(os.path.dirname(paths[1]))]
+                renames += [paths]
+        for path in mkdirs:
+            os.makedirs(path)
+        for paths in renames:
+            os.rename(paths[0], paths[1])
     finally:
         # Always delete the temporary directory, exception raised or not.
         shutil.rmtree(tmp_dir)
