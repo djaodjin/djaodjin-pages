@@ -26,7 +26,6 @@ import logging, os, shutil
 from collections import OrderedDict
 
 from django.core.files.storage import get_storage_class, FileSystemStorage
-from django.core.urlresolvers import reverse
 from django.core.validators import validate_slug
 from django.core.exceptions import ValidationError
 from django.db.models import Q
@@ -35,14 +34,19 @@ from boto.s3.connection import S3Connection
 from boto.exception import S3ResponseError
 
 from . import settings
-from .models import MediaTag, PageElement, ThemePackage, get_current_account
+from .models import MediaTag, PageElement, ThemePackage
 from .utils import validate_title
+from .extras import AccountMixinBase
 
 #pylint:disable=no-name-in-module,import-error
 from django.utils.six.moves.urllib.parse import urljoin
 
 
 LOGGER = logging.getLogger(__name__)
+
+
+class AccountMixin(AccountMixinBase, settings.EXTRA_MIXIN):
+    pass
 
 
 class PageElementMixin(object):
@@ -60,44 +64,6 @@ class PageElementMixin(object):
             return queryset
         except ValidationError:
             return []
-
-
-class AccountMixin(object):
-
-    account_url_kwarg = settings.ACCOUNT_URL_KWARG
-
-    @property
-    def account(self):
-        if not hasattr(self, '_account'):
-            self._account = get_current_account()
-        return self._account
-
-    def get_url_kwargs(self):
-        """
-        Rebuilds the ``kwargs`` to pass to ``reverse()``.
-        """
-        url_kwargs = {}
-        if self.account_url_kwarg in self.kwargs:
-            url_kwargs.update({
-                self.account_url_kwarg: self.kwargs[self.account_url_kwarg]})
-        return url_kwargs
-
-    def get_context_data(self, **kwargs):
-        context = super(AccountMixin, self).get_context_data(**kwargs)
-        urls_pages = {
-            'api_themes': reverse(
-                'pages_api_themes', kwargs=self.get_url_kwargs()),
-            'theme_base': reverse(
-                'theme_account_update', kwargs=self.get_url_kwargs())
-        }
-        if 'urls' in context:
-            if 'pages' in context['urls']:
-                context['urls']['pages'].update(urls_pages)
-            else:
-                context['urls'].update({'pages': urls_pages})
-        else:
-            context.update({'urls': {'pages': urls_pages}})
-        return context
 
 
 class UploadedImageMixin(object):

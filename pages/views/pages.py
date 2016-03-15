@@ -76,7 +76,7 @@ def inject_edition_tools(response, request=None, context=None,
     return soup
 
 
-class PageMixin(AccountMixin):
+class PageMixin(object):
     """
     Display or Edit a ``Page`` of a ``Project``.
 
@@ -172,7 +172,7 @@ class PageMixin(AccountMixin):
         return response
 
 
-class PageView(PageMixin, TemplateView):
+class PageView(PageMixin, AccountMixin, TemplateView):
 
     http_method_names = ['get']
 

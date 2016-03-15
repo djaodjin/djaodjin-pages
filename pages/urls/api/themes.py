@@ -32,12 +32,9 @@ from ...api.upload_package import (ThemePackageListAPIView,
 
 urlpatterns = [
     url(r'^themes/(?P<theme>[\w-]+)/filepath(?P<filepath>\S+)',
-        FileDetailAPIView.as_view(),
-        name='pages_api_theme_file_detail'),
+        FileDetailAPIView.as_view(), name='pages_api_theme_file_detail'),
     url(r'^themes/(?P<theme>[\w-]+)/',
-        ThemePackageAPIView.as_view(),
-        name='pages_api_theme_detail'),
+        ThemePackageAPIView.as_view(), name='pages_api_theme_detail'),
     url(r'^themes/',
-        ThemePackageListAPIView.as_view(),
-        name='pages_api_themes'),
+        ThemePackageListAPIView.as_view(), name='pages_api_themes'),
 ]

@@ -42,12 +42,12 @@ setup(
     packages=[
         'pages',
         'pages.api',
+        'pages.management',
+        'pages.management.commands',
+        'pages.templatetags',
         'pages.urls',
         'pages.urls.api',
-        'pages.views',
-        'pages.templatetags',
-        'pages.management',
-        'pages.management.commands'],
+        'pages.views'],
     package_data={'pages': [
         'static/js/*',
         'static/vendor/css/*',

@@ -24,8 +24,6 @@
 
 from django.conf.urls import url
 
-from ..settings import SLUG_RE
-from ..views import AccountRedirectView
 from ..views.themes import (ThemePackagesView,
     ThemePackagesEditView, ThemePackagesCreateView,
     ThemePackageDownloadView)
@@ -41,9 +39,6 @@ urlpatterns = [
         ThemePackagesEditView.as_view(),
         name="uploaded_theme_edition"),
 
-    url(r'^themes/(?P<account>%s)/' % SLUG_RE,
+    url(r'^themes/',
         ThemePackagesView.as_view(), name="theme_update"),
-    url(r'^themes/', AccountRedirectView.as_view(
-        pattern_name='theme_update'),
-        name="theme_account_update"),
 ]

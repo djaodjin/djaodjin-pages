@@ -145,13 +145,6 @@ class ThemePackage(models.Model):
             return self.name
 
 
-def get_current_account():
-    if settings.GET_CURRENT_ACCOUNT:
-        from .compat import import_string # Because AppRegistryNotReady
-        return import_string(settings.GET_CURRENT_ACCOUNT)()
-    return None
-
-
 def get_active_theme():
     """
     Returns the active theme from a request.

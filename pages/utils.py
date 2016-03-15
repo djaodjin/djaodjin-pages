@@ -22,10 +22,17 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import random, string
+import logging, random, string
 
+from django.apps import apps as django_apps
+from django.core.exceptions import ImproperlyConfigured
 from django.core.validators import RegexValidator
+from django.utils.module_loading import import_string
 from django.utils.translation import ugettext_lazy as _
+
+
+LOGGER = logging.getLogger(__name__)
+
 
 def random_slug():
     return ''.join(
@@ -39,3 +46,32 @@ validate_title = RegexValidator(#pylint: disable=invalid-name
         "numbers, space, underscores or hyphens."),
         'invalid'
 )
+
+
+def get_account_model():
+    """
+    Returns the ``Account`` model that is active in this project.
+    """
+    from . import settings
+    try:
+        return django_apps.get_model(settings.ACCOUNT_MODEL)
+    except ValueError:
+        raise ImproperlyConfigured(
+            "ACCOUNT_MODEL must be of the form 'app_label.model_name'")
+    except LookupError:
+        raise ImproperlyConfigured("ACCOUNT_MODEL refers to model '%s'"\
+" that has not been installed" % settings.ACCOUNT_MODEL)
+
+
+def get_current_account():
+    """
+    Returns the default account for a site.
+    """
+    from . import settings
+    if settings.DEFAULT_ACCOUNT_CALLABLE:
+        account = import_string(settings.DEFAULT_ACCOUNT_CALLABLE)()
+        LOGGER.debug("get_current_account: '%s'", account)
+    else:
+        account = get_account_model().objects.get(
+            pk=settings.DEFAULT_ACCOUNT_ID)
+    return account

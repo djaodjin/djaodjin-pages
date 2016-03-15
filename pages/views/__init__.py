@@ -24,7 +24,7 @@
 
 from django.views.generic import RedirectView
 
-from ..models import get_current_account
+from ..utils import get_current_account
 
 
 class AccountRedirectView(RedirectView):
