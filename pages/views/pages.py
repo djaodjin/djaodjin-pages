@@ -92,7 +92,8 @@ class PageMixin(object):
             return
         if not hasattr(self, 'templates'):
             self.templates = []
-        self.templates.insert(0, template.name)
+        self.templates.insert(
+            0, {"name": template.name, "index": len(self.templates)})
 
     def enable_instrumentation(self):
         template_loaded.connect(self._store_template_info)
