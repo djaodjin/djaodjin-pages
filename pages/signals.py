@@ -22,12 +22,7 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-'''API URLs for the pages application'''
+from django.dispatch import Signal
 
-from django.conf.urls import include, url
-
-urlpatterns = [
-    url(r'^', include('pages.urls.api.elements')),
-    url(r'^', include('pages.urls.api.sources')),
-    url(r'^', include('pages.urls.api.themes')),
-]
+#pylint: disable=invalid-name
+template_loaded = Signal(providing_args=["template"])

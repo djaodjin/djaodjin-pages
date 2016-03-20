@@ -114,17 +114,17 @@ Options:
 
         initDocument: function(){
             var self = this;
-            $(".dj-gallery").on("click", ".dj-gallery-delete-item",
+            self.element.on("click", ".dj-gallery-delete-item",
                 function(event) { self.deleteMedia(event); });
-            $(".dj-gallery").on("click", ".dj-gallery-preview-item",
+            self.element.on("click", ".dj-gallery-preview-item",
                 function(event) { self.previewMedia(event); });
-            $(".dj-gallery").on("keyup", ".dj-gallery-filter",
+            self.element.on("keyup", ".dj-gallery-filter",
                 function(event) { self.loadImage(); });
-            $(".dj-gallery").on("click", ".dj-gallery-tag-item",
+            self.element.on("click", ".dj-gallery-tag-item",
                 function(event) { self.tagMedia(); });
-            $(".dj-gallery").on("click", ".dj-gallery-item-container",
+            self.element.on("click", ".dj-gallery-item-container",
                 function(event) { self.selectMedia($(this)); });
-            $(".dj-gallery").on("djgallery.loadimages",
+            self.element.on("djgallery.loadresources",
                 function(event) { self.loadImage(); });
             $(".dj-gallery-load").on("click",
                 function(event) { self.loadImage(); });

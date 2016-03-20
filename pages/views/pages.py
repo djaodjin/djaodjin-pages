@@ -25,15 +25,16 @@
 #pylint:disable=unused-argument
 
 import markdown
-
 from bs4 import BeautifulSoup
 from django.template import loader
 from django.views.generic import ListView, DetailView, TemplateView
 from django.template.response import TemplateResponse
 
+from .. import settings
 from ..mixins import AccountMixin
 from ..models import PageElement
 from ..compat import csrf, render_template
+from ..signals import template_loaded
 
 
 def inject_edition_tools(response, request=None, context=None,
@@ -84,7 +85,26 @@ class PageMixin(object):
     body_top_template_name = "pages/_body_top.html"
     body_bottom_template_name = "pages/_body_bottom.html"
 
+    def _store_template_info(self, sender, **kwargs):
+        template = kwargs['template']
+        if template.name in settings.TEMPLATES_BLACKLIST:
+            # We don't show templates that cannot be edited.
+            return
+        if not hasattr(self, 'templates'):
+            self.templates = []
+        self.templates.insert(0, template.name)
+
+    def enable_instrumentation(self):
+        template_loaded.connect(self._store_template_info)
+
+    def disable_instrumentation(self):
+        template_loaded.disconnect(self._store_template_info)
+
     def add_edition_tools(self, response, context=None):
+        if context is None:
+            context = {}
+        if hasattr(self, 'templates'):
+            context.update({'templates': self.templates})
         return inject_edition_tools(
             response, request=self.request, context=context,
             body_top_template_name=self.body_top_template_name,

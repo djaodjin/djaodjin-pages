@@ -154,8 +154,8 @@ def get_active_theme():
         theme_slug = import_string(settings.ACTIVE_THEME_CALLABLE)()
         LOGGER.debug("pages: get_active_theme('%s')", theme_slug)
         try:
-            return ThemePackage.objects.get(
-                slug=theme_slug)
+            return ThemePackage.objects.get(slug=theme_slug)
         except ThemePackage.DoesNotExist:
-            return None
-    return ThemePackage.objects.all().first()
+            pass
+    return None
+

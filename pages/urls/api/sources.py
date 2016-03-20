@@ -24,10 +24,11 @@
 
 '''API URLs for the pages application'''
 
-from django.conf.urls import include, url
+from django.conf.urls import url
+
+from ...api.sources import SourceDetailAPIView
 
 urlpatterns = [
-    url(r'^', include('pages.urls.api.elements')),
-    url(r'^', include('pages.urls.api.sources')),
-    url(r'^', include('pages.urls.api.themes')),
+    url(r'^sources/(?P<page>\S+)?',
+        SourceDetailAPIView.as_view(), name='pages_api_sources'),
 ]

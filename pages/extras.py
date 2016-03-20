@@ -22,7 +22,7 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from django.core.urlresolvers import reverse
+from django.core.urlresolvers import NoReverseMatch, reverse
 from django.shortcuts import get_object_or_404
 
 from .utils import get_account_model, get_current_account
@@ -54,11 +54,17 @@ class AccountMixinBase(object):
             url_kwargs.update({
                 account_url_kwarg: self.kwargs[account_url_kwarg]})
         urls_pages = {
-            'api_themes': reverse(
-                'pages_api_themes', kwargs=url_kwargs),
-            'theme_base': reverse(
-                'theme_update', kwargs=url_kwargs)
-        }
+            'api_sources': reverse(
+                'pages_api_sources', kwargs=url_kwargs)}
+        try:
+            urls_pages.update({
+                'api_themes': reverse(
+                    'pages_api_themes', kwargs=url_kwargs),
+                'theme_base': reverse(
+                    'theme_update', kwargs=url_kwargs)})
+        except NoReverseMatch:
+            # Themes are optional
+            pass
         if 'urls' in context:
             if 'pages' in context['urls']:
                 context['urls']['pages'].update(urls_pages)
