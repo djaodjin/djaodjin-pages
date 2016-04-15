@@ -22,14 +22,11 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import logging, os, zipfile
-from optparse import make_option
+import os, zipfile
 
 from django.core.management.base import BaseCommand
 
 from ...themes import install_theme
-
-LOGGER = logging.getLogger(__name__)
 
 
 class Command(BaseCommand):
@@ -42,16 +39,17 @@ class Command(BaseCommand):
     They are copied into ``MULTITIER_RESOURCES_ROOT/APP_NAME``
     """
 
-    option_list = BaseCommand.option_list + (
-        make_option('--app_name', action='store', dest='app_name',
-            default=None, help='overrides the destination theme name'),
-        )
+    def add_arguments(self, parser):
+        super(Command, self).add_arguments(parser)
+        parser.add_argument('--app_name',
+            action='store', dest='app_name', default=None,
+            help='overrides the destination theme name')
 
     def handle(self, *args, **options):
         for package_path in args:
             app_name = options['app_name']
             if not app_name:
                 app_name = os.path.splitext(os.path.basename(package_path))[0]
-            print "install %s to %s" % (package_path, app_name)
+            self.stdout.write("install %s to %s\n" % (package_path, app_name))
             with zipfile.ZipFile(package_path, 'r') as zip_file:
                 install_theme(app_name, zip_file)

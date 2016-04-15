@@ -65,7 +65,8 @@ def inject_edition_tools(response, request=None, context=None,
                 # instead, later on ``soup.find_all(class_=...)`` returns
                 # an empty set though ``soup.prettify()`` outputs the full
                 # expected HTML text.
-                soup.body.insert(1, BeautifulSoup(body_top).body.next)
+                soup.body.insert(1, BeautifulSoup(
+                    body_top, 'html5lib').body.next)
     if body_bottom_template_name:
         template = loader.get_template(body_bottom_template_name)
         body_bottom = render_template(template, context, request).strip()
