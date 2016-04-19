@@ -26,15 +26,29 @@
 
 import markdown
 from bs4 import BeautifulSoup
-from django.template import loader
+from django.core.urlresolvers import reverse
+from django.template import loader, Template
 from django.views.generic import ListView, DetailView, TemplateView
+from django.template.backends.django import DjangoTemplates
 from django.template.response import TemplateResponse
+from django.test.signals import template_rendered
+from django.test.utils import instrumented_test_render
 
 from .. import settings
 from ..mixins import AccountMixin
 from ..models import PageElement
 from ..compat import csrf, render_template
 from ..signals import template_loaded
+
+# signals hook for Django Templates. Jinja2 templates are done through
+# a custom Environment.
+#pylint:disable=protected-access
+for engine in loader._engine_list():
+    if isinstance(engine, DjangoTemplates):
+        if Template._render != instrumented_test_render:
+            Template.original_render = Template._render
+            Template._render = instrumented_test_render
+            break
 
 
 def inject_edition_tools(response, request=None, context=None,
@@ -49,6 +63,12 @@ def inject_edition_tools(response, request=None, context=None,
         return None
     if context is None:
         context = {}
+    if 'urls' not in context:
+        context.update({'urls': {
+                'edit': {
+                'api_sources': reverse('pages_api_sources'),
+                'api_page_elements': reverse('page_elements'),
+                'media_upload': reverse('uploaded_media_elements')}}})
     context.update(csrf(request))
     soup = None
     if body_top_template_name:
@@ -101,14 +121,16 @@ class PageMixin(object):
 
     def enable_instrumentation(self):
         template_loaded.connect(self._store_template_info)
+        template_rendered.connect(self._store_template_info)
 
     def disable_instrumentation(self):
+        template_rendered.disconnect(self._store_template_info)
         template_loaded.disconnect(self._store_template_info)
 
     def add_edition_tools(self, response, context=None):
-        if context is None:
-            context = {}
         if hasattr(self, 'templates'):
+            if context is None:
+                context = {}
             context.update({'templates': self.templates.values()})
         return inject_edition_tools(
             response, request=self.request, context=context,
@@ -157,12 +179,11 @@ class PageMixin(object):
 
     def get(self, request, *args, **kwargs):
         #pylint: disable=too-many-statements, too-many-locals
+        self.enable_instrumentation()
         response = super(PageMixin, self).get(request, *args, **kwargs)
         if self.template_name and isinstance(response, TemplateResponse):
             response.render()
-        soup = self.add_edition_tools(response,
-            {'redirect_url': request.path,
-            'template_loaded': self.template_name})
+        soup = self.add_edition_tools(response)
         if not soup:
             content_type = response.get('content-type', '')
             if content_type.startswith('text/html'):

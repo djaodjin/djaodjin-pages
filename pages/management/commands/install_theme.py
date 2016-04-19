@@ -33,10 +33,10 @@ class Command(BaseCommand):
     """
     Install resources and templates into a multi-tier environment.
 
-    Templates are installed into ``MULTITIER_THEMES_DIR/APP_NAME/templates/``.
+    Templates are installed into ``THEMES_DIR/APP_NAME/templates/``.
     Resources include CSS, JS, images and other files which can be accessed
     anonymously over HTTP and are necessary for the functionality of the site.
-    They are copied into ``MULTITIER_RESOURCES_ROOT/APP_NAME``
+    They are copied into ``PUBLIC_ROOT/APP_NAME``
     """
 
     def add_arguments(self, parser):

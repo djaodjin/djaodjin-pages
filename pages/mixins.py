@@ -190,17 +190,15 @@ class UploadedImageMixin(object):
 def get_bucket_name(account=None):
     if not account:
         return settings.AWS_STORAGE_BUCKET_NAME
-    try:
-        bucket_name = account.bucket_name
-    except AttributeError:
-        LOGGER.debug("``%s`` does not contain a ``bucket_name``"\
-            " field, using ``slug`` instead.", account.__class__)
+    bucket_name = None
+    for bucket_field in ['bucket_name', 'slug', 'username']:
+        try:
+            bucket_name = getattr(account, bucket_field)
+        except AttributeError:
+            pass
         bucket_name = None
-    if not bucket_name:
-        # We always need a non-empty bucket_name in order
-        # to partition the namespace.
-        bucket_name = account.slug
     return bucket_name
+
 
 def get_media_prefix(account=None):
     if not account:
@@ -217,7 +215,12 @@ class ThemePackageMixin(AccountMixin):
 
     @staticmethod
     def get_templates_dir(theme):
-        return safe_join(settings.THEMES_DIR, theme.slug, 'templates')
+        if isinstance(settings.THEME_DIR_CALLABLE, basestring):
+            from ..compat import import_string
+            settings.THEME_DIR_CALLABLE = import_string(
+                settings.THEME_DIR_CALLABLE)
+        theme_dir = settings.THEME_DIR_CALLABLE(theme.slug)
+        return safe_join(theme_dir, 'templates')
 
     @staticmethod
     def get_statics_dir(theme):

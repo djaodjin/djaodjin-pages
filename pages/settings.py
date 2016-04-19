@@ -26,6 +26,9 @@ import os
 
 from django.conf import settings
 
+def theme_dir(account): #pylint:disable=unused-argument
+    return os.path.join(settings.BASE_DIR, 'themes')
+
 _SETTINGS = {
     'ACCOUNT_MODEL': getattr(settings, 'AUTH_USER_MODEL', None),
     'ACCOUNT_URL_KWARG': None,
@@ -42,7 +45,7 @@ _SETTINGS = {
     'PUBLIC_WHITELIST': None,
     'TEMPLATES_BLACKLIST': [],
     'TEMPLATES_WHITELIST': None,
-    'THEMES_DIR': os.path.join(settings.BASE_DIR, 'themes')
+    'THEME_DIR_CALLABLE': theme_dir,
 }
 
 _SETTINGS.update(getattr(settings, 'PAGES', {}))
@@ -61,7 +64,7 @@ PUBLIC_WHITELIST = _SETTINGS.get('PUBLIC_WHITELIST')
 TEMPLATES_BLACKLIST = _SETTINGS.get('TEMPLATES_BLACKLIST')
 TEMPLATES_WHITELIST = _SETTINGS.get('TEMPLATES_WHITELIST')
 ACTIVE_THEME_CALLABLE = _SETTINGS.get('ACTIVE_THEME_CALLABLE')
-THEMES_DIR = _SETTINGS.get('THEMES_DIR')
+THEME_DIR_CALLABLE = _SETTINGS.get('THEME_DIR_CALLABLE')
 
 SLUG_RE = r'[a-zA-Z0-9_\-]+'
 

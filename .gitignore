@@ -8,5 +8,4 @@ credentials
 site.conf
 pages/migrations/
 docs/build/
-testsite/static/vendor/bower
-bower_components/
+themes/

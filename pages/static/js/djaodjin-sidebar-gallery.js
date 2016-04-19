@@ -398,4 +398,87 @@ Options:
 
     Dropzone.autoDiscover = false;
 
+    /** Sliding panel
+
+        HTML requirements:
+
+        <button data-target="#_panel_"></button>
+        <div id="#_panel_"></div>
+     */
+    function PanelButton(el, options){
+        this.element = $(el);
+        this.options = options;
+        this.init();
+    }
+
+    PanelButton.prototype = {
+        init: function () {
+            var self = this;
+            var target = $(self.element.attr("data-target"));
+
+            target.find(".close").click(function() {
+                if( target.is(":visible")) {
+                    target.hide();
+                    self.element.show();
+                }
+            });
+
+            self.element.click(function() {
+                self.element.blur();
+                if( self.element.hasClass("dragged") ){
+                    self.element.removeClass("dragged");
+                    return false;
+                }
+                if( target.hasClass("visible-gallery") ) {
+                    target.css({right: -self.options.defaultWidth, width: self.options.defaultWidth}).removeClass("visible-gallery");
+                    self.element.removeAttr("style").css({right: 0}).draggable("destroy");
+                } else {
+                    target.css({right: 0, width: self.options.defaultWidth}).addClass("visible-gallery");
+                    self.element.css("right", self.options.defaultWidth);
+                    self.element.draggable({
+                        axis: "x",
+                        cursor: "move",
+                        containment: "window",
+                        start: function(event, ui) {
+                            self.element.addClass("dragged");
+                        },
+                        drag: function(event, ui) {
+                            var viewWidth = $(window).width();
+                            if (viewWidth - ui.position.left - $(ui.helper).outerWidth() >= self.options.defaultWidth){
+                                target.css("right", "0px").css("width", viewWidth - ui.position.left - $(ui.helper).outerWidth());
+                            } else {
+                                self.element.css("left", viewWidth - self.options.defaultWidth - $(ui.helper).outerWidth());
+                                return false;
+                            }
+                        },
+                        stop: function(event, ui) {
+                            var viewWidth = $(window).width();
+                            if (viewWidth - ui.position.left - $(ui.helper).outerWidth() >= self.options.defaultWidth){
+                                target.css("right", "0px").css("width", viewWidth - ui.position.left - $(ui.helper).outerWidth());
+                            } else {
+                                target.css("right", "0px").css("width", self.options.defaultWidth);
+                            }
+                            setTimeout( function(){
+                                if( self.element.hasClass("dragged")){
+                                    self.element.removeClass("dragged");
+                                }
+                            }, self.options.defaultWidth);
+                        }
+                    });
+                    target.trigger("djgallery.loadresources");
+                    target.find(".content").trigger("djtemplates.loadresources");
+                }
+            });
+        }
+    };
+
+    $.fn.panelButton = function(options) {
+        var opts = $.extend( {}, $.fn.panelButton.defaults, options );
+        return new PanelButton($(this), opts);
+    };
+
+    $.fn.panelButton.defaults = {
+        defaultWidth: 300
+    };
+
 })(jQuery);

@@ -33,6 +33,8 @@ initdb: install-conf
 	-rm -rf testsite/media/pages
 	-rm -f db.sqlite3
 	cd $(srcDir) && $(PYTHON) ./manage.py migrate $(RUNSYNCDB) --noinput
+	cd $(srcDir) && $(PYTHON) ./manage.py loaddata \
+						testsite/fixtures/default-db.json
 
 doc:
 	$(installDirs) docs

@@ -73,7 +73,8 @@ TEMPLATE_CONTEXT_PROCESSORS = (
 )
 
 TEMPLATE_DIRS = (
-    BASE_DIR + '/testsite/templates',
+    BASE_DIR + '/themes/templates',
+    BASE_DIR + '/testsite/templates'
 )
 
 # Django 1.8+

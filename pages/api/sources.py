@@ -56,9 +56,13 @@ class SourceDetailAPIView(ThemePackageMixin, generics.RetrieveUpdateAPIView):
 
     serializer_class = SourceCodeSerializer
 
-    def _get_template_path(self):
-        template = get_template(self.kwargs.get('page'))
-        return template.template.filename
+    def _get_template_path(self, template=None):
+        if template is None:
+            template = get_template(self.kwargs.get('page'))
+        try:
+            return template.template.filename
+        except AttributeError:
+            return template.origin.name
 
     def retrieve(self, request, *args, **kwargs):
         with open(self._get_template_path()) as source_file:
@@ -70,12 +74,17 @@ class SourceDetailAPIView(ThemePackageMixin, generics.RetrieveUpdateAPIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         template_path = self._get_template_path()
-        if not template_path.startswith(settings.THEMES_DIR):
+        if isinstance(settings.THEME_DIR_CALLABLE, basestring):
+            from ..compat import import_string
+            settings.THEME_DIR_CALLABLE = import_string(
+                settings.THEME_DIR_CALLABLE)
+        theme_base = settings.THEME_DIR_CALLABLE(self.account)
+        if not template_path.startswith(theme_base):
             resp_status = status.HTTP_201_CREATED
             # XXX Until the whole theme feature is rewritten properly.
             default_template_path = template_path
-            template_path = safe_join(settings.THEMES_DIR, self.account,
-                'templates', self.kwargs.get('page'))
+            template_path = safe_join(theme_base, 'templates',
+                self.kwargs.get('page'))
             if not os.path.isdir(os.path.dirname(template_path)):
                 os.makedirs(os.path.dirname(template_path))
             shutil.copy(default_template_path, template_path)
@@ -90,7 +99,7 @@ class SourceDetailAPIView(ThemePackageMixin, generics.RetrieveUpdateAPIView):
                 source_file.write(serializer.validated_data['text'])
             try:
                 template = get_template(self.kwargs.get('page'))
-                assert template.template.filename == template_path
+                assert self._get_template_path(template) == template_path
                 LOGGER.info("Written to %s", template_path)
                 os.remove(backup_path)
             except TemplateSyntaxError:
