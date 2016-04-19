@@ -92,9 +92,12 @@ class PageMixin(object):
             # We don't show templates that cannot be edited.
             return
         if not hasattr(self, 'templates'):
-            self.templates = []
-        self.templates.insert(
-            0, {"name": template.name, "index": len(self.templates)})
+            self.templates = {}
+        if not template.name in self.templates:
+            # For some reasons the Django/Jinja2 framework might load the same
+            # templates multiple times.
+            self.templates.update({template.name:
+                {"name": template.name, "index": len(self.templates)}})
 
     def enable_instrumentation(self):
         template_loaded.connect(self._store_template_info)
@@ -106,7 +109,7 @@ class PageMixin(object):
         if context is None:
             context = {}
         if hasattr(self, 'templates'):
-            context.update({'templates': self.templates})
+            context.update({'templates': self.templates.values()})
         return inject_edition_tools(
             response, request=self.request, context=context,
             body_top_template_name=self.body_top_template_name,

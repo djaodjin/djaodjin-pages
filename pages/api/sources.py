@@ -26,8 +26,10 @@
 import logging, os, shutil
 
 from django.template import TemplateSyntaxError
+from django.template.defaultfilters import slugify
 from django.template.loader import get_template
 from django.utils._os import safe_join
+from oslo_concurrency import lockutils
 from rest_framework import status, generics, serializers
 from rest_framework.response import Response
 
@@ -81,19 +83,20 @@ class SourceDetailAPIView(ThemePackageMixin, generics.RetrieveUpdateAPIView):
             resp_status = status.HTTP_200_OK
 
         # We only write the file if the template syntax is correct.
-        backup_path = template_path + '~'
-        shutil.copy(template_path, backup_path)
-        with open(template_path, 'w') as source_file:
-            source_file.write(serializer.validated_data['text'])
-        try:
-            template = get_template(self.kwargs.get('page'))
-            assert template.template.filename == template_path
-            LOGGER.info("Written to %s", template_path)
-            os.remove(backup_path)
-        except TemplateSyntaxError:
-            os.remove(template_path)
-            os.rename(backup_path, template_path)
-            return self.retrieve(request, *args, **kwargs)
-        return Response(serializer.data, status=resp_status)
+        with lockutils.lock(slugify(template_path), lock_file_prefix="pages-"):
+            backup_path = template_path + '~'
+            shutil.copy(template_path, backup_path)
+            with open(template_path, 'w') as source_file:
+                source_file.write(serializer.validated_data['text'])
+            try:
+                template = get_template(self.kwargs.get('page'))
+                assert template.template.filename == template_path
+                LOGGER.info("Written to %s", template_path)
+                os.remove(backup_path)
+            except TemplateSyntaxError:
+                os.remove(template_path)
+                os.rename(backup_path, template_path)
+                return self.retrieve(request, *args, **kwargs)
+            return Response(serializer.data, status=resp_status)
 
 

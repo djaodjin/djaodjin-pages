@@ -27,9 +27,9 @@ All uploaded media will be saved on ```/media_path/path/to/uploaded/media```. If
 
 ### Amazon S3 Storage
 
-This feature requires two more dependencies: boto, django-storages and django-celery, So first:
+This feature requires two more dependencies: boto, and django-storages. So first:
 
-    $ pip install boto django-celery django-storages
+    $ pip install boto django-storages
 
 Add configuration to your settings.py
 
