@@ -190,14 +190,12 @@ class UploadedImageMixin(object):
 def get_bucket_name(account=None):
     if not account:
         return settings.AWS_STORAGE_BUCKET_NAME
-    bucket_name = None
     for bucket_field in ['bucket_name', 'slug', 'username']:
         try:
-            bucket_name = getattr(account, bucket_field)
+            return getattr(account, bucket_field)
         except AttributeError:
             pass
-        bucket_name = None
-    return bucket_name
+    return None
 
 
 def get_media_prefix(account=None):
