@@ -214,7 +214,7 @@ class PageMixin(object):
                         editable['src'] = edit.text
                     else:
                         editable.string = new_text
-            response.content = soup.prettify()
+            response.content = str(soup)
         return response
 
 
