@@ -75,10 +75,10 @@
 <div id="style-editor" class="custom-gallery" style="width:800px;right:-800px;">
   <h2>Styles</h2>
   <button class="refresh-styles btn btn-primary">Reload</button>
+  <form id="editable-styles-form" class="form-horizontal">
   {% for section_name,section_attributes in editable_styles %}
   <hr>
   <h3>{{section_name}}</h3>
-  <form id="editable-styles-form" class="form-horizontal">
     {% for attribute in section_attributes %}
     <div class="form-group">
       <label for="style_attribute_{{forloop.parentloop.counter}}_{{forloop.counter}}"
@@ -101,8 +101,8 @@
 
     </div>
     {% endfor %}
+    {% endfor  %}
   </form>
-  {% endfor  %}
 </div>
 
 
@@ -219,8 +219,7 @@ jQuery(document).ready(function($) {
   relativeUrls: false,
   rootpath: ":{% static 'vendor/less/' %}"
   ,  onReady: false
-  }
-  });
+  };
 
 </script>
 <link rel="stylesheet/less" type="text/css" href="{% static 'vendor/less/bootstrap/bootstrap.less' %}" />
