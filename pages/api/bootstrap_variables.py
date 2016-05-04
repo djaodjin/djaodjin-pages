@@ -69,7 +69,7 @@ class BootstrapVariableListAPIView(AccountMixin,
 
         
         with transaction.atomic():
-            BootstrapVariable.objects.all().delete()
+            BootstrapVariable.objects.filter(account=self.account).delete()
 
             child_serializer = BootstrapVariableSerializer()            
             serializer = serializers.ListSerializer(data=request.data,child=child_serializer)
