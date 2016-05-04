@@ -125,6 +125,17 @@ class MediaTag(models.Model):
         return unicode(self.tag)
 
 
+class BootstrapVariable(models.Model):
+    variable_name = models.CharField(max_length=250,unique=True)
+    variable_value = models.CharField(max_length=250)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    account = models.ForeignKey(
+        settings.ACCOUNT_MODEL, related_name='account_bootstrap_variable', null=True)
+
+    def __unicode__(self):
+        return '%s: %s' % (self.variable_name, self.variable_value)
+
 class ThemePackage(models.Model):
     """
     This model allow to record uploaded template.

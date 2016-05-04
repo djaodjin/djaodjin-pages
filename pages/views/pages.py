@@ -66,9 +66,15 @@ def inject_edition_tools(response, request=None, context=None,
     if 'urls' not in context:
         context.update({'urls': {
                 'edit': {
+                'bootstrap_variables': reverse('bootstrap_variables'),
                 'api_sources': reverse('pages_api_sources'),
                 'api_page_elements': reverse('page_elements'),
                 'media_upload': reverse('uploaded_media_elements')}}})
+
+    if 'editable_styles' not in context:
+        styles_context = settings.BOOTSTRAP_EDITABLE_VARIABLES
+        context.update({'editable_styles': styles_context})
+
     context.update(csrf(request))
     soup = None
     if body_top_template_name:

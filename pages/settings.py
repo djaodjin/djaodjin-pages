@@ -96,3 +96,43 @@ ALLOWED_ATTRIBUTES = {
 }
 
 ALLOWED_STYLES = ['text-align', 'max-width', 'line-height']
+
+BOOTSTRAP_EDITABLE_VARIABLES = [
+    ('Colors',['@gray-base',
+               '@gray-darker',
+               '@gray-dark',
+               '@gray',
+               '@gray-light',
+               '@gray-lighter',
+
+                       '@brand-primary',
+               '@brand-success',
+               '@brand-info',
+               '@brand-warning',
+               '@brand-danger',
+    ]),
+    ('Buttons',['@btn-font-weight',
+                '@btn-default-color',
+                '@btn-default-bg',
+                '@btn-default-border',
+                '@btn-primary-color',
+                '@btn-primary-bg',
+                '@btn-primary-border',
+                '@btn-success-color',
+                '@btn-success-bg',
+                '@btn-success-border',
+                '@btn-info-color',
+                '@btn-info-bg',
+                '@btn-info-border',
+                '@btn-warning-color',
+                '@btn-warning-bg',
+                '@btn-warning-border',
+                '@btn-danger-color',
+                '@btn-danger-bg',
+                '@btn-danger-border',
+                '@btn-link-disabled-color',
+                '@btn-border-radius-base',
+                '@btn-border-radius-large',
+                '@btn-border-radius-small',
+    ]),
+]
