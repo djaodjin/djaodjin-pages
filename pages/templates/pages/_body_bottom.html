@@ -82,12 +82,13 @@
     {% for attribute in section_attributes %}
     <div class="form-group">
       <label for="style_attribute_{{forloop.parentloop.counter}}_{{forloop.counter}}"
-             class="col-sm-3 control-label">{{attribute}}</label>
+             class="col-sm-3 control-label">{{attribute.property}}</label>
       <div class="col-sm-9">
         <input id="style_attribute_{{forloop.parentloop.counter}}_{{forloop.counter}}"
-               name="{{attribute}}"
+               name="{{attribute.property}}"
                type="text"
-               class="form-control">
+               class="form-control"
+               value="{{ attribute.value }}">
       </div>
     </div>
     {% endfor %}
@@ -135,6 +136,8 @@
 <script type="text/javascript">
 jQuery(document).ready(function($) {
 
+  less.registerStylesheetsImmediately();
+
   $("#toggle-code-editor").panelButton({defaultWidth: 800});
   $("#toggle-style-editor").panelButton({defaultWidth: 800});
   $("#toggle-media-gallery").panelButton({defaultWidth: 300});
@@ -142,7 +145,7 @@ jQuery(document).ready(function($) {
   $("#code-editor .content").djtemplates({
       api_source_code: "{{urls.edit.api_sources}}"
   });
-  less.registerStylesheetsImmediately();
+
   $('#style-editor').djstyles({
       api_bootstrap_overrides: "{{urls.edit.bootstrap_variables}}"
   });

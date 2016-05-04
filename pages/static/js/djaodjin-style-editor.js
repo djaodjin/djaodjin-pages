@@ -17,9 +17,21 @@
             self.$refreshButton.on("click", function(event) {
                 self.refreshStyles();
             });
-
+            self.refreshBootstrap();
         },
 
+        refreshBootstrap: function(){
+            var formValues = $('#editable-styles-form').serializeArray();
+
+            var modifiedVars = {};
+            for(var i = 0; i < formValues.length ; i ++){
+                var formElem = formValues[i];
+                if ( formElem.value != '' ){
+                    modifiedVars[formElem.name] = formElem.value;
+                }
+            }
+            less.refresh(true, modifiedVars);
+        },
         refreshStyles: function(){
             var self = this;
             var formValues = $('#editable-styles-form').serializeArray();
@@ -42,16 +54,7 @@
                 contentType: "application/json; charset=utf-8",
                 data: JSON.stringify(bootstrap_variables),
                 success: function(response) {
-
-                    var modifiedVars = {};
-                    for(var i = 0; i < formValues.length ; i ++){
-                        var formElem = formValues[i];
-                        if ( formElem.value != '' ){
-                            modifiedVars[formElem.name] = formElem.value;
-                        }
-                    }
-                    console.log('got response', modifiedVars);
-                    less.refresh(true, modifiedVars);
+                    self.refreshBootstrap();
                 },                
                 error: function(resp) {
                     showErrorMessages(resp);
