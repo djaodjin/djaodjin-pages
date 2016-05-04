@@ -20,7 +20,7 @@
             self.refreshBootstrap();
         },
 
-        refreshBootstrap: function(){
+        modifiedVars: function(){
             var formValues = $('#editable-styles-form').serializeArray();
 
             var modifiedVars = {};
@@ -30,7 +30,10 @@
                     modifiedVars[formElem.name] = formElem.value;
                 }
             }
-            less.refresh(true, modifiedVars);
+            return modifiedVars;
+        },
+        refreshBootstrap: function(){
+            less.refresh(true, this.modifiedVars());
         },
         refreshStyles: function(){
             var self = this;
@@ -66,8 +69,8 @@
     $.fn.djstyles = function(options) {
         var opts = $.extend( {}, $.fn.djstyles.defaults, options );
         return this.each(function() {
-            if (!$.data($(this), "djstyles")) {
-                $.data($(this), "djstyles", new StyleEditor(this, opts));
+            if (!$.data(this, "djstyles")) {
+                $.data(this, "djstyles", new StyleEditor(this, opts));
             }
         });
     };
