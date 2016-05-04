@@ -18,6 +18,11 @@
                 self.refreshStyles();
             });
             self.refreshBootstrap();
+            self.$element.find('button.style-reset-button').on("click", function(event){
+                var $button = $(event.target);
+                var $target = $(document.getElementById($button.attr('data-target')));
+                $target.val($button.attr('data-reset-value'));
+            });
         },
 
         modifiedVars: function(){

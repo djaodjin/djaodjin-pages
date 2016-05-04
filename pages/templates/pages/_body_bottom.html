@@ -83,17 +83,26 @@
     <div class="form-group">
       <label for="style_attribute_{{forloop.parentloop.counter}}_{{forloop.counter}}"
              class="col-sm-3 control-label">{{attribute.property}}</label>
-      <div class="col-sm-9">
+      <div class="col-sm-7">
         <input id="style_attribute_{{forloop.parentloop.counter}}_{{forloop.counter}}"
                name="{{attribute.property}}"
                type="text"
                class="form-control"
-               value="{{ attribute.value }}">
+               value="{{ attribute.value }}" />
+
       </div>
+      <div class="col-sm-2">
+      <button class="btn btn-primary style-reset-button"
+              data-target="style_attribute_{{forloop.parentloop.counter}}_{{forloop.counter}}"
+              data-reset-value="{{ attribute.default }}"
+              type="button"
+              >Reset to default</button>
+      </div>
+
     </div>
     {% endfor %}
-    {% endfor  %}
   </form>
+  {% endfor  %}
 </div>
 
 

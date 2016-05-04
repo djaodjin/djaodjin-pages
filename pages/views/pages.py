@@ -81,7 +81,7 @@ def inject_edition_tools(response, request=None, context=None,
         styles_context = copy.deepcopy(settings.BOOTSTRAP_EDITABLE_VARIABLES)
         for section_name, section_attributes in styles_context:
             for attribute in section_attributes:
-                attribute['value'] = modified_bootstrap_variables.get(attribute['property'],'')
+                attribute['value'] = modified_bootstrap_variables.get(attribute['property'],attribute.get('default', ''))
         context['editable_styles'] = styles_context
 
     context.update(csrf(request))
