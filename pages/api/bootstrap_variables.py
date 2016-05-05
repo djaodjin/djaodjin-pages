@@ -24,26 +24,17 @@
 #pylint: disable=no-member
 
 
+import logging
 
-import logging, os, shutil
+from django.db import transaction
+from rest_framework import generics, serializers
+from rest_framework.mixins import CreateModelMixin
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from ..mixins import AccountMixin
 from ..models import BootstrapVariable
 from ..serializers import BootstrapVariableSerializer
-from ..utils import validate_title
-from django.core.exceptions import ValidationError
-from django.core.validators import validate_slug
-from django.db import transaction
-from django.http import Http404
-from django.template import TemplateSyntaxError
-from django.template.defaultfilters import slugify
-from django.template.loader import get_template
-from django.utils._os import safe_join
-from rest_framework import generics
-from rest_framework.views import APIView
-from rest_framework import status, generics, serializers
-from rest_framework.mixins import CreateModelMixin, UpdateModelMixin
-from rest_framework.response import Response
 
 
 LOGGER = logging.getLogger(__name__)
@@ -57,30 +48,23 @@ class BootstrapVariableMixin(AccountMixin):
 
 class BootstrapVariableListAPIView(AccountMixin,
                                    APIView):
-    
+
     def get(self, request):
         serializer = BootstrapVariableSerializer(self.get_queryset(), many=True)
-        
         return Response(serializer.data)
-                        
-    def put(self, request):
-        
-        print request.data
 
-        
+    def put(self, request):
         with transaction.atomic():
             BootstrapVariable.objects.filter(account=self.account).delete()
 
-            child_serializer = BootstrapVariableSerializer()            
-            serializer = serializers.ListSerializer(data=request.data,child=child_serializer)
+            child_serializer = BootstrapVariableSerializer()
+            serializer = serializers.ListSerializer(
+                data=request.data, child=child_serializer)
             serializer.is_valid()
             serializer.save(account=self.account)
-
-            
-            # serializer = BootstrapVariableSerializer(self.get_queryset(), many=True)
+            # serializer = BootstrapVariableSerializer(
+            #     self.get_queryset(), many=True)
             return Response(serializer.data)
-
-    
 
     def get_queryset(self):
         queryset = BootstrapVariable.objects.filter(account=self.account)
