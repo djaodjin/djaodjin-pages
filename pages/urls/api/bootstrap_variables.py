@@ -24,11 +24,15 @@
 
 '''API URLs for the pages application'''
 
-from django.conf.urls import include, url
+from django.conf.urls import url
+
+from ...api.bootstrap_variables import BootstrapVariableDetail, BootstrapVariableListAPIView
+
 
 urlpatterns = [
-    url(r'^', include('pages.urls.api.elements')),
-    url(r'^', include('pages.urls.api.sources')),
-    url(r'^', include('pages.urls.api.themes')),
-    url(r'^', include('pages.urls.api.bootstrap_variables')),
+    url(r'^bootstrap_variables/(?P<variable_name>[\w-]+)/',
+        BootstrapVariableDetail.as_view(), name='edit_bootstrap_variable'),
+    url(r'^bootstrap_variables/',
+        BootstrapVariableListAPIView.as_view(), name='bootstrap_variables'),
+    
 ]

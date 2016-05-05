@@ -36,9 +36,11 @@ from django.test.utils import instrumented_test_render
 
 from .. import settings
 from ..mixins import AccountMixin
-from ..models import PageElement
+from ..models import PageElement, BootstrapVariable
 from ..compat import csrf, render_template
 from ..signals import template_loaded
+import json
+import copy
 
 # signals hook for Django Templates. Jinja2 templates are done through
 # a custom Environment.
@@ -53,7 +55,9 @@ for engine in loader._engine_list():
 
 def inject_edition_tools(response, request=None, context=None,
                     body_top_template_name="pages/_body_top.html",
-                    body_bottom_template_name="pages/_body_bottom.html"):
+                    body_bottom_template_name="pages/_body_bottom.html",
+                    modified_bootstrap_variables=None
+):
     """
     Inject the edition tools into the html *content* and return
     a BeautifulSoup object of the resulting content + tools.
@@ -63,12 +67,23 @@ def inject_edition_tools(response, request=None, context=None,
         return None
     if context is None:
         context = {}
+    if modified_bootstrap_variables is None:
+        modified_bootstrap_variables = {}
     if 'urls' not in context:
         context.update({'urls': {
                 'edit': {
+                'bootstrap_variables': reverse('bootstrap_variables'),
                 'api_sources': reverse('pages_api_sources'),
                 'api_page_elements': reverse('page_elements'),
                 'media_upload': reverse('uploaded_media_elements')}}})
+
+    if 'editable_styles' not in context:
+        styles_context = copy.deepcopy(settings.BOOTSTRAP_EDITABLE_VARIABLES)
+        for section_name, section_attributes in styles_context:
+            for attribute in section_attributes:
+                attribute['value'] = modified_bootstrap_variables.get(attribute['property'],attribute.get('default', ''))
+        context['editable_styles'] = styles_context
+
     context.update(csrf(request))
     soup = None
     if body_top_template_name:
@@ -132,10 +147,17 @@ class PageMixin(object):
             if context is None:
                 context = {}
             context.update({'templates': self.templates.values()})
+
+        modified_variables = {}
+        for bv in BootstrapVariable.objects.filter(account=self.account):
+            modified_variables[bv.variable_name] = bv.variable_value
+
         return inject_edition_tools(
             response, request=self.request, context=context,
             body_top_template_name=self.body_top_template_name,
-            body_bottom_template_name=self.body_bottom_template_name)
+            body_bottom_template_name=self.body_bottom_template_name,
+            modified_bootstrap_variables=modified_variables
+        )
 
     @staticmethod
     def insert_formatted(editable, new_text):
@@ -214,7 +236,7 @@ class PageMixin(object):
                         editable['src'] = edit.text
                     else:
                         editable.string = new_text
-            response.content = soup.prettify()
+            response.content = str(soup)
         return response
 
 

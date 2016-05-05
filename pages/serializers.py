@@ -26,7 +26,7 @@ import bleach
 from django.db import transaction
 from rest_framework import serializers
 
-from .models import PageElement, ThemePackage
+from .models import PageElement, ThemePackage, BootstrapVariable
 from .settings import ALLOWED_TAGS, ALLOWED_ATTRIBUTES, ALLOWED_STYLES
 
 #pylint: disable=no-init,old-style-class,abstract-method
@@ -88,6 +88,11 @@ class PageElementSerializer(serializers.ModelSerializer):
                             slug=dest_element)
                         instance.add_relationship(dest_element)
         return instance
+
+class BootstrapVariableSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = BootstrapVariable
+        field = ('variable_name', 'variable_value', 'created_at', 'updated_at')
 
 
 class ThemePackageSerializer(serializers.ModelSerializer):
