@@ -188,25 +188,23 @@ class UploadedImageMixin(object):
 
 
 def get_bucket_name(account=None):
-    if not account:
-        return settings.AWS_STORAGE_BUCKET_NAME
-    for bucket_field in ['bucket_name', 'slug', 'username']:
-        try:
-            return getattr(account, bucket_field)
-        except AttributeError:
-            pass
-    return None
+    if account:
+        for bucket_field in ['bucket_name', 'slug', 'username']:
+            try:
+                return getattr(account, bucket_field)
+            except AttributeError:
+                pass
+    return settings.AWS_STORAGE_BUCKET_NAME
 
 
 def get_media_prefix(account=None):
-    if not account:
-        return settings.MEDIA_PREFIX
-    try:
-        return account.media_prefix
-    except AttributeError:
-        LOGGER.debug("``%s`` does not contain a ``media_prefix``"\
-            " field.", account.__class__)
-    return ""
+    if account:
+        try:
+            return account.media_prefix
+        except AttributeError:
+            LOGGER.debug("``%s`` does not contain a ``media_prefix``"\
+                " field.", account.__class__)
+    return settings.MEDIA_PREFIX
 
 
 class ThemePackageMixin(AccountMixin):
