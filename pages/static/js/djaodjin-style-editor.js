@@ -23,8 +23,30 @@
                 var $target = $(document.getElementById($button.attr('data-target')));
                 $target.val($button.attr('data-reset-value'));
             });
-        },
 
+            self.setupCustomEditors();
+        },
+        setupCustomEditors: function(){
+            var self = this;
+
+            // custom color editor
+            self.$element.find("[data-dj-style-variable-editor=color]").each(function(){
+                var $input = $(this);
+                $input.wrap('<div>');
+                $input.parent().addClass('input-group')
+                var $button = $('<span class="input-group-btn"><a href="#" class="btn btn-default" id="cp4"><span class="glyphicon glyphicon-pencil" aria-hidden="true"></span></a></span>');
+                $input.after($button);
+                $button.colorpicker({customClass: 'color-picker-widget'}).on('changeColor', function(e) {
+                    $input.val(e.color.toHex());
+                });
+
+            });
+
+
+            var styleEditorZIndex = parseInt(self.$element.css('z-index'));
+            // make sure color picker is on top of style editor
+            $('.color-picker-widget').css('z-index', styleEditorZIndex + 1 + '');
+        },
         modifiedVars: function(){
             var formValues = $('#editable-styles-form').serializeArray();
 
