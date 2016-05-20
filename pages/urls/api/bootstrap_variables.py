@@ -26,13 +26,12 @@
 
 from django.conf.urls import url
 
-from ...api.bootstrap_variables import BootstrapVariableDetail, BootstrapVariableListAPIView
-
+from ...api.bootstrap_variables import (BootstrapVariableDetail,
+    BootstrapVariableListAPIView)
 
 urlpatterns = [
     url(r'^bootstrap_variables/(?P<variable_name>[\w-]+)/',
         BootstrapVariableDetail.as_view(), name='edit_bootstrap_variable'),
     url(r'^bootstrap_variables/',
         BootstrapVariableListAPIView.as_view(), name='bootstrap_variables'),
-    
 ]

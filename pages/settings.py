@@ -164,28 +164,34 @@ BOOTSTRAP_EDITABLE_VARIABLES = [
                  'editor': 'color'},
 
     ]),
-    ('Typography',[
-        {'property': '@font-family-sans-serif', 'default': '"Helvetica Neue", Helvetica, Arial, sans-serif'},
-        {'property': '@font-family-serif', 'default': 'Georgia, "Times New Roman", Times, serif'},
-        {'property': '@font-family-monospace', 'default': 'Menlo, Monaco, Consolas, "Courier New", monospace'},
+    ('Typography', [
+        {'property': '@font-family-sans-serif',
+         'default': '"Helvetica Neue", Helvetica, Arial, sans-serif'},
+        {'property': '@font-family-serif',
+         'default': 'Georgia, "Times New Roman", Times, serif'},
+        {'property': '@font-family-monospace',
+         'default': 'Menlo, Monaco, Consolas, "Courier New", monospace'},
         {'property': '@font-family-base', 'default': '@font-family-sans-serif'},
-
         {'property': '@font-size-base', 'default': '14px'},
-        {'property': '@font-size-large', 'default': 'ceil((@font-size-base * 1.25))'},
-        {'property': '@font-size-small', 'default': 'ceil((@font-size-base * 0.85))'},
-
-        {'property': '@font-size-h1', 'default': 'floor((@font-size-base * 2.6))'},
-        {'property': '@font-size-h2', 'default': 'floor((@font-size-base * 2.15))'},
-        {'property': '@font-size-h3', 'default': 'ceil((@font-size-base * 1.7))'},
-        {'property': '@font-size-h4', 'default': 'ceil((@font-size-base * 1.25))'},
-        {'property': '@font-size-h5', 'default': '@font-size-base'},
-        {'property': '@font-size-h6', 'default': 'ceil((@font-size-base * 0.85))'},
-
-
+        {'property': '@font-size-large',
+         'default': 'ceil((@font-size-base * 1.25))'},
+        {'property': '@font-size-small',
+         'default': 'ceil((@font-size-base * 0.85))'},
+        {'property': '@font-size-h1',
+         'default': 'floor((@font-size-base * 2.6))'},
+        {'property': '@font-size-h2',
+         'default': 'floor((@font-size-base * 2.15))'},
+        {'property': '@font-size-h3',
+         'default': 'ceil((@font-size-base * 1.7))'},
+        {'property': '@font-size-h4',
+         'default': 'ceil((@font-size-base * 1.25))'},
+        {'property': '@font-size-h5',
+         'default': '@font-size-base'},
+        {'property': '@font-size-h6',
+         'default': 'ceil((@font-size-base * 0.85))'},
         {'property': '@line-height-base', 'default': '1.428571429'},
-
-        {'property': '@line-height-computed', 'default': 'floor((@font-size-base * @line-height-base))'},
-
+        {'property': '@line-height-computed',
+         'default': 'floor((@font-size-base * @line-height-base))'},
         {'property': '@headings-font-family', 'default': 'inherit'},
         {'property': '@headings-font-weight', 'default': '500'},
         {'property': '@headings-line-height', 'default': '1.1'},

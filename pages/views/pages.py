@@ -24,7 +24,8 @@
 
 #pylint:disable=unused-argument
 
-import markdown
+import markdown, copy
+
 from bs4 import BeautifulSoup
 from django.core.urlresolvers import reverse
 from django.shortcuts import render
