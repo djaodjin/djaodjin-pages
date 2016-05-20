@@ -20,7 +20,6 @@ jQuery(document).ready(function($) {
     });
 
     $iframe_view.on("load", function(){
-        console.log('loading iframe again');
         var view = $iframe_view.get(0);
 
         var djstyles = $('#style-editor').data('djstyles');
