@@ -35,19 +35,13 @@ from django.template.backends.django import DjangoTemplates
 from django.template.response import TemplateResponse
 from django.test.signals import template_rendered
 from django.test.utils import instrumented_test_render
-from django.http import HttpResponse
 from django.contrib.staticfiles.templatetags.staticfiles import static
 
 from .. import settings
 from ..mixins import AccountMixin, UploadedImageMixin
 from ..models import PageElement, BootstrapVariable, SiteCss
-from ..compat import csrf, render_template
+from ..compat import csrf
 from ..signals import template_loaded
-import json
-import copy
-import hashlib
-import os
-import cStringIO
 
 # signals hook for Django Templates. Jinja2 templates are done through
 # a custom Environment.
@@ -61,8 +55,8 @@ for engine in loader._engine_list():
 
 
 def inject_edition_tools(response, request=None, context=None,
-                    body_top_template_name="pages/_body_top.html",
-                    body_bottom_template_name="pages/_body_bottom.html"
+                         body_top_template_name="pages/_body_top.html",
+                         body_bottom_template_name="pages/_body_bottom.html"
 ):
     """
     Inject the edition tools into the html *content* and return
@@ -284,7 +278,7 @@ class EditView(PageMixin, AccountMixin, View):
 
         if 'editable_styles' not in context:
             styles_context = copy.deepcopy(settings.BOOTSTRAP_EDITABLE_VARIABLES)
-            for section_name, section_attributes in styles_context:
+            for _, section_attributes in styles_context:
                 for attribute in section_attributes:
                     attribute['value'] = modified_bootstrap_variables.get(attribute['property'],attribute.get('default', ''))
             context['editable_styles'] = styles_context

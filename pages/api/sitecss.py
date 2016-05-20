@@ -23,26 +23,20 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-import hashlib, os
+import cStringIO
 
-from django.utils.encoding import force_text
-from rest_framework import status
-from rest_framework.generics import GenericAPIView
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.pagination import PageNumberPagination
 
 from ..models import SiteCss
 from ..mixins import AccountMixin, UploadedImageMixin
 from ..serializers import SiteCssSerializer
-from ..utils import validate_title
 
-import cStringIO
 
 
 class SiteCssAPIView(UploadedImageMixin, AccountMixin, APIView):
 
-    def get(self, request, *args, **kwargs):
+    def get(self, request):
         try:
             css = SiteCss.objects.get(account=self.account)
 
@@ -58,16 +52,15 @@ class SiteCssAPIView(UploadedImageMixin, AccountMixin, APIView):
 
 
 
-    def post(self, request, *args, **kwargs):
+    def post(self, request):
 
         uploaded_file = request.body
-        sha1 = hashlib.sha1(uploaded_file).hexdigest()
 
         storage = self.get_default_storage(self.account)
 
         actual_name = storage.save('site.css', cStringIO.StringIO(uploaded_file))
 
-        css,_ = SiteCss.objects.update_or_create(
+        css, _ = SiteCss.objects.update_or_create(
             account=self.account,
             defaults={'url': storage.url(actual_name)}
         )
