@@ -55,7 +55,7 @@ jQuery(document).ready(function($) {
             relativeUrls: false,
             rootpath: less_root
             ,  onReady: false
-            // , modifyVars: djstyles.modifiedVars()
+
         };
 
         view.contentWindow.edition_sources = edition_sources.slice();

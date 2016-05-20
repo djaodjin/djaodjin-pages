@@ -126,7 +126,7 @@ class MediaTag(models.Model):
 
 
 class BootstrapVariable(models.Model):
-    variable_name = models.CharField(max_length=250,unique=True)
+    variable_name = models.CharField(max_length=250, unique=True)
     variable_value = models.CharField(max_length=250)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -137,6 +137,9 @@ class BootstrapVariable(models.Model):
         return '%s: %s' % (self.variable_name, self.variable_value)
 
 class SiteCss(models.Model):
+    """
+    This model keeps track of where the cite css is stored in storage.
+    """
     account = models.OneToOneField(settings.ACCOUNT_MODEL, primary_key=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
