@@ -136,6 +136,15 @@ class BootstrapVariable(models.Model):
     def __unicode__(self):
         return '%s: %s' % (self.variable_name, self.variable_value)
 
+class SiteCss(models.Model):
+    account = models.OneToOneField(settings.ACCOUNT_MODEL, primary_key=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    url = models.URLField()
+
+    def __unicode__(self):
+        return 'SiteCss[%s]' % (self.url)
+
 class ThemePackage(models.Model):
     """
     This model allow to record uploaded template.

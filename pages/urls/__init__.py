@@ -23,9 +23,10 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from django.conf.urls import url, include
-
+from pages.views.pages import EditView
 
 urlpatterns = [
+    url(r'^edit', EditView.as_view()),
     url(r'^api/', include('pages.urls.api')),
     url(r'^', include('pages.urls.themes')),
 ]
