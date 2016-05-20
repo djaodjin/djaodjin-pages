@@ -102,8 +102,6 @@ class PageMixin(object):
     Display or Edit a ``Page`` of a ``Project``.
 
     """
-    # body_top_template_name = "pages/_body_top.html"
-    # body_bottom_template_name = "pages/_body_bottom.html"
 
     def _store_template_info(self, sender, **kwargs):
         template = kwargs['template']
