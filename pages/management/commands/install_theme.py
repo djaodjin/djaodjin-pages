@@ -44,10 +44,12 @@ class Command(BaseCommand):
         parser.add_argument('--app_name',
             action='store', dest='app_name', default=None,
             help='overrides the destination theme name')
+        parser.add_argument('packages', nargs='*',
+            help='list of theme packages')
 
     def handle(self, *args, **options):
-        for package_path in args:
-            app_name = options['app_name']
+        app_name = options['app_name']
+        for package_path in options['packages']:
             if not app_name:
                 app_name = os.path.splitext(os.path.basename(package_path))[0]
             self.stdout.write("install %s to %s\n" % (package_path, app_name))
