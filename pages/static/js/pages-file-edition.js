@@ -67,6 +67,12 @@
                 contentType: "application/json; charset=utf-8",
                 data: JSON.stringify({
                     path: path, text: self.editor.getValue()}),
+                success: function(){
+                    // reload content
+                    if ( self.options.iframe_view ){
+                        self.options.iframe_view.src = self.options.iframe_view.src;
+                    }
+                },
                 error: function(resp) {
                     showErrorMessages(resp);
                 }

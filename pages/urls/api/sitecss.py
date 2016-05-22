@@ -24,12 +24,13 @@
 
 '''API URLs for the pages application'''
 
-from django.conf.urls import include, url
+from django.conf.urls import url
+
+from ...api.sitecss import SiteCssAPIView
+
 
 urlpatterns = [
-    url(r'^', include('pages.urls.api.elements')),
-    url(r'^', include('pages.urls.api.sources')),
-    url(r'^', include('pages.urls.api.themes')),
-    url(r'^', include('pages.urls.api.bootstrap_variables')),
-    url(r'^', include('pages.urls.api.sitecss')),
+    url(r'^sitecss',
+        SiteCssAPIView.as_view(), name='edit_sitecss'),
+
 ]

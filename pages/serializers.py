@@ -94,6 +94,15 @@ class BootstrapVariableSerializer(serializers.ModelSerializer):
         model = BootstrapVariable
         field = ('variable_name', 'variable_value', 'created_at', 'updated_at')
 
+class SiteCssSerializer(serializers.BaseSerializer):
+    "A Simple serializer for the SiteCss model"
+    def to_representation(self, obj):
+        return {
+            'created_at': obj.created_at.isoformat(),
+            'updated_at': obj.updated_at.isoformat(),
+            'url': obj.url
+        }
+
 
 class ThemePackageSerializer(serializers.ModelSerializer):
 
