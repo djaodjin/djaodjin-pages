@@ -22,11 +22,50 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from django.conf.urls import url, include
-from pages.views.pages import EditView
 
-urlpatterns = [
-    url(r'^edit', EditView.as_view()),
-    url(r'^api/', include('pages.urls.api')),
-    url(r'^', include('pages.urls.themes')),
-]
+import cStringIO
+
+from rest_framework.views import APIView
+from rest_framework.response import Response
+
+from ..models import SiteCss
+from ..mixins import AccountMixin, UploadedImageMixin
+from ..serializers import SiteCssSerializer
+
+
+
+class SiteCssAPIView(UploadedImageMixin, AccountMixin, APIView):
+
+    def get(self, request):
+        try:
+            css = SiteCss.objects.get(account=self.account)
+
+            serializer = SiteCssSerializer(css)
+
+            data = serializer.data
+        except SiteCss.DoesNotExist:
+            data = None
+
+
+        return Response(data)
+
+
+
+
+    def post(self, request):
+
+        uploaded_file = request.body
+
+        storage = self.get_default_storage(self.account)
+
+        actual_name = storage.save('site.css', cStringIO.StringIO(uploaded_file))
+
+        css, _ = SiteCss.objects.update_or_create(
+            account=self.account,
+            defaults={'url': storage.url(actual_name)}
+        )
+        serializer = SiteCssSerializer(css)
+
+        return Response(serializer.data)
+
+

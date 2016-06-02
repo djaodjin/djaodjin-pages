@@ -28,17 +28,19 @@ import markdown, copy
 
 from bs4 import BeautifulSoup
 from django.core.urlresolvers import reverse
+from django.shortcuts import render
 from django.template import loader, Template
-from django.views.generic import ListView, DetailView, TemplateView
+from django.views.generic import ListView, DetailView, TemplateView, View
 from django.template.backends.django import DjangoTemplates
 from django.template.response import TemplateResponse
 from django.test.signals import template_rendered
 from django.test.utils import instrumented_test_render
+from django.contrib.staticfiles.templatetags.staticfiles import static
 
 from .. import settings
-from ..mixins import AccountMixin
-from ..models import PageElement, BootstrapVariable
-from ..compat import csrf, render_template
+from ..mixins import AccountMixin, UploadedImageMixin
+from ..models import PageElement, BootstrapVariable, SiteCss
+from ..compat import csrf
 from ..signals import template_loaded
 
 # signals hook for Django Templates. Jinja2 templates are done through
@@ -53,10 +55,9 @@ for engine in loader._engine_list():
 
 
 def inject_edition_tools(response, request=None, context=None,
-                    body_top_template_name="pages/_body_top.html",
-                    body_bottom_template_name="pages/_body_bottom.html",
-                    modified_bootstrap_variables=None):
-    #pylint:disable=too-many-arguments
+                         body_top_template_name="pages/_body_top.html",
+                         body_bottom_template_name="pages/_body_bottom.html"
+):
     """
     Inject the edition tools into the html *content* and return
     a BeautifulSoup object of the resulting content + tools.
@@ -66,60 +67,41 @@ def inject_edition_tools(response, request=None, context=None,
         return None
     if context is None:
         context = {}
-    if modified_bootstrap_variables is None:
-        modified_bootstrap_variables = {}
-    if 'urls' not in context:
-        context.update({'urls': {
-                'edit': {
-                'bootstrap_variables': reverse('bootstrap_variables'),
-                'api_sources': reverse('pages_api_sources'),
-                'api_page_elements': reverse('page_elements'),
-                'media_upload': reverse('uploaded_media_elements')}}})
-
-    if 'editable_styles' not in context:
-        styles_context = copy.deepcopy(settings.BOOTSTRAP_EDITABLE_VARIABLES)
-        for _, section_attributes in styles_context:
-            for attribute in section_attributes:
-                attribute['value'] = modified_bootstrap_variables.get(
-                    attribute['property'], attribute.get('default', ''))
-        context['editable_styles'] = styles_context
 
     context.update(csrf(request))
     soup = None
-    if body_top_template_name:
-        template = loader.get_template(body_top_template_name)
-        body_top = render_template(template, context, request).strip()
-        if body_top:
-            if not soup:
-                soup = BeautifulSoup(response.content, 'html5lib')
-            if soup and soup.body:
-                # Implementation Note: we have to use ``.body.next`` here
-                # because html5lib "fixes" our HTML by adding missing
-                # html/body tags. Furthermore if we use
-                #``soup.body.insert(1, BeautifulSoup(body_top, 'html.parser'))``
-                # instead, later on ``soup.find_all(class_=...)`` returns
-                # an empty set though ``soup.prettify()`` outputs the full
-                # expected HTML text.
-                soup.body.insert(1, BeautifulSoup(
-                    body_top, 'html5lib').body.next)
-    if body_bottom_template_name:
-        template = loader.get_template(body_bottom_template_name)
-        body_bottom = render_template(template, context, request).strip()
-        if body_bottom:
-            if not soup:
-                soup = BeautifulSoup(response.content, 'html5lib')
-            if soup and soup.body:
-                soup.body.append(BeautifulSoup(body_bottom, 'html.parser'))
     return soup
 
+def find_all_templates(template_name):
+    template = loader.get_template(template_name)
+
+    templates = {}
+    def _store_template_info(sender, **kwargs):
+        template = kwargs['template']
+        if template.name in settings.TEMPLATES_BLACKLIST:
+            # We don't show templates that cannot be edited.
+            return
+        if not template.name in templates:
+            # For some reasons the Django/Jinja2 framework might load the same
+            # templates multiple times.
+            templates.update({template.name:
+                {"name": template.name, "index": len(templates)}})
+
+    template_loaded.connect(_store_template_info)
+    template_rendered.connect(_store_template_info)
+    try:
+        template.render()
+    finally:
+        template_rendered.disconnect(_store_template_info)
+        template_loaded.disconnect(_store_template_info)
+
+    return templates.values()
 
 class PageMixin(object):
     """
     Display or Edit a ``Page`` of a ``Project``.
 
     """
-    body_top_template_name = "pages/_body_top.html"
-    body_bottom_template_name = "pages/_body_bottom.html"
 
     def _store_template_info(self, sender, **kwargs):
         template = kwargs['template']
@@ -146,17 +128,13 @@ class PageMixin(object):
         if hasattr(self, 'templates'):
             if context is None:
                 context = {}
-            context.update({'templates': self.templates.values()})
 
-        modified_variables = {}
-        for bvar in BootstrapVariable.objects.filter(account=self.account):
-            modified_variables[bvar.variable_name] = bvar.variable_value
+            context.update({
+                'templates': self.templates.values(),
+            })
 
         return inject_edition_tools(
-            response, request=self.request, context=context,
-            body_top_template_name=self.body_top_template_name,
-            body_bottom_template_name=self.body_bottom_template_name,
-            modified_bootstrap_variables=modified_variables
+            response, request=self.request, context=context
         )
 
     @staticmethod
@@ -199,6 +177,17 @@ class PageMixin(object):
                 if not element in children_done:
                     editable.append(element)
 
+    def get_context_data(self, **kwargs):
+        context = super(PageMixin, self).get_context_data(**kwargs)
+        try:
+            css = SiteCss.objects.get(account=self.account)
+            url = css.url
+        except SiteCss.DoesNotExist:
+            url = static('vendor/css/bootstrap.css')
+
+        context.update({'sitecss': url})
+        return context
+
     def get(self, request, *args, **kwargs):
         #pylint: disable=too-many-statements, too-many-locals
         self.enable_instrumentation()
@@ -240,7 +229,7 @@ class PageMixin(object):
         return response
 
 
-class PageView(PageMixin, AccountMixin, TemplateView):
+class PageView(PageMixin, AccountMixin, TemplateView, UploadedImageMixin):
 
     http_method_names = ['get']
 
@@ -258,3 +247,39 @@ class PageElementListView(ListView):
 
 class PageElementDetailView(DetailView):
     model = PageElement
+
+class EditView(PageMixin, AccountMixin, View):
+
+    def get(self, request, *args, **kwargs):
+        template_target = {
+            'template': 'index.html',
+            'url': '/',
+        }
+
+        context = {
+            'template_target': template_target,
+            'templates': find_all_templates(template_target['template']),
+            'sitecss': static('vendor/css/bootstrap.css'),
+        }
+
+        context.update({'urls': {
+            'edit': {
+                'api_sitecss': reverse('edit_sitecss'),
+                'bootstrap_variables': reverse('bootstrap_variables'),
+                'api_sources': reverse('pages_api_sources'),
+                'api_page_elements': reverse('page_elements'),
+                'media_upload': reverse('uploaded_media_elements')}}})
+
+        modified_bootstrap_variables = {}
+        for bv in BootstrapVariable.objects.filter(account=self.account):
+            modified_bootstrap_variables[bv.variable_name] = bv.variable_value
+
+        if 'editable_styles' not in context:
+            styles_context = copy.deepcopy(settings.BOOTSTRAP_EDITABLE_VARIABLES)
+            for _, section_attributes in styles_context:
+                for attribute in section_attributes:
+                    attribute['value'] = modified_bootstrap_variables.get(attribute['property'],attribute.get('default', ''))
+            context['editable_styles'] = styles_context
+
+
+        return render(request, 'pages/edit.html', context)

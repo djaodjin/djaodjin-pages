@@ -126,15 +126,30 @@ class MediaTag(models.Model):
 
 
 class BootstrapVariable(models.Model):
+    """
+    This model stores bootstrap style changes
+    """
     variable_name = models.CharField(max_length=250, unique=True)
     variable_value = models.CharField(max_length=250)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     account = models.ForeignKey(settings.ACCOUNT_MODEL,
-        related_name='account_bootstrap_variable', null=True)
+                                related_name='account_bootstrap_variable', null=True)
 
     def __unicode__(self):
         return '%s: %s' % (self.variable_name, self.variable_value)
+
+class SiteCss(models.Model):
+    """
+    This model keeps track of where the cite css is stored in storage.
+    """
+    account = models.OneToOneField(settings.ACCOUNT_MODEL, primary_key=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    url = models.URLField()
+
+    def __unicode__(self):
+        return 'SiteCss[%s]' % (self.url)
 
 class ThemePackage(models.Model):
     """
