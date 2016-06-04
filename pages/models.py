@@ -134,7 +134,7 @@ class BootstrapVariable(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     account = models.ForeignKey(settings.ACCOUNT_MODEL,
-                                related_name='account_bootstrap_variable', null=True)
+        related_name='account_bootstrap_variable', null=True)
 
     def __unicode__(self):
         return '%s: %s' % (self.variable_name, self.variable_value)

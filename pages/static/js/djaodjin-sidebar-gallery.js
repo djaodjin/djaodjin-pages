@@ -103,6 +103,9 @@ Options:
             if (self.options.startLoad){
                 self.loadImage();
             }
+            $(document).on("click", "[data-dj-gallery-media-url]" , function(){
+                this.select();
+            });
         },
 
         initGallery: function(){
@@ -402,12 +405,13 @@ Options:
 
         HTML requirements:
 
-        <button data-target="#_panel_"></button>
+        <button data-target="#_panel_" data-default-width="300"></button>
         <div id="#_panel_"></div>
      */
     function PanelButton(el, options){
         this.element = $(el);
         this.options = options;
+        this.defaultWidth = 300;
         this.init();
     }
 
@@ -415,6 +419,14 @@ Options:
         init: function () {
             var self = this;
             var target = $(self.element.attr("data-target"));
+            if( typeof self.options.defaultWidth !== "undefined" ) {
+                self.defaultWidth = self.options.defaultWidth;
+            } else {
+                var defaultWidth = self.element.attr("data-default-width");
+                if( defaultWidth ) {
+                    self.defaultWidth = parseInt(defaultWidth);
+                }
+            }
 
             target.find(".close").click(function() {
                 if( target.is(":visible")) {
@@ -430,11 +442,11 @@ Options:
                     return false;
                 }
                 if( target.hasClass("visible-gallery") ) {
-                    target.css({right: -self.options.defaultWidth, width: self.options.defaultWidth}).removeClass("visible-gallery");
+                    target.css({right: -self.defaultWidth, width: self.defaultWidth}).removeClass("visible-gallery");
                     self.element.removeAttr("style").css({right: 0}).draggable("destroy");
                 } else {
-                    target.css({right: 0, width: self.options.defaultWidth}).addClass("visible-gallery");
-                    self.element.css("right", self.options.defaultWidth);
+                    target.css({right: 0, width: self.defaultWidth}).addClass("visible-gallery");
+                    self.element.css("right", self.defaultWidth);
                     self.element.draggable({
                         axis: "x",
                         cursor: "move",
@@ -444,25 +456,25 @@ Options:
                         },
                         drag: function(event, ui) {
                             var viewWidth = $(window).width();
-                            if (viewWidth - ui.position.left - $(ui.helper).outerWidth() >= self.options.defaultWidth){
+                            if (viewWidth - ui.position.left - $(ui.helper).outerWidth() >= self.defaultWidth){
                                 target.css("right", "0px").css("width", viewWidth - ui.position.left - $(ui.helper).outerWidth());
                             } else {
-                                self.element.css("left", viewWidth - self.options.defaultWidth - $(ui.helper).outerWidth());
+                                self.element.css("left", viewWidth - self.defaultWidth - $(ui.helper).outerWidth());
                                 return false;
                             }
                         },
                         stop: function(event, ui) {
                             var viewWidth = $(window).width();
-                            if (viewWidth - ui.position.left - $(ui.helper).outerWidth() >= self.options.defaultWidth){
+                            if (viewWidth - ui.position.left - $(ui.helper).outerWidth() >= self.defaultWidth){
                                 target.css("right", "0px").css("width", viewWidth - ui.position.left - $(ui.helper).outerWidth());
                             } else {
-                                target.css("right", "0px").css("width", self.options.defaultWidth);
+                                target.css("right", "0px").css("width", self.defaultWidth);
                             }
                             setTimeout( function(){
                                 if( self.element.hasClass("dragged")){
                                     self.element.removeClass("dragged");
                                 }
-                            }, self.options.defaultWidth);
+                            }, self.defaultWidth);
                         }
                     });
                     target.trigger("djgallery.loadresources");
@@ -474,11 +486,15 @@ Options:
 
     $.fn.panelButton = function(options) {
         var opts = $.extend( {}, $.fn.panelButton.defaults, options );
-        return new PanelButton($(this), opts);
+        return this.each(function() {
+            if (!$.data(this, "panelButton")) {
+                $.data(this, "panelButton", new PanelButton(this, opts));
+            }
+        });
     };
 
     $.fn.panelButton.defaults = {
-        defaultWidth: 300
+//        defaultWidth: 300
     };
 
 })(jQuery);

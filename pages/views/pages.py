@@ -35,12 +35,11 @@ from django.template.backends.django import DjangoTemplates
 from django.template.response import TemplateResponse
 from django.test.signals import template_rendered
 from django.test.utils import instrumented_test_render
-from django.contrib.staticfiles.templatetags.staticfiles import static
 
 from .. import settings
 from ..mixins import AccountMixin, UploadedImageMixin
-from ..models import PageElement, BootstrapVariable, SiteCss
-from ..compat import csrf
+from ..models import PageElement, BootstrapVariable
+from ..compat import csrf, render_template
 from ..signals import template_loaded
 
 # signals hook for Django Templates. Jinja2 templates are done through
@@ -54,10 +53,26 @@ for engine in loader._engine_list():
             break
 
 
+def _add_editable_styles_context(context=None, less_variables=None):
+    if context is None:
+        context = {}
+    if 'editable_styles' not in context:
+        if less_variables is None:
+            less_variables = {}
+        styles_context = copy.deepcopy(settings.BOOTSTRAP_EDITABLE_VARIABLES)
+        for _, section_attributes in styles_context:
+            for attribute in section_attributes:
+                attribute['value'] = less_variables.get(
+                    attribute['property'], attribute.get('default', ''))
+        context['editable_styles'] = styles_context
+    return context
+
+
 def inject_edition_tools(response, request=None, context=None,
                          body_top_template_name="pages/_body_top.html",
-                         body_bottom_template_name="pages/_body_bottom.html"
-):
+                         body_bottom_template_name="pages/_body_bottom.html",
+                         less_variables=None):
+    #pylint:disable=too-many-arguments
     """
     Inject the edition tools into the html *content* and return
     a BeautifulSoup object of the resulting content + tools.
@@ -67,10 +82,46 @@ def inject_edition_tools(response, request=None, context=None,
         return None
     if context is None:
         context = {}
-
+    if less_variables is None:
+        less_variables = {}
+    if 'urls' not in context:
+        context.update({'urls': {
+                'edit': {
+                'bootstrap_variables': reverse('bootstrap_variables'),
+                'api_sitecss': reverse('edit_sitecss'),
+                'api_sources': reverse('pages_api_sources'),
+                'api_page_elements': reverse('page_elements'),
+                'media_upload': reverse('uploaded_media_elements')}}})
+    context = _add_editable_styles_context(context=context,
+        less_variables=less_variables)
     context.update(csrf(request))
     soup = None
+    if body_top_template_name:
+        template = loader.get_template(body_top_template_name)
+        body_top = render_template(template, context, request).strip()
+        if body_top:
+            if not soup:
+                soup = BeautifulSoup(response.content, 'html5lib')
+            if soup and soup.body:
+                # Implementation Note: we have to use ``.body.next`` here
+                # because html5lib "fixes" our HTML by adding missing
+                # html/body tags. Furthermore if we use
+                #``soup.body.insert(1, BeautifulSoup(body_top, 'html.parser'))``
+                # instead, later on ``soup.find_all(class_=...)`` returns
+                # an empty set though ``soup.prettify()`` outputs the full
+                # expected HTML text.
+                soup.body.insert(1, BeautifulSoup(
+                    body_top, 'html5lib').body.next)
+    if body_bottom_template_name:
+        template = loader.get_template(body_bottom_template_name)
+        body_bottom = render_template(template, context, request).strip()
+        if body_bottom:
+            if not soup:
+                soup = BeautifulSoup(response.content, 'html5lib')
+            if soup and soup.body:
+                soup.body.append(BeautifulSoup(body_bottom, 'html.parser'))
     return soup
+
 
 def find_all_templates(template_name):
     template = loader.get_template(template_name)
@@ -96,6 +147,7 @@ def find_all_templates(template_name):
         template_loaded.disconnect(_store_template_info)
 
     return templates.values()
+
 
 class PageMixin(object):
     """
@@ -133,9 +185,13 @@ class PageMixin(object):
                 'templates': self.templates.values(),
             })
 
+        less_variables = {}
+        for var in BootstrapVariable.objects.filter(account=self.account):
+            less_variables[var.variable_name] = var.variable_value
+
         return inject_edition_tools(
-            response, request=self.request, context=context
-        )
+            response, request=self.request, context=context,
+            less_variables=less_variables)
 
     @staticmethod
     def insert_formatted(editable, new_text):
@@ -176,17 +232,6 @@ class PageMixin(object):
                         children_done += [sub_el]
                 if not element in children_done:
                     editable.append(element)
-
-    def get_context_data(self, **kwargs):
-        context = super(PageMixin, self).get_context_data(**kwargs)
-        try:
-            css = SiteCss.objects.get(account=self.account)
-            url = css.url
-        except SiteCss.DoesNotExist:
-            url = static('vendor/css/bootstrap.css')
-
-        context.update({'sitecss': url})
-        return context
 
     def get(self, request, *args, **kwargs):
         #pylint: disable=too-many-statements, too-many-locals
@@ -252,14 +297,13 @@ class EditView(PageMixin, AccountMixin, View):
 
     def get(self, request, *args, **kwargs):
         template_target = {
-            'template': 'index.html',
-            'url': '/',
+            'template': 'index.html', 'url': '/'
         }
 
         context = {
+            'page': request.GET.get('page', '/'),
             'template_target': template_target,
             'templates': find_all_templates(template_target['template']),
-            'sitecss': static('vendor/css/bootstrap.css'),
         }
 
         context.update({'urls': {
@@ -270,16 +314,10 @@ class EditView(PageMixin, AccountMixin, View):
                 'api_page_elements': reverse('page_elements'),
                 'media_upload': reverse('uploaded_media_elements')}}})
 
-        modified_bootstrap_variables = {}
-        for bv in BootstrapVariable.objects.filter(account=self.account):
-            modified_bootstrap_variables[bv.variable_name] = bv.variable_value
-
-        if 'editable_styles' not in context:
-            styles_context = copy.deepcopy(settings.BOOTSTRAP_EDITABLE_VARIABLES)
-            for _, section_attributes in styles_context:
-                for attribute in section_attributes:
-                    attribute['value'] = modified_bootstrap_variables.get(attribute['property'],attribute.get('default', ''))
-            context['editable_styles'] = styles_context
-
+        less_variables = {}
+        for var in BootstrapVariable.objects.filter(account=self.account):
+            less_variables[var.variable_name] = var.variable_value
+        context = _add_editable_styles_context(context=context,
+            less_variables=less_variables)
 
         return render(request, 'pages/edit.html', context)

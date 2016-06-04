@@ -53,6 +53,20 @@ if os.getenv('DEBUG'):
     # Enable override on command line.
     DEBUG = True if int(os.getenv('DEBUG')) > 0 else False
 
+INSTALLED_APPS = (
+    'django.contrib.admin',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.messages',
+    'django.contrib.staticfiles',
+    'debug_toolbar',
+    'rest_framework',
+    'pages',
+    'storages',
+    'testsite',
+)
+
 #
 # Templates
 # ---------
@@ -95,18 +109,18 @@ TEMPLATES = [
 
 # Applications
 # ------------
-INSTALLED_APPS = (
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-    'rest_framework',
-    'pages',
-    'storages',
-    'testsite',
-)
+
+# debug panel
+# -----------
+DEBUG_TOOLBAR_PATCH_SETTINGS = False
+DEBUG_TOOLBAR_CONFIG = {
+    'JQUERY_URL': '/static/vendor/js/jquery.js',
+    'SHOW_COLLAPSED': True,
+    'SHOW_TEMPLATE_CONTEXT': True,
+}
+
+INTERNAL_IPS = ('127.0.0.1', '::1')
+
 
 FILE_UPLOAD_HANDLERS = (
     "pages.uploadhandler.ProgressBarUploadHandler",
@@ -115,6 +129,7 @@ FILE_UPLOAD_HANDLERS = (
 )
 
 MIDDLEWARE_CLASSES = (
+ #   'debug_panel.middleware.DebugPanelMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',

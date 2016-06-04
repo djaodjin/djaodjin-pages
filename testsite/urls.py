@@ -1,4 +1,4 @@
-# Copyright (c) 2014, Djaodjin Inc.
+# Copyright (c) 2016, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -22,16 +22,22 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from django.conf.urls import include, url
-from django.contrib import admin
-from testsite.views import HomeView
-from django.conf.urls.static import static
 from django.conf import settings
+from django.conf.urls import include, url
+from django.conf.urls.static import static
+from django.contrib.staticfiles.urls import staticfiles_urlpatterns
+from django.views.generic import TemplateView
+import debug_toolbar
 
-urlpatterns = [
+from pages.views.pages import PageView
+
+
+urlpatterns = staticfiles_urlpatterns() \
+    + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+urlpatterns += [
+    url(r'^__debug__/', include(debug_toolbar.urls)),
     url(r'^', include('pages.urls')),
-    url(r'^$', HomeView.as_view()),
-
-    url(r'^admin/', include(admin.site.urls)),
-]+ static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)\
-+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    url(r'^$', PageView.as_view(template_name='index.html')),
+    url(r'^app/$', TemplateView.as_view(template_name='index.html')),
+]

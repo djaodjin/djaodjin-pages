@@ -1,4 +1,4 @@
-# Copyright (c) 2015, Djaodjin Inc.
+# Copyright (c) 2016, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -22,11 +22,25 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-
 from django import template
+from django.contrib.staticfiles.templatetags.staticfiles import static
 from django.utils.safestring import mark_safe
 
+from ..models import SiteCss
+from ..utils import get_current_account
+
 register = template.Library()
+
+
+@register.filter
+def sitecss(name):#pylint:disable=unused-argument
+    try:
+        css = SiteCss.objects.get(account=get_current_account())
+        url = css.url
+    except SiteCss.DoesNotExist:
+        url = static('vendor/css/bootstrap.css')
+    return url
+
 
 @register.filter
 def get_relationships(element, tag=None):

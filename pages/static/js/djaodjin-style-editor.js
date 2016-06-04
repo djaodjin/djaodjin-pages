@@ -1,4 +1,4 @@
-/* global $ ace document:true */
+/* global document:true */
 
 (function ($) {
     "use strict";
@@ -47,7 +47,10 @@
             $('.color-picker-widget').css('z-index', styleEditorZIndex + 1 + '');
         },
         getLess: function(){
-            return this.options.iframe_view.contentWindow.less;
+            if( this.options.iframe_view ) {
+                return this.options.iframe_view.contentWindow.less;
+            }
+            return less;
         },
         modifiedVars: function(){
             var formValues = $('#editable-styles-form').serializeArray();
@@ -62,8 +65,9 @@
             return modifiedVars;
         },
         refreshBootstrap: function(){
-            // reload content
-            this.options.iframe_view.src = this.options.iframe_view.src;
+            var self = this;
+            var less = self.getLess();
+            less.refresh(true, self.modifiedVars());
         },
         refreshStyles: function(){
             var self = this;
@@ -80,12 +84,16 @@
                 }
             }
 
-
             var less = self.getLess();
-            var fileManager = less.environment.fileManagers[0];
+            if( typeof less.sheets === "undefined" ) {
+                less.registerStylesheetsImmediately();
+            }
 
+            var fileManager = less.environment.fileManagers[0];
             var instanceOptions = jQuery.extend(less.options, {modifyVars: self.modifiedVars()});
-            fileManager.loadFile(less_href, null, instanceOptions, less.environment, function(e, loadedFile) {
+
+            var lesshref = $(less.sheets[0]).attr("href");
+            fileManager.loadFile(lesshref, null, instanceOptions, less.environment, function(e, loadedFile) {
 
                 var data = loadedFile.contents,
                     path = loadedFile.filename,

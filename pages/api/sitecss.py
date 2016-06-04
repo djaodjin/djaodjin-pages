@@ -1,4 +1,4 @@
-# Copyright (c) 2015, Djaodjin Inc.
+# Copyright (c) 2016, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -58,7 +58,8 @@ class SiteCssAPIView(UploadedImageMixin, AccountMixin, APIView):
 
         storage = self.get_default_storage(self.account)
 
-        actual_name = storage.save('site.css', cStringIO.StringIO(uploaded_file))
+        actual_name = storage.save(
+            'site.css', cStringIO.StringIO(uploaded_file))
 
         css, _ = SiteCss.objects.update_or_create(
             account=self.account,
