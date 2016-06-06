@@ -123,10 +123,6 @@ def inject_edition_tools(response, request=None, context=None,
             if not soup:
                 soup = BeautifulSoup(response.content, 'html5lib')
             edit_soup = BeautifulSoup(edit_frame, 'html5lib')
-            #edit_soup.iframe['src'] = "data:text/html,%s" % unicode(soup).replace('\n','')
-
-            #edit_soup.iframe.append(soup)
-            #edit_soup.iframe.append(BeautifulSoup("<html><head><link rel="stylesheet" media="screen" href="/media/alice/css/site.css" /></head><body>Hello</body></html>", 'html.parser'))
             soup = edit_soup
 
     return soup

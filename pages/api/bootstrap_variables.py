@@ -25,7 +25,7 @@
 
 
 from django.db import transaction
-from rest_framework import generics, serializers, status
+from rest_framework import generics, status
 from rest_framework.mixins import CreateModelMixin
 from rest_framework.response import Response
 
@@ -43,7 +43,6 @@ class BootstrapVariableListAPIView(AccountMixin, generics.ListAPIView):
         return cssfile
 
     def get_queryset(self):
-        cssfile = self.request.GET.get('cssfile', 'site.css')
         queryset = BootstrapVariable.objects.filter(
             account=self.account, cssfile=self.get_cssfile())
         return queryset
@@ -54,7 +53,7 @@ class BootstrapVariableListAPIView(AccountMixin, generics.ListAPIView):
         with transaction.atomic():
             any_created = False
             for var in serializer.validated_data:
-                obj, created = BootstrapVariable.objects.update_or_create(
+                _, created = BootstrapVariable.objects.update_or_create(
                     account=self.account,
                     cssfile=self.get_cssfile(),
                     variable_name=var['variable_name'],
