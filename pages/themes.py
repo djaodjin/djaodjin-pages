@@ -32,6 +32,15 @@ from . import settings
 LOGGER = logging.getLogger(__name__)
 
 
+def get_theme_dir(theme_name):
+    if isinstance(settings.THEME_DIR_CALLABLE, basestring):
+        from ..compat import import_string
+        settings.THEME_DIR_CALLABLE = import_string(
+            settings.THEME_DIR_CALLABLE)
+    theme_dir = settings.THEME_DIR_CALLABLE(theme_name)
+    return theme_dir
+
+
 def install_theme(theme_name, zip_file):
     """
     Extract resources and templates from an opened ``ZipFile``
@@ -40,11 +49,7 @@ def install_theme(theme_name, zip_file):
     """
     #pylint:disable=too-many-statements,too-many-locals
     LOGGER.info("install theme %s", theme_name)
-    if isinstance(settings.THEME_DIR_CALLABLE, basestring):
-        from ..compat import import_string
-        settings.THEME_DIR_CALLABLE = import_string(
-            settings.THEME_DIR_CALLABLE)
-    theme_dir = settings.THEME_DIR_CALLABLE(theme_name)
+    theme_dir = get_theme_dir(theme_name)
     public_dir = safe_join(settings.PUBLIC_ROOT, theme_name)
     templates_dir = safe_join(theme_dir, 'templates')
 

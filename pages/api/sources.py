@@ -33,11 +33,20 @@ from oslo_concurrency import lockutils
 from rest_framework import status, generics, serializers
 from rest_framework.response import Response
 
-from .. import settings
 from ..mixins import ThemePackageMixin
+from ..themes import get_theme_dir
 
 
 LOGGER = logging.getLogger(__name__)
+
+
+def get_template_path(template=None, relative_path=None):
+    if template is None:
+        template = get_template(relative_path)
+    try:
+        return template.template.filename
+    except AttributeError:
+        return template.origin.name
 
 
 class SourceCodeSerializer(serializers.Serializer):
@@ -56,35 +65,24 @@ class SourceDetailAPIView(ThemePackageMixin, generics.RetrieveUpdateAPIView):
 
     serializer_class = SourceCodeSerializer
 
-    def _get_template_path(self, template=None):
-        if template is None:
-            template = get_template(self.kwargs.get('page'))
-        try:
-            return template.template.filename
-        except AttributeError:
-            return template.origin.name
-
     def retrieve(self, request, *args, **kwargs):
-        with open(self._get_template_path()) as source_file:
+        relative_path = self.kwargs.get('page')
+        with open(get_template_path(
+                relative_path=relative_path)) as source_file:
             source_content = source_file.read()
-        return Response({"path": self.kwargs.get('page'),
-            "text": source_content})
+        return Response({"path": relative_path, "text": source_content})
 
     def update(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        template_path = self._get_template_path()
-        if isinstance(settings.THEME_DIR_CALLABLE, basestring):
-            from ..compat import import_string
-            settings.THEME_DIR_CALLABLE = import_string(
-                settings.THEME_DIR_CALLABLE)
-        theme_base = settings.THEME_DIR_CALLABLE(self.account)
+        relative_path = self.kwargs.get('page')
+        template_path = get_template_path(relative_path=relative_path)
+        theme_base = get_theme_dir(self.account)
         if not template_path.startswith(theme_base):
             resp_status = status.HTTP_201_CREATED
             # XXX Until the whole theme feature is rewritten properly.
             default_template_path = template_path
-            template_path = safe_join(theme_base, 'templates',
-                self.kwargs.get('page'))
+            template_path = safe_join(theme_base, 'templates', relative_path)
             if not os.path.isdir(os.path.dirname(template_path)):
                 os.makedirs(os.path.dirname(template_path))
             shutil.copy(default_template_path, template_path)
@@ -98,8 +96,8 @@ class SourceDetailAPIView(ThemePackageMixin, generics.RetrieveUpdateAPIView):
             with open(template_path, 'w') as source_file:
                 source_file.write(serializer.validated_data['text'])
             try:
-                template = get_template(self.kwargs.get('page'))
-                assert self._get_template_path(template) == template_path
+                template = get_template(relative_path)
+                assert get_template_path(template) == template_path
                 LOGGER.info("Written to %s", template_path)
                 os.remove(backup_path)
             except TemplateSyntaxError:

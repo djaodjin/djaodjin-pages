@@ -27,17 +27,9 @@ from django.conf.urls import include, url
 from django.conf.urls.static import static
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 from django.views.generic import TemplateView
-import debug_toolbar
 
 from pages.views.pages import PageView
 
-
-urlpatterns = staticfiles_urlpatterns() \
-    + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
-
-urlpatterns += [
-    url(r'^__debug__/', include(debug_toolbar.urls)),
-    url(r'^', include('pages.urls')),
+urlpatterns = [
     url(r'^$', PageView.as_view(template_name='index.html')),
-    url(r'^app/$', TemplateView.as_view(template_name='index.html')),
 ]

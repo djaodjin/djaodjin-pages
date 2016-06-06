@@ -22,10 +22,23 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from django.conf.urls import url, include
-from pages.views.pages import EditView
+from django.conf import settings
+from django.conf.urls import include, url
+from django.conf.urls.static import static
+from django.contrib.staticfiles.urls import staticfiles_urlpatterns
+import debug_toolbar
 
-urlpatterns = [
-    url(r'^api/', include('pages.urls.api')),
-    url(r'^', include('pages.urls.themes')),
+from pages.views.pages import PageView, EditView
+
+
+urlpatterns = staticfiles_urlpatterns() \
+    + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+urlpatterns += [
+    url(r'^__debug__/', include(debug_toolbar.urls)),
+    url(r'^', include('pages.urls')),
+    url(r'^$', PageView.as_view(template_name='index.html',
+        body_bottom_template_name="pages/_body_bottom_edit_tools.html")),
+    url(r'^content/', include('testsite.urls.content')),
+    url(r'^edit(?P<page>\S+)?', EditView.as_view(), name='pages_edit'),
 ]

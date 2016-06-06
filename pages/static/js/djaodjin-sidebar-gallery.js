@@ -299,6 +299,9 @@ Options:
                 data: JSON.stringify({"items": [{"location": self.selectedMedia.attr("src")}]}),
                 datatype: "json",
                 contentType: "application/json; charset=utf-8",
+                beforeSend: function(xhr, settings) {
+                    xhr.setRequestHeader("X-CSRFToken", getMetaCSRFToken());
+                },
                 success: function(){
                     $("[src=\"" + self.selectedMedia.attr("src") + "\"]").parent(".dj-gallery-item-container").remove();
                     $(".dj-gallery-info-item").empty();
@@ -348,6 +351,9 @@ Options:
                 async: false,
                 url: self.options.saveDroppedMediaUrl + idElement + "/",
                 data: data,
+                beforeSend: function(xhr, settings) {
+                    xhr.setRequestHeader("X-CSRFToken", getMetaCSRFToken());
+                },
                 success: function(response){
                     self.options.droppedMediaCallback(response);
                 }
@@ -478,7 +484,7 @@ Options:
                         }
                     });
                     target.trigger("djgallery.loadresources");
-                    target.find(".content").trigger("djtemplates.loadresources");
+                    target.find(".content").trigger("pages.loadresources");
                 }
             });
         }

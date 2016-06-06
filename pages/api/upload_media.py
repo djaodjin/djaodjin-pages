@@ -1,4 +1,4 @@
-# Copyright (c) 2015, Djaodjin Inc.
+# Copyright (c) 2016, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -30,6 +30,7 @@ from rest_framework import status
 from rest_framework.generics import GenericAPIView
 from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
+from rest_framework.parsers import FileUploadParser, FormParser, MultiPartParser
 
 from ..models import MediaTag
 from ..mixins import AccountMixin, UploadedImageMixin
@@ -39,8 +40,11 @@ from ..utils import validate_title
 
 class MediaListAPIView(UploadedImageMixin, AccountMixin, GenericAPIView):
 
+    store_hash = True
+    replace_stored = False
     serializer_class = MediaItemListSerializer
     pagination_class = PageNumberPagination
+    parser_classes = (FormParser, MultiPartParser, FileUploadParser)
 
     def get(self, request, *args, **kwargs):
         tags = None
@@ -64,20 +68,26 @@ class MediaListAPIView(UploadedImageMixin, AccountMixin, GenericAPIView):
         sha1 = hashlib.sha1(uploaded_file.read()).hexdigest()
 
         # Store filenames with forward slashes, even on Windows
-        file_name = force_text(uploaded_file.name.replace('\\', '/'))
-        sha1_filename = sha1 + os.path.splitext(file_name)[1]
+        filename = force_text(uploaded_file.name.replace('\\', '/'))
+        sha1_filename = sha1 + os.path.splitext(filename)[1]
         storage = self.get_default_storage(self.account)
+        stored_filename = sha1_filename if self.store_hash else filename
 
         result = {}
-        if storage.exists(sha1_filename):
-            result = {
-                "message": "%s is already in the gallery." % file_name}
-            response_status = status.HTTP_200_OK
+        if storage.exists(stored_filename):
+            if self.replace_stored:
+                storage.delete(stored_filename)
+                storage.save(stored_filename, uploaded_file)
+                response_status = status.HTTP_201_CREATED
+            else:
+                result = {
+                    "message": "%s is already in the gallery." % filename}
+                response_status = status.HTTP_200_OK
         else:
-            storage.save(sha1_filename, uploaded_file)
+            storage.save(stored_filename, uploaded_file)
             response_status = status.HTTP_201_CREATED
         result.update({
-            'location': storage.url(sha1_filename),
+            'location': storage.url(stored_filename),
             'tags': []
             })
         return Response(result, status=response_status)

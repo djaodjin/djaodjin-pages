@@ -1,22 +1,89 @@
 {% extends "base.html" %}
 {% block content %}
-<div>
-    <a href="{% url 'pages_edit' %}?page=/app/">iframe edit mode</a>
-    | <a id="inject-edit-mode" href="/">inject edit mode</a>
+<div style="margin-left: 5px;">
+    <h1 class="editable" id="injected-tools">Edit tools</h1>
+    <div>
+<p class="editable edit-formatted" id="injected-tools-formatted">
+The edit tools comprise the UI elements for the editors as well as code
+that must be injected into the edited page. The code in
+<code>djaodjin-editor.js</code> and <code>less.js</code>) can be injected into
+the edited page one of two ways:
+</p>
+<ol>
+    <li>Through a server-side decorator</li>
+    <li>Through a client-side iframe</li>
+</ol>
+    </div>
+    <div>
+        <h2 class="editable" id="injected-server">Server-side decorator</h2>
+        <div>
+            <a id="inject-edit-mode" href="/">click here</a>
+        </div>
+        <div>
+Features
+<ul>
+<li>The edited page URL os shown in the browser bar.</li>
+<li>Any change to stylesheets will affect both page and tools.</li>
+<li>The list of templates used to render the edited page is available.</li>
+</ul>
+        </div>
+    </div>
+    <div>
+        <h2 class="editable" id="injected-server">Client-side iframe</h2>
+        <div>
+            <a href="/edit/">click here</a>
+            <div>
+Features
+<ul>
+<li>Any change to page stylesheets will not affect the UI for edit tools.</li>
+<li>The editor URL is shown in the browser bar<sup>1</sup></li>
+<li>The list of templates used to render the page is not available.<sup>2</sup></li>
+<li>There is effectively two HTTP requests (one for the EditView and one
+for the edited page).<sup>3</sup></li>
+</ul>
+<p class="editable edit-markdown" id="edit-frame-1">
+<sup>1</sup> The server URL could be configured so that all editable pages
+are servered under a /content/ prefix. Example:
+</p>
+<pre class="code">
+testsite/urls/content.py:
+    url(r'^$', TemplateView.as_view(template_name='index.html')),
+
+testsite/urls/__init__.py:
+    url(r'^content/', include('testsite.urls.content')),
+    url(r'^(?P&lt;page&gt;\S+)?', EditView.as_view(), name='pages_edit'),
+</pre>
+<p>
+<sup>2</sup> The list of templates used to render the page could still be
+available if we use a minimal server-side decorator that adds the list into
+the edited page.
+</p>
+<p class="editable edit-markdown" id="injected-tools-markdown">
+<sup>3</sup> When we tried to <a href="http://stackoverflow.com/questions/6102636/html-code-as-iframe-source-rather-than-a-url">set iframe content through <code>src=&quot;data:text/html...&quot;</code></a>,
+the stylesheet links defined in the iframe content are not loaded.
+When we tried to <a href="http://stackoverflow.com/questions/18044073/iframe-without-src-but-still-has-content">insert content in the iframe through Javascript</a>,
+the page loads forever (this might be a side effect of how we inject the tools
+into the iframe). I haven't tried to use <code>&lt;iframe srcdoc=&quot;...&quot;</code> yet.
+</p>
+            </div>
+        </div>
+    </div>
+    <div>
+        <h2 class="editable" id="more-properties">More PageElement editors</h2>
+        <h3>Currencies</h3>
+        <div class="editable edit-currency" id="main-currency">$10.00</div>
+        <div class="editable edit-currency" id="main-currency2"
+             data-currency-unit="&euro;"
+             data-currency-position="after">23.99&euro;</div>
+        <h3>Ranges</h3>
+        <div class="editable edit-range" id="main-range"
+             data-range-max="3" data-range-min="1" data-range-step="1">1</div>
+        <h3>Images</h3>
+        <img class="droppable-image" id="djmedia-two"
+             alt="Generic placeholder image" src="/static/vendor/img/test.gif"
+             style="width: 600px;">
+    </div>
 </div>
-    <h1 class="editable" id="main-heading">Hello world!</h1>
-    <div class="editable edit-formatted" id="para-formatted"><p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Dolore officiis saepe asperiores facere at earum culpa neque dolorem placeat. Inventore deleniti quae illum omnis praesentium, veritatis similique aperiam rerum dolor!</p></div>
-
-    <div class="editable edit-markdown" id="para-markdown"><p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Dolore officiis saepe asperiores facere at earum culpa neque dolorem placeat. Inventore deleniti quae illum omnis praesentium, veritatis similique aperiam rerum dolor!</p></div>
-
-    <h3 class="editable edit-currency" id="main-currency">$10.00</h3>
-
-    <h3 class="editable edit-currency" id="main-currency2" data-currency-unit="&euro;" data-currency-position="after">23.99&euro;</h3>
-
-    <h3 class="editable edit-range" id="main-range" data-range-max="3" data-range-min="1" data-range-step="1">1</h3>
-
-    <img alt="Generic placeholder image" class="droppable-image" id="djmedia-two" src="/static/vendor/img/test.gif" style="width: 600px;">
-
 <script type="text/javascript">
 jQuery(document).ready(function($) {
     $("#inject-edit-mode").click(function(event) {

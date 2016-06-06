@@ -89,20 +89,17 @@ class PageElementSerializer(serializers.ModelSerializer):
                         instance.add_relationship(dest_element)
         return instance
 
+
 class BootstrapVariableSerializer(serializers.ModelSerializer):
     class Meta:
         model = BootstrapVariable
-        field = ('variable_name', 'variable_value', 'created_at', 'updated_at')
-
-class SiteCssSerializer(serializers.BaseSerializer):
-    "A Simple serializer for the SiteCss model"
-    def to_representation(self, obj):
-        return {
-            'created_at': obj.created_at.isoformat(),
-            'updated_at': obj.updated_at.isoformat(),
-            'url': obj.url
+        fields = ('variable_name', 'variable_value', 'created_at', 'updated_at')
+        # Implementation Note: Without this ``extra_kwargs``, DRF will complain
+        # with a "<Model> with this <field> already exists" error
+        # when attempting to update a list of objects.
+        extra_kwargs = {
+            'variable_name': {'validators': []},
         }
-
 
 class ThemePackageSerializer(serializers.ModelSerializer):
 

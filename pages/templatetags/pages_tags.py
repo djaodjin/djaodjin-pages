@@ -23,23 +23,10 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from django import template
-from django.contrib.staticfiles.templatetags.staticfiles import static
 from django.utils.safestring import mark_safe
 
-from ..models import SiteCss
-from ..utils import get_current_account
 
 register = template.Library()
-
-
-@register.filter
-def sitecss(name):#pylint:disable=unused-argument
-    try:
-        css = SiteCss.objects.get(account=get_current_account())
-        url = css.url
-    except SiteCss.DoesNotExist:
-        url = static('vendor/css/bootstrap.css')
-    return url
 
 
 @register.filter

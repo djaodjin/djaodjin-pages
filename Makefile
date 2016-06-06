@@ -30,11 +30,12 @@ credentials: $(srcDir)/testsite/etc/credentials
 		sed -e "s,\%(SECRET_KEY)s,$${SECRET_KEY}," $< > $@
 
 initdb: install-conf
-	-rm -rf testsite/media/pages
-	-rm -f db.sqlite3
+	-cd $(srcDir) && rm -rf testsite/media db.sqlite3
 	cd $(srcDir) && $(PYTHON) ./manage.py migrate $(RUNSYNCDB) --noinput
 	cd $(srcDir) && $(PYTHON) ./manage.py loaddata \
 						testsite/fixtures/default-db.json
+	cd $(srcDir) && $(installDirs) testsite/media
+	cd $(srcDir) && $(installFiles) testsite/static/vendor/css/bootstrap.css testsite/media
 
 doc:
 	$(installDirs) docs

@@ -24,60 +24,47 @@
 #pylint: disable=no-member
 
 
-import logging
-
 from django.db import transaction
-from rest_framework import generics, serializers
+from rest_framework import generics, serializers, status
 from rest_framework.mixins import CreateModelMixin
 from rest_framework.response import Response
-from rest_framework.views import APIView
 
 from ..mixins import AccountMixin
 from ..models import BootstrapVariable
 from ..serializers import BootstrapVariableSerializer
 
 
-LOGGER = logging.getLogger(__name__)
+class BootstrapVariableListAPIView(AccountMixin, generics.ListAPIView):
 
+    serializer_class = BootstrapVariableSerializer
 
-
-class BootstrapVariableMixin(AccountMixin):
-
-    pass
-
-
-class BootstrapVariableListAPIView(AccountMixin,
-                                   APIView):
-
-    def get(self, request):
-        serializer = BootstrapVariableSerializer(self.get_queryset(), many=True)
-        return Response(serializer.data)
-
-    def put(self, request):
-        with transaction.atomic():
-            BootstrapVariable.objects.filter(account=self.account).delete()
-
-            child_serializer = BootstrapVariableSerializer()
-            serializer = serializers.ListSerializer(
-                data=request.data, child=child_serializer)
-            serializer.is_valid()
-            serializer.save(account=self.account)
-            # serializer = BootstrapVariableSerializer(
-            #     self.get_queryset(), many=True)
-            return Response(serializer.data)
+    def get_cssfile(self):
+        cssfile = self.request.GET.get('cssfile', 'site.css')
+        return cssfile
 
     def get_queryset(self):
-        queryset = BootstrapVariable.objects.filter(account=self.account)
+        cssfile = self.request.GET.get('cssfile', 'site.css')
+        queryset = BootstrapVariable.objects.filter(
+            account=self.account, cssfile=self.get_cssfile())
         return queryset
 
-    # def perform_create(self, serializer):
-    #     serializer.save(account=self.account)
+    def put(self, request):
+        serializer = self.serializer_class(data=request.data, many=True)
+        serializer.is_valid(raise_exception=True)
+        with transaction.atomic():
+            any_created = False
+            for var in serializer.validated_data:
+                obj, created = BootstrapVariable.objects.update_or_create(
+                    account=self.account,
+                    cssfile=self.get_cssfile(),
+                    variable_name=var['variable_name'],
+                    defaults={'variable_value': var['variable_value']})
+                any_created |= created
+        return Response(serializer.data,
+            status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
 
-    # def perform_update(self, serializer):
-    #     serializer.save(account=self.account)
 
-
-class BootstrapVariableDetail(BootstrapVariableMixin, CreateModelMixin,
+class BootstrapVariableDetail(AccountMixin, CreateModelMixin,
                               generics.RetrieveUpdateDestroyAPIView):
     """
     Create or Update an bootstrap variable in a ``BootstrapVariable``.
@@ -86,8 +73,13 @@ class BootstrapVariableDetail(BootstrapVariableMixin, CreateModelMixin,
     lookup_url_kwarg = 'variable_name'
     serializer_class = BootstrapVariableSerializer
 
+    def get_cssfile(self):
+        cssfile = self.request.GET.get('cssfile', 'site.css')
+        return cssfile
+
     def get_queryset(self):
-        return BootstrapVariable.objects.filter(account=self.account)
+        return BootstrapVariable.objects.filter(
+            account=self.account, cssfile=self.get_cssfile())
 
     def perform_create(self, serializer):
-        serializer.save(account=self.account)
+        serializer.save(account=self.account, cssfile=self.get_cssfile())

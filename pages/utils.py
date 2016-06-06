@@ -68,10 +68,8 @@ def get_current_account():
     Returns the default account for a site.
     """
     from . import settings
+    account = None
     if settings.DEFAULT_ACCOUNT_CALLABLE:
         account = import_string(settings.DEFAULT_ACCOUNT_CALLABLE)()
         LOGGER.debug("get_current_account: '%s'", account)
-    else:
-        account = get_account_model().objects.get(
-            pk=settings.DEFAULT_ACCOUNT_ID)
     return account

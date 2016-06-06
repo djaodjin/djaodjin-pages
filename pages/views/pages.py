@@ -24,13 +24,12 @@
 
 #pylint:disable=unused-argument
 
-import markdown, copy
+import json, markdown, copy
 
 from bs4 import BeautifulSoup
 from django.core.urlresolvers import reverse
-from django.shortcuts import render
 from django.template import loader, Template
-from django.views.generic import ListView, DetailView, TemplateView, View
+from django.views.generic import ListView, DetailView, TemplateView
 from django.template.backends.django import DjangoTemplates
 from django.template.response import TemplateResponse
 from django.test.signals import template_rendered
@@ -38,7 +37,7 @@ from django.test.utils import instrumented_test_render
 
 from .. import settings
 from ..mixins import AccountMixin, UploadedImageMixin
-from ..models import PageElement, BootstrapVariable
+from ..models import PageElement
 from ..compat import csrf, render_template
 from ..signals import template_loaded
 
@@ -71,7 +70,7 @@ def _add_editable_styles_context(context=None, less_variables=None):
 def inject_edition_tools(response, request=None, context=None,
                          body_top_template_name="pages/_body_top.html",
                          body_bottom_template_name="pages/_body_bottom.html",
-                         less_variables=None):
+                         edit_frame_template_name=None):
     #pylint:disable=too-many-arguments
     """
     Inject the edition tools into the html *content* and return
@@ -82,8 +81,6 @@ def inject_edition_tools(response, request=None, context=None,
         return None
     if context is None:
         context = {}
-    if less_variables is None:
-        less_variables = {}
     if 'urls' not in context:
         context.update({'urls': {
                 'edit': {
@@ -92,8 +89,6 @@ def inject_edition_tools(response, request=None, context=None,
                 'api_sources': reverse('pages_api_sources'),
                 'api_page_elements': reverse('page_elements'),
                 'media_upload': reverse('uploaded_media_elements')}}})
-    context = _add_editable_styles_context(context=context,
-        less_variables=less_variables)
     context.update(csrf(request))
     soup = None
     if body_top_template_name:
@@ -120,33 +115,21 @@ def inject_edition_tools(response, request=None, context=None,
                 soup = BeautifulSoup(response.content, 'html5lib')
             if soup and soup.body:
                 soup.body.append(BeautifulSoup(body_bottom, 'html.parser'))
+
+    if edit_frame_template_name:
+        template = loader.get_template(edit_frame_template_name)
+        edit_frame = render_template(template, context, request).strip()
+        if edit_frame:
+            if not soup:
+                soup = BeautifulSoup(response.content, 'html5lib')
+            edit_soup = BeautifulSoup(edit_frame, 'html5lib')
+            #edit_soup.iframe['src'] = "data:text/html,%s" % unicode(soup).replace('\n','')
+
+            #edit_soup.iframe.append(soup)
+            #edit_soup.iframe.append(BeautifulSoup("<html><head><link rel="stylesheet" media="screen" href="/media/alice/css/site.css" /></head><body>Hello</body></html>", 'html.parser'))
+            soup = edit_soup
+
     return soup
-
-
-def find_all_templates(template_name):
-    template = loader.get_template(template_name)
-
-    templates = {}
-    def _store_template_info(sender, **kwargs):
-        template = kwargs['template']
-        if template.name in settings.TEMPLATES_BLACKLIST:
-            # We don't show templates that cannot be edited.
-            return
-        if not template.name in templates:
-            # For some reasons the Django/Jinja2 framework might load the same
-            # templates multiple times.
-            templates.update({template.name:
-                {"name": template.name, "index": len(templates)}})
-
-    template_loaded.connect(_store_template_info)
-    template_rendered.connect(_store_template_info)
-    try:
-        template.render()
-    finally:
-        template_rendered.disconnect(_store_template_info)
-        template_loaded.disconnect(_store_template_info)
-
-    return templates.values()
 
 
 class PageMixin(object):
@@ -154,6 +137,8 @@ class PageMixin(object):
     Display or Edit a ``Page`` of a ``Project``.
 
     """
+    body_bottom_template_name = "pages/_body_bottom.html"
+    edit_frame_template_name = None
 
     def _store_template_info(self, sender, **kwargs):
         template = kwargs['template']
@@ -176,22 +161,20 @@ class PageMixin(object):
         template_rendered.disconnect(self._store_template_info)
         template_loaded.disconnect(self._store_template_info)
 
-    def add_edition_tools(self, response, context=None):
+    def get_edition_tools_context_data(self, **kwargs):
+        context = {}
         if hasattr(self, 'templates'):
-            if context is None:
-                context = {}
+            context.update({'templates': json.dumps(self.templates.values())})
+        context = _add_editable_styles_context(context=context)
+        return context
 
-            context.update({
-                'templates': self.templates.values(),
-            })
-
-        less_variables = {}
-        for var in BootstrapVariable.objects.filter(account=self.account):
-            less_variables[var.variable_name] = var.variable_value
-
+    def add_edition_tools(self, response, context=None):
+        if context is None:
+            context = {}
+        context.update(self.get_edition_tools_context_data())
         return inject_edition_tools(
             response, request=self.request, context=context,
-            less_variables=less_variables)
+            body_bottom_template_name=self.body_bottom_template_name)
 
     @staticmethod
     def insert_formatted(editable, new_text):
@@ -274,7 +257,7 @@ class PageMixin(object):
         return response
 
 
-class PageView(PageMixin, AccountMixin, TemplateView, UploadedImageMixin):
+class PageView(PageMixin, AccountMixin, UploadedImageMixin, TemplateView):
 
     http_method_names = ['get']
 
@@ -293,31 +276,32 @@ class PageElementListView(ListView):
 class PageElementDetailView(DetailView):
     model = PageElement
 
-class EditView(PageMixin, AccountMixin, View):
 
-    def get(self, request, *args, **kwargs):
-        template_target = {
-            'template': 'index.html', 'url': '/'
-        }
+class EditView(AccountMixin, TemplateView):
 
-        context = {
-            'page': request.GET.get('page', '/'),
-            'template_target': template_target,
-            'templates': find_all_templates(template_target['template']),
-        }
+    inject_from_client = False
+    template_name = 'pages/edit.html'
 
-        context.update({'urls': {
-            'edit': {
-                'api_sitecss': reverse('edit_sitecss'),
-                'bootstrap_variables': reverse('bootstrap_variables'),
-                'api_sources': reverse('pages_api_sources'),
-                'api_page_elements': reverse('page_elements'),
-                'media_upload': reverse('uploaded_media_elements')}}})
+    def get_context_data(self, **kwargs):
+        context = super(EditView, self).get_context_data(**kwargs)
 
-        less_variables = {}
-        for var in BootstrapVariable.objects.filter(account=self.account):
-            less_variables[var.variable_name] = var.variable_value
-        context = _add_editable_styles_context(context=context,
-            less_variables=less_variables)
+        if self.request.path.startswith('/edit'):
+            url = '/content%s' % self.request.path[5:]
+        else:
+            url = '/content%s' % self.request.path
+        args = self.request.META.get('QUERY_STRING', '')
+        if args and self.query_string:
+            url = "%s?%s" % (url, args)
 
-        return render(request, 'pages/edit.html', context)
+        context.update({
+            'page': url,
+            'inject_from_client': self.inject_from_client,
+            'urls': {
+                'edit': {
+                    'api_sitecss': reverse('edit_sitecss'),
+                    'bootstrap_variables': reverse('bootstrap_variables'),
+                    'api_sources': reverse('pages_api_sources'),
+                    'api_page_elements': reverse('page_elements'),
+                    'media_upload': reverse('uploaded_media_elements')}}})
+        context = _add_editable_styles_context(context=context)
+        return context
