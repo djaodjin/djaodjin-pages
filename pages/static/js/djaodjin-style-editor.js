@@ -33,7 +33,7 @@
         loadVariables: function() {
             var self = this;
             $.ajax({
-                url: self.options.api_bootstrap_overrides,
+                url: self.options.api_less_overrides,
                 method: "GET",
                 datatype: "json",
                 contentType: "application/json; charset=utf-8",
@@ -41,9 +41,9 @@
                     for( let idx = 0; idx < resp.length; ++idx ) {
                         var variable = resp[idx];
                         var inp = self.$element.find(
-                            '[name="' + variable.variable_name + '"]');
+                            '[name="' + variable.name + '"]');
                         if( inp ) {
-                            inp.attr("value", variable.variable_value);
+                            inp.attr("value", variable.value);
                         }
                     }
                 },
@@ -92,7 +92,7 @@
             }
             return modifiedVars;
         },
-        refreshBootstrap: function(){
+        refreshCss: function(){
             var self = this;
             var less = self.getLess();
             less.refresh(true, self.modifiedVars());
@@ -100,14 +100,14 @@
         refreshStyles: function(){
             var self = this;
             var formValues = $('#editable-styles-form').serializeArray();
-            var bootstrap_variables = []
+            var less_variables = []
 
             for(var i = 0; i < formValues.length ; i ++){
                 var formElem = formValues[i];
                 if ( formElem.value != '' ){
-                    bootstrap_variables.push({
-                        variable_name: formElem.name,
-                        variable_value: formElem.value
+                    less_variables.push({
+                        name: formElem.name,
+                        value: formElem.value
                     });
                 }
             }
@@ -156,16 +156,16 @@
                         },
                         success: function(response) {
                             $.ajax({
-                                url: self.options.api_bootstrap_overrides,
+                                url: self.options.api_less_overrides,
                                 method: "PUT",
                                 datatype: "json",
                                 contentType: "application/json; charset=utf-8",
-                                data: JSON.stringify(bootstrap_variables),
+                                data: JSON.stringify(less_variables),
                                 beforeSend: function(xhr, settings) {
                                     xhr.setRequestHeader("X-CSRFToken", getMetaCSRFToken());
                                 },
                                 success: function(response) {
-                                    self.refreshBootstrap();
+                                    self.refreshCss();
                                 },
                                 error: function(resp) {
                                     showErrorMessages(resp);
@@ -196,7 +196,7 @@
     };
 
     $.fn.djstyles.defaults = {
-        api_bootstrap_overrides: "/api/bootstrap_variables"
+        api_less_overrides: "/api/less-overrides"
     };
 
 })(jQuery);

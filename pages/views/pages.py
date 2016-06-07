@@ -84,7 +84,7 @@ def inject_edition_tools(response, request=None, context=None,
     if 'urls' not in context:
         context.update({'urls': {
                 'edit': {
-                'bootstrap_variables': reverse('bootstrap_variables'),
+                'api_less_overrides': reverse('pages_api_less_overrides'),
                 'api_sitecss': reverse('edit_sitecss'),
                 'api_sources': reverse('pages_api_sources'),
                 'api_page_elements': reverse('page_elements'),
@@ -295,7 +295,7 @@ class EditView(AccountMixin, TemplateView):
             'urls': {
                 'edit': {
                     'api_sitecss': reverse('edit_sitecss'),
-                    'bootstrap_variables': reverse('bootstrap_variables'),
+                    'api_less_overrides': reverse('pages_api_less_overrides'),
                     'api_sources': reverse('pages_api_sources'),
                     'api_page_elements': reverse('page_elements'),
                     'media_upload': reverse('uploaded_media_elements')}}})

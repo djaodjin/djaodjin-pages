@@ -30,20 +30,20 @@ from rest_framework.mixins import CreateModelMixin
 from rest_framework.response import Response
 
 from ..mixins import AccountMixin
-from ..models import BootstrapVariable
-from ..serializers import BootstrapVariableSerializer
+from ..models import LessVariable
+from ..serializers import LessVariableSerializer
 
 
-class BootstrapVariableListAPIView(AccountMixin, generics.ListAPIView):
+class LessVariableListAPIView(AccountMixin, generics.ListAPIView):
 
-    serializer_class = BootstrapVariableSerializer
+    serializer_class = LessVariableSerializer
 
     def get_cssfile(self):
         cssfile = self.request.GET.get('cssfile', 'site.css')
         return cssfile
 
     def get_queryset(self):
-        queryset = BootstrapVariable.objects.filter(
+        queryset = LessVariable.objects.filter(
             account=self.account, cssfile=self.get_cssfile())
         return queryset
 
@@ -53,31 +53,31 @@ class BootstrapVariableListAPIView(AccountMixin, generics.ListAPIView):
         with transaction.atomic():
             any_created = False
             for var in serializer.validated_data:
-                _, created = BootstrapVariable.objects.update_or_create(
+                _, created = LessVariable.objects.update_or_create(
                     account=self.account,
                     cssfile=self.get_cssfile(),
-                    variable_name=var['variable_name'],
-                    defaults={'variable_value': var['variable_value']})
+                    name=var['name'],
+                    defaults={'value': var['value']})
                 any_created |= created
         return Response(serializer.data,
             status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
 
 
-class BootstrapVariableDetail(AccountMixin, CreateModelMixin,
+class LessVariableDetail(AccountMixin, CreateModelMixin,
                               generics.RetrieveUpdateDestroyAPIView):
     """
-    Create or Update an bootstrap variable in a ``BootstrapVariable``.
+    Create or update the value of a ``LessVariable``.
     """
-    lookup_field = 'variable_name'
-    lookup_url_kwarg = 'variable_name'
-    serializer_class = BootstrapVariableSerializer
+    lookup_field = 'name'
+    lookup_url_kwarg = 'name'
+    serializer_class = LessVariableSerializer
 
     def get_cssfile(self):
         cssfile = self.request.GET.get('cssfile', 'site.css')
         return cssfile
 
     def get_queryset(self):
-        return BootstrapVariable.objects.filter(
+        return LessVariable.objects.filter(
             account=self.account, cssfile=self.get_cssfile())
 
     def perform_create(self, serializer):

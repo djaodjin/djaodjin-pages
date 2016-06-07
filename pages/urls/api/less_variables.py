@@ -26,12 +26,11 @@
 
 from django.conf.urls import url
 
-from ...api.bootstrap_variables import (BootstrapVariableDetail,
-    BootstrapVariableListAPIView)
+from ...api.less_variables import LessVariableDetail, LessVariableListAPIView
 
 urlpatterns = [
-    url(r'^bootstrap_variables/(?P<variable_name>[\w-]+)/',
-        BootstrapVariableDetail.as_view(), name='edit_bootstrap_variable'),
-    url(r'^bootstrap_variables/',
-        BootstrapVariableListAPIView.as_view(), name='bootstrap_variables'),
+    url(r'^less-overrides/(?P<name>[\w-]+)/',
+        LessVariableDetail.as_view(), name='pages_api_less_override'),
+    url(r'^less-overrides/',
+        LessVariableListAPIView.as_view(), name='pages_api_less_overrides'),
 ]

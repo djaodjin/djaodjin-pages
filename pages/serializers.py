@@ -26,7 +26,7 @@ import bleach
 from django.db import transaction
 from rest_framework import serializers
 
-from .models import PageElement, ThemePackage, BootstrapVariable
+from .models import PageElement, ThemePackage, LessVariable
 from .settings import ALLOWED_TAGS, ALLOWED_ATTRIBUTES, ALLOWED_STYLES
 
 #pylint: disable=no-init,old-style-class,abstract-method
@@ -90,15 +90,15 @@ class PageElementSerializer(serializers.ModelSerializer):
         return instance
 
 
-class BootstrapVariableSerializer(serializers.ModelSerializer):
+class LessVariableSerializer(serializers.ModelSerializer):
     class Meta:
-        model = BootstrapVariable
-        fields = ('variable_name', 'variable_value', 'created_at', 'updated_at')
+        model = LessVariable
+        fields = ('name', 'value', 'created_at', 'updated_at')
         # Implementation Note: Without this ``extra_kwargs``, DRF will complain
         # with a "<Model> with this <field> already exists" error
         # when attempting to update a list of objects.
         extra_kwargs = {
-            'variable_name': {'validators': []},
+            'name': {'validators': []},
         }
 
 class ThemePackageSerializer(serializers.ModelSerializer):

@@ -125,23 +125,23 @@ class MediaTag(models.Model):
         return unicode(self.tag)
 
 
-class BootstrapVariable(models.Model):
+class LessVariable(models.Model):
     """
-    This model stores bootstrap style changes
+    This model stores value of a variable used to generate a css file.
     """
-    variable_name = models.CharField(max_length=250, unique=True)
-    variable_value = models.CharField(max_length=250)
+    name = models.CharField(max_length=250, unique=True)
+    value = models.CharField(max_length=250)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     account = models.ForeignKey(settings.ACCOUNT_MODEL,
-        related_name='account_bootstrap_variable', null=True)
+        related_name='account_less_variable', null=True)
     cssfile = models.CharField(max_length=50)
 
     class Meta:
-        unique_together = ('account', 'cssfile', 'variable_name')
+        unique_together = ('account', 'cssfile', 'name')
 
     def __unicode__(self):
-        return '%s: %s' % (self.variable_name, self.variable_value)
+        return '%s: %s' % (self.name, self.value)
 
 
 class ThemePackage(models.Model):

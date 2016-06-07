@@ -30,6 +30,6 @@ urlpatterns = [
     url(r'^', include('pages.urls.api.elements')),
     url(r'^', include('pages.urls.api.sources')),
     url(r'^', include('pages.urls.api.themes')),
-    url(r'^', include('pages.urls.api.bootstrap_variables')),
+    url(r'^', include('pages.urls.api.less_variables')),
     url(r'^', include('pages.urls.api.sitecss')),
 ]
