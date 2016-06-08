@@ -26,11 +26,10 @@
 import hashlib, os
 
 from django.utils.encoding import force_text
-from rest_framework import status
+from rest_framework import parsers, status
 from rest_framework.generics import GenericAPIView
 from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
-from rest_framework.parsers import FileUploadParser, FormParser, MultiPartParser
 
 from ..models import MediaTag
 from ..mixins import AccountMixin, UploadedImageMixin
@@ -44,7 +43,8 @@ class MediaListAPIView(UploadedImageMixin, AccountMixin, GenericAPIView):
     replace_stored = False
     serializer_class = MediaItemListSerializer
     pagination_class = PageNumberPagination
-    parser_classes = (FormParser, MultiPartParser, FileUploadParser)
+    parser_classes = (parsers.JSONParser, parsers.FormParser,
+        parsers.MultiPartParser, parsers.FileUploadParser)
 
     def get(self, request, *args, **kwargs):
         tags = None
