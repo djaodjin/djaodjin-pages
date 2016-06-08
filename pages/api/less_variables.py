@@ -34,13 +34,16 @@ from ..models import LessVariable
 from ..serializers import LessVariableSerializer
 
 
-class LessVariableListAPIView(AccountMixin, generics.ListAPIView):
-
-    serializer_class = LessVariableSerializer
+class LessVariableMixin(AccountMixin):
 
     def get_cssfile(self):
-        cssfile = self.request.GET.get('cssfile', 'site.css')
+        cssfile = self.request.GET.get('cssfile', 'bootstrap.css')
         return cssfile
+
+
+class LessVariableListAPIView(LessVariableMixin, generics.ListAPIView):
+
+    serializer_class = LessVariableSerializer
 
     def get_queryset(self):
         queryset = LessVariable.objects.filter(
@@ -63,7 +66,7 @@ class LessVariableListAPIView(AccountMixin, generics.ListAPIView):
             status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
 
 
-class LessVariableDetail(AccountMixin, CreateModelMixin,
+class LessVariableDetail(LessVariableMixin, CreateModelMixin,
                               generics.RetrieveUpdateDestroyAPIView):
     """
     Create or update the value of a ``LessVariable``.
@@ -71,10 +74,6 @@ class LessVariableDetail(AccountMixin, CreateModelMixin,
     lookup_field = 'name'
     lookup_url_kwarg = 'name'
     serializer_class = LessVariableSerializer
-
-    def get_cssfile(self):
-        cssfile = self.request.GET.get('cssfile', 'site.css')
-        return cssfile
 
     def get_queryset(self):
         return LessVariable.objects.filter(

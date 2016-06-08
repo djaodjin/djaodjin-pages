@@ -38,8 +38,13 @@
                 datatype: "json",
                 contentType: "application/json; charset=utf-8",
                 success: function(resp){
-                    for( let idx = 0; idx < resp.length; ++idx ) {
-                        var variable = resp[idx];
+                    var results = resp;
+                    if( typeof resp.results !== "undefined" ) {
+                        /* We are dealing with a paginator. */
+                        results = resp.results;
+                    }
+                    for( var idx = 0; idx < results.length; ++idx ) {
+                        var variable = results[idx];
                         var inp = self.$element.find(
                             '[name="' + variable.name + '"]');
                         if( inp ) {
@@ -144,39 +149,42 @@
                 newFileInfo.rootpath = instanceOptions.rootpath || newFileInfo.currentDirectory;
                 instanceOptions.rootFileInfo = newFileInfo;
 
-                less.render(data, instanceOptions, function(e, result) {
-                    $.ajax({
-                        url: self.options.api_sitecss,
-                        method: "POST",
-                        contentType: "text/plain; charset=utf-8",
-                        data: result.css,
-                        beforeSend: function(xhr, settings) {
-                            xhr.setRequestHeader("X-CSRFToken", getMetaCSRFToken());
-                            xhr.setRequestHeader("Content-Disposition", "attachment; filename=" + lesshref.substr(0, lesshref.lastIndexOf(".")) + ".css");
-                        },
-                        success: function(response) {
-                            $.ajax({
-                                url: self.options.api_less_overrides,
-                                method: "PUT",
-                                datatype: "json",
-                                contentType: "application/json; charset=utf-8",
-                                data: JSON.stringify(less_variables),
-                                beforeSend: function(xhr, settings) {
-                                    xhr.setRequestHeader("X-CSRFToken", getMetaCSRFToken());
-                                },
-                                success: function(response) {
-                                    self.refreshCss();
-                                },
-                                error: function(resp) {
-                                    showErrorMessages(resp);
-                                }
-                            });
-                        },
-                        error: function(resp) {
-                            showErrorMessages(resp);
-                        }
-                    });
-
+                less.render(data, instanceOptions, function(err, result) {
+                    if( err ) {
+                        showErrorMessages(err);
+                    } else {
+                        $.ajax({
+                            url: self.options.api_sitecss,
+                            method: "POST",
+                            contentType: "text/plain; charset=utf-8",
+                            data: result.css,
+                            beforeSend: function(xhr, settings) {
+                                xhr.setRequestHeader("X-CSRFToken", getMetaCSRFToken());
+                                xhr.setRequestHeader("Content-Disposition", "attachment; filename=" + lesshref.substr(0, lesshref.lastIndexOf(".")) + ".css");
+                            },
+                            success: function(response) {
+                                $.ajax({
+                                    url: self.options.api_less_overrides,
+                                    method: "PUT",
+                                    datatype: "json",
+                                    contentType: "application/json; charset=utf-8",
+                                    data: JSON.stringify(less_variables),
+                                    beforeSend: function(xhr, settings) {
+                                        xhr.setRequestHeader("X-CSRFToken", getMetaCSRFToken());
+                                    },
+                                    success: function(response) {
+                                        self.refreshCss();
+                                    },
+                                    error: function(resp) {
+                                        showErrorMessages(resp);
+                                    }
+                                });
+                            },
+                            error: function(resp) {
+                                showErrorMessages(resp);
+                            }
+                        });
+                    }
                 });
 
             });
