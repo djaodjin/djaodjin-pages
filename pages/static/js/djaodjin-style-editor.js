@@ -30,10 +30,24 @@
             self.setupCustomEditors();
         },
 
+        _apiLessOverrides: function() {
+            var self = this;
+            var cssfileCandidate = null;
+            var links = $('head > link');
+            if( links.length > 0 ) {
+                var pathParts = $(links[0]).attr("href").split('/');
+                cssfileCandidate = pathParts.pop();
+            }
+            if( cssfileCandidate ) {
+                return self.options.api_less_overrides + "?cssfile=" + cssfileCandidate;
+            }
+            return self.options.api_less_overrides;
+        },
+
         loadVariables: function() {
             var self = this;
             $.ajax({
-                url: self.options.api_less_overrides,
+                url: self._apiLessOverrides(),
                 method: "GET",
                 datatype: "json",
                 contentType: "application/json; charset=utf-8",
@@ -120,13 +134,26 @@
             var less = self.getLess();
             if( typeof less.sheets === "undefined" ) {
                 var cssfileCandidate = null;
-                var links = $('link');
-                for( var i = 0; i < links.length; ++i ) {
-                    if( $(links[i]).attr("href").substring(0, 6) === "/media" ){
-                        cssfileCandidate = $(links[i]).attr("href");
+                var lessUrlCandidate = null;
+                var links = $('head > link');
+                if( links.length > 0 ) {
+                    var pathParts = $(links[0]).attr("href").split('/');
+                    cssfileCandidate = pathParts.pop();
+                    cssfileCandidate = cssfileCandidate.substr(
+                        0, cssfileCandidate.lastIndexOf("."));
+                    pathParts = "/static/cache".split('/'); // XXX match less.rootpath
+                    if( pathParts[pathParts.length - 1] === 'cache' ) {
+                        pathParts.pop(); // remove the cache/ dir.
                     }
+                    pathParts.push(cssfileCandidate);
+                    pathParts.push(cssfileCandidate + ".less");
+                    lessUrlCandidate = pathParts.join('/');
                 }
-                console.log("XXX cssfileCandidate=", cssfileCandidate);
+                links = $('head > link[rel="stylesheet/less"]');
+                if( links.length === 0 ) {
+                    $('head').append('<link rel="stylesheet/less" href="'
+                        + lessUrlCandidate + '"/>');
+                }
                 less.registerStylesheetsImmediately();
             }
 
@@ -164,7 +191,7 @@
                             },
                             success: function(response) {
                                 $.ajax({
-                                    url: self.options.api_less_overrides,
+                                    url: self._apiLessOverrides(),
                                     method: "PUT",
                                     datatype: "json",
                                     contentType: "application/json; charset=utf-8",
