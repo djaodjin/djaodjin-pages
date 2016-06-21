@@ -226,14 +226,15 @@ Options:
 
         loadImage: function(){
             var self = this;
-            var search = "";
-            if ($(".dj-gallery-filter").val() !== ""){
-                search = $(".dj-gallery-filter").val();
+            var $element = $(self.element);
+            var mediaFilterUrl = self.options.mediaUrl;
+            var $filter = $element.find(".dj-gallery-filter");
+            if( $filter.val() !== "") {
+                mediaFilterUrl = self.options.mediaUrl + "?q=" + $filter.val();
             }
-            $(".dj-gallery-items").empty();
             $.ajax({
                 method: "GET",
-                url: self.options.mediaUrl + "?q=" + search,
+                url: mediaFilterUrl,
                 datatype: "json",
                 contentType: "application/json; charset=utf-8",
                 success: function(data){
@@ -241,6 +242,9 @@ Options:
                     $.each(data.results, function(index, file){
                         self.addMediaItem(file, index, true);
                     });
+                },
+                error: function(resp) {
+                    showErrorMessages(resp);
                 }
             });
         },
@@ -252,25 +256,33 @@ Options:
             if (typeof tags === "undefined"){
                 tags = "";
             }
-            if (file.location.toLowerCase().indexOf(".mp4") > 0){
+            var ext = null;
+            var filename = file.location.toLowerCase();
+            var extIdx = filename.lastIndexOf('.');
+            if( extIdx > 0 ) {
+                ext = filename.substr(extIdx);
+            }
+            if( ext === ".mp4" ){
                 $mediaItem = $("<div class=\"dj-gallery-item-container " + self.options.mediaClass + " \"><video id=\"image_" + index + "\" class=\"image dj-gallery-item image_media\" src=\"" + file.location + "\" tags=\"" + tags + "\"></video></div>");
-            }else{
+            } else if( ext === ".jpg" || ext === ".png" ) {
                 $mediaItem = $("<div class=\"dj-gallery-item-container " + self.options.mediaClass + " \"><img id=\"image_" + index + "\" class=\"image dj-gallery-item image_media\" src=\"" + file.location + "\" tags=\"" + tags + "\"></div>");
             }
-            $(".dj-gallery-items").prepend($mediaItem);
-            $("#image_" + index).draggable({
-                helper: "clone",
-                revert: true,
-                appendTo: "body",
-                zIndex: 1000000,
-                start: function(event, ui) {
-                    ui.helper.css({
-                        width: 65
-                    });
+            if( $mediaItem ) {
+                $(".dj-gallery-items").prepend($mediaItem);
+                $("#image_" + index).draggable({
+                    helper: "clone",
+                    revert: true,
+                    appendTo: "body",
+                    zIndex: 1000000,
+                    start: function(event, ui) {
+                        ui.helper.css({
+                            width: 65
+                        });
+                    }
+                });
+                if( !init ) {
+                    self.selectMedia($mediaItem);
                 }
-            });
-            if (!init){
-                self.selectMedia($mediaItem);
             }
         },
 

@@ -118,7 +118,7 @@ class UploadedImageMixin(object):
                 if not media.endswith('/') and media != "":
                     location = storage.url(media).split('?')[0]
                     total += 1
-                    if not filter_list or location in filter_list:
+                    if filter_list is None or location in filter_list:
                         results += [
                             {'location': location,
                             'tags': MediaTag.objects.filter(

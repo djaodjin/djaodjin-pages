@@ -64,11 +64,10 @@ textarea.djaodjin-editor:focus{
 [contenteditable=true]:empty:before{
   content: attr(placeholder);
   display: block; /* For Firefox */
-  color: #9D140E;
+  font-style: italic;
 }
 
 .inEditMode,
 .hover-editable{
     outline:1px solid #DDD;
-    background: #EEE;
 }

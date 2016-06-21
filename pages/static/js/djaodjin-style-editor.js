@@ -3,6 +3,27 @@
 (function ($) {
     "use strict";
 
+    /**
+       Augment an user interface element with an editor for .less source
+       code.
+
+       The element should look like:
+
+       <div id="style-editor">
+         <ul class="nav nav-tabs dashboard-tab" role="tablist">
+         </ul>
+         <div>
+           <div>
+             <input id="variable-name" type="text" name="..." value="..." />
+             <button class="style-reset-button"
+                  type="button" title="reset to default"
+                  data-target="#variable-name" data-reset-value="...">
+             </button>
+           </div>
+           ...
+         </div>
+       </div>
+    */
     function StyleEditor(el, options){
         this.element = el;
         this.$element = $(el);
@@ -27,17 +48,28 @@
                 $target.val($button.attr('data-reset-value'));
             });
 
+            self.$element.find('[href="#cssfile"]').text(self._cssfileCandidate());
+
             self.setupCustomEditors();
         },
 
-        _apiLessOverrides: function() {
-            var self = this;
+        _cssfileCandidate: function() {
             var cssfileCandidate = null;
             var links = $('head > link');
             if( links.length > 0 ) {
                 var pathParts = $(links[0]).attr("href").split('/');
                 cssfileCandidate = pathParts.pop();
+                var queryP = cssfileCandidate.lastIndexOf('?');
+                if( queryP > 0 ) {
+                    cssfileCandidate = cssfileCandidate.substr(0, queryP);
+                }
             }
+            return cssfileCandidate;
+        },
+
+        _apiLessOverrides: function() {
+            var self = this;
+            var cssfileCandidate = self._cssfileCandidate();
             if( cssfileCandidate ) {
                 return self.options.api_less_overrides + "?cssfile=" + cssfileCandidate;
             }
@@ -75,6 +107,12 @@
         setupCustomEditors: function(){
             var self = this;
 
+            // trigger refresh of css file when input looses focus.
+            self.$element.find('[data-dj-style-variable-editor]').blur(function() {
+                self.$element.find(".api-spinner").show();
+                self.refreshStyles();
+            });
+
             // custom color editor
             self.$element.find("[data-dj-style-variable-editor=color]").each(function(){
                 var $input = $(this);
@@ -82,12 +120,14 @@
                 $input.parent().addClass('input-group')
                 var $button = $('<span class="input-group-btn"><a href="#" class="btn btn-default" id="cp4"><span class="glyphicon glyphicon-pencil" aria-hidden="true"></span></a></span>');
                 $input.after($button);
-                $button.colorpicker({customClass: 'color-picker-widget'}).on('changeColor', function(e) {
+                $button.colorpicker({
+                    customClass: 'color-picker-widget'
+                }).on('changeColor', function(e) {
                     $input.val(e.color.toHex());
+                }).on('hidePicker', function() {
+                    $input.blur();
                 });
-
             });
-
 
             var styleEditorZIndex = parseInt(self.$element.css('z-index'));
             // make sure color picker is on top of style editor
@@ -111,11 +151,16 @@
             }
             return modifiedVars;
         },
-        refreshCss: function(){
+
+        refreshCSS: function(css) {
             var self = this;
             var less = self.getLess();
+            // XXX If we could find the ``browser`` variable, we might
+            // just be able to call ``createCSS`` directly.
+            // browser.createCSS(window.document, css, sheet);
             less.refresh(true, self.modifiedVars());
         },
+
         refreshStyles: function(){
             var self = this;
             var formValues = $('#editable-styles-form').serializeArray();
@@ -133,20 +178,20 @@
 
             var less = self.getLess();
             if( typeof less.sheets === "undefined" ) {
-                var cssfileCandidate = null;
                 var lessUrlCandidate = null;
+                var cssfileCandidate = null;
                 var links = $('head > link');
                 if( links.length > 0 ) {
                     var pathParts = $(links[0]).attr("href").split('/');
                     cssfileCandidate = pathParts.pop();
-                    cssfileCandidate = cssfileCandidate.substr(
+                    lessUrlCandidate = cssfileCandidate.substr(
                         0, cssfileCandidate.lastIndexOf("."));
                     pathParts = "/static/cache".split('/'); // XXX match less.rootpath
                     if( pathParts[pathParts.length - 1] === 'cache' ) {
                         pathParts.pop(); // remove the cache/ dir.
                     }
-                    pathParts.push(cssfileCandidate);
-                    pathParts.push(cssfileCandidate + ".less");
+                    pathParts.push(lessUrlCandidate);
+                    pathParts.push(lessUrlCandidate + ".less");
                     lessUrlCandidate = pathParts.join('/');
                 }
                 links = $('head > link[rel="stylesheet/less"]');
@@ -178,6 +223,7 @@
 
                 less.render(data, instanceOptions, function(err, result) {
                     if( err ) {
+                        self.$element.find(".api-spinner").hide();
                         showErrorMessages(err);
                     } else {
                         $.ajax({
@@ -200,24 +246,23 @@
                                         xhr.setRequestHeader("X-CSRFToken", getMetaCSRFToken());
                                     },
                                     success: function(response) {
-                                        self.refreshCss();
+                                        self.refreshCSS(result.css);
+                                        self.$element.find(".api-spinner").hide();
                                     },
                                     error: function(resp) {
+                                        self.$element.find(".api-spinner").hide();
                                         showErrorMessages(resp);
                                     }
                                 });
                             },
                             error: function(resp) {
+                                self.$element.find(".api-spinner").hide();
                                 showErrorMessages(resp);
                             }
                         });
                     }
                 });
-
             });
-
-
-
         }
     };
 
@@ -231,7 +276,8 @@
     };
 
     $.fn.djstyles.defaults = {
-        api_less_overrides: "/api/less-overrides"
+        api_less_overrides: "/api/less-overrides",
+        api_sitecss: null
     };
 
 })(jQuery);

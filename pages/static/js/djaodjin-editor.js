@@ -91,12 +91,12 @@
 
         getSavedText: function(){
             var self = this;
-            return self.$el.html();
+            return $.trim(self.$el.html());
         },
 
         checkInput: function(){
             var self = this;
-            if (self.$el.html() === ""){
+            if (self.getSavedText() === ""){
                 return false;
             }else{
                 return true;
@@ -109,20 +109,19 @@
 
         saveEdition: function(){
             var self = this;
-            var savedText = self.getSavedText();
-            if (!self.checkInput()){
+            if( !self.checkInput() ) {
                 return false;
             }
 
             var data = {};
             var method = "PUT";
-
+            var savedText = self.getSavedText();
             if (self.$el.attr("data-key")){
-                data[self.$el.attr("data-key")] = $.trim(savedText);
+                data[self.$el.attr("data-key")] = savedText;
             } else {
                 data = {
                     slug: self.getId(),
-                    text: $.trim(savedText)
+                    text: savedText
                 };
             }
 
@@ -271,15 +270,6 @@
             return self.$textarea;
         },
 
-        checkInput: function(){
-            var self = this;
-            if (self.$textarea.val() === ""){
-                return false;
-            }else{
-                return true;
-            }
-        },
-
         getElementProperties: function(){
             var self = this;
             if (self.$el.prop("tagName") === "DIV"){
@@ -380,7 +370,7 @@
 
         getSavedText: function(){
             var self = this;
-            return self.$textarea.val();
+            return $.trim(self.$textarea.val());
         },
 
         formatDisplayedValue: function(){
@@ -519,7 +509,7 @@
 
     $.fn.editor.defaults = {
         baseUrl: null, // Url to send request to server
-        emptyInputText: "Impossible to save an empty element.",
+        emptyInputText: "placeholder, type to overwrite...",
         uniqueIdentifier: "id",
         preventBlurOnClick: "",
         onSuccess: function(){
