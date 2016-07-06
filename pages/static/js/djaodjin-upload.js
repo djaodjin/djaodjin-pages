@@ -13,10 +13,6 @@
        </div>
      */
     Djupload.prototype = {
-        init: function(){
-            var self = this;
-            this.init();
-        },
 
         _csrfToken: function() {
             var self = this;
@@ -49,10 +45,10 @@
             }
         },
 
-        _uploadProgress: function(progress) {
+        _uploadProgress: function(file, progress) {
             var self = this;
             if( self.options.uploadProgress ) {
-                self.options.uploadProgress(progress);
+                self.options.uploadProgress(file, progress);
             }
             return true;
         },
