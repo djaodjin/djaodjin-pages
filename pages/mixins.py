@@ -191,7 +191,9 @@ def get_bucket_name(account=None):
     if account:
         for bucket_field in ['bucket_name', 'slug', 'username']:
             try:
-                return getattr(account, bucket_field)
+                bucket_name = getattr(account, bucket_field)
+                if bucket_name:
+                    return bucket_name
             except AttributeError:
                 pass
     return settings.AWS_STORAGE_BUCKET_NAME

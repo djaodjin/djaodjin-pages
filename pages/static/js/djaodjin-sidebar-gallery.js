@@ -52,7 +52,6 @@ Options:
     csrfToken :                         default: null, type: String, security token
 
     // AWS S3 Direct upload settings
-    S3DirectUploadUrl :                 default: null, type: String, A S3 url
     mediaPrefix :                       default: null, type: String, S3 folder ex: media/
     accessKey :                         default: null, type: String, S3 Temporary credentials
     securityToken :                     default: null, type: String, S3 Temporary credentials
@@ -179,9 +178,6 @@ Options:
         initDropzone: function(){
             var self = this;
             var dropzoneUrl = self.options.mediaUrl;
-            if (self.options.accessKey){
-                dropzoneUrl = self.options.S3DirectUploadUrl;
-            }
             self.element.djupload({
                 uploadUrl: dropzoneUrl,
                 csrfToken: self.options.csrfToken,
@@ -401,7 +397,6 @@ Options:
         clickableArea: false,
 
         // S3 direct upload
-        S3DirectUploadUrl: null,
         accessKey: null,
         mediaPrefix: null,
         securityToken: null,

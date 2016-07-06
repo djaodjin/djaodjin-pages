@@ -151,8 +151,7 @@ jQuery(document).ready(function($) {
     loadImageEvent: "gallery-opened",
     saveDroppedMediaUrl: "{{ urls.edit.api_page_elements }}",
     mediaPrefix: "{{media_prefix}}",
-{% if s3_direct_upload_url %}
-    S3DirectUploadUrl: "{{s3_direct_upload_url}}",
+{% if access_key %}
     accessKey: "{{access_key}}",
     policy: "{{aws_policy}}",
     signature: "{{aws_policy_signature}}",

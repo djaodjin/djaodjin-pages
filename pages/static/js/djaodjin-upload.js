@@ -7,33 +7,77 @@
         this.init();
     }
 
+    /* UI element to upload files directly to S3.
+
+       <div data-complete-url="">
+       </div>
+     */
     Djupload.prototype = {
         init: function(){
             var self = this;
-            this.initDropzone();
+            this.init();
         },
 
-        initDropzone: function(){
+        _csrfToken: function() {
+            var self = this;
+            if( self.options.csrfToken ) { return self.options.csrfToken; }
+            return getMetaCSRFToken();
+        },
+
+        _uploadSuccess: function(file, response) {
+            var self = this;
+            if( self.options.uploadSuccess ) {
+                self.options.uploadSuccess(file, response);
+            } else {
+                showMessages(
+                    ["" + file.name + " uploaded sucessfully."], "success");
+            }
+            return true;
+        },
+
+        _uploadError: function(file, resp) {
+            var self = this;
+            if( self.options.uploadError ) {
+                self.options.uploadError(file, response);
+            } else {
+                if( typeof resp === "string" ) {
+                    showErrorMessages(
+                 "Error: " + resp + "(while uploading '" + file.name + "')");
+                } else {
+                    showErrorMessages(resp);
+                }
+            }
+        },
+
+        _uploadProgress: function(progress) {
+            var self = this;
+            if( self.options.uploadProgress ) {
+                self.options.uploadProgress(progress);
+            }
+            return true;
+        },
+
+        init: function(){
             var self = this;
             var dropzoneUrl = self.options.uploadUrl;
-
-            if (!dropzoneUrl){
-                alert("No upload URL provided.", "error");
-                throw new Error("No upload URL provided.");
+            if( !dropzoneUrl ) {
+                showErrorMessages(
+                    "instantiated djupload() with no uploadUrl specified.");
+                throw new Error(
+                    "instantiated djupload() with no uploadUrl specified.");
             }
-
-            if (self.options.mediaPrefix !== "" && !self.options.mediaPrefix.match(/\/$/)){
+            if( self.options.mediaPrefix !== ""
+                && !self.options.mediaPrefix.match(/\/$/)){
                 self.options.mediaPrefix += "/";
             }
-
             self.element.dropzone({
                 paramName: self.options.uploadParamName,
                 url: dropzoneUrl,
                 maxFilesize: self.options.uploadMaxFileSize,
                 clickable: self.options.uploadClickableZone,
                 createImageThumbnails: false,
+                previewTemplate: "<div></div>",
                 init: function() {
-
                     this.on("sending", function(file, xhr, formData){
                         if( self.options.accessKey) {
                             formData.append("key", self.options.mediaPrefix + file.name);
@@ -47,30 +91,54 @@
                             formData.append("x-amz-signature",
                                             self.options.signature);
                         } else {
-                            formData.append("csrfmiddlewaretoken",
-                                            self.options.csrfToken);
+                            formData.append(
+                                "csrfmiddlewaretoken", self._csrfToken());
                         }
                     });
 
                     this.on("success", function(file, response){
-                        $(".dz-preview").remove();
                         if( self.options.accessKey) {
-                            // If Direct upload to S3 no response on successful upload
-                            // Let's build a custom response with location url info
+                            // With a direct upload to S3, we need to build
+                            // a custom response with location url ourselves.
                             response = {
-                                location: self.options.uploadUrl + self.options.mediaPrefix + file.name
+                                location: file.xhr.responseURL + file.name
                             };
+                            // We will also call back a completion url
+                            // on the server.
+                            var completeUrl = self.element.attr(
+                                "data-complete-url");
+                            if( completeUrl ) {
+                                $.extend(response, self.element.data());
+                                delete response.djupload;
+                                $.ajax({
+                                    type: "POST",
+                                    url: completeUrl,
+                                    beforeSend: function(xhr) {
+                                        xhr.setRequestHeader(
+                                            "X-CSRFToken", self._csrfToken());
+                                    },
+                                    data: JSON.stringify(response),
+                                    datatype: "json",
+                                    contentType: "application/json; charset=utf-8",
+                                    success: function(resp) {
+                                        self._uploadSuccess(file, response);
+                                    },
+                                    error: function(resp) {
+                                        self._uploadError(file, resp);
+                                    }
+                                });
+                            }
+                        } else {
+                            self._uploadSuccess(file, response);
                         }
-                        self.options.uploadSuccess(file, response);
                     });
 
                     this.on("error", function(file, message){
-                        $(".dz-preview").remove();
-                        self.options.uploadError(file, message);
+                        self._uploadError(file, message);
                     });
 
                     this.on("uploadprogress", function(file, progress){
-                        self.options.uploadProgress(file, progress);
+                        self._uploadProgress(file, progress);
                     });
                 }
             });
@@ -78,22 +146,29 @@
     };
 
     $.fn.djupload = function(options) {
-        var opts = $.extend({}, $.fn.djupload.defaults, options);
-        return new Djupload($(this), opts);
+        var opts = $.extend( {}, $.fn.djupload.defaults, options );
+        return this.each(function() {
+            if (!$.data(this, "djupload")) {
+                $.data(this, "djupload", new Djupload(this, opts));
+            }
+        });
     };
 
     $.fn.djupload.defaults = {
-
+        // location
         uploadUrl: null,
-        csrfToken: "",
+        mediaPrefix: null,
+
         uploadZone: "body",
         uploadClickableZone: true,
         uploadParamName: "file",
         uploadMaxFileSize: 250,
 
+        // Django upload
+        csrfToken: null,
+
         // S3 direct upload
         accessKey: null,
-        mediaPrefix: null,
         securityToken: null,
         policy: "",
         signature: null,
@@ -101,10 +176,9 @@
         amzDate: null,
 
         // callback
-        uploadSuccess: function(file, response){ return true; },
-        uploadError: function(file, message){ return true; },
-        uploadProgress: function(progress){ return true; },
-
+        uploadSuccess: null,
+        uploadError: null,
+        uploadProgress: null
     };
 
     Dropzone.autoDiscover = false;
