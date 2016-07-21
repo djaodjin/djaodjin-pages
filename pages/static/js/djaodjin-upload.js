@@ -117,6 +117,8 @@
                                     datatype: "json",
                                     contentType: "application/json; charset=utf-8",
                                     success: function(resp) {
+                                        // Use ``response`` instead of ``resp``
+                                        // to have consistent API.
                                         self._uploadSuccess(file, response);
                                     },
                                     error: function(resp) {
@@ -153,7 +155,7 @@
     $.fn.djupload.defaults = {
         // location
         uploadUrl: null,
-        mediaPrefix: null,
+        mediaPrefix: "",
 
         uploadZone: "body",
         uploadClickableZone: true,

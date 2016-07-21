@@ -46,7 +46,6 @@ function injectScripts(container) {
     }
     if( doit ) {
         // OK. These were not previously loaded by an injector.
-        console.log("XXX inject scripts into ", container, editedPage);
         var doc = editedPage.document;
         editedPage.edition_sources = edition_sources.slice();
         editedPage.less = {
