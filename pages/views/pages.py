@@ -24,47 +24,19 @@
 
 #pylint:disable=unused-argument
 
-import json, markdown, copy
+import markdown
 
 from bs4 import BeautifulSoup
 from django.core.urlresolvers import reverse
-from django.template import loader, Template
+from django.template import loader
 from django.views.generic import ListView, DetailView, TemplateView
-from django.template.backends.django import DjangoTemplates
 from django.template.response import TemplateResponse
-from django.test.signals import template_rendered
-from django.test.utils import instrumented_test_render
 
-from .. import settings
+from ..compat import csrf, render_template
+from ..locals import (enable_instrumentation, _add_editable_styles_context,
+    get_edition_tools_context_data)
 from ..mixins import AccountMixin, UploadedImageMixin
 from ..models import PageElement
-from ..compat import csrf, render_template
-from ..signals import template_loaded
-
-# signals hook for Django Templates. Jinja2 templates are done through
-# a custom Environment.
-#pylint:disable=protected-access
-for engine in loader._engine_list():
-    if isinstance(engine, DjangoTemplates):
-        if Template._render != instrumented_test_render:
-            Template.original_render = Template._render
-            Template._render = instrumented_test_render
-            break
-
-
-def _add_editable_styles_context(context=None, less_variables=None):
-    if context is None:
-        context = {}
-    if 'editable_styles' not in context:
-        if less_variables is None:
-            less_variables = {}
-        styles_context = copy.deepcopy(settings.BOOTSTRAP_EDITABLE_VARIABLES)
-        for _, section_attributes in styles_context:
-            for attribute in section_attributes:
-                attribute['value'] = less_variables.get(
-                    attribute['property'], attribute.get('default', ''))
-        context['editable_styles'] = styles_context
-    return context
 
 
 def inject_edition_tools(response, request=None, context=None,
@@ -131,43 +103,14 @@ def inject_edition_tools(response, request=None, context=None,
 class PageMixin(object):
     """
     Display or Edit a ``Page`` of a ``Project``.
-
     """
     body_bottom_template_name = "pages/_body_bottom.html"
     edit_frame_template_name = None
 
-    def _store_template_info(self, sender, **kwargs):
-        template = kwargs['template']
-        if template.name in settings.TEMPLATES_BLACKLIST:
-            # We don't show templates that cannot be edited.
-            return
-        if not hasattr(self, 'templates'):
-            self.templates = {}
-        if not template.name in self.templates:
-            # For some reasons the Django/Jinja2 framework might load the same
-            # templates multiple times.
-            self.templates.update({template.name:
-                {"name": template.name, "index": len(self.templates)}})
-
-    def enable_instrumentation(self):
-        template_loaded.connect(self._store_template_info)
-        template_rendered.connect(self._store_template_info)
-
-    def disable_instrumentation(self):
-        template_rendered.disconnect(self._store_template_info)
-        template_loaded.disconnect(self._store_template_info)
-
-    def get_edition_tools_context_data(self, **kwargs):
-        context = {}
-        if hasattr(self, 'templates'):
-            context.update({'templates': json.dumps(self.templates.values())})
-        context = _add_editable_styles_context(context=context)
-        return context
-
     def add_edition_tools(self, response, context=None):
         if context is None:
             context = {}
-        context.update(self.get_edition_tools_context_data())
+        context.update(get_edition_tools_context_data())
         return inject_edition_tools(
             response, request=self.request, context=context,
             body_bottom_template_name=self.body_bottom_template_name)
@@ -214,7 +157,7 @@ class PageMixin(object):
 
     def get(self, request, *args, **kwargs):
         #pylint: disable=too-many-statements, too-many-locals
-        self.enable_instrumentation()
+        enable_instrumentation()
         response = super(PageMixin, self).get(request, *args, **kwargs)
         if self.template_name and isinstance(response, TemplateResponse):
             response.render()
