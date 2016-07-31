@@ -22,10 +22,11 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import logging
+import logging, random
 
 from django.db import IntegrityError, models, transaction
 from django.template.defaultfilters import slugify
+from rest_framework.exceptions import ValidationError
 
 from . import settings
 
@@ -88,7 +89,7 @@ class PageElement(models.Model):
 
     def save(self, force_insert=False, force_update=False,
              using=None, update_fields=None):
-        if self.slug: # seriallizer will set created slug to '' instead of None.
+        if self.slug: # serializer will set created slug to '' instead of None.
             return super(PageElement, self).save(
                 force_insert=force_insert, force_update=force_update,
                 using=using, update_fields=update_fields)
@@ -97,23 +98,23 @@ class PageElement(models.Model):
         if len(slug_base) > max_length:
             slug_base = slug_base[:max_length]
         self.slug = slug_base
-        num = 1
-        while num < 10:
-            with transaction.atomic():
-                try:
+        for _ in range(1, 10):
+            try:
+                with transaction.atomic():
                     return super(PageElement, self).save(
                         force_insert=force_insert, force_update=force_update,
                         using=using, update_fields=update_fields)
-                except IntegrityError:
-                    suffix = '-%d' % num
-                    if len(slug_base) + len(suffix) > max_length:
-                        self.slug = slug_base[:(max_length-len(suffix))] \
-                            + suffix
-                    else:
-                        self.slug = slug_base + suffix
-                    num = num + 1
-        raise IntegrityError(
-            "Unable to create unique slug for title '%s'" % self.title)
+            except IntegrityError, err:
+                if 'uniq' not in str(err).lower():
+                    raise
+                suffix = '-%s' % "".join([random.choice("abcdef0123456789")
+                    for _ in range(7)])
+                if len(slug_base) + len(suffix) > max_length:
+                    self.slug = slug_base[:(max_length - len(suffix))] + suffix
+                else:
+                    self.slug = slug_base + suffix
+        raise ValidationError({'detail':
+            "Unable to create a unique URL slug from title '%s'" % self.title})
 
 
 class MediaTag(models.Model):

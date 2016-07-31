@@ -38,28 +38,33 @@ function showErrorMessages(resp) {
     if( typeof resp === "string" ) {
         messages = [resp];
     } else {
-        if( resp.data && typeof resp.data === "object" ) {
-            for( var key in resp.data ) {
-                if (resp.data.hasOwnProperty(key)) {
-                    var message = resp.data[key];
-                    if( typeof resp.data[key] !== 'string' ) {
-                        message = "";
-                        var sep = "";
-                        for( var i = 0; i < resp.data[key].length; ++i ) {
-                            var messagePart = resp.data[key][i];
-                            if( typeof resp.data[key][i] !== 'string' ) {
-                                messagePart = JSON.stringify(resp.data[key][i]);
+        var data = resp.data || resp.responseJSON || null;
+        if( data && typeof data === "object" ) {
+            if( data.detail ) {
+                messages = ["Error: " + data.detail];
+            } else {
+                for( var key in data ) {
+                    if (data.hasOwnProperty(key)) {
+                        var message = data[key];
+                        if( typeof data[key] !== 'string' ) {
+                            message = "";
+                            var sep = "";
+                            for( var i = 0; i < data[key].length; ++i ) {
+                                var messagePart = data[key][i];
+                                if( typeof data[key][i] !== 'string' ) {
+                                    messagePart = JSON.stringify(data[key][i]);
+                                }
+                                message += sep + messagePart;
+                                sep = ", ";
                             }
-                            message += sep + messagePart;
-                            sep = ", ";
                         }
+                        messages.push(key + ": " + message);
+                        $("[name=\"" + key + "\"]").addClass("has-error");
                     }
-                    messages.push(key + ": " + message);
-                    $("#" + key).addClass("has-error");
                 }
             }
         } else if( resp.detail ) {
-            messages = [resp.detail];
+            messages = ["Error: " + resp.detail];
         }
     }
     if( messages.length === 0 ) {
