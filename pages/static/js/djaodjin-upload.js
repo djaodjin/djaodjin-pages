@@ -77,6 +77,7 @@
                     this.on("sending", function(file, xhr, formData){
                         if( self.options.accessKey) {
                             formData.append("key", self.options.mediaPrefix + file.name);
+                            formData.append("acl", self.options.acl);
                             formData.append("policy", self.options.policy);
                             formData.append("x-amz-algorithm", "AWS4-HMAC-SHA256");
                             formData.append("x-amz-credential",
@@ -168,6 +169,7 @@
         // S3 direct upload
         accessKey: null,
         securityToken: null,
+        acl: "private",
         policy: "",
         signature: null,
         amzCredential: null,
