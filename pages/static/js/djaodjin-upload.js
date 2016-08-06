@@ -20,10 +20,10 @@
             return getMetaCSRFToken();
         },
 
-        _uploadSuccess: function(file, response) {
+        _uploadSuccess: function(file, resp) {
             var self = this;
             if( self.options.uploadSuccess ) {
-                self.options.uploadSuccess(file, response);
+                self.options.uploadSuccess(file, resp);
             } else {
                 showMessages(
                     ["" + file.name + " uploaded sucessfully."], "success");
@@ -34,7 +34,7 @@
         _uploadError: function(file, resp) {
             var self = this;
             if( self.options.uploadError ) {
-                self.options.uploadError(file, response);
+                self.options.uploadError(file, resp);
             } else {
                 if( typeof resp === "string" ) {
                     showErrorMessages(
@@ -87,6 +87,18 @@
                                             self.options.securityToken);
                             formData.append("x-amz-signature",
                                             self.options.signature);
+                            var ext = file.name.slice(
+                                file.name.lastIndexOf('.')).toLowerCase();
+                            if( ext === ".jpg" ) {
+                                formData.append("Content-Type", "image/jpeg");
+                            } else if( ext === ".png" ) {
+                                formData.append("Content-Type", "image/png");
+                            } else if( ext === ".mp4" ) {
+                                formData.append("Content-Type", "video/mp4");
+                            } else {
+                                formData.append(
+                                    "Content-Type", "binary/octet-stream");
+                            }
                         } else {
                             formData.append(
                                 "csrfmiddlewaretoken", self._csrfToken());
