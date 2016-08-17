@@ -3,6 +3,25 @@
 function initCodeEditors(api_sources, iframe) {
     "use strict";
 
+    function addPanel(element, name, beforeElem) {
+        var tabsContainer = element.find("[role='tablist']");
+        var contentsContainer = element.find(".tab-content");
+        var idx = tabsContainer.find(">li").length;
+        var tab = $("<li" + (idx === 0 ? " class=\"active\"" : "") + "><a href=\"#tab-" + idx + "\" data-toggle=\"tab\">" + name + "</a></li>");
+        var content = $("<div id=\"tab-" + idx + "\" class=\"tab-pane" + (idx === 0 ? " active" : "") + " role=\"tabpanel\" style=\"width:100%;height:100%;\"><div class=\"content\" data-content=\"" + name + "\" style=\"width:100%;min-height:100%;\"></div></div>");
+        if( typeof beforeElem !== 'undefined' ) {
+            console.log("insert ", tab, " before", beforeElem);
+            beforeElem.before(tab);
+        } else {
+            tabsContainer.append(tab);
+        }
+        contentsContainer.append(content);
+        content.find(".content").djtemplates({
+            api_source_code: api_sources,
+            iframe_view: iframe
+        });
+    };
+
     var templates = (typeof templateNames !== "undefined" ) ?
         templateNames : [];
     if( typeof iframe !== "undefined" ) {
@@ -10,15 +29,43 @@ function initCodeEditors(api_sources, iframe) {
     }
     if( templates.length > 0 ) {
         for( var idx = 0; idx < templates.length; ++idx ) {
-            $("#code-editor [role='tablist']").append("<li" + (idx === 0 ? " class=\"active\"" : "") + "><a href=\"#tab-" + idx + "\" data-toggle=\"tab\">" + templates[idx].name + "</a></li>");
-            $("#code-editor .tab-content").append("<div id=\"tab-" + idx + "\" class=\"tab-pane" + (idx === 0 ? " active" : "") + " role=\"tabpanel\" style=\"width:100%;height:100%;\"><div class=\"content\" data-content=\"" + templates[idx].name + "\" style=\"width:100%;min-height:100%;\"></div></div>");
+            addPanel($("#code-editor"), templates[idx].name);
         }
     } else {
         $("#code-editor .tab-content").append("<div>No editable templates</div>");
     }
-    $("#code-editor .content").djtemplates({
-        api_source_code: api_sources,
-        iframe_view: iframe
+    $("#code-editor [role='tablist']").append("<li id=\"new-source-btn\"><a href=\"#new-source\" data-toggle=\"modal\" data-target=\"#new-source\"><i class=\"fa fa-plus\"></i> New</a></li>");
+    $("#code-editor #new-source-submit").click(function(event) {
+        event.preventDefault();
+        var name = $("#code-editor #new-source [name='name']").val();
+        var path = null;
+        while( name.length > 0 && name[0] === '/' ) {
+            name = name.substr(1);
+        }
+        if( name.length > 0 && name[name.length - 1] === '/' ) {
+            path = name + 'index.html';
+        } else {
+            path = name + '.html';
+        }
+        $.ajax({
+            url: api_sources + path,
+            method: "POST",
+            datatype: "json",
+            contentType: "application/json; charset=utf-8",
+            data: JSON.stringify({
+                path: path, text: "{% extends \"base.html\" %}\n"}),
+            beforeSend: function(xhr, settings) {
+                xhr.setRequestHeader("X-CSRFToken", getMetaCSRFToken());
+            },
+            success: function(){
+                // move to new page
+                var last = api_sources.indexOf('/api/');
+                window.location = api_sources.substr(0, last) + '/' + name;
+            },
+            error: function(resp) {
+                showErrorMessages(resp);
+            }
+        });
     });
 }
 

@@ -66,6 +66,18 @@ def get_template_path(template=None, relative_path=None):
         return template.origin.name
 
 
+def write_template(template_path, template_source):
+    check_template(template_source)
+    base_dir = os.path.dirname(template_path)
+    if not os.path.isdir(base_dir):
+        os.makedirs(base_dir)
+    temp_file = tempfile.NamedTemporaryFile(dir=base_dir, delete=False)
+    temp_file.write(template_source)
+    temp_file.close()
+    os.rename(temp_file.name, template_path)
+    LOGGER.info("pid %d wrote to %s", os.getpid(), template_path)
+
+
 class SourceCodeSerializer(serializers.Serializer):
 
     path = serializers.CharField(required=False, max_length=255)
@@ -78,7 +90,8 @@ class SourceCodeSerializer(serializers.Serializer):
         pass
 
 
-class SourceDetailAPIView(ThemePackageMixin, generics.RetrieveUpdateAPIView):
+class SourceDetailAPIView(ThemePackageMixin, generics.RetrieveUpdateAPIView,
+                          generics.CreateAPIView):
 
     serializer_class = SourceCodeSerializer
 
@@ -98,20 +111,23 @@ class SourceDetailAPIView(ThemePackageMixin, generics.RetrieveUpdateAPIView):
         if not template_path.startswith(theme_base):
             resp_status = status.HTTP_201_CREATED
             template_path = safe_join(theme_base, 'templates', relative_path)
-            if not os.path.isdir(os.path.dirname(template_path)):
-                os.makedirs(os.path.dirname(template_path))
         else:
             resp_status = status.HTTP_200_OK
 
         # We only write the file if the template syntax is correct.
         try:
-            check_template(serializer.validated_data['text'])
-            temp_file = tempfile.NamedTemporaryFile(
-                dir=os.path.dirname(template_path), delete=False)
-            temp_file.write(serializer.validated_data['text'])
-            temp_file.close()
-            os.rename(temp_file.name, template_path)
-            LOGGER.info("pid %d wrote to %s", os.getpid(), template_path)
+            write_template(template_path, serializer.validated_data['text'])
         except TemplateSyntaxError:
             return self.retrieve(request, *args, **kwargs)
         return Response(serializer.data, status=resp_status)
+
+    def perform_create(self, serializer): #pylint:disable=unused-argument
+        relative_path = self.kwargs.get('page')
+        theme_base = get_theme_dir(self.account)
+        template_path = safe_join(theme_base, 'templates', relative_path)
+        write_template(template_path, '''{% extends "base.html" %}
+
+{% block content %}
+<h1>Lorem Ipsum</h1>
+{% endblock %}
+''')

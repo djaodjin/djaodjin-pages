@@ -138,6 +138,8 @@
                                         self._uploadError(file, resp);
                                     }
                                 });
+                            } else {
+                                self._uploadSuccess(file, response);
                             }
                         } else {
                             self._uploadSuccess(file, response);
