@@ -23,13 +23,14 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pylint: disable=no-member
 
-import logging, os, shutil
+import logging, os, tempfile, sys
 
 from django.template import TemplateSyntaxError
-from django.template.defaultfilters import slugify
-from django.template.loader import get_template
+from django.template.loader import _engine_list, get_template
+from django.template.backends.jinja2 import get_exception_info
+from django.utils import six
 from django.utils._os import safe_join
-from oslo_concurrency import lockutils
+import jinja2
 from rest_framework import status, generics, serializers
 from rest_framework.response import Response
 
@@ -38,6 +39,22 @@ from ..themes import get_theme_dir
 
 
 LOGGER = logging.getLogger(__name__)
+
+
+def check_template(template_source, using=None):
+    """
+    Loads and returns a template for the given name.
+
+    Raises TemplateDoesNotExist if no such template exists.
+    """
+    engines = _engine_list(using)
+    for engine in engines:
+        try:
+            engine.from_string(template_source)
+        except jinja2.TemplateSyntaxError as exc:
+            new = TemplateSyntaxError(exc.args)
+            new.template_debug = get_exception_info(exc)
+            six.reraise(TemplateSyntaxError, new, sys.exc_info()[2])
 
 
 def get_template_path(template=None, relative_path=None):
@@ -80,30 +97,21 @@ class SourceDetailAPIView(ThemePackageMixin, generics.RetrieveUpdateAPIView):
         theme_base = get_theme_dir(self.account)
         if not template_path.startswith(theme_base):
             resp_status = status.HTTP_201_CREATED
-            # XXX Until the whole theme feature is rewritten properly.
-            default_template_path = template_path
             template_path = safe_join(theme_base, 'templates', relative_path)
             if not os.path.isdir(os.path.dirname(template_path)):
                 os.makedirs(os.path.dirname(template_path))
-            shutil.copy(default_template_path, template_path)
         else:
             resp_status = status.HTTP_200_OK
 
         # We only write the file if the template syntax is correct.
-        with lockutils.lock(slugify(template_path), lock_file_prefix="pages-"):
-            backup_path = template_path + '~'
-            shutil.copy(template_path, backup_path)
-            with open(template_path, 'w') as source_file:
-                source_file.write(serializer.validated_data['text'])
-            try:
-                template = get_template(relative_path)
-                assert get_template_path(template) == template_path
-                LOGGER.info("Written to %s", template_path)
-                os.remove(backup_path)
-            except TemplateSyntaxError:
-                os.remove(template_path)
-                os.rename(backup_path, template_path)
-                return self.retrieve(request, *args, **kwargs)
-            return Response(serializer.data, status=resp_status)
-
-
+        try:
+            check_template(serializer.validated_data['text'])
+            temp_file = tempfile.NamedTemporaryFile(
+                dir=os.path.dirname(template_path), delete=False)
+            temp_file.write(serializer.validated_data['text'])
+            temp_file.close()
+            os.rename(temp_file.name, template_path)
+            LOGGER.info("pid %d wrote to %s", os.getpid(), template_path)
+        except TemplateSyntaxError:
+            return self.retrieve(request, *args, **kwargs)
+        return Response(serializer.data, status=resp_status)
