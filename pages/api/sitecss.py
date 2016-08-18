@@ -28,3 +28,4 @@ class SiteCssAPIView(MediaListAPIView):
 
     store_hash = False
     replace_stored = True
+    content_type = 'text/css'

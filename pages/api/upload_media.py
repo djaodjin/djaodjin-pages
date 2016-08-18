@@ -41,6 +41,7 @@ class MediaListAPIView(UploadedImageMixin, AccountMixin, GenericAPIView):
 
     store_hash = True
     replace_stored = False
+    content_type = None
     serializer_class = MediaItemListSerializer
     pagination_class = PageNumberPagination
     parser_classes = (parsers.JSONParser, parsers.FormParser,
@@ -65,6 +66,11 @@ class MediaListAPIView(UploadedImageMixin, AccountMixin, GenericAPIView):
     def post(self, request, *args, **kwargs):
         #pylint: disable=unused-argument,too-many-locals
         uploaded_file = request.data['file']
+        if self.content_type:
+            # We optionally force the content_type because S3Store uses
+            # mimetypes.guess and surprisingly it doesn't get it correct
+            # for 'text/css'.
+            uploaded_file.content_type = self.content_type
         sha1 = hashlib.sha1(uploaded_file.read()).hexdigest()
 
         # Store filenames with forward slashes, even on Windows

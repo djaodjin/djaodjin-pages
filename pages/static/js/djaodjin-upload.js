@@ -110,7 +110,7 @@
                             // With a direct upload to S3, we need to build
                             // a custom response with location url ourselves.
                             response = {
-                                location: file.xhr.responseURL + file.name
+                                location: file.xhr.responseURL + self.options.mediaPrefix + file.name
                             };
                             // We will also call back a completion url
                             // on the server.
