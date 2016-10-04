@@ -52,10 +52,10 @@ class RelationShip(models.Model):
 class PageElementManager(models.Manager):
 
     def get_roots(self):
-        return self.raw('SELECT * FROM %(page_element_table)s"\
-" LEFT OUTER JOIN %(relationship_table)s ON %(page_element_table)s.id"\
-" = %(relationship_table)s.dest_element_id WHERE"\
-" %(relationship_table)s.dest_element_id IS NULL' % {
+        return self.raw('SELECT * FROM %(page_element_table)s'\
+' LEFT OUTER JOIN %(relationship_table)s ON %(page_element_table)s.id'\
+' = %(relationship_table)s.dest_element_id WHERE'\
+' %(relationship_table)s.dest_element_id IS NULL' % {
     'page_element_table': 'pages_pageelement',
     'relationship_table': 'pages_relationship'})
 
