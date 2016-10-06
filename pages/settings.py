@@ -33,8 +33,10 @@ _SETTINGS = {
     'ACCOUNT_MODEL': getattr(settings, 'AUTH_USER_MODEL', None),
     'ACCOUNT_URL_KWARG': None,
     'ACTIVE_THEME_CALLABLE': None,
-    'AWS_STORAGE_BUCKET_NAME': getattr(
-        settings, 'AWS_STORAGE_BUCKET_NAME', None),
+    'AWS_STORAGE_BUCKET_NAME':
+        getattr(settings, 'AWS_STORAGE_BUCKET_NAME',
+            getattr(settings, 'APP_NAME',
+                None)),
     'BUCKET_NAME_FROM_FIELDS': ['bucket_name'],
     'DEFAULT_ACCOUNT_CALLABLE': '',
     'EXTRA_MIXIN': object,
