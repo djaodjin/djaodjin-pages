@@ -189,7 +189,7 @@ class UploadedImageMixin(object):
 
 def get_bucket_name(account=None):
     if account:
-        for bucket_field in ['bucket_name', 'slug', 'username']:
+        for bucket_field in settings.BUCKET_NAME_FROM_FIELDS:
             try:
                 bucket_name = getattr(account, bucket_field)
                 if bucket_name:
