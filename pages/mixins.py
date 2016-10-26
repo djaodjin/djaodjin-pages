@@ -176,10 +176,6 @@ class UploadedImageMixin(object):
     def get_file_system_storage(account=None):
         location = settings.MEDIA_ROOT
         base_url = settings.MEDIA_URL
-        bucket_name = get_bucket_name(account)
-        if bucket_name:
-            location = os.path.join(location, bucket_name)
-            base_url = urljoin(base_url, bucket_name + '/')
         prefix = get_media_prefix(account)
         if prefix:
             location = os.path.join(location, prefix)

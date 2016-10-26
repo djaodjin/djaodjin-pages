@@ -36,6 +36,9 @@ from ..mixins import AccountMixin, UploadedImageMixin
 from ..serializers import MediaItemListSerializer
 from ..utils import validate_title
 
+#pylint:disable=no-name-in-module,import-error
+from django.utils.six.moves.urllib.parse import urljoin
+
 
 class MediaListAPIView(UploadedImageMixin, AccountMixin, GenericAPIView):
 
@@ -78,6 +81,9 @@ class MediaListAPIView(UploadedImageMixin, AccountMixin, GenericAPIView):
         sha1_filename = sha1 + os.path.splitext(filename)[1]
         storage = self.get_default_storage(self.account)
         stored_filename = sha1_filename if self.store_hash else filename
+        prefix = request.data.get('prefix', None)
+        if prefix is not None:
+            stored_filename = urljoin(prefix, stored_filename)
 
         result = {}
         if storage.exists(stored_filename):
@@ -93,7 +99,8 @@ class MediaListAPIView(UploadedImageMixin, AccountMixin, GenericAPIView):
             storage.save(stored_filename, uploaded_file)
             response_status = status.HTTP_201_CREATED
         result.update({
-            'location': storage.url(stored_filename),
+            'location': request.build_absolute_uri(
+                storage.url(stored_filename)),
             'tags': []
             })
         return Response(result, status=response_status)

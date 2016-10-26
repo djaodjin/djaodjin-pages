@@ -26,7 +26,7 @@
                 self.options.uploadSuccess(file, resp);
             } else {
                 showMessages(
-                    ["" + file.name + " uploaded sucessfully."], "success");
+                    ["\"" + file.name + "\" uploaded sucessfully to \"" + resp.location + "\""], "success");
             }
             return true;
         },
@@ -102,6 +102,12 @@
                         } else {
                             formData.append(
                                 "csrfmiddlewaretoken", self._csrfToken());
+                        }
+                        var data = self.element.data();
+                        for( var key in data ) {
+                            if( data.hasOwnProperty(key) ) {
+                                formData.append(key, data[key]);
+                            }
                         }
                     });
 
