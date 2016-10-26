@@ -99,8 +99,7 @@ class MediaListAPIView(UploadedImageMixin, AccountMixin, GenericAPIView):
             storage.save(stored_filename, uploaded_file)
             response_status = status.HTTP_201_CREATED
         result.update({
-            'location': request.build_absolute_uri(
-                storage.url(stored_filename)),
+            'location': storage.url(stored_filename),
             'tags': []
             })
         return Response(result, status=response_status)
