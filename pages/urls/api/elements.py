@@ -26,16 +26,17 @@
 
 from django.conf.urls import url
 
+from ...import settings
 from ...api.edition import PageElementDetail, PagesElementListAPIView
 from ...api.upload_media import MediaListAPIView
 from ...api.relationship import RelationShipListAPIView
 
 
 urlpatterns = [
+    url(r'^uploaded-media(?P<path>%s)/?' % settings.PATH_RE,
+        MediaListAPIView.as_view(), name='uploaded_media_elements'),
     url(r'^editable/relationship/',
         RelationShipListAPIView.as_view(), name='relationships'),
-    url(r'^uploaded-media/',
-        MediaListAPIView.as_view(), name='uploaded_media_elements'),
     url(r'^editables/(?P<slug>[\w-]+)/',
         PageElementDetail.as_view(), name='edit_page_element'),
     url(r'^editables/',

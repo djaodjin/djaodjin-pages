@@ -93,7 +93,6 @@ Options:
         init: function(){
             var self = this;
             self.originalTags = [];
-            self.selectedMediaLocation = "";
             self.currentInfo = "";
             self.selectedMedia = null;
             self.initGallery();
@@ -162,12 +161,26 @@ Options:
             });
         },
 
+        _mediaLocation: function(url) {
+            var parser = document.createElement('a');
+            parser.href = url;
+            var result = parser.pathname;
+            if( parser.host ) {
+                result = parser.host + result;
+            }
+            if( parser.protocol ) {
+                result = parser.protocol + "//" + result;
+            }
+            return result;
+        },
+
         initMenuMedia: function(){
             var self = this;
+            var location = self._mediaLocation(self.selectedMedia.attr("src"));
             $(".dj-gallery-info-item").html(self.options.galleryItemOptionsTemplate);
             $("[data-dj-gallery-media-src]").attr("src", self.selectedMedia.attr("src"));
-            $("[data-dj-gallery-media-location]").attr("location", self.selectedMedia.attr("src"));
-            $("[data-dj-gallery-media-url]").val(self.selectedMedia.attr("src"));
+            $("[data-dj-gallery-media-location]").attr("location", location);
+            $("[data-dj-gallery-media-url]").val(location);
             $("[data-dj-gallery-media-tag]").val(self.orginalTags.join(", "));
         },
 
@@ -297,7 +310,6 @@ Options:
                 self.selectedMedia = item.children(".dj-gallery-item");
                 item.addClass(self.options.selectedMediaClass);
                 self.orginalTags = self.selectedMedia.attr("tags").split(",");
-                self.selectedMediaLocation = self.selectedMedia.attr("src");
                 self.initMenuMedia();
             }else{
                 item.removeClass(self.options.selectedMediaClass);
@@ -327,13 +339,20 @@ Options:
 
         tagMedia: function(){
             var self = this;
-            var tags = $(".dj-gallery-tag-input").val().replace(/\s+/g, "");
-            tags = tags.split(",");
+            var tags = $(".dj-gallery-tag-input").val().split(",");
+            for( var idx = 0; idx < tags.length; ++idx ) {
+                tags[idx] = $.trim(tags[idx]);
+            }
             if (tags !== self.originalTags){
                 $.ajax({
                     type: "PUT",
                     url: self.options.mediaUrl,
-                    data: JSON.stringify({"items": [{"location": self.selectedMediaLocation}], "tags": tags}),
+                    data: JSON.stringify({
+                        "items": [{
+                            "location": self._mediaLocation(
+                                self.selectedMedia.attr("src"))
+                        }],
+                        "tags": tags}),
                     datatype: "json",
                     contentType: "application/json; charset=utf-8",
                     success: function(response){

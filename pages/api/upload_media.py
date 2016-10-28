@@ -31,16 +31,38 @@ from rest_framework.generics import GenericAPIView
 from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
 
-from ..models import MediaTag
+from ..models import MediaTag, PageElement
 from ..mixins import AccountMixin, UploadedImageMixin
 from ..serializers import MediaItemListSerializer
 from ..utils import validate_title
 
 #pylint:disable=no-name-in-module,import-error
-from django.utils.six.moves.urllib.parse import urljoin
+from django.utils.six.moves.urllib.parse import urljoin, urlparse, urlunparse
 
 
 class MediaListAPIView(UploadedImageMixin, AccountMixin, GenericAPIView):
+    """
+    List, upload, tag and delete asset files.
+
+    **Example request**:
+
+    .. sourcecode:: http
+
+        GET /api/uploaded-media/
+
+    **Example response**:
+
+    .. sourcecode:: http
+
+        {
+          "count": 1,
+          results: [{
+              "location": "/media/image-001.jpg",
+              "updated_at": "2016-10-26T00:00:00.00000+00:00",
+              "tags": []
+          }]
+        }
+    """
 
     store_hash = True
     replace_stored = False
@@ -57,14 +79,18 @@ class MediaListAPIView(UploadedImageMixin, AccountMixin, GenericAPIView):
             validate_title(search)
             tags = MediaTag.objects.filter(tag__startswith=search)\
                 .values_list('location', flat=True)
-        queryset = self.list_media(
-            self.get_default_storage(self.account), tags)
+        results, total_count = self.list_media(
+            self.get_default_storage(self.account), tags,
+            prefix=kwargs.get('path', '.'))
         # XXX - Deactivate pagination until not
         # implemented in djaodjin-sidebar-gallery
         # page = self.paginate_queryset(queryset['results'])
         # if page is not None:
         #     queryset = {'count': len(page), 'results' : page}
-        return Response(queryset)
+        return Response({
+            'count': total_count,
+            'results': sorted(results, key=lambda x: x['updated_at'])
+        })
 
     def post(self, request, *args, **kwargs):
         #pylint: disable=unused-argument,too-many-locals
@@ -121,12 +147,20 @@ class MediaListAPIView(UploadedImageMixin, AccountMixin, GenericAPIView):
         serializer.is_valid()
         validated_data = serializer.validated_data
         filter_list = self.build_filter_list(validated_data)
-        list_delete_media = self.list_delete_media(storage, filter_list)
-        if list_delete_media['count'] > 0:
-            self.delete_media_items(storage, list_delete_media)
-            return Response({}, status=status.HTTP_200_OK)
-        else:
+        results, _ = self.list_media(storage, filter_list,
+            prefix=kwargs.get('path', '.'))
+        if len(results) == 0:
             return Response({}, status=status.HTTP_404_NOT_FOUND)
+
+        for item in results:
+            storage.delete(item['location'])
+            # Delete all MediaTag and PageElement using this location
+            MediaTag.objects.filter(location=item['location']).delete()
+            elements = PageElement.objects.filter(text=item['location'])
+            for element in elements:
+                element.text = ""
+                element.save()
+        return Response({}, status=status.HTTP_204_NO_CONTENT)
 
     def put(self, request, *args, **kwargs):
         """
@@ -142,16 +176,27 @@ class MediaListAPIView(UploadedImageMixin, AccountMixin, GenericAPIView):
         will apply tag1 and tag2 to both media location
         """
         #pylint: disable=unused-argument
-        storage = self.get_default_storage(self.account)
         serializer = MediaItemListSerializer(data=request.data)
         serializer.is_valid()
-        validated_data = serializer.validated_data
-        filter_list = self.build_filter_list(validated_data)
-        tags = validated_data.get('tags')
 
-        list_media = self.list_media(storage, filter_list)
-        if list_media['count'] > 0:
-            self.update_media_tag(tags, list_media)
-            return Response(list_media, status=status.HTTP_200_OK)
-        else:
+        assets, total_count = self.list_media(
+            self.get_default_storage(self.account),
+            self.build_filter_list(serializer.validated_data))
+        if len(assets) == 0:
             return Response({}, status=status.HTTP_404_NOT_FOUND)
+
+        tags = [tag for tag in serializer.validated_data.get('tags') if tag]
+        for item in assets:
+            parts = urlparse(item['location'])
+            location = urlunparse((parts.scheme, parts.netloc, parts.path,
+                None, None, None))
+            media_tags = MediaTag.objects.filter(location=location)
+            for tag in tags:
+                MediaTag.objects.get_or_create(location=location, tag=tag)
+            # Remove tags which are no more set for the location.
+            media_tags.exclude(tag__in=tags).delete()
+
+        return Response({
+            'count': total_count,
+            'results': sorted(assets, key=lambda x: x['updated_at'])
+        }, status=status.HTTP_200_OK)

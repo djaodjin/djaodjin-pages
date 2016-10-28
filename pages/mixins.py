@@ -69,35 +69,6 @@ class PageElementMixin(object):
 class UploadedImageMixin(object):
 
     @staticmethod
-    def update_media_tag(tags, list_media):
-        for item in list_media['results']:
-            media_tags = MediaTag.objects.filter(location=item['location'])
-            new_media_tags = []
-            if tags:
-                for tag in tags:
-                    if tag != "":
-                        new_media_tag, _ = MediaTag.objects.get_or_create(
-                            tag=tag, location=item['location'])
-                        new_media_tags += [new_media_tag]
-
-            # compare new list and delete removed tags.
-            for tag in media_tags:
-                if not tag in new_media_tags:
-                    tag.delete()
-
-    @staticmethod
-    def delete_media_items(storage, list_media):
-        for item in list_media['results']:
-            storage.delete(item['media'])
-
-            # Delete all MediaTag and PageElement using this location
-            MediaTag.objects.filter(location=item['location']).delete()
-            elements = PageElement.objects.filter(text=item['location'])
-            for element in elements:
-                element.text = ""
-                element.save()
-
-    @staticmethod
     def build_filter_list(validated_data):
         items = validated_data.get('items')
         filter_list = []
@@ -106,20 +77,24 @@ class UploadedImageMixin(object):
                 filter_list += [item['location']]
         return filter_list
 
-    @staticmethod
-    def list_media(storage, filter_list):
+    def list_media(self, storage, filter_list, prefix='.'):
         """
         Return a list of media from default storage
         """
         results = []
-        total = 0
+        total_count = 0
+        if prefix.startswith('/'):
+            prefix = prefix[1:]
         try:
-            for media in storage.listdir('.')[1]:
+            dirs, files = storage.listdir(prefix)
+            for media in files:
+                if prefix and prefix != '.':
+                    media = prefix + '/' + media
                 if not media.endswith('/') and media != "":
+                    total_count += 1
                     location = storage.url(media)
                     updated_at = storage.modified_time(media)
                     normalized_location = location.split('?')[0]
-                    total += 1
                     if (filter_list is None
                         or normalized_location in filter_list):
                         results += [
@@ -129,6 +104,11 @@ class UploadedImageMixin(object):
                                 'tag', flat=True),
                             'updated_at': updated_at
                             }]
+            for asset_dir in dirs:
+                dir_results, dir_total_count = self.list_media(
+                    storage, filter_list, prefix=prefix + '/' + asset_dir)
+                results += dir_results
+                total_count += dir_total_count
         except OSError:
             if storage.exists('.'):
                 LOGGER.exception(
@@ -139,29 +119,7 @@ class UploadedImageMixin(object):
 
         # sort results by updated_at to sort by created_at.
         # Media are not updated, so updated_at = created_at
-        return {
-            'count': total,
-            'results': sorted(results, key=lambda x: x['updated_at'])}
-
-    @staticmethod
-    def list_delete_media(storage, filter_list):
-        results = []
-        total = 0
-        try:
-            for media in storage.listdir('.')[1]:
-                if not media.endswith('/') and media != "":
-                    location = storage.url(media).split('?')[0]
-                    total += 1
-                    if filter_list and location in filter_list:
-                        results += [
-                            {'location': location, 'media': media}]
-        except OSError:
-            LOGGER.exception(
-                "Unable to list objects in %s.", storage.__class__.__name__)
-        except S3ResponseError:
-            LOGGER.exception(
-                "Unable to list objects in %s bucket.", storage.bucket_name)
-        return {'count': total, 'results': results}
+        return results, total_count
 
     def get_default_storage(self, account=None):
         storage_class = get_storage_class()
