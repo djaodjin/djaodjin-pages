@@ -116,15 +116,18 @@ class UploadedImageMixin(object):
         try:
             for media in storage.listdir('.')[1]:
                 if not media.endswith('/') and media != "":
-                    location = storage.url(media).split('?')[0]
+                    location = storage.url(media)
+                    updated_at = storage.modified_time(media)
+                    normalized_location = location.split('?')[0]
                     total += 1
-                    if filter_list is None or location in filter_list:
+                    if (filter_list is None
+                        or normalized_location in filter_list):
                         results += [
                             {'location': location,
                             'tags': MediaTag.objects.filter(
-                                location=location).values_list(
+                                location=normalized_location).values_list(
                                 'tag', flat=True),
-                            'updated_at': storage.modified_time(media)
+                            'updated_at': updated_at
                             }]
         except OSError:
             if storage.exists('.'):
@@ -164,9 +167,14 @@ class UploadedImageMixin(object):
         storage_class = get_storage_class()
         try:
             _ = storage_class.bucket_name
+            kwargs = {}
+            for key in ['access_key', 'secret_key', 'security_token']:
+                if self.request.session.has_key(key):
+                    kwargs[key] = self.request.session[key]
             return storage_class(
                 bucket=get_bucket_name(account),
-                location=get_media_prefix(account))
+                location=get_media_prefix(account),
+                **kwargs)
         except AttributeError:
             LOGGER.debug("``%s`` does not contain a ``bucket_name``"\
                 " field, default to FileSystemStorage.", storage_class)

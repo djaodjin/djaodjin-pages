@@ -258,7 +258,9 @@ Options:
                 tags = "";
             }
             var ext = null;
-            var filename = file.location.toLowerCase();
+            var parser = document.createElement('a');
+            parser.href = file.location;
+            var filename = parser.pathname.toLowerCase();
             var extIdx = filename.lastIndexOf('.');
             if( extIdx > 0 ) {
                 ext = filename.substr(extIdx);
