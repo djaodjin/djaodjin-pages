@@ -152,14 +152,18 @@ class MediaListAPIView(UploadedImageMixin, AccountMixin, GenericAPIView):
         if len(results) == 0:
             return Response({}, status=status.HTTP_404_NOT_FOUND)
 
+        base = storage.url('')
         for item in results:
-            storage.delete(item['location'])
-            # Delete all MediaTag and PageElement using this location
-            MediaTag.objects.filter(location=item['location']).delete()
-            elements = PageElement.objects.filter(text=item['location'])
-            for element in elements:
-                element.text = ""
-                element.save()
+            location = item['location']
+            if location.startswith(base):
+                location = location[len(base):]
+                storage.delete(location)
+                # Delete all MediaTag and PageElement using this location
+                MediaTag.objects.filter(location=location).delete()
+                elements = PageElement.objects.filter(text=location)
+                for element in elements:
+                    element.text = ""
+                    element.save()
         return Response({}, status=status.HTTP_204_NO_CONTENT)
 
     def put(self, request, *args, **kwargs):
