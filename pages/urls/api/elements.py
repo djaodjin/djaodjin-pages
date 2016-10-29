@@ -33,7 +33,7 @@ from ...api.relationship import RelationShipListAPIView
 
 
 urlpatterns = [
-    url(r'^uploaded-media(?P<path>%s)/?' % settings.PATH_RE,
+    url(r'^uploaded-media(?P<path>%s)/' % settings.PATH_RE,
         MediaListAPIView.as_view(), name='uploaded_media_elements'),
     url(r'^editable/relationship/',
         RelationShipListAPIView.as_view(), name='relationships'),
