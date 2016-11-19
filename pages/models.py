@@ -25,6 +25,7 @@
 import logging, random
 
 from django.db import IntegrityError, models, transaction
+from django.db.models import F, Q
 from django.template.defaultfilters import slugify
 from rest_framework.exceptions import ValidationError
 
@@ -33,17 +34,29 @@ from . import settings
 
 LOGGER = logging.getLogger(__name__)
 
+class RelationShipManager(models.Manager):
+
+    def insert_node(self, root, node, pos=0):
+        queryset = self.filter(orig_element=root)
+        queryset.filter(Q(rank__gte=pos)).update(rank=F('rank') + 1)
+        self.create(orig_element=root, dest_element=node, rank=pos)
+
 
 class RelationShip(models.Model):
     """
     Encodes a relation between two ``PageElement``.
     """
+    objects = RelationShipManager()
 
     orig_element = models.ForeignKey(
         "PageElement", related_name='from_element')
     dest_element = models.ForeignKey(
         "PageElement", related_name='to_element')
     tag = models.SlugField(null=True)
+    rank = models.IntegerField(default=0)
+
+    class Meta:
+        unique_together = ('orig_element', 'dest_element')
 
     def __unicode__(self):
         return "%s to %s" % (
