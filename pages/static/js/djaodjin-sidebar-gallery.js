@@ -165,12 +165,14 @@ Options:
             var parser = document.createElement('a');
             parser.href = url;
             var result = parser.pathname;
+            /* reverts absolute location so tests are flexible (See 24993a)
             if( parser.host ) {
                 result = parser.host + result;
             }
             if( parser.protocol ) {
                 result = parser.protocol + "//" + result;
             }
+            */
             return result;
         },
 
@@ -304,26 +306,23 @@ Options:
 
         selectMedia: function(item) {
             var self = this;
-            self.initMediaInfo();
-            $(".dj-gallery-item-container").not(item).removeClass(self.options.selectedMediaClass);
-            if (!item.hasClass(self.options.selectedMediaClass)){
-                self.selectedMedia = item.children(".dj-gallery-item");
-                item.addClass(self.options.selectedMediaClass);
-                self.orginalTags = self.selectedMedia.attr("tags").split(",");
-                self.initMenuMedia();
-            }else{
-                item.removeClass(self.options.selectedMediaClass);
-                self.selectedMedia = null;
-            }
+            $(".dj-gallery-item-container").not(item).removeClass(
+                self.options.selectedMediaClass);
+
+            self.selectedMedia = item.children(".dj-gallery-item");
+            item.addClass(self.options.selectedMediaClass);
+            self.orginalTags = self.selectedMedia.attr("tags").split(",");
+            self.initMenuMedia();
         },
 
         deleteMedia: function(event){
             var self = this;
             event.preventDefault();
+            var location = self._mediaLocation(self.selectedMedia.attr("src"));
             $.ajax({
                 method: "DELETE",
                 url: self.options.mediaUrl,
-                data: JSON.stringify({"items": [{"location": self.selectedMedia.attr("src")}]}),
+                data: JSON.stringify({"items": [{"location": location}]}),
                 datatype: "json",
                 contentType: "application/json; charset=utf-8",
                 beforeSend: function(xhr, settings) {
@@ -333,6 +332,9 @@ Options:
                     $("[src=\"" + self.selectedMedia.attr("src") + "\"]").parent(".dj-gallery-item-container").remove();
                     $(".dj-gallery-info-item").empty();
                     self.options.galleryMessage("Media correctly deleted.");
+                },
+                error: function(resp) {
+                    showErrorMessages(resp);
                 }
             });
         },
@@ -355,11 +357,18 @@ Options:
                         "tags": tags}),
                     datatype: "json",
                     contentType: "application/json; charset=utf-8",
+                    beforeSend: function(xhr, settings) {
+                        xhr.setRequestHeader("X-CSRFToken", getMetaCSRFToken());
+                    },
                     success: function(response){
                         $.each(response.results, function(index, element) {
-                            $("[src=\"" + element.location + "\"]").attr("tags", element.tags);
+                            $("[src=\"" + element.location + "\"]").attr(
+                                "tags", element.tags);
                         });
                         self.options.galleryMessage("Tags correctly updated.");
+                    },
+                    error: function(resp) {
+                        showErrorMessages(resp);
                     }
                 });
             }
@@ -425,7 +434,7 @@ Options:
         // S3 direct upload
         S3DirectUploadUrl: null,
         accessKey: null,
-        mediaPrefix: null,
+        mediaPrefix: "",
         securityToken: null,
         acl: "private",
         policy: "",
