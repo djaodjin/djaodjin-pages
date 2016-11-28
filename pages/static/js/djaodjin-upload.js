@@ -102,11 +102,12 @@
                         } else {
                             formData.append(
                                 "csrfmiddlewaretoken", self._csrfToken());
-                        }
-                        var data = self.element.data();
-                        for( var key in data ) {
-                            if( data.hasOwnProperty(key) ) {
-                                formData.append(key, data[key]);
+                            var data = self.element.data();
+                            for( var key in data ) {
+                                if( data.hasOwnProperty(key)
+                                    && key != 'djupload' ) {
+                                    formData.append(key, data[key]);
+                                }
                             }
                         }
                     });

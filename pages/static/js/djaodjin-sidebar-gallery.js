@@ -165,14 +165,12 @@ Options:
             var parser = document.createElement('a');
             parser.href = url;
             var result = parser.pathname;
-            /* reverts absolute location so tests are flexible (See 24993a)
-            if( parser.host ) {
+            if( parser.host != location.hostname ) {
                 result = parser.host + result;
+                if( parser.protocol ) {
+                    result = parser.protocol + "//" + result;
+                }
             }
-            if( parser.protocol ) {
-                result = parser.protocol + "//" + result;
-            }
-            */
             return result;
         },
 
@@ -226,7 +224,9 @@ Options:
                     }
                     if ([201, 204].indexOf(status) >= 0){
                         self.addMediaItem(response, lastIndex, false);
-                        self.options.galleryMessage("Media correctly uploaded.");
+                        self.options.galleryMessage("\"" + file.name
+                            + "\" uploaded sucessfully to \""
+                            + response.location + "\"");
                     }else if (status === 200){
                         self.options.galleryMessage(response.message);
                     }
