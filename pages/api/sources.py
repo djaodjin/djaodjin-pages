@@ -48,9 +48,10 @@ def check_template(template_source, using=None):
     Raises TemplateDoesNotExist if no such template exists.
     """
     engines = _engine_list(using)
+    # XXX We should find at least one engine that does not raise an error.
     for engine in engines:
         try:
-            engine.from_string(template_source)
+            return engine.from_string(template_source)
         except jinja2.TemplateSyntaxError as exc:
             new = TemplateSyntaxError(exc.args)
             new.template_debug = get_exception_info(exc)
@@ -117,7 +118,8 @@ class SourceDetailAPIView(ThemePackageMixin, generics.RetrieveUpdateAPIView,
         # We only write the file if the template syntax is correct.
         try:
             write_template(template_path, serializer.validated_data['text'])
-        except TemplateSyntaxError:
+        except TemplateSyntaxError as err:
+            LOGGER.debug("%s", err, extra={'request': request})
             return self.retrieve(request, *args, **kwargs)
         return Response(serializer.data, status=resp_status)
 
