@@ -47,15 +47,21 @@ def check_template(template_source, using=None):
 
     Raises TemplateDoesNotExist if no such template exists.
     """
+    errs = {}
     engines = _engine_list(using)
-    # XXX We should find at least one engine that does not raise an error.
+    # We should find at least one engine that does not raise an error.
     for engine in engines:
         try:
-            return engine.from_string(template_source)
-        except jinja2.TemplateSyntaxError as exc:
-            new = TemplateSyntaxError(exc.args)
-            new.template_debug = get_exception_info(exc)
-            six.reraise(TemplateSyntaxError, new, sys.exc_info()[2])
+            try:
+                return engine.from_string(template_source)
+            except jinja2.TemplateSyntaxError as exc:
+                new = TemplateSyntaxError(exc.args)
+                new.template_debug = get_exception_info(exc)
+                six.reraise(TemplateSyntaxError, new, sys.exc_info()[2])
+        except TemplateSyntaxError as err:
+            errs.update({engine: err})
+    if errs:
+        raise TemplateSyntaxError(errs)
 
 
 def get_template_path(template=None, relative_path=None):
