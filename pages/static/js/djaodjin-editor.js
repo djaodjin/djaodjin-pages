@@ -4,6 +4,86 @@
     "use strict";
     var preventClick = false;
 
+    function BaseEditor(element, options){
+        var self = this;
+        self.el = element;
+        self.$el = $(element);
+        self.options = options;
+        self.init();
+        return self;
+    }
+
+    BaseEditor.prototype = {
+        init: function(){
+            var self = this;
+        },
+
+        getId: function() {
+            var self = this;
+            var slug = self.$el.attr(self.options.uniqueIdentifier);
+            if( !slug ) {
+                slug = self.$el.parents(
+                    "[" + self.options.uniqueIdentifier + "]").attr(
+                        self.options.uniqueIdentifier);
+            }
+            if( !slug ) {
+                slug = "undefined";
+            }
+            return slug;
+        },
+
+        addTags: function(tags) {
+            var self = this;
+            $.ajax({
+                method: "PUT",
+                url: self.options.baseUrl + self.getId() + "/add-tags/",
+                data: JSON.stringify({"tag": tags}),
+                datatype: "json",
+                contentType: "application/json; charset=utf-8",
+                success: function(resp) {
+                    self.options.onSuccess(self, resp);
+                },
+                error: self.options.onError
+            });
+        },
+
+        removeTags: function(tags) {
+            var self = this;
+            $.ajax({
+                method: "PUT",
+                url: self.options.baseUrl + self.getId() + "/remove-tags/",
+                data: JSON.stringify({"tag": tags}),
+                datatype: "json",
+                contentType: "application/json; charset=utf-8",
+                success: function(resp) {
+                    self.options.onSuccess(self, resp);
+                },
+                error: self.options.onError
+            });
+        },
+    };
+
+    $.fn.baseEditor = function(options, custom){
+        var opts = $.extend( {}, $.fn.baseEditor.defaults, options );
+        return this.each(function() {
+            console.log("attach editor to", this);
+            $(this).data("editor", new BaseEditor($(this), opts));
+        });
+    };
+
+    $.fn.baseEditor.defaults = {
+        baseUrl: null, // Url to send request to server
+        uniqueIdentifier: "id",
+        onSuccess: function(){
+            return true;
+        },
+        onError: function(){
+            return true;
+        },
+    };
+
+    /**
+     */
     function Editor(element, options){
         var self = this;
         self.el = element;
@@ -13,7 +93,7 @@
         return self;
     }
 
-    Editor.prototype = {
+    Editor.prototype = $.extend({}, BaseEditor.prototype, {
         init: function(){
             var self = this;
             self.$el.on("click", function(){
@@ -47,20 +127,6 @@
             }else{
                 self.$el.removeClass("hover-editable");
             }
-        },
-
-        getId: function() {
-            var self = this;
-            var slug = self.$el.attr(self.options.uniqueIdentifier);
-            if( !slug ) {
-                slug = self.$el.parents(
-                    "[" + self.options.uniqueIdentifier + "]").attr(
-                        self.options.uniqueIdentifier);
-            }
-            if( !slug ) {
-                slug = "undefined";
-            }
-            return slug;
         },
 
         getOriginText: function(){
@@ -143,7 +209,7 @@
                 });
             }
         }
-    };
+    });
 
     function CurrencyEditor(element, options){
         var self = this;

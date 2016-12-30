@@ -90,6 +90,13 @@ class PageElementSerializer(serializers.ModelSerializer):
         return instance
 
 
+class PageElementTagSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = PageElement
+        fields = ('tag',)
+
+
 class LessVariableSerializer(serializers.ModelSerializer):
     class Meta:
         model = LessVariable

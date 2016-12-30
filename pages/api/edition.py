@@ -29,13 +29,17 @@ from rest_framework.mixins import CreateModelMixin
 from rest_framework import generics
 
 from ..models import PageElement
-from ..serializers import PageElementSerializer
+from ..serializers import PageElementSerializer, PageElementTagSerializer
 from ..mixins import AccountMixin
 from ..utils import validate_title
 
 class PageElementMixin(AccountMixin):
 
-    pass
+    lookup_field = 'slug'
+    lookup_url_kwarg = 'slug'
+
+    def get_queryset(self):
+        return PageElement.objects.filter(account=self.account)
 
 
 class PagesElementListAPIView(AccountMixin, generics.ListCreateAPIView):
@@ -65,12 +69,7 @@ class PageElementDetail(PageElementMixin, CreateModelMixin,
     """
     Create or Update an editable element on a ``PageElement``.
     """
-    lookup_field = 'slug'
-    lookup_url_kwarg = 'slug'
     serializer_class = PageElementSerializer
-
-    def get_queryset(self):
-        return PageElement.objects.filter(account=self.account)
 
     def perform_create(self, serializer):
         serializer.save(account=self.account)
@@ -83,3 +82,67 @@ class PageElementDetail(PageElementMixin, CreateModelMixin,
         except Http404:
             pass
         return super(PageElementDetail, self).create(request, *args, **kwargs)
+
+
+class PageElementAddTags(PageElementMixin, generics.UpdateAPIView):
+    """
+    Add tags to a ``PageElement`` if they are not already present.
+
+    **Example request**:
+
+    .. sourcecode:: http
+
+        PUT /api/editables/_my-element_/add-tags
+        {
+          "tag": "sometag"
+        }
+
+    **Example response**:
+
+    .. sourcecode:: http
+
+        {
+        }
+    """
+    serializer_class = PageElementTagSerializer
+
+    def perform_update(self, serializer):
+        curr_tags = serializer.instance.tag.split(',')
+        add_tags = serializer.validated_data['tag'].split(',')
+        for tag in add_tags:
+            if not tag in curr_tags:
+                curr_tags.append(tag)
+        serializer.instance.tag = ','.join(curr_tags)
+        serializer.instance.save()
+
+
+class PageElementRemoveTags(PageElementMixin, generics.UpdateAPIView):
+    """
+    Remove tags from a ``PageElement``.
+
+    **Example request**:
+
+    .. sourcecode:: http
+
+        PUT /api/editables/_my-element_/reomve-tags
+        {
+          "tag": "sometag"
+        }
+
+    **Example response**:
+
+    .. sourcecode:: http
+
+        {
+        }
+    """
+    serializer_class = PageElementTagSerializer
+
+    def perform_update(self, serializer):
+        curr_tags = serializer.instance.tag.split(',')
+        remove_tags = serializer.validated_data['tag'].split(',')
+        for tag in remove_tags:
+            if tag in curr_tags:
+                curr_tags.remove(tag)
+        serializer.instance.tag = ','.join(curr_tags)
+        serializer.instance.save()
