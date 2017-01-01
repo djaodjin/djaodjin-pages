@@ -39,7 +39,7 @@ from .utils import validate_title
 from .extras import AccountMixinBase
 
 #pylint:disable=no-name-in-module,import-error
-from django.utils.six.moves.urllib.parse import urljoin
+from django.utils.six.moves.urllib.parse import urljoin, urlsplit
 
 
 LOGGER = logging.getLogger(__name__)
@@ -68,13 +68,16 @@ class PageElementMixin(object):
 
 class UploadedImageMixin(object):
 
-    @staticmethod
-    def build_filter_list(validated_data):
+    def build_filter_list(self, validated_data):
         items = validated_data.get('items')
         filter_list = []
         if items:
             for item in items:
-                filter_list += [item['location']]
+                location = item['location']
+                parts = urlsplit(location)
+                if parts.netloc == self.request.get_host():
+                    location = parts.path
+                filter_list += [location]
         return filter_list
 
     def list_media(self, storage, filter_list, prefix='.'):
