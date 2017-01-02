@@ -107,7 +107,11 @@ class PageElementAddTags(PageElementMixin, generics.UpdateAPIView):
     serializer_class = PageElementTagSerializer
 
     def perform_update(self, serializer):
-        curr_tags = serializer.instance.tag.split(',')
+        curr_tags = serializer.instance.tag
+        if curr_tags:
+            curr_tags = curr_tags.split(',')
+        else:
+            curr_tags = []
         add_tags = serializer.validated_data['tag'].split(',')
         for tag in add_tags:
             if not tag in curr_tags:
@@ -139,7 +143,11 @@ class PageElementRemoveTags(PageElementMixin, generics.UpdateAPIView):
     serializer_class = PageElementTagSerializer
 
     def perform_update(self, serializer):
-        curr_tags = serializer.instance.tag.split(',')
+        curr_tags = serializer.instance.tag
+        if curr_tags:
+            curr_tags = curr_tags.split(',')
+        else:
+            curr_tags = []
         remove_tags = serializer.validated_data['tag'].split(',')
         for tag in remove_tags:
             if tag in curr_tags:
