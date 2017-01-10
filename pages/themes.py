@@ -41,24 +41,24 @@ def get_theme_dir(theme_name):
     return theme_dir
 
 
-def install_theme(theme_name, zip_file):
+def install_theme(theme_name, zip_file, force=False):
     """
     Extract resources and templates from an opened ``ZipFile``
     and install them at a place they can be picked by the multitier
     logic in ``template_loader.Loader.get_template_sources``.
     """
     #pylint:disable=too-many-statements,too-many-locals
-    LOGGER.info("install theme %s", theme_name)
+    LOGGER.info("install theme %s%s", theme_name, " (force)" if force else "")
     theme_dir = get_theme_dir(theme_name)
     public_dir = safe_join(settings.PUBLIC_ROOT, theme_name)
     templates_dir = safe_join(theme_dir, 'templates')
 
-    if os.path.exists(public_dir):
+    if not force and os.path.exists(public_dir):
         LOGGER.warning("install theme '%s' but '%s' already exists.",
             theme_name, public_dir)
         raise PermissionDenied("Theme public assets already exists.")
 
-    if os.path.exists(templates_dir):
+    if not force and os.path.exists(templates_dir):
         LOGGER.warning("install theme '%s' but '%s' already exists.",
             theme_name, templates_dir)
         raise PermissionDenied("Theme templates already exists.")
@@ -124,6 +124,9 @@ def install_theme(theme_name, zip_file):
         for path in mkdirs:
             os.makedirs(path)
         for paths in renames:
+            if os.path.exists(paths[1]):
+                LOGGER.info("remove previous path %s", paths[1])
+                shutil.rmtree(paths[1])
             os.rename(paths[0], paths[1])
     finally:
         # Always delete the temporary directory, exception raised or not.

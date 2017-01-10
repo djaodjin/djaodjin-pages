@@ -41,6 +41,9 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         super(Command, self).add_arguments(parser)
+        parser.add_argument('--force',
+            action='store_true', dest='force', default=False,
+            help='overwrite existing directories and files')
         parser.add_argument('--app_name',
             action='store', dest='app_name', default=None,
             help='overrides the destination theme name')
@@ -54,4 +57,4 @@ class Command(BaseCommand):
                 app_name = os.path.splitext(os.path.basename(package_path))[0]
             self.stdout.write("install %s to %s\n" % (package_path, app_name))
             with zipfile.ZipFile(package_path, 'r') as zip_file:
-                install_theme(app_name, zip_file)
+                install_theme(app_name, zip_file, force=options['force'])
