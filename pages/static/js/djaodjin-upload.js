@@ -22,6 +22,7 @@
 
         _uploadSuccess: function(file, resp) {
             var self = this;
+            self.element.trigger("djupload.success", resp.location);
             if( self.options.uploadSuccess ) {
                 self.options.uploadSuccess(file, resp);
             } else {
@@ -33,6 +34,7 @@
 
         _uploadError: function(file, resp) {
             var self = this;
+            self.element.trigger("djupload.error", [file.name, resp]);
             if( self.options.uploadError ) {
                 self.options.uploadError(file, resp);
             } else {
@@ -47,6 +49,7 @@
 
         _uploadProgress: function(file, progress) {
             var self = this;
+            self.element.trigger("djupload.progress", [file.name, progress]);
             if( self.options.uploadProgress ) {
                 self.options.uploadProgress(file, progress);
             }
@@ -55,7 +58,11 @@
 
         init: function(){
             var self = this;
-            var dropzoneUrl = self.options.uploadUrl;
+            var dropzoneUrl = (self.options.accessKey ? self.options.uploadUrl
+                : (self.element.attr("data-complete-url") ?
+                    self.element.attr("data-complete-url")
+                    : self.options.uploadUrl));
+
             if( !dropzoneUrl ) {
                 showErrorMessages(
                     "instantiated djupload() with no uploadUrl specified.");
