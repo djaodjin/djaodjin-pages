@@ -97,6 +97,6 @@ def get_edition_tools_context_data():
     context = {}
     if hasattr(_thread_locals, 'templates'):
         context.update({'templates': json.dumps(
-            six.itervalues(_thread_locals.templates))})
+            list(six.itervalues(_thread_locals.templates)))})
     context = _add_editable_styles_context(context=context)
     return context
