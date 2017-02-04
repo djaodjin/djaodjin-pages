@@ -1,4 +1,4 @@
-# Copyright (c) 2016, DjaoDjin inc.
+# Copyright (c) 2017, DjaoDjin inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -29,6 +29,7 @@ from django.template import loader, Template
 from django.template.backends.django import DjangoTemplates
 from django.test.signals import template_rendered
 from django.test.utils import instrumented_test_render
+from django.utils import six
 
 from . import settings
 from .signals import template_loaded
@@ -96,6 +97,6 @@ def get_edition_tools_context_data():
     context = {}
     if hasattr(_thread_locals, 'templates'):
         context.update({'templates': json.dumps(
-            _thread_locals.templates.values())})
+            six.itervalues(_thread_locals.templates))})
     context = _add_editable_styles_context(context=context)
     return context

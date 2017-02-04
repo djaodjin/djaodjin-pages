@@ -1,4 +1,4 @@
-# Copyright (c) 2016, Djaodjin Inc.
+# Copyright (c) 2017, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -28,6 +28,7 @@ import os, zipfile, hashlib, tempfile, shutil
 from django.core.files import File
 from django.core.files.base import ContentFile
 from django.core.files.storage import FileSystemStorage
+from django.utils import six
 from rest_framework import status, generics
 from rest_framework.parsers import MultiPartParser
 from rest_framework.response import Response
@@ -46,7 +47,7 @@ class ThemePackageListAPIView(UploadedImageMixin, ThemePackageMixin,
 
     @staticmethod
     def get_theme_attributes(file_obj):
-        if isinstance(file_obj, basestring):
+        if isinstance(file_obj, six.string_types):
             readable_file = open(file_obj, 'w+')
             file_obj = File(readable_file)
         theme_name = os.path.splitext(
@@ -94,7 +95,7 @@ class ThemePackageListAPIView(UploadedImageMixin, ThemePackageMixin,
             shutil.rmtree(tmp_dir)
 
     def post(self, request, *args, **kwargs):
-        if 's3prefix' in request.data.keys():
+        if 's3prefix' in request.data:
             # if 's3prefix', callback after successful upload to S3
             return self.upload_theme_from_s3(request, *args, **kwargs)
         else:

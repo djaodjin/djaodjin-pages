@@ -1,4 +1,4 @@
-# Copyright (c) 2016, DjaoDjin inc.
+# Copyright (c) 2017, DjaoDjin inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -23,7 +23,7 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import logging, os, zipfile
-from StringIO import StringIO
+from io import StringIO
 
 from django.template.loader import get_template
 from django.template.loader_tags import ExtendsNode

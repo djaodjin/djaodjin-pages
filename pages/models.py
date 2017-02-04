@@ -1,4 +1,4 @@
-# Copyright (c) 2016, Djaodjin Inc.
+# Copyright (c) 2017, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -22,11 +22,14 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+from __future__ import unicode_literals
+
 import logging, random
 
 from django.db import IntegrityError, models, transaction
 from django.db.models import F, Q
 from django.template.defaultfilters import slugify
+from django.utils.encoding import python_2_unicode_compatible
 from rest_framework.exceptions import ValidationError
 
 from . import settings
@@ -42,6 +45,7 @@ class RelationShipManager(models.Manager):
         self.create(orig_element=root, dest_element=node, rank=pos)
 
 
+@python_2_unicode_compatible
 class RelationShip(models.Model):
     """
     Encodes a relation between two ``PageElement``.
@@ -58,7 +62,7 @@ class RelationShip(models.Model):
     class Meta:
         unique_together = ('orig_element', 'dest_element')
 
-    def __unicode__(self):
+    def __str__(self):
         return "%s to %s" % (
             self.orig_element.slug, self.dest_element.slug) #pylint: disable=no-member
 
@@ -73,6 +77,7 @@ class PageElementManager(models.Manager):
     'relationship_table': 'pages_relationship'})
 
 
+@python_2_unicode_compatible
 class PageElement(models.Model):
     """
     Elements of an editable HTML page.
@@ -88,7 +93,7 @@ class PageElement(models.Model):
         related_name='related_to', through='RelationShip', symmetrical=False)
     tag = models.SlugField(null=True, blank=True)
 
-    def __unicode__(self):
+    def __str__(self):
         return self.slug
 
     def add_relationship(self, element, tag=None):
@@ -133,7 +138,7 @@ class PageElement(models.Model):
                     return super(PageElement, self).save(
                         force_insert=force_insert, force_update=force_update,
                         using=using, update_fields=update_fields)
-            except IntegrityError, err:
+            except IntegrityError as err:
                 if 'uniq' not in str(err).lower():
                     raise
                 suffix = '-%s' % "".join([random.choice("abcdef0123456789")
@@ -146,15 +151,17 @@ class PageElement(models.Model):
             "Unable to create a unique URL slug from title '%s'" % self.title})
 
 
+@python_2_unicode_compatible
 class MediaTag(models.Model):
 
     location = models.CharField(max_length=250)
     tag = models.CharField(max_length=50)
 
-    def __unicode__(self):
-        return unicode(self.tag)
+    def __str__(self):
+        return self.tag
 
 
+@python_2_unicode_compatible
 class LessVariable(models.Model):
     """
     This model stores value of a variable used to generate a css file.
@@ -170,10 +177,11 @@ class LessVariable(models.Model):
     class Meta:
         unique_together = ('account', 'cssfile', 'name')
 
-    def __unicode__(self):
+    def __str__(self):
         return '%s: %s' % (self.name, self.value)
 
 
+@python_2_unicode_compatible
 class ThemePackage(models.Model):
     """
     This model allow to record uploaded template.
@@ -187,7 +195,7 @@ class ThemePackage(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     is_active = models.BooleanField(default=False)
 
-    def __unicode__(self):
+    def __str__(self):
         if self.account:
             return '%s-%s' % (self.account, self.name)
         else:

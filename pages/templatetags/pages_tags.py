@@ -1,4 +1,4 @@
-# Copyright (c) 2016, Djaodjin Inc.
+# Copyright (c) 2017, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -24,6 +24,7 @@
 
 from django import template
 from django.utils.safestring import mark_safe
+from django.utils import six
 
 
 register = template.Library()
@@ -41,7 +42,7 @@ def print_tree(tree, excludes=None):
     return mark_safe(html)
 
 def print_dict(dictionary, html="", parent=None, excludes=None):
-    for key, value in dictionary.iteritems():
+    for key, value in six.iteritems(dictionary):
         if value:
             if not excludes or (excludes and not key in excludes):
                 html += "<li><i class=\"fa-li fa fa-folder\"></i> \

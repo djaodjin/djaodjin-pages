@@ -1,4 +1,4 @@
-# Copyright (c) 2015, Djaodjin Inc.
+# Copyright (c) 2017, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -26,6 +26,7 @@ import logging, os, shutil, tempfile
 
 from django.core.exceptions import PermissionDenied
 from django.utils._os import safe_join
+from django.utils import six
 
 from . import settings
 
@@ -33,7 +34,7 @@ LOGGER = logging.getLogger(__name__)
 
 
 def get_theme_dir(theme_name):
-    if isinstance(settings.THEME_DIR_CALLABLE, basestring):
+    if isinstance(settings.THEME_DIR_CALLABLE, six.string_types):
         from ..compat import import_string
         settings.THEME_DIR_CALLABLE = import_string(
             settings.THEME_DIR_CALLABLE)

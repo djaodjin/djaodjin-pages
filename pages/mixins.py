@@ -1,4 +1,4 @@
-# Copyright (c) 2016, DjaoDjin inc.
+# Copyright (c) 2017, DjaoDjin inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -24,14 +24,16 @@
 
 import logging, os, shutil
 from collections import OrderedDict
+from functools import reduce #pylint:disable=redefined-builtin
 
+from boto.s3.connection import S3Connection
+from boto.exception import S3ResponseError
 from django.core.files.storage import get_storage_class, FileSystemStorage
 from django.core.validators import validate_slug
 from django.core.exceptions import ValidationError
 from django.db.models import Q
 from django.utils._os import safe_join
-from boto.s3.connection import S3Connection
-from boto.exception import S3ResponseError
+from django.utils import six
 
 from . import settings
 from .models import MediaTag, PageElement, ThemePackage
@@ -130,7 +132,7 @@ class UploadedImageMixin(object):
             _ = storage_class.bucket_name
             kwargs = {}
             for key in ['access_key', 'secret_key', 'security_token']:
-                if self.request.session.has_key(key):
+                if key in self.request.session:
                     kwargs[key] = self.request.session[key]
             return storage_class(
                 bucket=get_bucket_name(account),
@@ -178,7 +180,7 @@ class ThemePackageMixin(AccountMixin):
 
     @staticmethod
     def get_templates_dir(theme):
-        if isinstance(settings.THEME_DIR_CALLABLE, basestring):
+        if isinstance(settings.THEME_DIR_CALLABLE, six.string_types):
             from ..compat import import_string
             settings.THEME_DIR_CALLABLE = import_string(
                 settings.THEME_DIR_CALLABLE)
