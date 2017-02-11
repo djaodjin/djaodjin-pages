@@ -26,8 +26,14 @@
             if( self.options.uploadSuccess ) {
                 self.options.uploadSuccess(file, resp);
             } else {
-                showMessages(
-                    ["\"" + file.name + "\" uploaded sucessfully to \"" + resp.location + "\""], "success");
+                console.log(resp);
+                if( resp.details ) {
+                    showMessages(resp.details, "success");
+                } else {
+                    showMessages(["\"" + file.name
+                        + "\" uploaded sucessfully to \"" + resp.location
+                        + "\""], "success");
+                }
             }
             return true;
         },
