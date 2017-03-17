@@ -50,9 +50,9 @@ class AccountMixinBase(object):
         url_kwargs = {}
         from . import settings
         account_url_kwarg = settings.ACCOUNT_URL_KWARG
-        if account_url_kwarg in self.kwargs:
+        if account_url_kwarg in kwargs:
             url_kwargs.update({
-                account_url_kwarg: self.kwargs[account_url_kwarg]})
+                account_url_kwarg: kwargs[account_url_kwarg]})
         urls_pages = {
             'api_sources': reverse(
                 'pages_api_sources', kwargs=url_kwargs)}

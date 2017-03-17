@@ -26,7 +26,6 @@
             if( self.options.uploadSuccess ) {
                 self.options.uploadSuccess(file, resp);
             } else {
-                console.log(resp);
                 if( resp.details ) {
                     showMessages(resp.details, "success");
                 } else {
@@ -87,19 +86,36 @@
                 createImageThumbnails: false,
                 previewTemplate: "<div></div>",
                 init: function() {
+                    if( self.options.accessKey ) {
+                        // We are going to remove extra input files that AWS
+                        // would reject (ex: csrftoken).
+                        var fields = this.element.querySelectorAll(
+                            "input, textarea, select, button");
+                        for( var idx = 0; idx < fields.length; ++idx ) {
+                            if( fields[idx].getAttribute("name")
+                                && (fields[idx].getAttribute("name")
+                                    !== self.options.uploadParamName) ) {
+                                fields[idx].parentNode.removeChild(fields[idx]);
+                            }
+                        }
+                    }
                     this.on("sending", function(file, xhr, formData){
-                        if( self.options.accessKey) {
-                            formData.append("key", self.options.mediaPrefix + file.name);
-                            formData.append("acl", self.options.acl);
+                        if( self.options.accessKey ) {
+                            formData.append(
+                                "key", self.options.mediaPrefix + file.name);
                             formData.append("policy", self.options.policy);
-                            formData.append("x-amz-algorithm", "AWS4-HMAC-SHA256");
-                            formData.append("x-amz-credential",
-                                            self.options.amzCredential);
+                            formData.append(
+                                "x-amz-algorithm", "AWS4-HMAC-SHA256");
+                            formData.append(
+                                "x-amz-credential", self.options.amzCredential);
                             formData.append("x-amz-date", self.options.amzDate);
                             formData.append("x-amz-security-token",
-                                            self.options.securityToken);
-                            formData.append("x-amz-signature",
-                                            self.options.signature);
+                                self.options.securityToken);
+                            formData.append(
+                                "x-amz-signature", self.options.signature);
+                            if( self.options.acl ) {
+                                formData.append("acl", self.options.acl);
+                            }
                             var ext = file.name.slice(
                                 file.name.lastIndexOf('.')).toLowerCase();
                             if( ext === ".jpg" ) {
@@ -150,9 +166,14 @@
                                     datatype: "json",
                                     contentType: "application/json; charset=utf-8",
                                     success: function(resp) {
-                                        // Use ``response`` instead of ``resp``
-                                        // to have consistent API.
-                                        self._uploadSuccess(file, response);
+             // We used ``response`` instead of ``resp`` to have consistent API,
+             // but sometimes it is nice to be able to update the ``details``
+             // message shown to the user.
+                                      if( resp.details ) {
+                                          self._uploadSuccess(file, resp);
+                                      } else {
+                                          self._uploadSuccess(file, response);
+                                      }
                                     },
                                     error: function(resp) {
                                         self._uploadError(file, resp);
@@ -203,7 +224,7 @@
         // S3 direct upload
         accessKey: null,
         securityToken: null,
-        acl: "private",
+        acl: null, // defaults to "private".
         policy: "",
         signature: null,
         amzCredential: null,
