@@ -1,4 +1,4 @@
-# Copyright (c) 2016, Djaodjin Inc.
+# Copyright (c) 2017, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -42,9 +42,10 @@ class HTMLField(serializers.CharField):
         super(HTMLField, self).__init__(**kwargs)
 
     def to_internal_value(self, data):
-        return bleach.clean(data, tags=self.html_tags,
+        return super(HTMLField, self).to_internal_value(
+            bleach.clean(data, tags=self.html_tags,
             attributes=self.html_attributes, styles=self.html_styles,
-            strip=self.html_strip)
+            strip=self.html_strip))
 
 
 class RelationShipSerializer(serializers.Serializer): #pylint: disable=abstract-method
@@ -57,7 +58,6 @@ class RelationShipSerializer(serializers.Serializer): #pylint: disable=abstract-
 
 class PageElementSerializer(serializers.ModelSerializer):
     slug = serializers.SlugField(required=False)
-    title = HTMLField(html_strip=True, required=False)
     text = HTMLField(html_tags=ALLOWED_TAGS, html_attributes=ALLOWED_ATTRIBUTES,
         html_styles=ALLOWED_STYLES, required=False)
     tag = serializers.SlugField(required=False)

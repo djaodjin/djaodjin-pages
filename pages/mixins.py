@@ -29,15 +29,12 @@ from functools import reduce #pylint:disable=redefined-builtin
 from boto.s3.connection import S3Connection
 from boto.exception import S3ResponseError
 from django.core.files.storage import get_storage_class, FileSystemStorage
-from django.core.validators import validate_slug
-from django.core.exceptions import ValidationError
 from django.db.models import Q
 from django.utils._os import safe_join
 from django.utils import six
 
 from . import settings
 from .models import MediaTag, PageElement, ThemePackage
-from .utils import validate_title
 from .extras import AccountMixinBase
 
 #pylint:disable=no-name-in-module,import-error
@@ -51,21 +48,13 @@ class AccountMixin(AccountMixinBase, settings.EXTRA_MIXIN):
     pass
 
 
-class PageElementMixin(object):
+class PageElementMixin(AccountMixin):
 
-    def get_queryset(self): #pylint: disable=no-self-use
-        try:
-            queryset = PageElement.objects.filter()
-            search_string = 'test /String'
-            if search_string is not None:
-                tag = 'test-tag'
-                validate_slug(tag)
-                validate_title(search_string)
-                queryset = queryset.filter(tag=tag,
-                    title__contains=search_string)
-            return queryset
-        except ValidationError:
-            return []
+    lookup_field = 'slug'
+    lookup_url_kwarg = 'slug'
+
+    def get_queryset(self):
+        return PageElement.objects.filter(account=self.account)
 
 
 class UploadedImageMixin(object):

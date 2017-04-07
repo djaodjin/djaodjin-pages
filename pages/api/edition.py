@@ -30,16 +30,8 @@ from rest_framework import generics
 
 from ..models import PageElement
 from ..serializers import PageElementSerializer, PageElementTagSerializer
-from ..mixins import AccountMixin
+from ..mixins import AccountMixin, PageElementMixin
 from ..utils import validate_title
-
-class PageElementMixin(AccountMixin):
-
-    lookup_field = 'slug'
-    lookup_url_kwarg = 'slug'
-
-    def get_queryset(self):
-        return PageElement.objects.filter(account=self.account)
 
 
 class PagesElementListAPIView(AccountMixin, generics.ListCreateAPIView):
