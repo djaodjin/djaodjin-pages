@@ -85,7 +85,7 @@ class PageElement(models.Model):
     objects = PageElementManager()
 
     slug = models.SlugField(unique=True)
-    title = models.CharField(max_length=150, blank=True)
+    title = models.CharField(max_length=200, blank=True)
     text = models.TextField(blank=True)
     account = models.ForeignKey(
         settings.ACCOUNT_MODEL, related_name='account_page_element', null=True)
