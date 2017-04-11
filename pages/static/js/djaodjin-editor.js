@@ -483,6 +483,26 @@
         valueSelector: function(){
             var self = this;
             self.$valueSelector = $("<input class=\"djaodjin-editor\" id=\"value_selector_" + self.getId() + "\" style=\"width:auto;\"/ type=\"range\">");
+
+            self.$valueSelector.on("input", function(event){
+                event.stopPropagation();
+                self.options.rangeUpdate(self.$el, $(this).val());
+                if (self.$el.data("range-value") !== "undefined"){
+                    self.$el.data("range-value", $(this).val());
+                }
+            });
+
+            self.$valueSelector.on("mouseup", function(event){
+                self.$valueSelector.blur();
+            });
+
+            self.$valueSelector.on("blur", function(event){
+                self.saveEdition();
+                self.$valueSelector.remove();
+                self.$valueSelector = null;
+                event.stopPropagation();
+            });
+
             return self.$valueSelector;
         },
 
@@ -508,14 +528,13 @@
             return newVal;
          },
 
-
         toggleEdition: function(){
             var self = this;
             if (self.$valueSelector){
-                self.$valueSelector.trigger("mouseup");
+                self.$valueSelector.blur();
             }else{
                 self.getOriginText();
-                $("body").append(self.valueSelector());
+                self.$el.append(self.valueSelector());
                 self.$valueSelector.attr("min", self.$el.data("range-min"))
                     .attr("max", self.$el.data("range-max"))
                     .attr("step", self.$el.data("range-step"))
@@ -532,21 +551,7 @@
                 }else if (self.options.rangePosition === "top"){
                     self.$valueSelector.css({top: self.$el.offset().top + "px"});
                 }
-
-                self.$valueSelector.on("input", function(event){
-                    self.options.rangeUpdate(self.$el, $(this).val());
-                    if (self.$el.data("range-value") !== "undefined"){
-                        self.$el.data("range-value", $(this).val());
-                    }
-                    event.stopPropagation();
-                });
-
-                self.$valueSelector.on("mouseup", function(event){
-                    self.saveEdition();
-                    self.$valueSelector.remove();
-                    self.$valueSelector = null;
-                    event.stopPropagation();
-                });
+                self.$valueSelector.focus();
             }
         }
     });
