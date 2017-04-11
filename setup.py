@@ -49,9 +49,8 @@ setup(
         'pages.urls.api',
         'pages.views'],
     package_data={'pages': [
-        'static/js/*',
-        'static/vendor/css/*',
-        'static/vendor/js/*',
+        'static/css/*', 'static/js/*',
+        'static/vendor/css/*', 'static/vendor/js/*',
         'templates/pages/*.html']},
     url='https://github.com/djaodjin/djaodjin-pages/',
     download_url='https://github.com/djaodjin/djaodjin-pages/tarball/%s' \
