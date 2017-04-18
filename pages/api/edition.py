@@ -23,8 +23,8 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from django.http import Http404
-from django.core.validators import validate_slug
 from django.core.exceptions import ValidationError
+from django.db.models import Q
 from rest_framework.mixins import CreateModelMixin
 from rest_framework import generics
 
@@ -43,11 +43,10 @@ class PagesElementListAPIView(AccountMixin, generics.ListCreateAPIView):
             queryset = PageElement.objects.filter(account=self.account)
             search_string = self.request.query_params.get('q', None)
             if search_string is not None:
-                tag = self.request.query_params.get('tag', None)
-                validate_slug(tag)
                 validate_title(search_string)
-                queryset = queryset.filter(tag=tag,
-                    title__contains=search_string)
+                queryset = queryset.filter(
+                    Q(tag__icontains=search_string)
+                    | Q(title__icontains=search_string))
                 return queryset
         except ValidationError:
             return []

@@ -46,7 +46,7 @@ function showErrorMessages(resp) {
                 for( var key in data ) {
                     if (data.hasOwnProperty(key)) {
                         var message = data[key];
-                        if( typeof data[key] !== 'string' ) {
+                        if( $.isArray(data[key]) ) {
                             message = "";
                             var sep = "";
                             for( var i = 0; i < data[key].length; ++i ) {
