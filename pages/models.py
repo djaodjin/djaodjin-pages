@@ -27,7 +27,6 @@ from __future__ import unicode_literals
 import logging, random
 
 from django.db import IntegrityError, models, transaction
-from django.db.models import F, Q
 from django.template.defaultfilters import slugify
 from django.utils.encoding import python_2_unicode_compatible
 from rest_framework.exceptions import ValidationError
@@ -40,9 +39,21 @@ LOGGER = logging.getLogger(__name__)
 class RelationShipManager(models.Manager):
 
     def insert_node(self, root, node, pos=0):
-        queryset = self.filter(orig_element=root)
-        queryset.filter(Q(rank__gte=pos)).update(rank=F('rank') + 1)
-        self.create(orig_element=root, dest_element=node, rank=pos)
+        """
+        Insert a *node* at a specific position in the list of outbound
+        edges from *root*.
+        """
+        # Implementation Note:
+        #   Edges are ordered loosily. That is: only when a node is specified
+        #   to be at a specific position in the list outbounds from an origin
+        #   node will ranks be computed. By default all ranks are zero.
+        with transaction.atomic():
+            for index, edge in enumerate(self.filter(
+                    orig_element=root).order_by('rank', 'pk')[pos:]):
+                if edge.rank < (pos + index + 1):
+                    edge.rank = pos + index + 1
+                    edge.save()
+            self.create(orig_element=root, dest_element=node, rank=pos)
 
 
 @python_2_unicode_compatible
