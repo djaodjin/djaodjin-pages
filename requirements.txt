@@ -1,5 +1,5 @@
 beautifulsoup4>=4.3.2
-bleach>=1.4.2
+bleach>=2.0.0
 boto>=2.32.1
 Django>=1.8
 djangorestframework==3.3.1
