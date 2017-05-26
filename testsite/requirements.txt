@@ -1,4 +1,4 @@
-beautifulsoup4==4.4.1
+beautifulsoup4==4.6.0
 bleach==2.0.0
 boto==2.39.0
 Django==1.9.9
