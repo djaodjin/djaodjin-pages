@@ -60,7 +60,7 @@ def inject_edition_tools(response, request=None, context=None,
                 'api_sitecss': reverse('edit_sitecss'),
                 'api_sources': reverse('pages_api_sources'),
                 'api_page_elements': reverse('page_elements'),
-                'media_upload': reverse('uploaded_media_elements',
+                'api_medias': reverse('uploaded_media_elements',
                     kwargs={'path':''})}}})
     context.update(csrf(request))
     soup = None
@@ -242,7 +242,7 @@ class EditView(AccountMixin, TemplateView):
                     'api_less_overrides': reverse('pages_api_less_overrides'),
                     'api_sources': reverse('pages_api_sources'),
                     'api_page_elements': reverse('page_elements'),
-                    'media_upload': reverse('uploaded_media_elements',
+                    'api_medias': reverse('uploaded_media_elements',
                         kwargs={'path':''})}}})
         context = _add_editable_styles_context(context=context)
         return context

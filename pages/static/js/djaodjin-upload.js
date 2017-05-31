@@ -29,9 +29,9 @@
                 if( resp.details ) {
                     showMessages(resp.details, "success");
                 } else {
-                    showMessages(["\"" + file.name
-                        + "\" uploaded sucessfully to \"" + resp.location
-                        + "\""], "success");
+                    var msg = "\"" + file.name + "\" uploaded sucessfully";
+                    showMessages([msg], "success");
+//XXX                    console.log(msg + " to \"" + resp.location + "\"");
                 }
             }
             return true;
@@ -63,20 +63,44 @@
 
         init: function(){
             var self = this;
+            if( self.options.mediaPrefix !== ""
+                && !self.options.mediaPrefix.match(/\/$/)){
+                self.options.mediaPrefix += "/";
+            }
+
+            if( self.options.uploadUrl.indexOf("/api/credentials/") >= 0 ) {
+                $.ajax({
+                    method: "GET",
+                    url: self.options.uploadUrl,
+                    datatype: "json",
+                    contentType: "application/json; charset=utf-8",
+                    success: function(data) {
+                        self.options.uploadUrl = data.location;
+                        self.options.accessKey = data.access_key;
+                        self.options.policy = data.policy;
+                        self.options.amzCredential = data.x_amz_credential;
+                        self.options.amzDate = data.x_amz_date
+                        self.options.securityToken = data.security_token
+                        self.options.signature = data.signature;
+                        self.initDropzone();
+                    }
+                });
+            } else {
+                self.initDropzone();
+            }
+        },
+
+        initDropzone: function() {
+            var self = this;
             var dropzoneUrl = (self.options.accessKey ? self.options.uploadUrl
                 : (self.element.attr("data-complete-url") ?
                     self.element.attr("data-complete-url")
                     : self.options.uploadUrl));
-
             if( !dropzoneUrl ) {
                 showErrorMessages(
                     "instantiated djupload() with no uploadUrl specified.");
                 throw new Error(
                     "instantiated djupload() with no uploadUrl specified.");
-            }
-            if( self.options.mediaPrefix !== ""
-                && !self.options.mediaPrefix.match(/\/$/)){
-                self.options.mediaPrefix += "/";
             }
             self.element.dropzone({
                 paramName: self.options.uploadParamName,
@@ -99,6 +123,7 @@
                             }
                         }
                     }
+
                     this.on("sending", function(file, xhr, formData){
                         if( self.options.accessKey ) {
                             formData.append(
@@ -115,6 +140,8 @@
                                 "x-amz-signature", self.options.signature);
                             if( self.options.acl ) {
                                 formData.append("acl", self.options.acl);
+                            } else {
+                                formData.append("acl", "private");
                             }
                             var ext = file.name.slice(
                                 file.name.lastIndexOf('.')).toLowerCase();
@@ -130,7 +157,7 @@
                             }
                         } else {
                             formData.append(
-                                "csrfmiddlewaretoken", self._csrfToken());
+                                "csrfmiddlewaretoken", getMetaCSRFToken());
                             var data = self.element.data();
                             for( var key in data ) {
                                 if( data.hasOwnProperty(key)
@@ -160,20 +187,13 @@
                                     url: completeUrl,
                                     beforeSend: function(xhr) {
                                         xhr.setRequestHeader(
-                                            "X-CSRFToken", self._csrfToken());
+                                            "X-CSRFToken", getMetaCSRFToken());
                                     },
                                     data: JSON.stringify(response),
                                     datatype: "json",
                                     contentType: "application/json; charset=utf-8",
                                     success: function(resp) {
-             // We used ``response`` instead of ``resp`` to have consistent API,
-             // but sometimes it is nice to be able to update the ``details``
-             // message shown to the user.
-                                      if( resp.details ) {
-                                          self._uploadSuccess(file, resp);
-                                      } else {
-                                          self._uploadSuccess(file, response);
-                                      }
+                                        self._uploadSuccess(file, resp);
                                     },
                                     error: function(resp) {
                                         self._uploadError(file, resp);

@@ -145,7 +145,7 @@ if( view.length > 0 ) {
   <script type="text/javascript">
 jQuery(document).ready(function($) {
   $(".dj-gallery").djgallery({
-    mediaUrl: "{{urls.edit.media_upload}}",
+    mediaUrl: "{{urls.edit.api_medias}}",
     csrfToken: "{{csrf_token}}",
     loadImageEvent: "gallery-opened",
     saveDroppedMediaUrl: "{{ urls.edit.api_page_elements }}",

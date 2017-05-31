@@ -49,7 +49,6 @@ DELETE mediaUrl 200 OK
 Options:
 
     mediaUrl :                          default: null, type: String, url to get, post, put and delete media from backend
-    csrfToken :                         default: null, type: String, security token
 
     // AWS S3 Direct upload settings
     S3DirectUploadUrl :                 default: null, type: String, A S3 url
@@ -97,7 +96,6 @@ Options:
             self.selectedMedia = null;
             self.initGallery();
             self.initDocument();
-            self.initDropzone();
             self.initMediaInfo();
             if (self.options.startLoad){
                 self.loadImage();
@@ -191,13 +189,9 @@ Options:
 
         initDropzone: function(){
             var self = this;
-            var dropzoneUrl = self.options.mediaUrl;
-            if (self.options.accessKey){
-                dropzoneUrl = self.options.S3DirectUploadUrl;
-            }
             self.element.djupload({
-                uploadUrl: dropzoneUrl,
-                csrfToken: self.options.csrfToken,
+                uploadUrl: self.options.S3DirectUploadUrl ?
+                    self.options.S3DirectUploadUrl : self.options.mediaUrl,
                 uploadZone: "body",
                 uploadClickableZone: self.options.clickableArea,
                 uploadParamName: "file",
@@ -240,7 +234,7 @@ Options:
             });
         },
 
-        loadImage: function(){
+        _loadMedias: function() {
             var self = this;
             var $element = $(self.element);
             var mediaFilterUrl = self.options.mediaUrl;
@@ -263,6 +257,30 @@ Options:
                     showErrorMessages(resp);
                 }
             });
+        },
+
+        loadImage: function(){
+            var self = this;
+            if( self.options.S3DirectUploadUrl
+              && self.options.S3DirectUploadUrl.indexOf('amazon') <= 0 ) {
+                $.ajax({
+                    method: "GET",
+                    url: self.options.S3DirectUploadUrl,
+                    datatype: "json",
+                    contentType: "application/json; charset=utf-8",
+                    success: function(data) {
+                        self.options.S3DirectUploadUrl = data.location;
+                        self.initDropzone();
+                        self._loadMedias();
+                    },
+                    error: function(resp) {
+                        showErrorMessages(resp);
+                    }
+                });
+            } else {
+                self.initDropzone();
+                self._loadMedias();
+            }
         },
 
         addMediaItem: function(file, index, init){
@@ -413,7 +431,6 @@ Options:
 
         // Djaodjin gallery required options
         mediaUrl: null, // Url to get list of media and upload, update and delete a media item
-        csrfToken: "", //
 
         // Customize djaodjin gallery.
         buttonClass: "",
