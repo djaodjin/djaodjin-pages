@@ -78,7 +78,8 @@ def write_template(template_path, template_source):
     base_dir = os.path.dirname(template_path)
     if not os.path.isdir(base_dir):
         os.makedirs(base_dir)
-    temp_file = tempfile.NamedTemporaryFile(dir=base_dir, delete=False)
+    temp_file = tempfile.NamedTemporaryFile(
+        mode='w+t', dir=base_dir, delete=False)
     temp_file.write(template_source)
     temp_file.close()
     os.rename(temp_file.name, template_path)
