@@ -48,6 +48,19 @@ class HTMLField(serializers.CharField):
             strip=self.html_strip))
 
 
+class EdgeCreateSerializer(serializers.Serializer):
+    """
+    Create a new edge between two ``PageElement``.
+
+    The *method* parameter can either be:
+
+      move    Move the PageElement from its previous attachement to the new one.
+      copy    Duplicate the subtree rooted at PageElement to the new attach.
+      alias   Alias the PageElement at the new attach.
+    """
+    source = serializers.CharField()
+
+
 class RelationShipSerializer(serializers.Serializer): #pylint: disable=abstract-method
     orig_elements = serializers.ListField(
         child=serializers.SlugField(), required=False
