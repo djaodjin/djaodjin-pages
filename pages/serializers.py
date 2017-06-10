@@ -59,6 +59,7 @@ class EdgeCreateSerializer(serializers.Serializer):
       alias   Alias the PageElement at the new attach.
     """
     source = serializers.CharField()
+    rank = serializers.IntegerField(required=False)
 
 
 class RelationShipSerializer(serializers.Serializer): #pylint: disable=abstract-method
@@ -70,7 +71,12 @@ class RelationShipSerializer(serializers.Serializer): #pylint: disable=abstract-
         )
 
 class PageElementSerializer(serializers.ModelSerializer):
+    """
+    Serializes a PageElement.
+    """
+
     slug = serializers.SlugField(required=False)
+    path = serializers.SerializerMethodField()
     text = HTMLField(html_tags=ALLOWED_TAGS, html_attributes=ALLOWED_ATTRIBUTES,
         html_styles=ALLOWED_STYLES, required=False)
     tag = serializers.SlugField(required=False)
@@ -83,8 +89,11 @@ class PageElementSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = PageElement
-        fields = ('slug', 'title', 'text', 'tag',
+        fields = ('slug', 'path', 'title', 'text', 'tag',
                   'orig_elements', 'dest_elements')
+
+    def get_path(self, obj):
+        return "%s/%s" % (self.context.get('prefix', ""), obj.slug)
 
     def create(self, validated_data):
         orig_elements = validated_data.pop('orig_elements', None)

@@ -25,6 +25,7 @@
 import logging
 
 from django.db import transaction
+from django.db.models import Max
 from rest_framework.mixins import DestroyModelMixin
 from rest_framework import generics
 from rest_framework import status
@@ -70,20 +71,32 @@ class EdgesUpdateAPIView(generics.CreateAPIView):
         targets = self._full_element_path(self.kwargs.get('path', None))
         sources = self._full_element_path(
             serializer.validated_data.get('source'))
-        self.perform_change(sources, targets)
+        self.perform_change(sources, targets,
+            rank=serializer.validated_data.get('rank', None))
 
 
 class PageElementMoveAPIView(EdgesUpdateAPIView):
     """
     Move an PageElement from one attachement to another.
     """
+    queryset = RelationShip.objects.all()
 
-    @staticmethod
-    def perform_change(sources, targets):
+    def perform_change(self, sources, targets, rank=None):
+        node = sources[-2]
+        root = targets[-1]
+        LOGGER.debug("update node %s under %s with rank=%s", node, root, rank)
         with transaction.atomic():
+            if rank is None:
+                rank = self.get_queryset().filter(
+                    orig_element=root).aggregate(Max('rank')).get(
+                    'rank__max', None)
+                rank = 0 if rank is None else rank + 1
+            else:
+                RelationShip.objects.insert_available_rank(root, pos=rank)
             edge = RelationShip.objects.get(
-                orig_element=sources[-2], dest_element=sources[-1])
-            edge.orig_element = targets[-1]
+                orig_element=node, dest_element=sources[-1])
+            edge.orig_element = root
+            edge.rank = rank
             edge.save()
 
 
