@@ -141,7 +141,10 @@ class PageElement(models.Model):
                 using=using, update_fields=update_fields)
         max_length = self._meta.get_field('slug').max_length
         slug_base = slugify(self.title)
-        if len(slug_base) > max_length:
+        if not slug_base:
+            # title might be empty
+            "".join([random.choice("abcdef0123456789") for _ in range(7)])
+        elif len(slug_base) > max_length:
             slug_base = slug_base[:max_length]
         self.slug = slug_base
         for _ in range(1, 10):
