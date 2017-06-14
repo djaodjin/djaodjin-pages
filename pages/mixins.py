@@ -78,6 +78,8 @@ class TrailMixin(object):
 
 
     def get_full_element_path(self, path):
+        if not path:
+            return []
         parts = path.split('/')
         if not parts[0]:
             parts.pop(0)
