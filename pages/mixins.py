@@ -59,6 +59,11 @@ class TrailMixin(object):
             candidates = PageElement.objects.get_roots()
         if not candidates:
             raise Http404()
+        if not isinstance(candidates, list):
+            # Because `PageElement.objects.get_roots` has a specialy crafted
+            # `where` clause which would cause an error with the SQL generated
+            # by the `RelationShip.objects.filter` further down.
+            candidates = list(candidates)
 
         for candidate in candidates:
             if candidate.slug == name:
