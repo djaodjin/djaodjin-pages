@@ -26,51 +26,39 @@ import logging
 
 from django.db import transaction
 from django.db.models import Max
+from rest_framework import generics, status
+from rest_framework.exceptions import ValidationError
 from rest_framework.mixins import DestroyModelMixin
-from rest_framework import generics
-from rest_framework import status
 from rest_framework.response import Response
 
-from ..models import PageElement, RelationShip
+from ..mixins import TrailMixin
+from ..models import RelationShip
 from ..serializers import EdgeCreateSerializer, RelationShipSerializer
 
 
 LOGGER = logging.getLogger(__name__)
 
 
-class EdgesUpdateAPIView(generics.CreateAPIView):
+class EdgesUpdateAPIView(TrailMixin, generics.CreateAPIView):
 
     serializer_class = EdgeCreateSerializer
 
-    def _scan_candidates(self, root, name):
-        if root is None:
-            candidates = PageElement.objects.get_roots()
-        else:
-            candidates = root.relationships.all()
-        for candidate in candidates:
-            if candidate.slug == name:
-                return [candidate]
-        for candidate in candidates:
-            suffix = self._scan_candidates(candidate, name)
-            if len(suffix) > 0:
-                return [candidate] + suffix
-        return []
-
-    def _full_element_path(self, path):
-        parts = path.split('/')
-        if not parts[0]:
-            parts.pop(0)
-        results = []
-        if len(parts) > 0:
-            results = self._scan_candidates(None, parts[0])
-            for name in parts[1:]:
-                results += self._scan_candidates(results[-1], name)
-        return results
-
     def perform_create(self, serializer):
-        targets = self._full_element_path(self.kwargs.get('path', None))
-        sources = self._full_element_path(
-            serializer.validated_data.get('source'))
+        targets = self.get_full_element_path(self.kwargs.get('path', None))
+        sources = self.get_full_element_path(serializer.validated_data.get(
+            'source'))
+        if len(sources) <= len(targets):
+            is_prefix = True
+            for source, target in zip(sources, targets[:len(sources)]):
+                if source != target:
+                    is_prefix = False
+                    break
+            if is_prefix:
+                raise ValidationError({"details": "'%s' cannot be attached"\
+                    " under '%s' as it is a leading prefix. That would create"\
+                    " a loop." % (
+                    " > ".join([source.title for source in sources]),
+                    " > ".join([target.title for target in targets]))})
         self.perform_change(sources, targets,
             rank=serializer.validated_data.get('rank', None))
 

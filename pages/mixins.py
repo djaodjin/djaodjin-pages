@@ -29,12 +29,13 @@ from functools import reduce #pylint:disable=redefined-builtin
 from boto.s3.connection import S3Connection
 from boto.exception import S3ResponseError
 from django.core.files.storage import get_storage_class, FileSystemStorage
+from django.http import Http404
 from django.db.models import Q
 from django.utils._os import safe_join
 from django.utils import six
 
 from . import settings
-from .models import MediaTag, PageElement, ThemePackage
+from .models import MediaTag, PageElement, RelationShip, ThemePackage
 from .extras import AccountMixinBase
 
 #pylint:disable=no-name-in-module,import-error
@@ -46,6 +47,43 @@ LOGGER = logging.getLogger(__name__)
 
 class AccountMixin(AccountMixinBase, settings.EXTRA_MIXIN):
     pass
+
+
+class TrailMixin(object):
+    """
+    Generate a trail of PageElement based on a path.
+    """
+
+    def _scan_candidates(self, candidates, name):
+        if candidates is None:
+            candidates = PageElement.objects.get_roots()
+        if not candidates:
+            raise Http404()
+
+        for candidate in candidates:
+            if candidate.slug == name:
+                return [candidate]
+
+        edges = RelationShip.objects.filter(orig_element__in=candidates)
+        next_candidates = PageElement.objects.filter(
+            pk__in=edges.values('dest_element_id'))
+        suffix = self._scan_candidates(next_candidates, name)
+        edge = edges.get(dest_element=suffix[0])
+        return [edge.orig_element] + suffix
+
+
+    def get_full_element_path(self, path):
+        parts = path.split('/')
+        if not parts[0]:
+            parts.pop(0)
+        results = []
+        if len(parts) > 0:
+            results = self._scan_candidates(
+                PageElement.objects.get_roots(), parts[0])
+            for name in parts[1:]:
+                results += self._scan_candidates(
+                    results[-1].relationships.all(), name)
+        return results
 
 
 class PageElementMixin(AccountMixin):
