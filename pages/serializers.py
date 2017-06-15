@@ -24,6 +24,7 @@
 
 import bleach
 from django.db import transaction
+from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 
 from .models import PageElement, ThemePackage, LessVariable
@@ -102,13 +103,14 @@ class PageElementSerializer(serializers.ModelSerializer):
             instance = super(PageElementSerializer, self).create(validated_data)
             if orig_elements:
                 for orig_element in orig_elements:
-                    orig_element = PageElement.objects.get(slug=orig_element)
+                    orig_element = get_object_or_404(
+                        PageElement, slug=orig_element)
                     orig_element.add_relationship(instance)
-                if dest_elements:
-                    for dest_element in dest_elements:
-                        dest_element = PageElement.objects.get(
-                            slug=dest_element)
-                        instance.add_relationship(dest_element)
+            if dest_elements:
+                for dest_element in dest_elements:
+                    dest_element = get_object_or_404(
+                        PageElement, slug=dest_element)
+                    instance.add_relationship(dest_element)
         return instance
 
 
