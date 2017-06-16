@@ -135,11 +135,13 @@ class PageElement(models.Model):
         return self.slug
 
     def add_relationship(self, element, tag=None):
+        rank = RelationShip.objects.filter(
+            orig_element=self).aggregate(Max('rank')).get('rank__max', None)
+        if rank is None:
+            rank = 0
         return RelationShip.objects.get_or_create(
             orig_element=self, dest_element=element,
-            defaults={'tag': tag, 'rank': RelationShip.objects.filter(
-                orig_element=self).aggregate(Max('rank')).get(
-                'rank__max', 0)})
+            defaults={'tag': tag, 'rank': rank})
 
     def remove_relationship(self, element):
         RelationShip.objects.filter(
