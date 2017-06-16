@@ -41,8 +41,24 @@ class RelationShipManager(models.Manager):
     def insert_available_rank(self, root, pos=0):
         # Implementation Note:
         #   Edges are ordered loosily. That is: only when a node is specified
-        #   to be at a specific position in the list outbounds from an origin
-        #   node will ranks be computed. By default all ranks are zero.
+        #   to be at a specific position in the outbound adjency list from
+        #   an origin node will ranks be computed. By default all ranks
+        #   are zero.
+        #   This means we can end-up in the following situations before
+        #   inserting a node:
+        #      (sort order 0 1 2 3 4 5 6)
+        #   1. rank        0 0 0 0 0 0 0
+        #   2. rank        6 6 6 6 6 6 6
+        #   insertion pos      ^
+        #   The resulting ranks must keep the current order yet leave
+        #   a hole to insert the new node.
+        #   1. new rank    0 0 3 4 5 6 7
+        #   2. new rank    0 1 6 6 6 6 6
+        for index, edge in enumerate(self.filter(
+                orig_element=root).order_by('rank', 'pk')[:pos]):
+            if edge.rank >= pos:
+                edge.rank = index
+                edge.save()
         for index, edge in enumerate(self.filter(
                 orig_element=root).order_by('rank', 'pk')[pos:]):
             if edge.rank < (pos + index + 1):
