@@ -70,20 +70,23 @@ class PageElementMoveAPIView(EdgesUpdateAPIView):
     queryset = RelationShip.objects.all()
 
     def perform_change(self, sources, targets, rank=None):
-        node = sources[-2]
+        old_root = sources[-2]
         root = targets[-1]
-        LOGGER.debug("update node %s under %s with rank=%s", node, root, rank)
+        LOGGER.debug("update node %s to be under %s with rank=%s",
+            sources[-1], root, rank)
         with transaction.atomic():
+            edge = RelationShip.objects.get(
+                orig_element=old_root, dest_element=sources[-1])
             if rank is None:
                 rank = self.get_queryset().filter(
                     orig_element=root).aggregate(Max('rank')).get(
                     'rank__max', None)
                 rank = 0 if rank is None else rank + 1
             else:
-                RelationShip.objects.insert_available_rank(root, pos=rank)
-            edge = RelationShip.objects.get(
-                orig_element=node, dest_element=sources[-1])
-            edge.orig_element = root
+                RelationShip.objects.insert_available_rank(root, pos=rank,
+                    node=sources[-1] if root == old_root else None)
+            if root != old_root:
+                edge.orig_element = root
             edge.rank = rank
             edge.save()
 

@@ -27,6 +27,7 @@ from __future__ import unicode_literals
 import logging, random
 
 from django.db import IntegrityError, models, transaction
+from django.db.models import Max
 from django.template.defaultfilters import slugify
 from django.utils.encoding import python_2_unicode_compatible
 from rest_framework.exceptions import ValidationError
@@ -38,7 +39,7 @@ LOGGER = logging.getLogger(__name__)
 
 class RelationShipManager(models.Manager):
 
-    def insert_available_rank(self, root, pos=0):
+    def insert_available_rank(self, root, pos=0, node=None):
         # Implementation Note:
         #   Edges are ordered loosily. That is: only when a node is specified
         #   to be at a specific position in the outbound adjency list from
@@ -54,13 +55,22 @@ class RelationShipManager(models.Manager):
         #   a hole to insert the new node.
         #   1. new rank    0 0 3 4 5 6 7
         #   2. new rank    0 1 6 6 6 6 6
-        for index, edge in enumerate(self.filter(
-                orig_element=root).order_by('rank', 'pk')[:pos]):
+        sorted_edges = list(self.filter(orig_element=root).order_by(
+            'rank', 'pk'))
+
+        if node:
+            for index, edge in enumerate(sorted_edges):
+                if edge.dest_element_id == node.pk:
+                    prev_pos = index
+                    break
+            if prev_pos < pos:
+                pos = pos + 1
+
+        for index, edge in enumerate(sorted_edges[:pos]):
             if edge.rank >= pos:
                 edge.rank = index
                 edge.save()
-        for index, edge in enumerate(self.filter(
-                orig_element=root).order_by('rank', 'pk')[pos:]):
+        for index, edge in enumerate(sorted_edges[pos:]):
             if edge.rank < (pos + index + 1):
                 edge.rank = pos + index + 1
                 edge.save()
@@ -127,7 +137,9 @@ class PageElement(models.Model):
     def add_relationship(self, element, tag=None):
         return RelationShip.objects.get_or_create(
             orig_element=self, dest_element=element,
-            defaults={'tag': tag})
+            defaults={'tag': tag, 'rank': RelationShip.objects.filter(
+                orig_element=self).aggregate(Max('rank')).get(
+                'rank__max', 0)})
 
     def remove_relationship(self, element):
         RelationShip.objects.filter(
