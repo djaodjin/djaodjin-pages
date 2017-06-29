@@ -53,7 +53,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         app_name = options['app_name']
         for package_path in options['packages']:
-            if not app_name:
+            if not options['app_name']:
                 app_name = os.path.splitext(os.path.basename(package_path))[0]
             self.stdout.write("install %s to %s\n" % (package_path, app_name))
             with zipfile.ZipFile(package_path, 'r') as zip_file:
