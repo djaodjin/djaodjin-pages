@@ -45,7 +45,7 @@ except ImportError: # django < 1.7
 try:
     from django.template.context_processors import csrf
 except ImportError: # django < 1.8
-    from django.core.context_processors import csrf
+    from django.core.context_processors import csrf #pylint:disable=import-error
 
 try:
     from django.template.exceptions import TemplateDoesNotExist

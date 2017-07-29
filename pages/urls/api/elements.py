@@ -30,7 +30,8 @@ from ...import settings
 from ...api.edition import (PageElementDetail, PagesElementListAPIView,
     PageElementAddTags, PageElementRemoveTags)
 from ...api.upload_media import MediaListAPIView
-from ...api.relationship import PageElementMoveAPIView, RelationShipListAPIView
+from ...api.relationship import (PageElementAliasAPIView,
+    PageElementMoveAPIView, RelationShipListAPIView)
 
 
 urlpatterns = [
@@ -38,6 +39,8 @@ urlpatterns = [
         MediaListAPIView.as_view(), name='uploaded_media_elements'),
     url(r'^editable/relationship/',
         RelationShipListAPIView.as_view(), name='relationships'),
+    url(r'^editables/alias(?P<path>%s)/' % settings.PATH_RE,
+        PageElementAliasAPIView.as_view(), name='api_alias_node'),
     url(r'^editables/attach(?P<path>%s)/' % settings.PATH_RE,
         PageElementMoveAPIView.as_view(), name='api_move_node'),
     url(r'^editables/attach/?',

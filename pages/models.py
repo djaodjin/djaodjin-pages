@@ -149,6 +149,23 @@ class PageElement(models.Model):
             dest_element=element).delete()
         return True
 
+    def get_parents(self, depth=None):
+        if depth is not None and depth == 0:
+            return [[self]]
+        results = []
+        parents = PageElement.objects.filter(
+            pk__in=RelationShip.objects.filter(
+                dest_element=self).values('orig_element_id'))
+        for parent in parents:
+            grandparents = parent.get_parents(
+                depth=(depth - 1) if depth is not None else None)
+            if grandparents:
+                for grandparent in grandparents:
+                    results += [grandparent + [self]]
+            else:
+                results += [[self]]
+        return results
+
     def get_relationships(self, tag=None):
         if not tag:
             return self.relationships.filter(

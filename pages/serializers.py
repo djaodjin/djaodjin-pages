@@ -94,7 +94,13 @@ class PageElementSerializer(serializers.ModelSerializer):
                   'orig_elements', 'dest_elements')
 
     def get_path(self, obj):
-        return "%s/%s" % (self.context.get('prefix', ""), obj.slug)
+        prefix = self.context.get('prefix', "")
+        if not prefix:
+            parents = obj.get_parents()
+            if parents:
+                prefix = "/" + "/".join(
+                    [parent.slug for parent in parents[0][:-1]])
+        return "%s/%s" % (prefix, obj.slug)
 
     def create(self, validated_data):
         orig_elements = validated_data.pop('orig_elements', None)

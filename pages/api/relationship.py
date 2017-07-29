@@ -63,6 +63,26 @@ class EdgesUpdateAPIView(TrailMixin, generics.CreateAPIView):
             rank=serializer.validated_data.get('rank', None))
 
 
+class PageElementAliasAPIView(EdgesUpdateAPIView):
+    """
+    Alias the content of a PageElement at another node.
+    """
+    queryset = RelationShip.objects.all()
+
+    def perform_change(self, sources, targets, rank=None):
+        root = targets[-1]
+        node = sources[-1]
+        LOGGER.debug("alias node %s under %s with rank=%s", node, root, rank)
+        with transaction.atomic():
+            if rank is None:
+                rank = self.get_queryset().filter(
+                    orig_element=root).aggregate(Max('rank')).get(
+                    'rank__max', None)
+                rank = 0 if rank is None else rank + 1
+            RelationShip.objects.create(
+                orig_element=root, dest_element=node, rank=rank)
+
+
 class PageElementMoveAPIView(EdgesUpdateAPIView):
     """
     Move an PageElement from one attachement to another.
