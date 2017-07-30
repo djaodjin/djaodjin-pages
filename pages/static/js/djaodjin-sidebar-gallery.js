@@ -261,26 +261,8 @@ Options:
 
         loadImage: function(){
             var self = this;
-            if( self.options.S3DirectUploadUrl
-              && self.options.S3DirectUploadUrl.indexOf('amazon') <= 0 ) {
-                $.ajax({
-                    method: "GET",
-                    url: self.options.S3DirectUploadUrl,
-                    datatype: "json",
-                    contentType: "application/json; charset=utf-8",
-                    success: function(data) {
-                        self.options.S3DirectUploadUrl = data.location;
-                        self.initDropzone();
-                        self._loadMedias();
-                    },
-                    error: function(resp) {
-                        showErrorMessages(resp);
-                    }
-                });
-            } else {
-                self.initDropzone();
-                self._loadMedias();
-            }
+            self.initDropzone();
+            self._loadMedias();
         },
 
         addMediaItem: function(file, index, init){

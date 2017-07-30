@@ -179,7 +179,7 @@ jQuery(document).ready(function($) {
       if (!type){
         type = "success";
       }
-      toastr[type](message)
+      showMessages([message], type);
     },
     previewMediaItem: function(src, type){
       $("#modal-preview-media .modal-body").empty();
