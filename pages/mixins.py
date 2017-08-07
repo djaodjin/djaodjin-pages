@@ -33,6 +33,7 @@ from django.http import Http404
 from django.db.models import Q
 from django.utils._os import safe_join
 from django.utils import six
+from rest_framework.generics import get_object_or_404
 
 from . import settings
 from .models import MediaTag, PageElement, RelationShip, ThemePackage
@@ -54,29 +55,6 @@ class TrailMixin(object):
     Generate a trail of PageElement based on a path.
     """
 
-    def _scan_candidates(self, candidates, name):
-        if candidates is None:
-            candidates = PageElement.objects.get_roots()
-        if not candidates:
-            raise Http404()
-        if not isinstance(candidates, list):
-            # Because `PageElement.objects.get_roots` has a specialy crafted
-            # `where` clause which would cause an error with the SQL generated
-            # by the `RelationShip.objects.filter` further down.
-            candidates = list(candidates)
-
-        for candidate in candidates:
-            if candidate.slug == name:
-                return [candidate]
-
-        edges = RelationShip.objects.filter(orig_element__in=candidates)
-        next_candidates = PageElement.objects.filter(
-            pk__in=edges.values('dest_element_id'))
-        suffix = self._scan_candidates(next_candidates, name)
-        edge = edges.get(dest_element=suffix[0])
-        return [edge.orig_element] + suffix
-
-
     def get_full_element_path(self, path):
         if not path:
             return []
@@ -84,12 +62,20 @@ class TrailMixin(object):
         if not parts[0]:
             parts.pop(0)
         results = []
-        if len(parts) > 0:
-            results = self._scan_candidates(
-                PageElement.objects.get_roots(), parts[0])
-            for name in parts[1:]:
-                results += self._scan_candidates(
-                    results[-1].relationships.all(), name)
+        if parts:
+            element = get_object_or_404(
+                PageElement.objects.all(), slug=parts[-1])
+            candidates = element.get_parent_paths(hints=parts[:-1])
+            if not candidates:
+                raise Http404("%s could not be found." % path)
+            # XXX Implementation Note: if we have multiple candidates,
+            # it means the hints were not enough to select a single path.
+            # This is still OK to pick the first candidate as the breadcrumbs
+            # should take a user back to the top-level page.
+            if len(candidates) > 1:
+                LOGGER.info("get_full_element_path has multiple candidates"\
+                    " for '%s': %s", path, candidates)
+            results = candidates[0]
         return results
 
 

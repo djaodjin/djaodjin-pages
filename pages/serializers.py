@@ -96,7 +96,7 @@ class PageElementSerializer(serializers.ModelSerializer):
     def get_path(self, obj):
         prefix = self.context.get('prefix', "")
         if not prefix:
-            parents = obj.get_parents()
+            parents = obj.get_parent_paths()
             if parents:
                 prefix = "/" + "/".join(
                     [parent.slug for parent in parents[0][:-1]])

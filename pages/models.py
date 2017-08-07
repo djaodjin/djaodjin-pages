@@ -149,21 +149,45 @@ class PageElement(models.Model):
             dest_element=element).delete()
         return True
 
-    def get_parents(self, depth=None):
+    def get_parent_paths(self, depth=None, hints=None):
+        """
+        Returns a list of paths.
+
+        When *depth* is specified each paths will be *depth* long or shorter.
+        When *hints* is specified, it is a list of elements in a path. The
+        paths returns will contain *hints* along the way.
+        """
         if depth is not None and depth == 0:
             return [[self]]
         results = []
         parents = PageElement.objects.filter(
             pk__in=RelationShip.objects.filter(
                 dest_element=self).values('orig_element_id'))
+        if not parents:
+            return [[self]]
+        if hints:
+            for parent in parents:
+                if parent.slug == hints[-1]:
+                    # we found a way to cut the search space early.
+                    parents = [parent]
+                    hints = hints[:-1]
+                    break
         for parent in parents:
-            grandparents = parent.get_parents(
-                depth=(depth - 1) if depth is not None else None)
+            grandparents = parent.get_parent_paths(
+                depth=(depth - 1) if depth is not None else None,
+                hints=hints)
             if grandparents:
                 for grandparent in grandparents:
-                    results += [grandparent + [self]]
-            else:
-                results += [[self]]
+                    term_index = 0
+                    if hints:
+                        for node in grandparent:
+                            if node.slug == hints[term_index]:
+                                term_index += 1
+                                if term_index >= len(hints):
+                                    break
+                    if not hints or term_index >= len(hints):
+                        # we have not hints or we consumed all of them.
+                        results += [grandparent + [self]]
         return results
 
     def get_relationships(self, tag=None):
