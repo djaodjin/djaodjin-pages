@@ -74,11 +74,11 @@
     $.fn.baseEditor.defaults = {
         baseUrl: null, // Url to send request to server
         uniqueIdentifier: "id",
-        onSuccess: function(){
+        onSuccess: function(element, resp){
             return true;
         },
-        onError: function(){
-            return true;
+        onError: function(resp){
+            showErrorMessages(resp);
         },
     };
 
@@ -200,8 +200,8 @@
                     data: JSON.stringify(data),
                     datatype: "json",
                     contentType: "application/json; charset=utf-8",
-                    success: function(response) {
-                        self.options.onSuccess(self, response);
+                    success: function(resp) {
+                        self.options.onSuccess(self, resp);
                         self.$el.removeAttr("contenteditable");
                         self.formatDisplayedValue();
                     },
@@ -580,11 +580,11 @@
         emptyInputText: "placeholder, type to overwrite...",
         uniqueIdentifier: "id",
         preventBlurOnClick: "",
-        onSuccess: function(){
+        onSuccess: function(element, resp){
             return true;
         },
-        onError: function(){
-            return true;
+        onError: function(resp){
+            showErrorMessages(resp);
         },
         rangeUpdate: function(editable, newVal){
             editable.text(newVal);

@@ -157,6 +157,7 @@ class PageElement(models.Model):
         When *hints* is specified, it is a list of elements in a path. The
         paths returns will contain *hints* along the way.
         """
+        #pylint:disable=too-many-nested-blocks
         if depth is not None and depth == 0:
             return [[self]]
         results = []

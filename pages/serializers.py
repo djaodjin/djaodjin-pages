@@ -53,14 +53,16 @@ class EdgeCreateSerializer(serializers.Serializer):
     """
     Create a new edge between two ``PageElement``.
 
-    The *method* parameter can either be:
+    The path specified in the URL will be aliased or moved under *source*.
+    When *rank* is specified, the resulting index of the aliased/moved element
+    in its parent list will be *rank*.
 
-      move    Move the PageElement from its previous attachement to the new one.
-      copy    Duplicate the subtree rooted at PageElement to the new attach.
-      alias   Alias the PageElement at the new attach.
+    The state in the UI is particularly complex. We use the *external_key*
+    to log incorrect calls from the Javascript code.
     """
     source = serializers.CharField()
     rank = serializers.IntegerField(required=False)
+    external_key = serializers.CharField(required=False)
 
 
 class RelationShipSerializer(serializers.Serializer): #pylint: disable=abstract-method

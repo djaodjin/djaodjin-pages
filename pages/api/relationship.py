@@ -90,6 +90,11 @@ class PageElementMoveAPIView(EdgesUpdateAPIView):
     queryset = RelationShip.objects.all()
 
     def perform_change(self, sources, targets, rank=None):
+        if len(sources) < 2 or len(targets) < 1:
+            LOGGER.error("There will be a problem calling "\
+                " perform_change(sources=%s, targets=%s, rank=%s)"\
+                " - data=%s", sources, targets, rank, self.request.data,
+                extra={'request': self.request})
         old_root = sources[-2]
         root = targets[-1]
         LOGGER.debug("update node %s to be under %s with rank=%s",

@@ -36,7 +36,7 @@ from django.utils import six
 from rest_framework.generics import get_object_or_404
 
 from . import settings
-from .models import MediaTag, PageElement, RelationShip, ThemePackage
+from .models import MediaTag, PageElement, ThemePackage
 from .extras import AccountMixinBase
 
 #pylint:disable=no-name-in-module,import-error
@@ -55,7 +55,8 @@ class TrailMixin(object):
     Generate a trail of PageElement based on a path.
     """
 
-    def get_full_element_path(self, path):
+    @staticmethod
+    def get_full_element_path(path):
         if not path:
             return []
         parts = path.split('/')
