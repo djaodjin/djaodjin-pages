@@ -192,22 +192,22 @@
             }
 
             if( self.options.debug ){
-                console.log(data);
-            } else {
-                $.ajax({
-                    method: method,
-                    url: self.options.baseUrl + self.getId() + "/",
-                    data: JSON.stringify(data),
-                    datatype: "json",
-                    contentType: "application/json; charset=utf-8",
-                    success: function(resp) {
-                        self.options.onSuccess(self, resp);
-                        self.$el.removeAttr("contenteditable");
-                        self.formatDisplayedValue();
-                    },
-                    error: self.options.onError
-                });
+                console.log("data-key:", self.$el.attr("data-key"),
+                    "send:", data);
             }
+            $.ajax({
+                method: method,
+                url: self.options.baseUrl + self.getId() + "/",
+                data: JSON.stringify(data),
+                datatype: "json",
+                contentType: "application/json; charset=utf-8",
+                success: function(resp) {
+                    self.options.onSuccess(self, resp);
+                    self.$el.removeAttr("contenteditable");
+                    self.formatDisplayedValue();
+                },
+                error: self.options.onError
+            });
         }
     });
 
