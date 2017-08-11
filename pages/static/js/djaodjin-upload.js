@@ -67,7 +67,6 @@
                 && !self.options.mediaPrefix.match(/\/$/)){
                 self.options.mediaPrefix += "/";
             }
-
             if( self.options.uploadUrl.indexOf("/api/credentials/") >= 0 ) {
                 $.ajax({
                     method: "GET",
@@ -82,6 +81,15 @@
                         self.options.amzDate = data.x_amz_date
                         self.options.securityToken = data.security_token
                         self.options.signature = data.signature;
+                        self.options.mediaPrefix = data.media_prefix;
+                        if( self.options.mediaPrefix === 'undefined'
+                            || self.options.mediaPrefix === null ) {
+                            self.options.mediaPrefix = "";
+                        }
+                        if( self.options.mediaPrefix !== ""
+                            && !self.options.mediaPrefix.match(/\/$/)){
+                            self.options.mediaPrefix += "/";
+                        }
                         self.initDropzone();
                     }
                 });
@@ -180,8 +188,21 @@
                             var completeUrl = self.element.attr(
                                 "data-complete-url");
                             if( completeUrl ) {
-                                $.extend(response, self.element.data());
-                                delete response.djupload;
+                                var data = {};
+                                [].forEach.call(self.element[0].attributes, function(attr) {
+                                    if (/^data-/.test(attr.name)) {
+                                        var camelCaseName = attr.name.substr(5).replace(/-(.)/g, function ($0, $1) {
+                                            return $1.toUpperCase();
+                                        });
+                                        data[camelCaseName] = attr.value;
+                                    }
+                                });
+                                for( var key in data ) {
+                                    if( data.hasOwnProperty(key)
+                                        && key != 'djupload' ) {
+                                        response[key] = data[key];
+                                    }
+                                }
                                 $.ajax({
                                     type: "POST",
                                     url: completeUrl,

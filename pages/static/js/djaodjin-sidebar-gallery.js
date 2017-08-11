@@ -189,9 +189,15 @@ Options:
 
         initDropzone: function(){
             var self = this;
+            var uploadUrl = self.options.mediaUrl;
+            if( self.options.S3DirectUploadUrl &&
+                self.options.S3DirectUploadUrl.indexOf("/api/credentials/") >= 0 ) {
+                uploadUrl = self.options.S3DirectUploadUrl + "?public=1";
+                self.options.acl = "public-read";
+            }
+
             self.element.djupload({
-                uploadUrl: self.options.S3DirectUploadUrl ?
-                    self.options.S3DirectUploadUrl : self.options.mediaUrl,
+                uploadUrl: uploadUrl,
                 uploadZone: "body",
                 uploadClickableZone: self.options.clickableArea,
                 uploadParamName: "file",
