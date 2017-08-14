@@ -78,8 +78,9 @@
                         self.options.accessKey = data.access_key;
                         self.options.policy = data.policy;
                         self.options.amzCredential = data.x_amz_credential;
-                        self.options.amzDate = data.x_amz_date
-                        self.options.securityToken = data.security_token
+                        self.options.amzDate = data.x_amz_date;
+                        self.options.amzServerSideEncryption = data.x_amz_server_side_encryption;
+                        self.options.securityToken = data.security_token;
                         self.options.signature = data.signature;
                         self.options.mediaPrefix = data.media_prefix;
                         if( self.options.mediaPrefix === 'undefined'
@@ -150,6 +151,14 @@
                                 formData.append("acl", self.options.acl);
                             } else {
                                 formData.append("acl", "private");
+                            }
+                            if( self.options.amzServerSideEncryption ) {
+                                formData.append("x-amz-server-side-encryption",
+                                    self.options.amzServerSideEncryption);
+                            } else if( !self.options.acl
+                                || self.options.acl !== "public-read" ) {
+                                formData.append("x-amz-server-side-encryption",
+                                    "AES256");
                             }
                             var ext = file.name.slice(
                                 file.name.lastIndexOf('.')).toLowerCase();
@@ -270,6 +279,7 @@
         signature: null,
         amzCredential: null,
         amzDate: null,
+        amzServerSideEncryption: null,
 
         // callback
         uploadSuccess: null,
