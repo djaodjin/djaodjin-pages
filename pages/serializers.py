@@ -53,9 +53,10 @@ class EdgeCreateSerializer(serializers.Serializer):
     """
     Create a new edge between two ``PageElement``.
 
-    The path specified in the URL will be aliased or moved under *source*.
-    When *rank* is specified, the resulting index of the aliased/moved element
-    in its parent list will be *rank*.
+    The path specified in the URL will be aliased, mirrored or moved
+    under *source*.
+    When *rank* is specified, the resulting index of the aliased/mirrored/moved
+    element in its parent list will be *rank*.
 
     The state in the UI is particularly complex. We use the *external_key*
     to log incorrect calls from the Javascript code.

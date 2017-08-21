@@ -23,6 +23,7 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import logging
+from copy import deepcopy
 
 from django.db import transaction
 from django.db.models import Max
@@ -42,6 +43,14 @@ LOGGER = logging.getLogger(__name__)
 class EdgesUpdateAPIView(TrailMixin, generics.CreateAPIView):
 
     serializer_class = EdgeCreateSerializer
+
+    def rank_or_max(self, root, rank=None):
+        if rank is None:
+            rank = self.get_queryset().filter(
+                orig_element=root).aggregate(Max('rank')).get(
+                'rank__max', None)
+            rank = 0 if rank is None else rank + 1
+        return rank
 
     def perform_create(self, serializer):
         targets = self.get_full_element_path(self.kwargs.get('path', None))
@@ -74,13 +83,52 @@ class PageElementAliasAPIView(EdgesUpdateAPIView):
         node = sources[-1]
         LOGGER.debug("alias node %s under %s with rank=%s", node, root, rank)
         with transaction.atomic():
-            if rank is None:
-                rank = self.get_queryset().filter(
-                    orig_element=root).aggregate(Max('rank')).get(
-                    'rank__max', None)
-                rank = 0 if rank is None else rank + 1
             RelationShip.objects.create(
-                orig_element=root, dest_element=node, rank=rank)
+                orig_element=root, dest_element=node,
+                rank=self.rank_or_max(rank))
+
+
+class PageElementMirrorAPIView(EdgesUpdateAPIView):
+    """
+    Mirror the content of a PageElement and attach the mirror
+    under another node.
+    """
+    queryset = RelationShip.objects.all()
+
+    @staticmethod
+    def mirror_leaf(leaf, prefix="", new_prefix=""):
+        #pylint:disable=unused-argument
+        return leaf
+
+    def mirror_recursive(self, root, prefix="", new_prefix=""):
+        edges = RelationShip.objects.filter(
+            orig_element=root).select_related('dest_element')
+        if not edges:
+            return self.mirror_leaf(root, prefix=prefix, new_prefix=new_prefix)
+        new_root = deepcopy(root)
+        new_root.pk = None
+        new_root.slug = None
+        new_root.save()
+        prefix = prefix + "/" + root.slug
+        new_prefix = new_prefix + "/" + new_root.slug
+        for edge in edges:
+            new_edge = deepcopy(edge)
+            new_edge.pk = None
+            new_edge.orig_element = new_root
+            new_edge.dest_element = self.mirror_recursive(
+                edge.dest_element, prefix=prefix, new_prefix=new_prefix)
+            new_edge.save()
+        return new_root
+
+    def perform_change(self, sources, targets, rank=None):
+        root = targets[-1]
+        node = sources[-1]
+        LOGGER.debug("mirror node %s under %s with rank=%s", node, root, rank)
+        with transaction.atomic():
+            new_node = self.mirror_recursive(node)
+            RelationShip.objects.create(
+                orig_element=root, dest_element=new_node,
+                rank=self.rank_or_max(root, rank))
 
 
 class PageElementMoveAPIView(EdgesUpdateAPIView):
@@ -103,10 +151,7 @@ class PageElementMoveAPIView(EdgesUpdateAPIView):
             edge = RelationShip.objects.get(
                 orig_element=old_root, dest_element=sources[-1])
             if rank is None:
-                rank = self.get_queryset().filter(
-                    orig_element=root).aggregate(Max('rank')).get(
-                    'rank__max', None)
-                rank = 0 if rank is None else rank + 1
+                rank = self.rank_or_max(root, rank)
             else:
                 RelationShip.objects.insert_available_rank(root, pos=rank,
                     node=sources[-1] if root == old_root else None)

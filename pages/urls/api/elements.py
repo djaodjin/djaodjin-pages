@@ -31,7 +31,7 @@ from ...api.edition import (PageElementDetail, PagesElementListAPIView,
     PageElementAddTags, PageElementRemoveTags)
 from ...api.upload_media import MediaListAPIView
 from ...api.relationship import (PageElementAliasAPIView,
-    PageElementMoveAPIView, RelationShipListAPIView)
+    PageElementMirrorAPIView, PageElementMoveAPIView, RelationShipListAPIView)
 
 
 urlpatterns = [
@@ -43,6 +43,8 @@ urlpatterns = [
         PageElementAliasAPIView.as_view(), name='api_alias_node'),
     url(r'^editables/attach(?P<path>%s)' % settings.PATH_RE,
         PageElementMoveAPIView.as_view(), name='api_move_node'),
+    url(r'^editables/mirror(?P<path>%s)/' % settings.PATH_RE,
+        PageElementMirrorAPIView.as_view(), name='api_mirror_node'),
     url(r'^editables/(?P<slug>[\w-]+)/add-tags/?',
         PageElementAddTags.as_view(), name='page_element_add_tags'),
     url(r'^editables/(?P<slug>[\w-]+)/remove-tags/?',
