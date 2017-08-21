@@ -52,10 +52,8 @@ class EdgesUpdateAPIView(TrailMixin, generics.CreateAPIView):
             rank = 0 if rank is None else rank + 1
         return rank
 
-    def perform_create(self, serializer):
-        targets = self.get_full_element_path(self.kwargs.get('path', None))
-        sources = self.get_full_element_path(serializer.validated_data.get(
-            'source'))
+    @staticmethod
+    def valid_against_loop(sources, targets):
         if len(sources) <= len(targets):
             is_prefix = True
             for source, target in zip(sources, targets[:len(sources)]):
@@ -68,6 +66,13 @@ class EdgesUpdateAPIView(TrailMixin, generics.CreateAPIView):
                     " a loop." % (
                     " > ".join([source.title for source in sources]),
                     " > ".join([target.title for target in targets]))})
+
+
+    def perform_create(self, serializer):
+        targets = self.get_full_element_path(self.kwargs.get('path', None))
+        sources = self.get_full_element_path(serializer.validated_data.get(
+            'source'))
+        self.valid_against_loop(sources, targets)
         self.perform_change(sources, targets,
             rank=serializer.validated_data.get('rank', None))
 
@@ -86,6 +91,7 @@ class PageElementAliasAPIView(EdgesUpdateAPIView):
             RelationShip.objects.create(
                 orig_element=root, dest_element=node,
                 rank=self.rank_or_max(rank))
+        return node
 
 
 class PageElementMirrorAPIView(EdgesUpdateAPIView):
@@ -125,10 +131,13 @@ class PageElementMirrorAPIView(EdgesUpdateAPIView):
         node = sources[-1]
         LOGGER.debug("mirror node %s under %s with rank=%s", node, root, rank)
         with transaction.atomic():
-            new_node = self.mirror_recursive(node)
+            new_node = self.mirror_recursive(node,
+                prefix="/" + "/".join([elm.slug for elm in sources[:-1]]),
+                new_prefix="/" + "/".join([elm.slug for elm in targets]))
             RelationShip.objects.create(
                 orig_element=root, dest_element=new_node,
                 rank=self.rank_or_max(root, rank))
+        return new_node
 
 
 class PageElementMoveAPIView(EdgesUpdateAPIView):
@@ -159,6 +168,7 @@ class PageElementMoveAPIView(EdgesUpdateAPIView):
                 edge.orig_element = root
             edge.rank = rank
             edge.save()
+        return sources[-1]
 
 
 class RelationShipListAPIView(DestroyModelMixin, generics.ListCreateAPIView):
