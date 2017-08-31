@@ -129,7 +129,7 @@ class PageElement(models.Model):
         settings.ACCOUNT_MODEL, related_name='account_page_element', null=True)
     relationships = models.ManyToManyField("self",
         related_name='related_to', through='RelationShip', symmetrical=False)
-    tag = models.SlugField(null=True, blank=True)
+    tag = models.CharField(max_length=255, null=True, blank=True)
 
     def __str__(self):
         return self.slug

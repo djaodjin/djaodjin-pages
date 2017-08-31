@@ -83,7 +83,7 @@ class PageElementSerializer(serializers.ModelSerializer):
     path = serializers.SerializerMethodField()
     text = HTMLField(html_tags=ALLOWED_TAGS, html_attributes=ALLOWED_ATTRIBUTES,
         html_styles=ALLOWED_STYLES, required=False)
-    tag = serializers.SlugField(required=False)
+    tag = serializers.CharField(required=False)
     orig_elements = serializers.ListField(
         child=serializers.SlugField(required=False), required=False
         )
