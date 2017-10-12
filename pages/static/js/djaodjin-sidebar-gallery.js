@@ -290,10 +290,14 @@ Options:
             if( extIdx > 0 ) {
                 ext = filename.substr(extIdx);
             }
+            var location = file.location;
+            if( self.options.acl === "public-read" ) {
+                location = self._mediaLocation(location);
+            }
             if( ext === ".mp4" ){
-                $mediaItem = $("<div class=\"dj-gallery-item-container " + self.options.mediaClass + " \"><video id=\"image_" + index + "\" class=\"image dj-gallery-item image_media\" src=\"" + file.location + "\" tags=\"" + tags + "\"></video></div>");
+                $mediaItem = $("<div class=\"dj-gallery-item-container " + self.options.mediaClass + " \"><video id=\"image_" + index + "\" class=\"image dj-gallery-item image_media\" src=\"" + location + "\" tags=\"" + tags + "\"></video></div>");
             } else if( ext === ".jpg" || ext === ".png" ) {
-                $mediaItem = $("<div class=\"dj-gallery-item-container " + self.options.mediaClass + " \"><img id=\"image_" + index + "\" class=\"image dj-gallery-item image_media\" src=\"" + file.location + "\" tags=\"" + tags + "\"></div>");
+                $mediaItem = $("<div class=\"dj-gallery-item-container " + self.options.mediaClass + " \"><img id=\"image_" + index + "\" class=\"image dj-gallery-item image_media\" src=\"" + location + "\" tags=\"" + tags + "\"></div>");
             }
             if( $mediaItem ) {
                 $(".dj-gallery-items").prepend($mediaItem);
