@@ -137,18 +137,22 @@ Options:
             $(self.options.mediaPlaceholder).droppable({
                 drop: function( event, ui ) {
                     var droppable = $(this);
-                    var source = ui.draggable.attr("src").toLowerCase();
+                    var location = self._mediaLocation(
+                        ui.draggable.attr("src"));
+                    var source = location.toLowerCase();
                     if (droppable.prop("tagName") === "IMG"){
-                        if (self.options.acceptedImages.some(function(v) { return source.toLowerCase().indexOf(v) >= 0; })){
-                            droppable.attr("src", ui.draggable.attr("src"));
+                        if (self.options.acceptedImages.some(function(v) {
+                            return source.indexOf(v) >= 0; })) {
+                            droppable.attr("src", location);
                             $(ui.helper).remove();
                             self.saveDroppedMedia(droppable);
                         }else{
                             self.options.galleryMessage("This placeholder accepts only: " + self.options.acceptedImages.join(", ") + " files.");
                         }
                     }else if (droppable.prop("tagName") === "VIDEO"){
-                        if (self.options.acceptedVideos.some(function(v) { return source.toLowerCase().indexOf(v) >= 0; })){
-                            droppable.attr("src", ui.draggable.attr("src"));
+                        if (self.options.acceptedVideos.some(function(v) {
+                            return source.indexOf(v) >= 0; })){
+                            droppable.attr("src", location);
                             $(ui.helper).remove();
                             self.saveDroppedMedia(droppable);
                         }else{
