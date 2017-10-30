@@ -22,10 +22,11 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import os, zipfile
+import os, shutil, tempfile, zipfile
 
 from django.core.management.base import BaseCommand
 from django.core.files.storage import FileSystemStorage
+import requests
 from storages.backends.s3boto import S3BotoStorage
 
 from ...themes import install_theme
@@ -58,19 +59,36 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         app_name = options['app_name']
         for package_path in options['packages']:
-            if package_path.startswith('s3://'):
-                parts = urlparse(package_path)
-                basename = os.path.basename(parts.path)
-                package_storage = S3BotoStorage(bucket_name=parts.netloc,
-                    location=os.path.dirname(parts.path))
-            else:
-                basename = os.path.basename(package_path)
-                #pylint:disable=redefined-variable-type
-                package_storage = FileSystemStorage(
-                    os.path.dirname(package_path))
-            if not options['app_name']:
-                app_name = os.path.splitext(basename)[0]
-            self.stdout.write("install %s to %s\n" % (package_path, app_name))
-            with package_storage.open(basename) as package_file:
+            parts = urlparse(package_path)
+            package_file = None
+            try:
+                if parts.scheme == 's3':
+                    basename = os.path.basename(parts.path)
+                    package_storage = S3BotoStorage(bucket_name=parts.netloc,
+                        location=os.path.dirname(parts.path))
+                    package_file = package_storage.open(basename)
+                elif parts.scheme in ['http', 'https']:
+                    basename = os.path.basename(parts.path)
+                    resp = requests.get(package_path, stream=True)
+                    if resp.status_code == 200:
+                        package_file = tempfile.NamedTemporaryFile()
+                        shutil.copyfileobj(resp.raw, package_file)
+                        package_file.seek(0)
+                    else:
+                        raise RuntimeError(
+                            "requests status code: %d" % resp.status_code)
+                else:
+                    basename = os.path.basename(package_path)
+                    #pylint:disable=redefined-variable-type
+                    package_storage = FileSystemStorage(
+                        os.path.dirname(package_path))
+                    package_file = package_storage.open(basename)
+                if not options['app_name']:
+                    app_name = os.path.splitext(basename)[0]
+                self.stdout.write("install %s to %s\n" % (
+                    package_path, app_name))
                 with zipfile.ZipFile(package_file, 'r') as zip_file:
                     install_theme(app_name, zip_file, force=options['force'])
+            finally:
+                if hasattr(package_file, 'close'):
+                    package_file.close()
