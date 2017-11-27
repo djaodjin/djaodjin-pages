@@ -1,6 +1,11 @@
 /** These are plumbing functions to connect the UI and API backends.
  */
 
+function clearMessages() {
+    "use strict";
+    $("#messages-content").empty();
+};
+
 function showMessages(messages, style) {
     "use strict";
     if( typeof toastr !== 'undefined'
@@ -64,7 +69,7 @@ function _showErrorMessages(resp) {
                             }
                         }
                         messages.push(key + ": " + message);
-                        $("[name=\"" + key + "\"]").addClass("has-error");
+                        $("[name=\"" + key + "\"]").parents('.form-group').addClass("has-error");
                     }
                 }
             }
