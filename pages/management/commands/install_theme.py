@@ -1,4 +1,4 @@
-# Copyright (c) 2017, Djaodjin Inc.
+# Copyright (c) 2018, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -53,6 +53,9 @@ class Command(BaseCommand):
         parser.add_argument('--app_name',
             action='store', dest='app_name', default=None,
             help='overrides the destination theme name')
+        parser.add_argument('--path_prefix', action='store',
+            dest='path_prefix', default=None,
+            help='Adds a prefix to all URLs for static assets')
         parser.add_argument('packages', nargs='*',
             help='list of theme packages')
 
@@ -88,7 +91,8 @@ class Command(BaseCommand):
                 self.stdout.write("install %s to %s\n" % (
                     package_path, app_name))
                 with zipfile.ZipFile(package_file, 'r') as zip_file:
-                    install_theme(app_name, zip_file, force=options['force'])
+                    install_theme(app_name, zip_file, force=options['force'],
+                        path_prefix=options['path_prefix'])
             finally:
                 if hasattr(package_file, 'close'):
                     package_file.close()

@@ -1,4 +1,4 @@
-# Copyright (c) 2017, DjaoDjin inc.
+# Copyright (c) 2018, DjaoDjin inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -87,3 +87,40 @@ def render_template(template, context, request):
         context = RequestContext(request, context)
         return template.render(context)
     return template.render(context, request)
+
+
+try:
+    from django.template.base import DebugLexer
+except ImportError: # django < 1.8
+    from django.template.debug import DebugLexer as BaseDebugLexer
+
+    class DebugLexer(BaseDebugLexer):
+
+        def __init__(self, template_string):
+            super(DebugLexer, self).__init__(template_string, origin=None)
+
+
+class DjangoTemplate(object):
+
+    @property
+    def template_builtins(self):
+        from django.template.base import builtins
+        return builtins
+
+    @property
+    def template_libraries(self):
+        from django.template.base import libraries
+        return libraries
+
+
+def get_html_engine():
+    try:
+        from django.template import engines
+        from django.template.utils import InvalidTemplateEngineError
+        try:
+            return engines['html'], None, None
+        except InvalidTemplateEngineError:
+            engine = engines['django'].engine
+            return engine, engine.template_libraries, engine.template_builtins
+    except ImportError: # django < 1.8
+        return DjangoTemplate()
