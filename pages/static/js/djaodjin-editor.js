@@ -485,10 +485,11 @@
             self.$valueSelector = $("<input class=\"djaodjin-editor\" id=\"value_selector_" + self.getId() + "\" style=\"width:auto;\"/ type=\"range\">");
 
             self.$valueSelector.on("input", function(event){
+                var val = $(this).val();
                 event.stopPropagation();
-                self.options.rangeUpdate(self.$el, $(this).val());
+                self.options.rangeUpdate(self.$el, val);
                 if (self.$el.data("range-value") !== "undefined"){
-                    self.$el.data("range-value", $(this).val());
+                    self.$el.data("range-value", val);
                 }
             });
 
