@@ -171,7 +171,7 @@ class UploadedImageMixin(object):
         prefix = get_media_prefix(account)
         parts = location.split(os.sep)
         if prefix and prefix != parts[-1]:
-            location = os.sep + os.path.join(*parts[:-1], prefix, parts[-1])
+            location = os.sep.join(parts[:-1] + [prefix, parts[-1]])
             if base_url.startswith('/'):
                 base_url = base_url[1:]
             base_url = urljoin("/%s/" % prefix, base_url)

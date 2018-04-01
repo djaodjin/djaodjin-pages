@@ -92,6 +92,7 @@ def render_template(template, context, request):
 try:
     from django.template.base import DebugLexer
 except ImportError: # django < 1.8
+    #pylint:disable=import-error
     from django.template.debug import DebugLexer as BaseDebugLexer
 
     class DebugLexer(BaseDebugLexer):
