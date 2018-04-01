@@ -235,7 +235,11 @@ Options:
                         self.options.galleryMessage(response.message);
                     }
                 },
-                uploadError: function(file, message){
+                uploadError: function(file, resp){
+                    var message = resp;
+                    if( typeof resp.detail !== "undefined" ) {
+                        message = resp.detail;
+                    }
                     self.options.galleryMessage(message, "error");
                 },
                 uploadProgress: function(file, progress){

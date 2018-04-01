@@ -169,9 +169,12 @@ class UploadedImageMixin(object):
         location = settings.MEDIA_ROOT
         base_url = settings.MEDIA_URL
         prefix = get_media_prefix(account)
-        if prefix:
-            location = os.path.join(location, prefix)
-            base_url = urljoin(base_url, prefix)
+        parts = location.split(os.sep)
+        if prefix and prefix != parts[-1]:
+            location = os.sep + os.path.join(*parts[:-1], prefix, parts[-1])
+            if base_url.startswith('/'):
+                base_url = base_url[1:]
+            base_url = urljoin("/%s/" % prefix, base_url)
         return FileSystemStorage(location=location, base_url=base_url)
 
 
@@ -188,13 +191,16 @@ def get_bucket_name(account=None):
 
 
 def get_media_prefix(account=None):
+    media_prefix = settings.MEDIA_PREFIX
     if account:
         try:
-            return account.media_prefix
+            media_prefix = account.media_prefix
         except AttributeError:
             LOGGER.debug("``%s`` does not contain a ``media_prefix``"\
                 " field.", account.__class__)
-    return settings.MEDIA_PREFIX
+        if not media_prefix:
+            media_prefix = str(account)
+    return media_prefix
 
 
 class ThemePackageMixin(AccountMixin):
