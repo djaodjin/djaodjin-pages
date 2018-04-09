@@ -1,4 +1,4 @@
-# Copyright (c) 2017, Djaodjin Inc.
+# Copyright (c) 2018, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -93,9 +93,9 @@ class RelationShip(models.Model):
     objects = RelationShipManager()
 
     orig_element = models.ForeignKey(
-        "PageElement", related_name='from_element')
+        "PageElement", on_delete=models.CASCADE, related_name='from_element')
     dest_element = models.ForeignKey(
-        "PageElement", related_name='to_element')
+        "PageElement", on_delete=models.CASCADE, related_name='to_element')
     tag = models.SlugField(null=True)
     rank = models.IntegerField(default=0)
 
@@ -126,7 +126,8 @@ class PageElement(models.Model):
     title = models.CharField(max_length=300, blank=True)
     text = models.TextField(blank=True)
     account = models.ForeignKey(
-        settings.ACCOUNT_MODEL, related_name='account_page_element', null=True)
+        settings.ACCOUNT_MODEL, related_name='account_page_element',
+        null=True, on_delete=models.SET_NULL)
     relationships = models.ManyToManyField("self",
         related_name='related_to', through='RelationShip', symmetrical=False)
     tag = models.CharField(max_length=255, null=True, blank=True)
@@ -258,7 +259,8 @@ class LessVariable(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     account = models.ForeignKey(settings.ACCOUNT_MODEL,
-        related_name='account_less_variable', null=True)
+        null=True, on_delete=models.SET_NULL,
+        related_name='account_less_variable')
     cssfile = models.CharField(max_length=50)
 
     class Meta:
@@ -275,8 +277,8 @@ class ThemePackage(models.Model):
     """
     slug = models.SlugField(unique=True)
     account = models.ForeignKey(
-        settings.ACCOUNT_MODEL,
-        related_name='account_template', null=True, blank=True)
+        settings.ACCOUNT_MODEL, null=True, on_delete=models.CASCADE,
+        related_name='account_template', blank=True)
     name = models.CharField(max_length=150)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

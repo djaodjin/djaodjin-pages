@@ -30,13 +30,6 @@ from django.template import RequestContext
 
 
 try:
-    from django.contrib.auth import get_user_model
-except ImportError: # django < 1.5
-    from django.contrib.auth.models import User
-else:
-    User = get_user_model() #pylint:disable=invalid-name
-
-try:
     from django.utils.module_loading import import_string
 except ImportError: # django < 1.7
     from django.utils.module_loading import import_by_path as import_string
@@ -51,6 +44,14 @@ try:
     from django.template.exceptions import TemplateDoesNotExist
 except ImportError:
     from django.template.base import TemplateDoesNotExist
+
+try:
+    from django.urls import NoReverseMatch, reverse, reverse_lazy
+except ImportError: # <= Django 1.10, Python<3.6
+    from django.core.urlresolvers import NoReverseMatch, reverse, reverse_lazy
+except ModuleNotFoundError: #pylint:disable=undefined-variable
+    # <= Django 1.10, Python>=3.6
+    from django.core.urlresolvers import NoReverseMatch, reverse, reverse_lazy
 
 
 def get_loaders():

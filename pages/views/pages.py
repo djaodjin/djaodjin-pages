@@ -27,12 +27,11 @@
 import markdown
 
 from bs4 import BeautifulSoup
-from django.core.urlresolvers import reverse
 from django.template import loader
 from django.views.generic import ListView, DetailView, TemplateView
 from django.template.response import TemplateResponse
 
-from ..compat import csrf, render_template
+from ..compat import csrf, render_template, reverse
 from ..locals import (enable_instrumentation, _add_editable_styles_context,
     get_edition_tools_context_data)
 from ..mixins import AccountMixin, UploadedImageMixin

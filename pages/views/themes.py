@@ -1,4 +1,4 @@
-# Copyright (c) 2017, DjaoDjin inc.
+# Copyright (c) 2018, DjaoDjin inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -28,12 +28,11 @@ from io import StringIO
 from django.template.loader import get_template
 from django.template.loader_tags import ExtendsNode
 from django.http import HttpResponseRedirect, HttpResponse
-from django.core.urlresolvers import reverse
 from django.views.generic import DetailView, TemplateView, CreateView, View
 
+from ..compat import TemplateDoesNotExist, get_loaders, reverse
 from ..mixins import AccountMixin, ThemePackageMixin
 from ..models import ThemePackage, get_active_theme
-from ..compat import TemplateDoesNotExist, get_loaders
 from ..utils import random_slug
 
 
