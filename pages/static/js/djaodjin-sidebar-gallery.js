@@ -176,16 +176,6 @@ Options:
             return result;
         },
 
-        initMenuMedia: function(){
-            var self = this;
-            var location = self._mediaLocation(self.selectedMedia.attr("src"));
-            $(".dj-gallery-info-item").html(self.options.galleryItemOptionsTemplate);
-            $("[data-dj-gallery-media-src]").attr("src", self.selectedMedia.attr("src"));
-            $("[data-dj-gallery-media-location]").attr("location", location);
-            $("[data-dj-gallery-media-url]").val(location);
-            $("[data-dj-gallery-media-tag]").val(self.orginalTags.join(", "));
-        },
-
         initMediaInfo: function(){
             var self = this;
             $(".dj-gallery-info-item").text("Click on an item to view more options");
@@ -281,7 +271,7 @@ Options:
 
         addMediaItem: function(file, index, init){
             var self = this;
-            var $mediaItem = null;
+            var mediaItem = null;
             var tags = file.tags;
             if (typeof tags === "undefined"){
                 tags = "";
@@ -299,11 +289,17 @@ Options:
                 location = self._mediaLocation(location);
             }
             if( ext === ".mp4" ){
-                $mediaItem = $("<div class=\"dj-gallery-item-container " + self.options.mediaClass + " \"><video id=\"image_" + index + "\" class=\"image dj-gallery-item image_media\" src=\"" + location + "\" tags=\"" + tags + "\"></video></div>");
+                mediaItem = "<video id=\"image_" + index + "\" class=\"image dj-gallery-item image_media\" src=\"" + location + "\" tags=\"" + tags + "\"></video>";
             } else if( ext === ".jpg" || ext === ".png" ) {
-                $mediaItem = $("<div class=\"dj-gallery-item-container " + self.options.mediaClass + " \"><img id=\"image_" + index + "\" class=\"image dj-gallery-item image_media\" src=\"" + location + "\" tags=\"" + tags + "\"></div>");
+                mediaItem = "<img id=\"image_" + index + "\" class=\"image dj-gallery-item image_media\" src=\"" + location + "\" tags=\"" + tags + "\">";
+            } else {
+                mediaItem = "<img id=\"image_" + index + "\" class=\"image dj-gallery-item image_media\" src=\"/static/img/generic-document.png\" data-location=\"" + location + "\" tags=\"" + tags + "\">";
             }
-            if( $mediaItem ) {
+            if( mediaItem ) {
+                var $mediaItem = $("<div class=\"dj-gallery-item-container "
+                      + self.options.mediaClass + " \">"
+                      + mediaItem
+                      + "</div>");
                 $(".dj-gallery-items").prepend($mediaItem);
                 $("#image_" + index).draggable({
                     helper: "clone",
@@ -324,13 +320,37 @@ Options:
 
         selectMedia: function(item) {
             var self = this;
-            $(".dj-gallery-item-container").not(item).removeClass(
+            var $elem = self.element;
+            // Removes highlights for previously selected media
+            $elem.find(".dj-gallery-item-container").not(item).removeClass(
                 self.options.selectedMediaClass);
 
             self.selectedMedia = item.children(".dj-gallery-item");
+            var refElem = item.find("[tags]");
+            if( refElem.length > 0 ) {
+                self.orginalTags = refElem.attr("tags").split(",");
+            } else {
+                self.orginalTags = "";
+            }
             item.addClass(self.options.selectedMediaClass);
-            self.orginalTags = self.selectedMedia.attr("tags").split(",");
-            self.initMenuMedia();
+
+            // populates contextual menu
+            var location = null;
+            refElem = item.find("[data-location]");
+            if( refElem.length > 0 ) {
+                location = self._mediaLocation(refElem.data("location"));
+            } else {
+                refElem = item.find("[src]");
+                location = self._mediaLocation(refElem.attr("src"));
+            }
+            var icon = item.find("[src]").attr("src");
+            $elem.find(".dj-gallery-info-item").html(
+                self.options.galleryItemOptionsTemplate);
+            $elem.find("[data-dj-gallery-media-src]").attr("src", icon);
+            $elem.find("[data-dj-gallery-media-location]").attr(
+                "location", location);
+            $elem.find("[data-dj-gallery-media-url]").val(location);
+            $elem.find("[data-dj-gallery-media-tag]").val(item.attr("tags"));
         },
 
         deleteMedia: function(event){
