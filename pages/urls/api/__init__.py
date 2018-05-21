@@ -1,4 +1,4 @@
-# Copyright (c) 2017, DjaoDjin inc.
+# Copyright (c) 2018, DjaoDjin inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -27,9 +27,6 @@
 from django.conf.urls import include, url
 
 urlpatterns = [
-    url(r'^', include('pages.urls.api.elements')),
-    url(r'^', include('pages.urls.api.sources')),
-    url(r'^', include('pages.urls.api.themes')),
-    url(r'^', include('pages.urls.api.less_variables')),
-    url(r'^', include('pages.urls.api.sitecss')),
+    url(r'^themes/', include('pages.urls.api.assets')),
+    url(r'^themes/', include('pages.urls.api.templates')),
 ]

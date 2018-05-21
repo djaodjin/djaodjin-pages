@@ -1,3 +1,33 @@
+.dj-style-label {
+  text-align: right;
+  margin-bottom: 0;
+  padding-top: 7px;
+  width: 25%;
+  float: left;
+  position: relative;
+  min-height: 1px;
+  display: inline-block;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding-right: 15px;
+}
+
+.dj-style-input-wrap {
+  width: 58.33333333%;
+  float: left;
+  position: relative;
+  min-height: 1px;
+  box-sizing: border-box;
+}
+
+.dj-style-button-wrap {
+  width: 16.66666667%;
+  float: left;
+  position: relative;
+  min-height: 1px;
+  box-sizing: border-box;
+}
+
 .edit-hover:hover{
 	background: #AAA;
 	border-radius: 4px;

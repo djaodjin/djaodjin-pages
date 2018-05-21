@@ -67,7 +67,7 @@
                 && !self.options.mediaPrefix.match(/\/$/)){
                 self.options.mediaPrefix += "/";
             }
-            if( self.options.uploadUrl.indexOf("/api/credentials/") >= 0 ) {
+            if( self.options.uploadUrl.indexOf("/api/auth/") >= 0 ) {
                 $.ajax({
                     method: "GET",
                     url: self.options.uploadUrl,

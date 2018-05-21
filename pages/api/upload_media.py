@@ -48,7 +48,7 @@ class MediaListAPIView(UploadedImageMixin, AccountMixin, GenericAPIView):
 
     .. sourcecode:: http
 
-        GET /api/uploaded-media/
+        GET /api/assets/
 
     **Example response**:
 

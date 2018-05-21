@@ -1,4 +1,4 @@
-# Copyright (c) 2017, DjaoDjin inc.
+# Copyright (c) 2018, DjaoDjin inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -26,11 +26,19 @@
 
 from django.conf.urls import url
 
+from ... import settings
+from ...api.upload_media import MediaListAPIView
 from ...api.less_variables import LessVariableDetail, LessVariableListAPIView
+from ...api.sitecss import SiteCssAPIView
+
 
 urlpatterns = [
-    url(r'^less-overrides/(?P<name>[\w-]+)/',
+    url(r'^assets(?P<path>%s)/' % settings.PATH_RE,
+        MediaListAPIView.as_view(), name='uploaded_media_elements'),
+    url(r'^sitecss/variables/(?P<name>[\w-]+)/',
         LessVariableDetail.as_view(), name='pages_api_less_override'),
-    url(r'^less-overrides/',
+    url(r'^sitecss/variables/',
         LessVariableListAPIView.as_view(), name='pages_api_less_overrides'),
+    url(r'^sitecss',
+        SiteCssAPIView.as_view(), name='edit_sitecss'),
 ]

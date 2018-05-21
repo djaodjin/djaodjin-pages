@@ -185,7 +185,7 @@ Options:
             var self = this;
             var uploadUrl = self.options.mediaUrl;
             if( self.options.S3DirectUploadUrl &&
-                self.options.S3DirectUploadUrl.indexOf("/api/credentials/") >= 0 ) {
+                self.options.S3DirectUploadUrl.indexOf("/api/auth/") >= 0 ) {
                 uploadUrl = self.options.S3DirectUploadUrl + "?public=1";
                 self.options.acl = "public-read";
             }
@@ -522,7 +522,8 @@ Options:
                 }
             });
 
-            self.element.click(function() {
+            self.element.click(function(event) {
+                event.preventDefault();
                 self.element.blur();
                 if( self.element.hasClass("dragged") ){
                     self.element.removeClass("dragged");
