@@ -48,7 +48,7 @@ $(DESTDIR)$(CONFIG_DIR)/gunicorn.conf: $(srcDir)/testsite/etc/gunicorn.conf
 
 
 initdb: install-conf
-	-cd $(srcDir) && rm -rf testsite/media db.sqlite3
+	-cd $(srcDir) && rm -rf testsite/media db.sqlite3 testsite-app.log
 	cd $(srcDir) && $(PYTHON) ./manage.py migrate $(RUNSYNCDB) --noinput
 	cd $(srcDir) && $(PYTHON) ./manage.py loaddata \
 						testsite/fixtures/default-db.json
