@@ -27,5 +27,5 @@ through the web browser in a What-You-See-Is-What-You-Get (WYSIWYG) mode.
 * [jquery.selection.js](http://madapaja.github.io/jquery.selection/)
 * [jquery.ui-contextmenu.js](https://github.com/mar10/jquery-ui-contextmenu)
 * [Markdown.Converter.js](https://github.com/ujifgc/pagedown)
-* [Markdown.Sanitiser.js](https://github.com/ujifgc/pagedown)
+* [Markdown.Sanitizer.js](https://github.com/ujifgc/pagedown)
 

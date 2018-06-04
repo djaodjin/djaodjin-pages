@@ -1,4 +1,4 @@
-# Copyright (c) 2017, Djaodjin Inc.
+# Copyright (c) 2018, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -26,7 +26,6 @@ from django.conf import settings
 from django.conf.urls import include, url
 from django.conf.urls.static import static
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
-import debug_toolbar
 
 from pages.views.pages import PageView, EditView
 
@@ -35,10 +34,12 @@ urlpatterns = staticfiles_urlpatterns() \
     + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 urlpatterns += [
-    url(r'^__debug__/', include(debug_toolbar.urls)),
-    url(r'^', include('pages.urls')),
+    url(r'^app/$', PageView.as_view(template_name='index.html',
+        body_bottom_template_name="pages/_body_bottom_edit_tools.html")),
     url(r'^$', PageView.as_view(template_name='index.html',
         body_bottom_template_name="pages/_body_bottom_edit_tools.html")),
+    url(r'^', include('django.contrib.auth.urls')),
+    url(r'^', include('pages.urls')),
     url(r'^content/', include('testsite.urls.content')),
     url(r'^edit(?P<page>\S+)?', EditView.as_view(), name='pages_edit'),
 ]

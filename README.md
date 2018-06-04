@@ -1,4 +1,5 @@
-djaodjin-pages is a Django application that allow live templates edition and upload templates packages.
+djaodjin-pages is a Django application that allow live templates edition
+and upload templates packages.
 
 Major Features:
 
@@ -12,9 +13,11 @@ Development
 After cloning the repository, create a virtualenv environment, install
 the prerequisites, create the database then run the testsite webapp.
 
-    $ virtualenv-2.7 _installTop_
+    $ virtualenv _installTop_
     $ source _installTop_/bin/activate
     $ pip install -r testsite/requirements.txt
+    $ make vendor-assets-prerequisites
+
     $ make initdb
     $ python manage.py runserver
 

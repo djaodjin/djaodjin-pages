@@ -5,12 +5,17 @@
 srcDir        ?= $(realpath .)
 installTop    ?= $(VIRTUAL_ENV)
 binDir        ?= $(installTop)/bin
+CONFIG_DIR    ?= $(srcDir)
+# XXX CONFIG_DIR should really be $(installTop)/etc/testsite
+LOCALSTATEDIR ?= $(installTop)/var
 
+NPM           ?= npm
+PIP           := $(binDir)/pip
 PYTHON        := $(binDir)/python
 installDirs   ?= install -d
 installFiles  := install -p -m 644
 
-ASSETS_DIR    := $(srcDir)/testsite/static/
+ASSETS_DIR    := $(srcDir)/testsite/static
 
 # Django 1.7,1.8 sync tables without migrations by default while Django 1.9
 # requires a --run-syncdb argument.
@@ -22,12 +27,25 @@ install::
 	cd $(srcDir) && $(PYTHON) ./setup.py --quiet \
 		build -b $(CURDIR)/build install
 
-install-conf:: credentials
+install-conf:: $(DESTDIR)$(CONFIG_DIR)/credentials \
+                $(DESTDIR)$(CONFIG_DIR)/gunicorn.conf
+	install -d $(DESTDIR)$(LOCALSTATEDIR)/db
+	install -d $(DESTDIR)$(LOCALSTATEDIR)/run
+	install -d $(DESTDIR)$(LOCALSTATEDIR)/log/gunicorn
 
-credentials: $(srcDir)/testsite/etc/credentials
+
+$(DESTDIR)$(CONFIG_DIR)/credentials: $(srcDir)/testsite/etc/credentials
+	install -d $(dir $@)
 	[ -f $@ ] || \
-		SECRET_KEY=`python -c 'import sys ; from random import choice ; sys.stdout.write("".join([choice("abcdefghijklmnopqrstuvwxyz0123456789!@#$%^*-_=+") for i in range(50)]))'` ; \
-		sed -e "s,\%(SECRET_KEY)s,$${SECRET_KEY}," $< > $@
+		SECRET_KEY=`python -c 'import sys ; from random import choice ; sys.stdout.write("".join([choice("abcdefghijklmnopqrstuvwxyz0123456789!@#$%^*-_=+") for i in range(50)]))'` && sed \
+		-e "s,\%(SECRET_KEY)s,$${SECRET_KEY}," $< > $@
+
+
+$(DESTDIR)$(CONFIG_DIR)/gunicorn.conf: $(srcDir)/testsite/etc/gunicorn.conf
+	install -d $(dir $@)
+	[ -f $@ ] || sed \
+		-e 's,%(LOCALSTATEDIR)s,$(LOCALSTATEDIR),' $< > $@
+
 
 initdb: install-conf
 	-cd $(srcDir) && rm -rf testsite/media db.sqlite3
@@ -42,32 +60,33 @@ doc:
 	cd $(srcDir) && sphinx-build -b html ./docs $(PWD)/docs
 
 clean:
-	rm credentials db.sqlite3
+	rm credentials gunicorn.conf db.sqlite3
 
-bower-prerequisites: $(srcDir)/bower.json
-	$(installFiles) $^ .
-	bower install --verbose --config.cwd="$(PWD)"
-	$(installDirs) -d $(ASSETS_DIR)/fonts $(ASSETS_DIR)/vendor/fonts $(ASSETS_DIR)/vendor/css $(ASSETS_DIR)/vendor/js
-	$(installFiles) bower_components/jquery/jquery.js $(ASSETS_DIR)/vendor/js
-	$(installFiles) bower_components/jqueryui-touch-punch/jquery.ui.touch-punch.js $(ASSETS_DIR)/vendor/js
-	$(installFiles) bower_components/dropzone/dist/dropzone.css $(ASSETS_DIR)/vendor/css
-	$(installFiles) bower_components/dropzone/dist/dropzone.js $(ASSETS_DIR)/vendor/js
-	$(installFiles) bower_components/font-awesome/css/font-awesome.css $(ASSETS_DIR)/vendor/css
-	$(installFiles) bower_components/font-awesome/fonts/* $(ASSETS_DIR)/fonts
-	$(installFiles) bower_components/font-awesome/fonts/* $(ASSETS_DIR)/vendor/fonts
-	$(installFiles) bower_components/hallo/dist/hallo.js $(ASSETS_DIR)/vendor/js
-	$(installFiles) bower_components/rangy-official/rangy-core.js $(ASSETS_DIR)/vendor/js
-	$(installFiles) bower_components/jquery-ui/themes/base/jquery-ui.css $(ASSETS_DIR)/vendor/css
-	$(installFiles) bower_components/jquery-ui/ui/jquery-ui.js $(ASSETS_DIR)/vendor/js
-	$(installFiles) bower_components/textarea-autosize/dist/jquery.textarea_autosize.js $(ASSETS_DIR)/vendor/js
-	$(installFiles) bower_components/jquery-selection/src/jquery.selection.js $(ASSETS_DIR)/vendor/js
-	$(installFiles) bower_components/ace-builds/src/ace.js $(ASSETS_DIR)/vendor/js
-	$(installFiles) bower_components/ace-builds/src/ext-language_tools.js $(ASSETS_DIR)/vendor/js
-	$(installFiles) bower_components/ace-builds/src/ext-modelist.js $(ASSETS_DIR)/vendor/js
-	$(installFiles) bower_components/ace-builds/src/ext-emmet.js $(ASSETS_DIR)/vendor/js
-	$(installFiles) bower_components/ace-builds/src/theme-monokai.js $(ASSETS_DIR)/vendor/js
-	$(installFiles) bower_components/ace-builds/src/mode-html.js $(ASSETS_DIR)/vendor/js
-	$(installFiles) bower_components/ace-builds/src/mode-css.js $(ASSETS_DIR)/vendor/js
-	$(installFiles) bower_components/ace-builds/src/mode-javascript.js $(ASSETS_DIR)/vendor/js
-	$(installFiles) bower_components/angular/angular.js $(ASSETS_DIR)/vendor/js
-
+vendor-assets-prerequisites: $(srcDir)/package.json
+	$(installFiles) $^ $(installTop)
+	$(NPM) install --loglevel verbose --cache $(installTop)/.npm --tmp $(installTop)/tmp --prefix $(installTop)
+	$(installDirs) -d $(ASSETS_DIR)/fonts $(ASSETS_DIR)/vendor $(ASSETS_DIR)/img/bootstrap-colorpicker
+	$(installFiles) $(installTop)/node_modules/ace-builds/src/ace.js $(ASSETS_DIR)/vendor
+	$(installFiles) $(installTop)/node_modules/ace-builds/src/ext-language_tools.js $(ASSETS_DIR)/vendor
+	$(installFiles) $(installTop)/node_modules/ace-builds/src/ext-modelist.js $(ASSETS_DIR)/vendor
+	$(installFiles) $(installTop)/node_modules/ace-builds/src/ext-emmet.js $(ASSETS_DIR)/vendor
+	$(installFiles) $(installTop)/node_modules/ace-builds/src/theme-monokai.js $(ASSETS_DIR)/vendor
+	$(installFiles) $(installTop)/node_modules/ace-builds/src/mode-html.js $(ASSETS_DIR)/vendor
+	$(installFiles) $(installTop)/node_modules/ace-builds/src/mode-css.js $(ASSETS_DIR)/vendor
+	$(installFiles) $(installTop)/node_modules/ace-builds/src/mode-javascript.js $(ASSETS_DIR)/vendor
+	$(installFiles) $(installTop)/node_modules/ace-builds/src/worker-html.js $(ASSETS_DIR)/vendor
+	$(installFiles) $(installTop)/node_modules/angular/angular.js $(ASSETS_DIR)/vendor
+	$(installFiles) $(installTop)/node_modules/bootstrap/dist/js/bootstrap.js $(ASSETS_DIR)/vendor
+	$(installFiles) $(installTop)/node_modules/bootstrap-colorpicker/dist/img/bootstrap-colorpicker/*.png $(ASSETS_DIR)/img/bootstrap-colorpicker
+	$(installFiles) $(installTop)/node_modules/bootstrap-colorpicker/dist/css/bootstrap-colorpicker.css $(ASSETS_DIR)/vendor
+	$(installFiles) $(installTop)/node_modules/bootstrap-colorpicker/dist/js/bootstrap-colorpicker.js $(ASSETS_DIR)/vendor
+	$(installFiles) $(installTop)/node_modules/dropzone/dist/dropzone.css $(ASSETS_DIR)/vendor
+	$(installFiles) $(installTop)/node_modules/dropzone/dist/dropzone.js $(ASSETS_DIR)/vendor
+	$(installFiles) $(installTop)/node_modules/font-awesome/css/font-awesome.css $(ASSETS_DIR)/vendor
+	$(installFiles) $(installTop)/node_modules/font-awesome/fonts/* $(ASSETS_DIR)/fonts
+	$(installFiles) $(installTop)/node_modules/font-awesome/fonts/* $(ASSETS_DIR)/vendor
+	$(installFiles) $(installTop)/node_modules/jquery/dist/jquery.js $(ASSETS_DIR)/vendor
+	$(installFiles) $(installTop)/node_modules/jquery-ui-touch-punch/jquery.ui.touch-punch.js $(ASSETS_DIR)/vendor
+	$(installFiles) $(installTop)/node_modules/jquery.selection/dist/jquery.selection.js $(ASSETS_DIR)/vendor
+	$(installFiles) $(installTop)/node_modules/pagedown/Markdown.Converter.js $(installTop)/node_modules/pagedown/Markdown.Sanitizer.js $(ASSETS_DIR)/vendor
+	[ -f $(binDir)/lessc ] || (cd $(binDir) && ln -s ../node_modules/less/bin/lessc)

@@ -1,8 +1,7 @@
 {% load static from staticfiles %}
 
 <!-- Necessary vendor code to connect to the API end-points -->
-<script type="text/javascript" src="{% static 'vendor/js/jquery.js' %}"></script>
-<script type="text/javascript" src="{% static 'vendor/js/jquery-ui.js' %}"></script><!-- for droppable() -->
+<script type="text/javascript" src="{% static 'vendor/jquery-ui.js' %}"></script><!-- for droppable() -->
 <script type="text/javascript" src="{% static 'js/djaodjin-resources.js' %}"></script>
 
 <!-- Scripts that need to be injected into the page actually being edited
@@ -10,22 +9,22 @@
      resources are loaded so we get a chance to intercept the iframe onload
      event.
   -->
-<link rel="stylesheet" href="{% static 'vendor/css/font-awesome.css' %}"/><!-- XXX fontawesome is required by hallo? -->
+<link rel="stylesheet" href="{% static 'vendor/font-awesome.css' %}"/><!-- XXX fontawesome is required by hallo? -->
 <script type="text/javascript">
 var edition_sources = [
 /* WYSIWYG element editors */
   "{% static 'css/djaodjin-editor.css' %}",
-  "{% static 'vendor/js/jquery.js' %}",
-  "{% static 'vendor/js/jquery-ui.js' %}",
-  "{% static 'vendor/js/jquery.ui.touch-punch.js' %}",
-  "{% static 'vendor/js/jquery.textarea_autosize.js' %}",
-  "{% static 'vendor/js/jquery.selection.js' %}",
-  "{% static 'vendor/js/jquery.ba-throttle-debounce.js' %}",
-  "{% static 'vendor/js/rangy-core.js' %}",
-  "{% static 'vendor/js/hallo.js' %}",
-  "{% static 'vendor/js/Markdown.Converter.js' %}",
-  "{% static 'vendor/js/Markdown.Sanitiser.js' %}",
-  "{% static 'vendor/js/dropzone.js' %}",
+  "{% static 'vendor/jquery.js' %}",
+  "{% static 'vendor/jquery-ui.js' %}",
+  "{% static 'vendor/jquery.ui.touch-punch.js' %}",
+  "{% static 'vendor/jquery.textarea_autosize.js' %}",
+  "{% static 'vendor/jquery.selection.js' %}",
+  "{% static 'vendor/jquery.ba-throttle-debounce.js' %}",
+  "{% static 'vendor/rangy-core.js' %}",
+  "{% static 'vendor/hallo.js' %}",
+  "{% static 'vendor/Markdown.Converter.js' %}",
+  "{% static 'vendor/Markdown.Sanitizer.js' %}",
+  "{% static 'vendor/dropzone.js' %}",
   "{% static 'js/djaodjin-resources.js' %}",
   "{% static 'js/djaodjin-editor.js' %}",
   "jQuery(document).ready(function($) {\
@@ -80,7 +79,7 @@ function injectScripts(container) {
 
         addScript(doc, "{% static 'js/load-edition-src.js' %}");
         addLess(doc, "{% static 'vendor/less/bootstrap/bootstrap.less' %}");
-        addScript(doc, "{% static 'vendor/js/less.js' %}");
+        addScript(doc, "{% static 'vendor/less.js' %}");
     }
 };
 
@@ -138,8 +137,8 @@ if( view.length > 0 ) {
       </div>
     </div>
   </div>
-  <script type="text/javascript" src="{% static 'vendor/js/jquery.ui.touch-punch.js' %}"></script>
-  <script type="text/javascript" src="{% static 'vendor/js/dropzone.js' %}"></script>
+  <script type="text/javascript" src="{% static 'vendor/jquery.ui.touch-punch.js' %}"></script>
+  <script type="text/javascript" src="{% static 'vendor/dropzone.js' %}"></script>
   <script type="text/javascript" src="{% static 'js/djaodjin-upload.js' %}"></script>
   <script type="text/javascript" src="{% static 'js/djaodjin-sidebar-gallery.js' %}"></script>
   <script type="text/javascript">
@@ -196,7 +195,7 @@ jQuery(document).ready(function($) {
 </div>
 
 <!-- Template editor panel -->
-<link rel="stylesheet" href="{% static 'vendor/css/jquery-ui.css' %}"/>
+<link rel="stylesheet" href="{% static 'vendor/jquery-ui.css' %}"/>
 <div id="code-editor" class="custom-gallery" style="width:800px;right:-800px;">
   <ul class="nav nav-tabs dashboard-tab" role="tablist">
       {# tabs inserted here #}
@@ -204,16 +203,16 @@ jQuery(document).ready(function($) {
   <div class="tab-content" style="width:100%;min-height:100%;display:inline;">
       {# content panels inserted here #}
   </div>
-  <script type="text/javascript" src="{% static 'vendor/js/jquery.ba-throttle-debounce.js' %}"></script>
+  <script type="text/javascript" src="{% static 'vendor/jquery.ba-throttle-debounce.js' %}"></script>
   <script type="text/javascript" src="{% static 'js/djaodjin-code-editor.js' %}"></script>
-  <script type="text/javascript" src="{% static 'vendor/js/ace.js' %}"></script>
-  <script type="text/javascript" src="{% static 'vendor/js/ext-language_tools.js' %}"></script>
-  <script type="text/javascript" src="{% static 'vendor/js/ext-modelist.js' %}"></script>
-  <script type="text/javascript" src="{% static 'vendor/js/ext-emmet.js' %}"></script>
+  <script type="text/javascript" src="{% static 'vendor/ace.js' %}"></script>
+  <script type="text/javascript" src="{% static 'vendor/ext-language_tools.js' %}"></script>
+  <script type="text/javascript" src="{% static 'vendor/ext-modelist.js' %}"></script>
+  <script type="text/javascript" src="{% static 'vendor/ext-emmet.js' %}"></script>
 </div>
 
 <!-- style editor -->
-<link rel="stylesheet" href="{% static 'vendor/css/bootstrap-colorpicker.css' %}"/>
+<link rel="stylesheet" href="{% static 'vendor/bootstrap-colorpicker.css' %}"/>
 <link rel="stylesheet" href="{% static 'css/djaodjin-style-editor.css' %}" type="text/css" />
 <div id="style-editor" class="custom-gallery" style="width:800px;right:-800px;">
   <h2>Styles</h2>
@@ -247,7 +246,7 @@ jQuery(document).ready(function($) {
     {% endfor %}
     {% endfor  %}
   </form>
-  <script type="text/javascript" src="{% static 'vendor/js/bootstrap-colorpicker.js' %}"></script>
+  <script type="text/javascript" src="{% static 'vendor/bootstrap-colorpicker.js' %}"></script>
   <script type="text/javascript" src="{% static 'js/djaodjin-style-editor.js' %}"></script>
   <script type="text/javascript">
 jQuery(document).ready(function($) {

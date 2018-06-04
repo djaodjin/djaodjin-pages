@@ -2,14 +2,18 @@
   "name": "djaodjin-pages",
   "version" : "0.1",
   "dependencies": {
+    "ace-builds": "1.2.2",
     "angular": "1.4.8",
+    "bootstrap": "3.3.6",
+    "bootstrap-colorpicker": "2.5.2",
     "dropzone": "4.2.0",
-    "jqueryui-touch-punch": "latest",
-    "hallo": "https://github.com/bergie/hallo.git",
     "font-awesome": "~4.4.0",
-    "textarea-autosize": "0.4.1",
+    "hallo": "https://github.com/bergie/hallo.git",
+    "jqueryui-touch-punch": "latest",
     "jquery-selection": "https://github.com/madapaja/jquery.selection.git#1.0.1",
-    "ace-builds": "1.2.2"
+    "less": "2.7.2",
+    "markdown": "v0.5.0",
+    "textarea-autosize": "0.4.1"
   },
   "resolutions": {
     "font-awesome": "4.4.0"

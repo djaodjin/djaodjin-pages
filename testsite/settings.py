@@ -30,16 +30,13 @@ def load_config(confpath):
                     if look:
                         value = look.group(2) \
                             % {'LOCALSTATEDIR': BASE_DIR + '/var'}
-                        try:
-                            # Once Django 1.5 introduced ALLOWED_HOSTS (a tuple
-                            # definitely in the site.conf set), we had no choice
-                            # other than using eval. The {} are here to restrict
-                            # the globals and locals context eval has access to.
-                            # pylint: disable=eval-used
-                            setattr(sys.modules[__name__],
-                                    look.group(1).upper(), eval(value, {}, {}))
-                        except StandardError:
-                            raise
+                        # Once Django 1.5 introduced ALLOWED_HOSTS (a tuple
+                        # definitely in the site.conf set), we had no choice
+                        # other than using eval. The {} are here to restrict
+                        # the globals and locals context eval has access to.
+                        # pylint: disable=eval-used
+                        setattr(sys.modules[__name__],
+                            look.group(1).upper(), eval(value, {}, {}))
                 line = conffile.readline()
     else:
         sys.stderr.write('warning: config file %s does not exist.\n' % confpath)
@@ -54,13 +51,13 @@ if os.getenv('DEBUG'):
     DEBUG = True if int(os.getenv('DEBUG')) > 0 else False
 
 INSTALLED_APPS = (
+    'django_extensions',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'debug_toolbar',
     'rest_framework',
     'pages',
     'storages',
@@ -128,8 +125,7 @@ FILE_UPLOAD_HANDLERS = (
     "django.core.files.uploadhandler.TemporaryFileUploadHandler",
 )
 
-MIDDLEWARE_CLASSES = (
- #   'debug_panel.middleware.DebugPanelMiddleware',
+MIDDLEWARE = (
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -138,6 +134,8 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 )
+
+MIDDLEWARE_CLASSES = MIDDLEWARE
 
 ROOT_URLCONF = 'testsite.urls'
 
@@ -230,3 +228,5 @@ LOGGING = {
     }
 }
 
+LOGIN_URL = 'login'
+LOGIN_REDIRECT_URL = '/app/'

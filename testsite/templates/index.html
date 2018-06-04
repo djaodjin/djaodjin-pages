@@ -1,13 +1,13 @@
 {% extends "base.html" %}
 {% block content %}
 <div style="margin-left: 5px;">
-    <h1 class="editable" id="injected-tools">Edit tools</h1>
+    <h1 class="editable" id="leaderboard-title">Edit tools</h1>
     <div>
 <p class="editable edit-formatted" id="injected-tools-formatted">
 The edit tools comprise the UI elements for the editors as well as code
 that must be injected into the edited page. The code in
-<code>djaodjin-editor.js</code> and <code>less.js</code>) can be injected into
-the edited page one of two ways:
+<code>djaodjin-editor.js</code> and <code>less.js</code>) can be injected
+into the edited page one of two ways:
 </p>
 <ol>
     <li>Through a server-side decorator</li>
@@ -15,21 +15,21 @@ the edited page one of two ways:
 </ol>
     </div>
     <div>
-        <h2 class="editable" id="injected-server">Server-side decorator</h2>
-        <div>
-            <a id="inject-edit-mode" href="/">click here</a>
-        </div>
-        <div>
+      <h2 id="leaderboard-subtitle" class="editable">Server-side decorator</h2>
+      <div>
+          <a id="inject-edit-mode" href="/">click here</a>
+      </div>
+      <div>
 Features
 <ul>
 <li>The edited page URL os shown in the browser bar.</li>
 <li>Any change to stylesheets will affect both page and tools.</li>
 <li>The list of templates used to render the edited page is available.</li>
 </ul>
-        </div>
+      </div>
     </div>
     <div>
-        <h2 class="editable" id="injected-server">Client-side iframe</h2>
+        <h2 class="editable" id="client-side">Client-side iframe</h2>
         <div>
             <a href="/edit/">click here</a>
             <div>
@@ -41,7 +41,7 @@ Features
 <li>There is effectively two HTTP requests (one for the EditView and one
 for the edited page).<sup>3</sup></li>
 </ul>
-<p class="editable edit-markdown" id="edit-frame-1">
+<p id="leaderboard-message" class="lead editable edit-markdown" data-intro="Paragraph editable in markdown" data-position="bottom">
 <sup>1</sup> The server URL could be configured so that all editable pages
 are servered under a /content/ prefix. Example:
 </p>
@@ -79,9 +79,7 @@ into the iframe). I haven't tried to use <code>&lt;iframe srcdoc=&quot;...&quot;
         <div class="editable edit-range" id="main-range"
              data-range-max="3" data-range-min="1" data-range-step="1">1</div>
         <h3>Images</h3>
-        <img class="droppable-image" id="djmedia-two"
-             alt="Generic placeholder image" src="/static/vendor/img/test.gif"
-             style="width: 600px;">
+        <img id="site-feedback-portrait" class="img-responsive img-circle editable droppable-image" style="width:150px;height:150px;margin-left:auto;margin-right:auto;margin-top:15px;margin-bottom:15px;" src="data:image/gif;base64,R0lGODlhAQABAIAAAMLCwgAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw==" alt="Portrait of statisfied customer">
     </div>
 </div>
 <script type="text/javascript">
