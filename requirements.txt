@@ -3,5 +3,6 @@ bleach>=2.0.0
 boto>=2.32.1
 Django>=1.8
 djangorestframework>=3.3.1
+django-assets>=0.12
 django-storages-redux>=1.2.3
 Markdown>=2.4.1
