@@ -48,7 +48,7 @@ $(DESTDIR)$(CONFIG_DIR)/gunicorn.conf: $(srcDir)/testsite/etc/gunicorn.conf
 
 
 initdb: install-conf
-	-cd $(srcDir) && rm -rf testsite/media db.sqlite3 testsite-app.log
+	-cd $(srcDir) && rm -rf db.sqlite3 testsite-app.log testsite/media themes
 	cd $(srcDir) && $(PYTHON) ./manage.py migrate $(RUNSYNCDB) --noinput
 	cd $(srcDir) && $(PYTHON) ./manage.py loaddata \
 						testsite/fixtures/default-db.json
@@ -60,7 +60,7 @@ doc:
 	cd $(srcDir) && sphinx-build -b html ./docs $(PWD)/docs
 
 clean:
-	rm credentials gunicorn.conf db.sqlite3
+	-rm -rf credentials gunicorn.conf db.sqlite3 testsite-app.log testsite/media themes
 
 vendor-assets-prerequisites: $(srcDir)/package.json
 	$(installFiles) $^ $(installTop)

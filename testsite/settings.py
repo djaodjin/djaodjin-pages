@@ -116,7 +116,7 @@ TEMPLATES = [
 # -----------
 DEBUG_TOOLBAR_PATCH_SETTINGS = False
 DEBUG_TOOLBAR_CONFIG = {
-    'JQUERY_URL': '/static/vendor/js/jquery.js',
+    'JQUERY_URL': '/static/vendor/jquery.js',
     'SHOW_COLLAPSED': True,
     'SHOW_TEMPLATE_CONTEXT': True,
 }
