@@ -10,7 +10,7 @@
     "dropzone": "4.2.0",
     "font-awesome": "~4.4.0",
     "hallo": "https://github.com/bergie/hallo.git",
-    "jqueryui-touch-punch": "latest",
+    "jquery-ui-touch-punch": "0.2.3",
     "jquery-selection": "https://github.com/madapaja/jquery.selection.git#1.0.1",
     "less": "2.7.2",
     "markdown": "v0.5.0",
