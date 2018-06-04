@@ -119,7 +119,10 @@ class UploadedImageMixin(object):
                 if not media.endswith('/') and media != "":
                     total_count += 1
                     location = storage.url(media)
-                    updated_at = storage.modified_time(media)
+                    try:
+                        updated_at = storage.get_modified_time(media)
+                    except AttributeError: # Django<2.0
+                        updated_at = storage.modified_time(media)
                     normalized_location = location.split('?')[0]
                     if (filter_list is None
                         or normalized_location in filter_list):
