@@ -10,7 +10,9 @@ https://docs.djangoproject.com/en/1.7/ref/settings/
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import os
+
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
+RUN_DIR = os.getcwd()
 
 def load_config(confpath):
     '''
@@ -41,8 +43,11 @@ def load_config(confpath):
     else:
         sys.stderr.write('warning: config file %s does not exist.\n' % confpath)
 
-load_config(os.path.join(BASE_DIR, 'credentials'))
-load_config(os.path.join(BASE_DIR, 'site.conf'))
+load_config(
+    os.path.join(os.getenv('TESTSITE_CONFIG_DIR', RUN_DIR), 'credentials'))
+load_config(
+    os.path.join(os.getenv('TESTSITE_CONFIG_DIR', RUN_DIR), 'site.conf'))
+
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -149,7 +154,7 @@ ALLOWED_HOSTS = []
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3')
+        'NAME': os.path.join(RUN_DIR, 'db.sqlite3')
     }
 }
 
