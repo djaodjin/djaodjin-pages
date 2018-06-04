@@ -9,9 +9,8 @@
     "bootstrap-colorpicker": "2.5.2",
     "dropzone": "4.2.0",
     "font-awesome": "~4.4.0",
-    "hallo": "https://github.com/bergie/hallo.git",
     "jquery-ui-touch-punch": "0.2.3",
-    "jquery-selection": "https://github.com/madapaja/jquery.selection.git#1.0.1",
+    "jquery.selection": "0.1.2",
     "less": "2.7.2",
     "markdown": "v0.5.0",
     "textarea-autosize": "0.4.1"
