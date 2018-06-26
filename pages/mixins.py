@@ -150,18 +150,19 @@ class UploadedImageMixin(object):
         # Media are not updated, so updated_at = created_at
         return results, total_count
 
-    def get_default_storage(self, account=None):
+    def get_default_storage(self, account=None, **kwargs):
         storage_class = get_storage_class()
         try:
             _ = storage_class.bucket_name
-            kwargs = {}
+            storage_kwargs = {}
+            storage_kwargs.update(**kwargs)
             for key in ['access_key', 'secret_key', 'security_token']:
                 if key in self.request.session:
-                    kwargs[key] = self.request.session[key]
+                    storage_kwargs[key] = self.request.session[key]
             return storage_class(
                 bucket=get_bucket_name(account),
                 location=get_media_prefix(account),
-                **kwargs)
+                **storage_kwargs)
         except AttributeError:
             LOGGER.debug("``%s`` does not contain a ``bucket_name``"\
                 " field, default to FileSystemStorage.", storage_class)
