@@ -196,10 +196,8 @@ class PageElement(models.Model):
         if not tag:
             return self.relationships.filter(
                 to_element__orig_element=self)
-        else:
-            return self.relationships.filter(
-                to_element__tag=tag,
-                to_element__orig_element=self)
+        return self.relationships.filter(
+            to_element__tag=tag, to_element__orig_element=self)
 
     def get_related_to(self, tag):
         return self.related_to.filter(
@@ -287,8 +285,7 @@ class ThemePackage(models.Model):
     def __str__(self):
         if self.account:
             return '%s-%s' % (self.account, self.name)
-        else:
-            return self.name
+        return self.name
 
 
 def get_active_theme():
@@ -304,4 +301,3 @@ def get_active_theme():
         except ThemePackage.DoesNotExist:
             pass
     return None
-

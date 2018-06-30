@@ -29,4 +29,5 @@ from django.conf.urls import include, url
 urlpatterns = [
     url(r'^themes/', include('pages.urls.api.assets')),
     url(r'^themes/', include('pages.urls.api.templates')),
+    url(r'^themes/', include('pages.urls.api.themes')),
 ]

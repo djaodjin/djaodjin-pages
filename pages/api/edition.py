@@ -49,7 +49,8 @@ class PagesElementListAPIView(AccountMixin, generics.ListCreateAPIView):
                     | Q(title__icontains=search_string))
                 return queryset
         except ValidationError:
-            return []
+            pass
+        return []
 
     def perform_create(self, serializer):
         serializer.save(account=self.account)

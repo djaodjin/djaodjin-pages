@@ -39,7 +39,7 @@ urlpatterns = [
         RelationShipListAPIView.as_view(), name='relationships'),
     url(r'^editables/alias(?P<path>%s)/' % settings.PATH_RE,
         PageElementAliasAPIView.as_view(), name='api_alias_node'),
-    url(r'^editables/attach(?P<path>%s)' % settings.PATH_RE,
+    url(r'^editables/attach(?P<path>%s)$' % settings.PATH_RE,
         PageElementMoveAPIView.as_view(), name='api_move_node'),
     url(r'^editables/mirror(?P<path>%s)/' % settings.PATH_RE,
         PageElementMirrorAPIView.as_view(), name='api_mirror_node'),

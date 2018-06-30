@@ -1,4 +1,4 @@
-# Copyright (c) 2017, Djaodjin Inc.
+# Copyright (c) 2018, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -26,7 +26,7 @@
 import logging, os, tempfile, sys
 
 from django.template import TemplateSyntaxError
-from django.template.loader import _engine_list, get_template
+from django.template.loader import _engine_list
 from django.template.backends.jinja2 import get_exception_info
 from django.utils import six
 from django.utils._os import safe_join
@@ -35,7 +35,7 @@ from rest_framework import status, generics, serializers
 from rest_framework.response import Response
 
 from ..mixins import ThemePackageMixin
-from ..themes import get_theme_dir
+from ..themes import get_theme_dir, get_template_path
 
 
 LOGGER = logging.getLogger(__name__)
@@ -62,15 +62,6 @@ def check_template(template_source, using=None):
             errs.update({engine: err})
     if errs:
         raise TemplateSyntaxError(errs)
-
-
-def get_template_path(template=None, relative_path=None):
-    if template is None:
-        template = get_template(relative_path)
-    try:
-        return template.template.filename
-    except AttributeError:
-        return template.origin.name
 
 
 def write_template(template_path, template_source):

@@ -61,7 +61,9 @@ class AccountMixinBase(object):
                 'api_themes': reverse(
                     'pages_api_themes', kwargs=url_kwargs),
                 'theme_base': reverse(
-                    'theme_update', kwargs=url_kwargs)})
+                    'theme_update', kwargs=url_kwargs),
+                'theme_download': reverse(
+                    'theme_download', kwargs=url_kwargs)})
         except NoReverseMatch:
             # Themes are optional
             pass

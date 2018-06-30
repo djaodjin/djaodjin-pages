@@ -42,6 +42,7 @@ setup(
     packages=[
         'pages',
         'pages.api',
+        'pages.backends',
         'pages.management',
         'pages.management.commands',
         'pages.templatetags',

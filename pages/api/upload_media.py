@@ -1,4 +1,4 @@
-# Copyright (c) 2017, Djaodjin Inc.
+# Copyright (c) 2018, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -72,9 +72,9 @@ class MediaListAPIView(UploadedImageMixin, AccountMixin, GenericAPIView):
     parser_classes = (parsers.JSONParser, parsers.FormParser,
         parsers.MultiPartParser, parsers.FileUploadParser)
 
-    def get(self, request, *args, **kwargs):
+    def get(self, request, *args, **kwargs): #pylint:disable=unused-argument
         tags = None
-        search = self.request.GET.get('q')
+        search = request.GET.get('q')
         if search:
             validate_title(search)
             tags = MediaTag.objects.filter(tag__startswith=search)\
@@ -149,7 +149,7 @@ class MediaListAPIView(UploadedImageMixin, AccountMixin, GenericAPIView):
         filter_list = self.build_filter_list(validated_data)
         results, _ = self.list_media(storage, filter_list,
             prefix=kwargs.get('path', '.'))
-        if len(results) == 0:
+        if not results:
             return Response({}, status=status.HTTP_404_NOT_FOUND)
 
         base = storage.url('')
@@ -186,7 +186,7 @@ class MediaListAPIView(UploadedImageMixin, AccountMixin, GenericAPIView):
         assets, total_count = self.list_media(
             self.get_default_storage(self.account),
             self.build_filter_list(serializer.validated_data))
-        if len(assets) == 0:
+        if not assets:
             return Response({}, status=status.HTTP_404_NOT_FOUND)
 
         tags = [tag for tag in serializer.validated_data.get('tags') if tag]

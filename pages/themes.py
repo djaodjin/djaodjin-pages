@@ -24,20 +24,27 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
-import logging, os, shutil, tempfile
+import logging, os, tempfile, shutil, subprocess, zipfile
 
-from django.contrib.staticfiles.templatetags.staticfiles import do_static
+from django.core.files.storage import FileSystemStorage
 from django.core.exceptions import PermissionDenied
+from django.contrib.staticfiles.templatetags.staticfiles import do_static
 from django.template.base import (Parser, NodeList,
     TOKEN_TEXT, TOKEN_VAR, TOKEN_BLOCK, TOKEN_COMMENT, TemplateSyntaxError)
 from django.template.context import Context
+from django.template.loader import get_template
 from django.utils import six
 from django.utils._os import safe_join
 from django.utils.encoding import force_text
 from django_assets.templatetags.assets import assets
+import requests
 
 from . import settings
 from .compat import DebugLexer, get_html_engine
+
+#pylint:disable=no-name-in-module,import-error
+from django.utils.six.moves.urllib.parse import urlparse
+
 
 LOGGER = logging.getLogger(__name__)
 
@@ -121,16 +128,59 @@ class AssetsParser(Parser):
                 pass
 
 
+def get_template_path(template=None, relative_path=None):
+    if template is None:
+        template = get_template(relative_path)
+    try:
+        return template.template.filename
+    except AttributeError:
+        return template.origin.name
+
+
 def get_theme_dir(theme_name):
     if isinstance(settings.THEME_DIR_CALLABLE, six.string_types):
-        from ..compat import import_string
+        from .compat import import_string
         settings.THEME_DIR_CALLABLE = import_string(
             settings.THEME_DIR_CALLABLE)
     theme_dir = settings.THEME_DIR_CALLABLE(theme_name)
     return theme_dir
 
 
-def install_theme(theme_name, zip_file, force=False, path_prefix=None):
+def install_theme(app_name, package_uri, force=False, path_prefix=None):
+    parts = urlparse(package_uri)
+    package_file = None
+    try:
+        if parts.scheme == 's3':
+            from .backends.s3 import get_package_file_from_s3
+            package_file = get_package_file_from_s3(package_uri)
+        elif parts.scheme in ['http', 'https']:
+            basename = os.path.basename(parts.path)
+            resp = requests.get(package_uri, stream=True)
+            if resp.status_code == 200:
+                package_file = tempfile.NamedTemporaryFile()
+                shutil.copyfileobj(resp.raw, package_file)
+                package_file.seek(0)
+            else:
+                raise RuntimeError(
+                    "requests status code: %d" % resp.status_code)
+        else:
+            basename = os.path.basename(package_uri)
+            #pylint:disable=redefined-variable-type
+            package_storage = FileSystemStorage(
+                os.path.dirname(package_uri))
+            package_file = package_storage.open(basename)
+        if not app_name:
+            app_name = os.path.splitext(basename)[0]
+        LOGGER.info("install %s to %s\n", package_uri, app_name)
+        with zipfile.ZipFile(package_file, 'r') as zip_file:
+            install_theme_fileobj(app_name, zip_file, force=force,
+                path_prefix=path_prefix)
+    finally:
+        if hasattr(package_file, 'close'):
+            package_file.close()
+
+
+def install_theme_fileobj(theme_name, zip_file, force=False, path_prefix=None):
     """
     Extract resources and templates from an opened ``ZipFile``
     and install them at a place they can be picked by the multitier
@@ -176,7 +226,7 @@ def install_theme(theme_name, zip_file, force=False, path_prefix=None):
                 continue
             tmp_path = None
             test_parts = os.path.normpath(info.filename).split(os.sep)[1:]
-            if len(test_parts) > 0:
+            if test_parts:
                 base = test_parts.pop(0)
                 if base == 'public':
                     if settings.PUBLIC_WHITELIST is not None:
@@ -191,12 +241,13 @@ def install_theme(theme_name, zip_file, force=False, path_prefix=None):
                         with open(tmp_path, 'wb') as extracted_file:
                             extracted_file.write(zip_file.read(info.filename))
                 elif base == 'templates':
+                    relative_path = os.path.join(*test_parts)
                     if settings.TEMPLATES_WHITELIST is not None:
                         if (os.path.join(*test_parts)
                             in settings.TEMPLATES_WHITELIST):
-                            tmp_path = safe_join(tmp_dir, base, *test_parts)
+                            tmp_path = safe_join(tmp_dir, base, relative_path)
                     else:
-                        tmp_path = safe_join(tmp_dir, base, *test_parts)
+                        tmp_path = safe_join(tmp_dir, base, relative_path)
                     if tmp_path:
                         if not os.path.isdir(os.path.dirname(tmp_path)):
                             os.makedirs(os.path.dirname(tmp_path))
@@ -206,13 +257,31 @@ def install_theme(theme_name, zip_file, force=False, path_prefix=None):
                         template_string = force_text(template_string)
                         lexer = DebugLexer(template_string)
                         tokens = lexer.tokenize()
-                        with open(tmp_path, 'w') as extracted_file:
-                            parser = AssetsParser(tokens,
-                                URLRewriteWrapper(extracted_file, path_prefix),
-                                libraries=libraries,
-                                builtins=builtins,
-                                origin=None)
-                            parser.parse_through()
+                        try:
+                            with open(tmp_path, 'w') as extracted_file:
+                                parser = AssetsParser(tokens, URLRewriteWrapper(
+                                    extracted_file, path_prefix),
+                                    libraries=libraries,
+                                    builtins=builtins,
+                                    origin=None)
+                                parser.parse_through()
+                            default_path = get_template_path(
+                                relative_path=relative_path)
+                            if (default_path and
+                                not default_path.startswith(theme_dir)):
+                                cmdline = ['diff', '-u', default_path, tmp_path]
+                                cmd = subprocess.Popen(
+                                    cmdline, stdout=subprocess.PIPE)
+                                lines = cmd.stdout.readlines()
+                                cmd.wait()
+                                # Non-zero error codes are ok here. That's how
+                                # diff indicates the files are different.
+                                if not lines:
+                                    LOGGER.info(
+                                        "%s: no differences", relative_path)
+                                    os.remove(tmp_path)
+                        except TemplateSyntaxError as err:
+                            LOGGER.info("error:%s: %s", relative_path, err)
 
         # Should be safe to move in-place at this point.
         # Templates are necessary while public resources (css, js)
@@ -237,4 +306,3 @@ def install_theme(theme_name, zip_file, force=False, path_prefix=None):
     finally:
         # Always delete the temporary directory, exception raised or not.
         shutil.rmtree(tmp_dir)
-

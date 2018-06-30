@@ -22,13 +22,16 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from django.conf.urls import url
+import os
 
-from ..views.themes import ThemePackagesView, ThemePackageDownloadView
+from storages.backends.s3boto import S3BotoStorage
+#pylint:disable=no-name-in-module,import-error
+from django.utils.six.moves.urllib.parse import urlparse
 
-urlpatterns = [
-    url(r'^themes/download/',
-        ThemePackageDownloadView.as_view(), name='theme_download'),
-    url(r'^themes/',
-        ThemePackagesView.as_view(), name='theme_update'),
-]
+
+def get_package_file_from_s3(package_uri):
+    parts = urlparse(package_uri)
+    basename = os.path.basename(parts.path)
+    package_storage = S3BotoStorage(bucket_name=parts.netloc,
+        location=os.path.dirname(parts.path))
+    return package_storage.open(basename)

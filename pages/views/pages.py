@@ -148,7 +148,7 @@ class PageMixin(object):
         for element in new_text.find_all():
             if element.name != 'html' and\
                 element.name != 'body':
-                if len(element.findChildren()) > 0:
+                if element.findChildren():
                     for sub_el in element.findChildren():
                         element.append(sub_el)
                         children_done += [sub_el]

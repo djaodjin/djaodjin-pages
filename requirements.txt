@@ -5,4 +5,5 @@ Django>=1.8
 djangorestframework>=3.3.1
 django-assets>=0.12
 django-storages-redux>=1.2.3
+djaodjin-deployutils>=0.5.5
 Markdown>=2.4.1

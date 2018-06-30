@@ -1,4 +1,4 @@
-# Copyright (c) 2017, DjaoDjin inc.
+# Copyright (c) 2018, DjaoDjin inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -22,21 +22,17 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import logging, os, shutil
-from collections import OrderedDict
-from functools import reduce #pylint:disable=redefined-builtin
+import logging, os
 
-from boto.s3.connection import S3Connection
 from boto.exception import S3ResponseError
 from django.core.files.storage import get_storage_class, FileSystemStorage
 from django.http import Http404
-from django.db.models import Q
 from django.utils._os import safe_join
 from django.utils import six
 from rest_framework.generics import get_object_or_404
 
 from . import settings
-from .models import MediaTag, PageElement, ThemePackage
+from .models import MediaTag, PageElement
 from .extras import AccountMixinBase
 
 #pylint:disable=no-name-in-module,import-error
@@ -209,94 +205,21 @@ def get_media_prefix(account=None):
 
 class ThemePackageMixin(AccountMixin):
 
+    theme_url_kwarg = 'theme'
+
+    @property
+    def theme(self):
+        return self.kwargs.get(self.theme_url_kwarg)
+
     @staticmethod
     def get_templates_dir(theme):
         if isinstance(settings.THEME_DIR_CALLABLE, six.string_types):
-            from ..compat import import_string
+            from .compat import import_string
             settings.THEME_DIR_CALLABLE = import_string(
                 settings.THEME_DIR_CALLABLE)
-        theme_dir = settings.THEME_DIR_CALLABLE(theme.slug)
+        theme_dir = settings.THEME_DIR_CALLABLE(theme)
         return safe_join(theme_dir, 'templates')
 
     @staticmethod
     def get_statics_dir(theme):
-        return safe_join(settings.PUBLIC_ROOT, theme.slug, 'static')
-
-    @staticmethod
-    def get_file_tree(root_path):
-        tree = OrderedDict()
-        root_path = root_path.rstrip(os.sep)
-        start = root_path.rfind(os.sep) + 1
-        for (dirpath, _, filenames) in os.walk(root_path):
-            folders = dirpath[start:].split(os.sep)
-            subdir = dict.fromkeys(filenames)
-            parent = reduce(dict.get, folders[:-1], tree)
-            parent[folders[-1]] = OrderedDict(subdir)
-        return tree
-
-    @staticmethod
-    def find_file(root_path, file_path):
-        abs_file_path = None
-        for (dirpath, _, filenames) in os.walk(root_path):
-            for filename in filenames:
-                if file_path in os.path.join(dirpath, filename):
-                    abs_file_path = os.path.join(dirpath, filename)
-        return abs_file_path
-
-    def get_queryset(self):
-        queryset = ThemePackage.objects.filter(
-            Q(account=self.account)|Q(account=None)).order_by('-created_at')
-        return queryset
-
-    @staticmethod
-    def get_file_from_s3(bucket, orig, dest):
-        conn = S3Connection()
-        bucket = conn.get_bucket(bucket)
-        key = bucket.get_key(orig)
-
-        if not key:
-            return None
-        else:# Save file from S3 into tmp_dir
-            key.get_contents_to_filename(dest)
-            return dest
-
-    @staticmethod
-    def create_file(to_path):
-        if not os.path.exists(os.path.dirname(to_path)):
-            os.makedirs(os.path.dirname(to_path))
-        if not os.path.exists(to_path):
-            open(to_path, 'w').close()
-
-    @staticmethod
-    def copy_file(from_path, to_path):
-        if not os.path.exists(os.path.dirname(to_path)):
-            os.makedirs(os.path.dirname(to_path))
-        if not os.path.exists(to_path):
-            shutil.copyfile(
-                from_path,
-                to_path)
-
-    def copy_files(self, from_dir, to_dir):
-        for (dirpath, _, filenames) in os.walk(from_dir):
-            for filename in filenames:
-                from_path = os.path.join(dirpath, filename)
-                to_path = os.path.join(
-                    to_dir,
-                    from_path.replace(os.path.join(from_dir, ''), ''))
-                self.copy_file(
-                    from_path,
-                    to_path)
-
-    @staticmethod
-    def write_zipfile(zipf, dir_path, dir_option=""):
-        for dirname, _, files in os.walk(dir_path):
-            for filename in files:
-                abs_file_path = os.path.join(
-                    dirname, filename)
-                rel_file_path = os.path.join(
-                    dir_option,
-                    abs_file_path.replace("%s/" % dir_path, ''))
-
-                zipf.write(abs_file_path,
-                    rel_file_path)
-        return zipf
+        return safe_join(settings.PUBLIC_ROOT, theme, 'static')
