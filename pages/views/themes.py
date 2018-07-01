@@ -22,9 +22,8 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import logging, os, zipfile
+import logging, os, shutil, tempfile, zipfile
 from io import BytesIO
-from tempfile import TemporaryDirectory
 
 from django.http import HttpResponse
 from django.views.generic import TemplateView, View
@@ -61,7 +60,8 @@ class ThemePackageDownloadView(ThemePackageMixin, View):
         from_templates_dir = self.get_templates_dir(self.theme)
 
         content = BytesIO()
-        with TemporaryDirectory(prefix="pages-") as build_dir:
+        build_dir = tempfile.mkdtemp(prefix="pages-")
+        try:
             package_theme(self.theme, build_dir, excludes=[
                 'django/', 'jinja2/', 'rest_framework_swagger/',
                 'debug_toolbar/'])
@@ -73,6 +73,8 @@ class ThemePackageDownloadView(ThemePackageMixin, View):
                     os.path.join(self.theme, 'templates'))
                 zipf = self.write_zipfile(zipf, from_templates_dir,
                     os.path.join(self.theme, 'templates'))
+        finally:
+            shutil.rmtree(build_dir)
         content.seek(0)
 
         resp = HttpResponse(content.read(), content_type='application/x-zip')
