@@ -30,7 +30,8 @@ from django.core.files.storage import FileSystemStorage
 from django.core.exceptions import PermissionDenied
 from django.contrib.staticfiles.templatetags.staticfiles import do_static
 from django.template.base import (Parser, NodeList,
-    TOKEN_TEXT, TOKEN_VAR, TOKEN_BLOCK, TOKEN_COMMENT, TemplateSyntaxError)
+    TOKEN_TEXT, TOKEN_VAR, TOKEN_BLOCK, TOKEN_COMMENT)
+from django.template.exceptions import TemplateDoesNotExist, TemplateSyntaxError
 from django.template.context import Context
 from django.template.loader import get_template
 from django.utils import six
@@ -187,6 +188,7 @@ def install_theme_fileobj(theme_name, zip_file, force=False, path_prefix=None):
     logic in ``template_loader.Loader.get_template_sources``.
     """
     #pylint:disable=too-many-statements,too-many-locals
+    assert theme_name is not None
     LOGGER.info("install theme %s%s", theme_name, " (force)" if force else "")
     theme_dir = get_theme_dir(theme_name)
     public_dir = safe_join(settings.PUBLIC_ROOT, theme_name)
@@ -280,7 +282,8 @@ def install_theme_fileobj(theme_name, zip_file, force=False, path_prefix=None):
                                     LOGGER.info(
                                         "%s: no differences", relative_path)
                                     os.remove(tmp_path)
-                        except TemplateSyntaxError as err:
+                        except (TemplateDoesNotExist,
+                                TemplateSyntaxError) as err:
                             LOGGER.info("error:%s: %s", relative_path, err)
 
         # Should be safe to move in-place at this point.

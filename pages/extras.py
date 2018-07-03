@@ -47,12 +47,11 @@ class AccountMixinBase(object):
 
     def get_context_data(self, **kwargs):
         context = super(AccountMixinBase, self).get_context_data(**kwargs)
-        url_kwargs = {}
         from . import settings
-        account_url_kwarg = settings.ACCOUNT_URL_KWARG
-        if account_url_kwarg in kwargs:
-            url_kwargs.update({
-                account_url_kwarg: kwargs[account_url_kwarg]})
+        url_kwargs = {}
+        for url_kwarg in [settings.ACCOUNT_URL_KWARG, 'organization']:
+            if url_kwarg in kwargs:
+                url_kwargs.update({url_kwarg: kwargs[url_kwarg]})
         urls_pages = {
             'api_sources': reverse(
                 'pages_api_sources', kwargs=url_kwargs)}

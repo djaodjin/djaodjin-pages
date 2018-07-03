@@ -31,7 +31,7 @@ from rest_framework.response import Response
 
 from ..mixins import ThemePackageMixin
 from ..serializers import ThemePackageSerializer
-from ..themes import install_theme, install_theme_fileobj
+from ..themes import install_theme as install_theme_base, install_theme_fileobj
 
 
 LOGGER = logging.getLogger(__name__)
@@ -47,11 +47,14 @@ class ThemePackageListAPIView(ThemePackageMixin, GenericAPIView):
         parsers.JSONParser)
     serializer_class = ThemePackageSerializer
 
+    def install_theme(self, package_uri):
+        install_theme_base(self.theme, package_uri, force=True)
+
     def post(self, request, *args, **kwargs):
         #pylint:disable=too-many-locals,too-many-statements
         package_uri = request.data.get('location', None)
         if package_uri and 'aws.com/' in package_uri:
-            install_theme(self.theme, package_uri, force=True)
+            self.install_theme(package_uri)
         elif 'file' in request.FILES:
             package_file = request.FILES['file']
             LOGGER.info("install %s to %s", package_uri, self.theme)

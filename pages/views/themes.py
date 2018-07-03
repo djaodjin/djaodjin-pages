@@ -43,6 +43,10 @@ class ThemePackagesView(AccountMixin, TemplateView):
 class ThemePackageDownloadView(ThemePackageMixin, View):
 
     @staticmethod
+    def get_template_dirs():
+        return None
+
+    @staticmethod
     def write_zipfile(zipf, dir_path, dir_option=""):
         for dirname, _, files in os.walk(dir_path):
             for filename in files:
@@ -64,7 +68,7 @@ class ThemePackageDownloadView(ThemePackageMixin, View):
         try:
             package_theme(self.theme, build_dir, excludes=[
                 'django/', 'jinja2/', 'rest_framework_swagger/',
-                'debug_toolbar/'])
+                'debug_toolbar/'], template_dirs=self.get_template_dirs())
             with zipfile.ZipFile(content, mode="w") as zipf:
                 zipf = self.write_zipfile(zipf, from_static_dir,
                     os.path.join(self.theme, 'public'))
