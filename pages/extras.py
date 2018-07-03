@@ -49,7 +49,7 @@ class AccountMixinBase(object):
         context = super(AccountMixinBase, self).get_context_data(**kwargs)
         from . import settings
         url_kwargs = {}
-        for url_kwarg in [settings.ACCOUNT_URL_KWARG, 'organization']:
+        for url_kwarg in [settings.ACCOUNT_URL_KWARG]:
             if url_kwarg in kwargs:
                 url_kwargs.update({url_kwarg: kwargs[url_kwarg]})
         urls_pages = {
