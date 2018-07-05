@@ -51,7 +51,7 @@ class ThemePackageListAPIView(ThemePackageMixin, GenericAPIView):
         install_theme_base(self.theme, package_uri, force=True)
 
     def post(self, request, *args, **kwargs):
-        #pylint:disable=too-many-locals,too-many-statements
+        #pylint:disable=unused-argument
         package_uri = request.data.get('location', None)
         if package_uri and 'aws.com/' in package_uri:
             self.install_theme(package_uri)

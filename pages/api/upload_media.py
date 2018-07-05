@@ -141,7 +141,7 @@ class MediaListAPIView(UploadedImageMixin, AccountMixin, GenericAPIView):
             ]
         }
         """
-        #pylint: disable=unused-argument
+        #pylint: disable=unused-argument,too-many-locals
         storage = self.get_default_storage(self.account)
         serializer = MediaItemListSerializer(data=request.data)
         serializer.is_valid()

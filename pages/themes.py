@@ -24,24 +24,26 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
-import logging, os, tempfile, shutil, subprocess, zipfile
+import logging, os, tempfile, shutil, subprocess, sys, zipfile
 
 from django.core.files.storage import FileSystemStorage
 from django.core.exceptions import PermissionDenied
 from django.contrib.staticfiles.templatetags.staticfiles import do_static
 from django.template.base import (Parser, NodeList,
     TOKEN_TEXT, TOKEN_VAR, TOKEN_BLOCK, TOKEN_COMMENT)
-from django.template.exceptions import TemplateDoesNotExist, TemplateSyntaxError
+from django.template.backends.jinja2 import get_exception_info
 from django.template.context import Context
-from django.template.loader import get_template
+from django.template.exceptions import TemplateDoesNotExist, TemplateSyntaxError
+from django.template.loader import _engine_list, get_template
 from django.utils import six
 from django.utils._os import safe_join
 from django.utils.encoding import force_text
 from django_assets.templatetags.assets import assets
+import jinja2
 import requests
 
 from . import settings
-from .compat import DebugLexer, get_html_engine
+from .compat import get_html_engine
 
 #pylint:disable=no-name-in-module,import-error
 from django.utils.six.moves.urllib.parse import urlparse
@@ -129,6 +131,29 @@ class AssetsParser(Parser):
                 pass
 
 
+def check_template(template_source, using=None):
+    """
+    Loads and returns a template for the given name.
+
+    Raises TemplateDoesNotExist if no such template exists.
+    """
+    errs = {}
+    engines = _engine_list(using)
+    # We should find at least one engine that does not raise an error.
+    for engine in engines:
+        try:
+            try:
+                return engine.from_string(template_source)
+            except jinja2.TemplateSyntaxError as exc:
+                new = TemplateSyntaxError(exc.args)
+                new.template_debug = get_exception_info(exc)
+                six.reraise(TemplateSyntaxError, new, sys.exc_info()[2])
+        except TemplateSyntaxError as err:
+            errs.update({engine: err})
+    if errs:
+        raise TemplateSyntaxError(errs)
+
+
 def get_template_path(template=None, relative_path=None):
     if template is None:
         template = get_template(relative_path)
@@ -147,7 +172,7 @@ def get_theme_dir(theme_name):
     return theme_dir
 
 
-def install_theme(app_name, package_uri, force=False, path_prefix=None):
+def install_theme(app_name, package_uri, force=False):
     parts = urlparse(package_uri)
     package_file = None
     try:
@@ -166,22 +191,21 @@ def install_theme(app_name, package_uri, force=False, path_prefix=None):
                     "requests status code: %d" % resp.status_code)
         else:
             basename = os.path.basename(package_uri)
-            #pylint:disable=redefined-variable-type
             package_storage = FileSystemStorage(
                 os.path.dirname(package_uri))
+            #pylint:disable=redefined-variable-type
             package_file = package_storage.open(basename)
         if not app_name:
             app_name = os.path.splitext(basename)[0]
         LOGGER.info("install %s to %s\n", package_uri, app_name)
         with zipfile.ZipFile(package_file, 'r') as zip_file:
-            install_theme_fileobj(app_name, zip_file, force=force,
-                path_prefix=path_prefix)
+            install_theme_fileobj(app_name, zip_file, force=force)
     finally:
         if hasattr(package_file, 'close'):
             package_file.close()
 
 
-def install_theme_fileobj(theme_name, zip_file, force=False, path_prefix=None):
+def install_theme_fileobj(theme_name, zip_file, force=False):
     """
     Extract resources and templates from an opened ``ZipFile``
     and install them at a place they can be picked by the multitier
@@ -219,7 +243,6 @@ def install_theme_fileobj(theme_name, zip_file, force=False, path_prefix=None):
         os.makedirs(os.path.dirname(templates_dir))
     tmp_dir = tempfile.mkdtemp(dir=tmp_base)
 
-    _, libraries, builtins = get_html_engine()
     #pylint: disable=too-many-nested-blocks
     try:
         for info in zip_file.infolist():
@@ -257,16 +280,10 @@ def install_theme_fileobj(theme_name, zip_file, force=False, path_prefix=None):
                         if hasattr(template_string, 'decode'):
                             template_string = template_string.decode('utf-8')
                         template_string = force_text(template_string)
-                        lexer = DebugLexer(template_string)
-                        tokens = lexer.tokenize()
                         try:
+                            check_template(template_string)
                             with open(tmp_path, 'w') as extracted_file:
-                                parser = AssetsParser(tokens, URLRewriteWrapper(
-                                    extracted_file, path_prefix),
-                                    libraries=libraries,
-                                    builtins=builtins,
-                                    origin=None)
-                                parser.parse_through()
+                                extracted_file.write(template_string)
                             default_path = get_template_path(
                                 relative_path=relative_path)
                             if (default_path and

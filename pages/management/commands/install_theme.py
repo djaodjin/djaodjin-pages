@@ -54,5 +54,4 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         app_name = options['app_name']
         for package_uri in options['packages']:
-            install_theme(app_name, package_uri,
-                force=options['force'], path_prefix=options['path_prefix'])
+            install_theme(app_name, package_uri, force=options['force'])

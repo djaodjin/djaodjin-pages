@@ -23,45 +23,18 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pylint: disable=no-member
 
-import logging, os, tempfile, sys
+import logging, os, tempfile
 
 from django.template import TemplateSyntaxError
-from django.template.loader import _engine_list
-from django.template.backends.jinja2 import get_exception_info
-from django.utils import six
 from django.utils._os import safe_join
-import jinja2
 from rest_framework import status, generics, serializers
 from rest_framework.response import Response
 
 from ..mixins import ThemePackageMixin
-from ..themes import get_theme_dir, get_template_path
+from ..themes import check_template, get_theme_dir, get_template_path
 
 
 LOGGER = logging.getLogger(__name__)
-
-
-def check_template(template_source, using=None):
-    """
-    Loads and returns a template for the given name.
-
-    Raises TemplateDoesNotExist if no such template exists.
-    """
-    errs = {}
-    engines = _engine_list(using)
-    # We should find at least one engine that does not raise an error.
-    for engine in engines:
-        try:
-            try:
-                return engine.from_string(template_source)
-            except jinja2.TemplateSyntaxError as exc:
-                new = TemplateSyntaxError(exc.args)
-                new.template_debug = get_exception_info(exc)
-                six.reraise(TemplateSyntaxError, new, sys.exc_info()[2])
-        except TemplateSyntaxError as err:
-            errs.update({engine: err})
-    if errs:
-        raise TemplateSyntaxError(errs)
 
 
 def write_template(template_path, template_source):
