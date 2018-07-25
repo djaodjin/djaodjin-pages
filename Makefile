@@ -11,7 +11,7 @@ LOCALSTATEDIR ?= $(installTop)/var
 
 NPM           ?= npm
 PIP           := $(binDir)/pip
-PYTHON        := TESTSITE_CONFIG_DIR=$(CONFIG_DIR) $(binDir)/python
+PYTHON        := TESTSITE_SETTINGS_LOCATION=$(CONFIG_DIR) $(binDir)/python
 installDirs   ?= install -d
 installFiles  := install -p -m 644
 
