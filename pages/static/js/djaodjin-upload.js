@@ -74,7 +74,28 @@
                     datatype: "json",
                     contentType: "application/json; charset=utf-8",
                     success: function(data) {
-                        self.options.uploadUrl = data.location;
+
+                        var parser = document.createElement('a');
+                        parser.href = data.location;
+                        self.options.uploadUrl = parser.host + "/";
+                        if( parser.protocol ) {
+                            self.options.uploadUrl = parser.protocol + "//"
+                                + self.options.uploadUrl;
+                        }
+                        self.options.mediaPrefix = parser.pathname;
+                        if( self.options.mediaPrefix === 'undefined'
+                            || self.options.mediaPrefix === null ) {
+                            self.options.mediaPrefix = "";
+                        }
+                        if( self.options.mediaPrefix !== ""
+                            && self.options.mediaPrefix.match(/^\//)){
+                            self.options.mediaPrefix = self.options.mediaPrefix.substring(1);
+                        }
+                        if( self.options.mediaPrefix !== ""
+                            && !self.options.mediaPrefix.match(/\/$/)){
+                            self.options.mediaPrefix += "/";
+                        }
+
                         self.options.accessKey = data.access_key;
                         self.options.policy = data.policy;
                         self.options.amzCredential = data.x_amz_credential;
@@ -82,15 +103,6 @@
                         self.options.amzServerSideEncryption = data.x_amz_server_side_encryption;
                         self.options.securityToken = data.security_token;
                         self.options.signature = data.signature;
-                        self.options.mediaPrefix = data.media_prefix;
-                        if( self.options.mediaPrefix === 'undefined'
-                            || self.options.mediaPrefix === null ) {
-                            self.options.mediaPrefix = "";
-                        }
-                        if( self.options.mediaPrefix !== ""
-                            && !self.options.mediaPrefix.match(/\/$/)){
-                            self.options.mediaPrefix += "/";
-                        }
                         self.initDropzone();
                     }
                 });
@@ -166,6 +178,8 @@
                                 formData.append("Content-Type", "image/jpeg");
                             } else if( ext === ".png" ) {
                                 formData.append("Content-Type", "image/png");
+                            } else if( ext === ".gif" ) {
+                                formData.append("Content-Type", "image/gif");
                             } else if( ext === ".mp4" ) {
                                 formData.append("Content-Type", "video/mp4");
                             } else {

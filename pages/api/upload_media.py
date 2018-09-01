@@ -34,7 +34,7 @@ from rest_framework.pagination import PageNumberPagination
 from ..models import MediaTag, PageElement
 from ..mixins import AccountMixin, UploadedImageMixin
 from ..serializers import MediaItemListSerializer
-from ..utils import validate_title
+from ..utils import validate_title, get_default_storage
 
 #pylint:disable=no-name-in-module,import-error
 from django.utils.six.moves.urllib.parse import urljoin, urlparse, urlunparse
@@ -42,17 +42,15 @@ from django.utils.six.moves.urllib.parse import urljoin, urlparse, urlunparse
 
 class MediaListAPIView(UploadedImageMixin, AccountMixin, GenericAPIView):
     """
-    List, upload, tag and delete asset files.
+    Lists asset files.
 
-    **Example request**:
+    **Examples
 
-    .. sourcecode:: http
+    .. code-block:: http
 
-        GET /api/assets/
+        GET /api/assets/ HTTP/1.1
 
-    **Example response**:
-
-    .. sourcecode:: http
+    .. code-block:: json
 
         {
           "count": 1,
@@ -62,8 +60,8 @@ class MediaListAPIView(UploadedImageMixin, AccountMixin, GenericAPIView):
               "tags": []
           }]
         }
-    """
 
+    """
     store_hash = True
     replace_stored = False
     content_type = None
@@ -80,7 +78,7 @@ class MediaListAPIView(UploadedImageMixin, AccountMixin, GenericAPIView):
             tags = MediaTag.objects.filter(tag__startswith=search)\
                 .values_list('location', flat=True)
         results, total_count = self.list_media(
-            self.get_default_storage(self.account), tags,
+            get_default_storage(self.request, self.account), tags,
             prefix=kwargs.get('path', '.'))
         # XXX - Deactivate pagination until not
         # implemented in djaodjin-sidebar-gallery
@@ -93,6 +91,16 @@ class MediaListAPIView(UploadedImageMixin, AccountMixin, GenericAPIView):
         })
 
     def post(self, request, *args, **kwargs):
+        """
+        Uploads asset files.
+
+        **Examples
+
+        .. code-block:: http
+
+            POST /api/assets/ HTTP/1.1
+
+        """
         #pylint: disable=unused-argument,too-many-locals
         uploaded_file = request.data['file']
         if self.content_type:
@@ -105,7 +113,7 @@ class MediaListAPIView(UploadedImageMixin, AccountMixin, GenericAPIView):
         # Store filenames with forward slashes, even on Windows
         filename = force_text(uploaded_file.name.replace('\\', '/'))
         sha1_filename = sha1 + os.path.splitext(filename)[1]
-        storage = self.get_default_storage(self.account)
+        storage = get_default_storage(self.request, self.account)
         stored_filename = sha1_filename if self.store_hash else filename
         prefix = request.data.get('prefix', None)
         if prefix is not None:
@@ -132,17 +140,27 @@ class MediaListAPIView(UploadedImageMixin, AccountMixin, GenericAPIView):
 
     def delete(self, request, *args, **kwargs):
         """
-        Delete media
-        {
-            items: [
-                {location: "/media/item/url1.jpg"},
-                {location: "/media/item/url2.jpg"},
-                ....
-            ]
-        }
+        Deletes assets file
+
+        **Examples
+
+        .. code-block:: http
+
+            DELETE /api/assets/ HTTP/1.1
+
+        .. code-block:: json
+
+            {
+                items: [
+                    {location: "/media/item/url1.jpg"},
+                    {location: "/media/item/url2.jpg"},
+                    ....
+                ]
+            }
+
         """
         #pylint: disable=unused-argument,too-many-locals
-        storage = self.get_default_storage(self.account)
+        storage = get_default_storage(self.request, self.account)
         serializer = MediaItemListSerializer(data=request.data)
         serializer.is_valid()
         validated_data = serializer.validated_data
@@ -184,7 +202,7 @@ class MediaListAPIView(UploadedImageMixin, AccountMixin, GenericAPIView):
         serializer.is_valid()
 
         assets, total_count = self.list_media(
-            self.get_default_storage(self.account),
+            get_default_storage(self.request, self.account),
             self.build_filter_list(serializer.validated_data))
         if not assets:
             return Response({}, status=status.HTTP_404_NOT_FOUND)

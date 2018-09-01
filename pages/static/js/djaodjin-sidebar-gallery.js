@@ -288,9 +288,9 @@ Options:
             if( self.options.acl === "public-read" ) {
                 location = self._mediaLocation(location);
             }
-            if( ext === ".mp4" ){
+            if (self.options.acceptedVideos.some(function(v) { return ext.toLowerCase().indexOf(v) >= 0; })){
                 mediaItem = "<video id=\"image_" + index + "\" class=\"image dj-gallery-item image_media\" src=\"" + location + "\" tags=\"" + tags + "\"></video>";
-            } else if( ext === ".jpg" || ext === ".png" ) {
+            } else if (self.options.acceptedImages.some(function(v) { return ext.toLowerCase().indexOf(v) >= 0; })){
                 mediaItem = "<img id=\"image_" + index + "\" class=\"image dj-gallery-item image_media\" src=\"" + location + "\" tags=\"" + tags + "\">";
             } else {
                 mediaItem = "<img id=\"image_" + index + "\" class=\"image dj-gallery-item image_media\" src=\"/static/img/generic-document.png\" data-location=\"" + location + "\" tags=\"" + tags + "\">";
