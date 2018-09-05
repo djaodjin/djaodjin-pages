@@ -1,4 +1,4 @@
-# Copyright (c) 2017, DjaoDjin inc.
+# Copyright (c) 2018, DjaoDjin inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -23,6 +23,7 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import copy, json, logging
+from collections import OrderedDict
 
 from django.dispatch import receiver
 from django.template import loader, Template
@@ -77,7 +78,7 @@ def _store_template_info(sender, **kwargs): #pylint: disable=unused-argument
         # We don't show templates that cannot be edited.
         return
     if not hasattr(_thread_locals, 'templates'):
-        _thread_locals.templates = {}
+        _thread_locals.templates = OrderedDict()
     if not template.name in _thread_locals.templates:
         # For some reasons the Django/Jinja2 framework might load the same
         # templates multiple times.
@@ -85,7 +86,7 @@ def _store_template_info(sender, **kwargs): #pylint: disable=unused-argument
             {"name": template.name, "index": len(_thread_locals.templates)}})
 
 def enable_instrumentation():
-    _thread_locals.templates = {}
+    _thread_locals.templates = OrderedDict()
     template_loaded.connect(_store_template_info)
     template_rendered.connect(_store_template_info)
 
