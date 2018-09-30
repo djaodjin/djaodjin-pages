@@ -46,7 +46,7 @@ def random_slug():
 
 validate_title = RegexValidator(#pylint: disable=invalid-name
     r'^[a-zA-Z0-9- ]+$',
-    _("Enter a valid 'Title' consisting of letters, "
+    _("Enter a valid title consisting of letters, "
         "numbers, space, underscores or hyphens."),
         'invalid'
 )
