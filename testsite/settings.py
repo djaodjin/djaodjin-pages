@@ -89,13 +89,13 @@ TEMPLATE_CONTEXT_PROCESSORS = (
 )
 
 TEMPLATE_DIRS = (
-    BASE_DIR + '/themes/templates',
-    BASE_DIR + '/testsite/templates'
+    BASE_DIR + '/testsite/templates',
 )
 
 # Django 1.8+
 TEMPLATES = [
     {
+        'NAME': 'html',
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'DIRS': TEMPLATE_DIRS,
         'APP_DIRS': True,

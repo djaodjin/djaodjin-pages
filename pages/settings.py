@@ -27,12 +27,14 @@ import os
 from django.conf import settings
 
 def theme_dir(account): #pylint:disable=unused-argument
-    return os.path.join(settings.BASE_DIR, 'themes')
+    return os.path.join(settings.BASE_DIR, 'themes', account)
 
 _SETTINGS = {
     'ACCOUNT_MODEL': getattr(settings, 'AUTH_USER_MODEL', None),
     'ACCOUNT_URL_KWARG': None,
     'ACTIVE_THEME_CALLABLE': None,
+    'APP_NAME': getattr(settings, 'APP_NAME',
+        os.path.basename(settings.BASE_DIR)),
     'AWS_STORAGE_BUCKET_NAME':
         getattr(settings, 'AWS_STORAGE_BUCKET_NAME',
             getattr(settings, 'APP_NAME',
@@ -55,6 +57,7 @@ _SETTINGS.update(getattr(settings, 'PAGES', {}))
 
 ACCOUNT_MODEL = _SETTINGS.get('ACCOUNT_MODEL')
 ACCOUNT_URL_KWARG = _SETTINGS.get('ACCOUNT_URL_KWARG')
+APP_NAME = _SETTINGS.get('APP_NAME')
 AWS_STORAGE_BUCKET_NAME = _SETTINGS.get('AWS_STORAGE_BUCKET_NAME')
 BUCKET_NAME_FROM_FIELDS = _SETTINGS.get('BUCKET_NAME_FROM_FIELDS')
 DEFAULT_ACCOUNT_CALLABLE = _SETTINGS.get('DEFAULT_ACCOUNT_CALLABLE')

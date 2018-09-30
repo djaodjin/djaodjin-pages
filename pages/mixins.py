@@ -153,7 +153,11 @@ class ThemePackageMixin(AccountMixin):
 
     @property
     def theme(self):
-        return self.kwargs.get(self.theme_url_kwarg)
+        if not hasattr(self, '_theme'):
+            self._theme = self.kwargs.get(self.theme_url_kwarg)
+            if not self._theme:
+                self._theme = settings.APP_NAME
+        return self._theme
 
     @staticmethod
     def get_templates_dir(theme):

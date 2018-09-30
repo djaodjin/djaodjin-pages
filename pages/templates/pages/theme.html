@@ -1,35 +1,62 @@
 {% extends "base.html" %}
 {% load static from staticfiles %}
+
 {% block content %}
-<div ng-app="UploaderApp" ng-controller="UploaderCtrl">
-    <h1>Upload theme</h1>
-    <div class="col-md-12">
-        <table class="table table-striped table-bordered table-condensed custab">
-            <thead>
-                <th>Package name</th>
-                <th>Created at</th>
-                <th>Updated at</th>
-                <th></th>
-            </thead>
-            <tbody>
-                <tr ng-repeat="template in uploadedPackagelist">
-                    <td>[% template.name %]<span style="font-size:11px;">[% template.slug.replace(template.name, '')|limitTo:10 %]</span></td>
-                    <td>[% template.created_at|date %]</td>
-                    <td>[% template.updated_at|date %]</td>
-                    <td><a href="{% url 'theme_update' %}[% template.slug %]/">Edit</a></td>
-                </tr>
-            </tbody>
-        </table>
+<div ng-app="UploaderApp">
+  <div ng-controller="UploaderCtrl" ng-cloak>
+    <div class="pages-upload"
+         data-complete-url="{{urls.pages.api_themes}}"
+         djupload-success >
+      <div class="dropzone-previews previewsContainer">
+        <span class="dz-default dz-message">Upload theme package (.zip)</span>
+      </div>
     </div>
-
-
-    <div class="col-md-12">
-
-        <div class="dropzone_area " dropzone="dropzoneConfig" style="margin-top:50px;text-align:center;padding:50px;background:#CCC">Drag and drop files here or click to upload</div>
+    <div class="text-center">
+      <a id="download-theme" href="{{urls.pages.theme_download}}" target="_blank">Download as .zip file</a>
     </div>
+  </div>
 </div>
+{% endblock %}
 
-{% include "pages_upload_templates.html" %}
-
-{% endblock content %}
-
+{% block bodyscripts %}
+<script src='{% static "vendor/js/angular.js" %}'></script>
+<script src='{% static "vendor/js/dropzone.js" %}'></script>
+<script src='{% static "js/pages-angular-upload-package.js" %}'></script>
+<script type="text/javascript">
+/* Implementation Note: Not including a list of dependent modules
+   (2nd parameter to `module`) "re-opens" the module for additional
+   configuration. */
+var app = angular.module('UploaderApp');
+app.config(['$interpolateProvider', '$httpProvider',
+           function($interpolateProvider, $httpProvider) {
+    $httpProvider.defaults.headers.common['X-CSRFToken'] = '{{csrf_token}}';
+    /* Makes it easier to separate between django and angularjs templates */
+    $interpolateProvider.startSymbol('[[');
+    $interpolateProvider.endSymbol(']]');
+}]);
+app.constant('urls', {
+    url_base_theme: "{{urls.pages.api_themes}}",
+});
+app.constant('csrf', {
+    csrf_token: "{{csrf_token}}",
+});
+app.constant('s3', {
+    mediaPrefix: "{% if media_prefix %}{{media_prefix}}{% else %}{% endif %}",
+{% if access_key %}
+    accessKey: "{{access_key}}",
+    policy: "{{aws_policy}}",
+    signature: "{{aws_policy_signature}}",
+    securityToken: "{{security_token}}",
+    amzCredential: "{{x_amz_credential}}",
+    amzDate: "{{x_amz_date}}",
+{% endif %}
+});
+</script>
+  <script type="text/javascript">
+jQuery(document).ready(function($) {
+  $(".pages-upload").djupload({
+      uploadUrl: "{{urls.pages.api_themes}}",
+  });
+});
+  </script>
+{% endblock %}
