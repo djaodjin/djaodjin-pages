@@ -27,7 +27,9 @@ import os
 from django.conf import settings
 
 def theme_dir(account): #pylint:disable=unused-argument
-    return os.path.join(settings.BASE_DIR, 'themes', account)
+    if account:
+        return os.path.join(settings.BASE_DIR, 'themes', account)
+    return os.path.join(settings.BASE_DIR, 'themes')
 
 _SETTINGS = {
     'ACCOUNT_MODEL': getattr(settings, 'AUTH_USER_MODEL', None),
