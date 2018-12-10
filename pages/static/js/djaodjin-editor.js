@@ -332,6 +332,7 @@
 
     function MarkdownEditor(element, options){
         var self = this;
+        self.el = element;
         self.$el = $(element);
         self.options = options;
         self.init();
@@ -501,6 +502,7 @@
 
     function RangeEditor(element, options){
         var self = this;
+        self.el = element;
         self.$el = $(element);
         self.options = options;
         self.init();
