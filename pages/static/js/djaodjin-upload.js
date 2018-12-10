@@ -104,6 +104,9 @@
                         self.options.securityToken = data.security_token;
                         self.options.signature = data.signature;
                         self.initDropzone();
+                    },
+                    error: function(resp) {
+                        showErrorMessages(resp);
                     }
                 });
             } else {

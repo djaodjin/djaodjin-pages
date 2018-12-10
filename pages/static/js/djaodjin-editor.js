@@ -1,4 +1,11 @@
-/* global jQuery Markdown document setTimeout: true*/
+/**
+   Functionality related to the wysiwyg editor in djaodjin-pages.
+
+   These are based on jquery.
+ */
+
+/* global location setTimeout jQuery */
+/* global getMetaCSRFToken showMessages */
 
 (function ($) {
     "use strict";
@@ -16,6 +23,15 @@
     BaseEditor.prototype = {
         init: function(){
             var self = this;
+        },
+
+        _getCSRFToken: function() {
+            var self = this;
+            var crsfNode = self.el.find("[name='csrfmiddlewaretoken']");
+            if( crsfNode.length > 0 ) {
+                return crsfNode.val();
+            }
+            return getMetaCSRFToken();
         },
 
         getId: function() {
@@ -37,6 +53,9 @@
             $.ajax({
                 method: "PUT",
                 url: self.options.baseUrl + self.getId() + "/add-tags/",
+                beforeSend: function(xhr) {
+                    xhr.setRequestHeader("X-CSRFToken", self._getCSRFToken());
+                },
                 data: JSON.stringify({"tag": tags}),
                 datatype: "json",
                 contentType: "application/json; charset=utf-8",
@@ -52,6 +71,9 @@
             $.ajax({
                 method: "PUT",
                 url: self.options.baseUrl + self.getId() + "/remove-tags/",
+                beforeSend: function(xhr) {
+                    xhr.setRequestHeader("X-CSRFToken", self._getCSRFToken());
+                },
                 data: JSON.stringify({"tag": tags}),
                 datatype: "json",
                 contentType: "application/json; charset=utf-8",
@@ -198,6 +220,9 @@
             $.ajax({
                 method: method,
                 url: self.options.baseUrl + self.getId() + "/",
+                beforeSend: function(xhr) {
+                    xhr.setRequestHeader("X-CSRFToken", self._getCSRFToken());
+                },
                 data: JSON.stringify(data),
                 datatype: "json",
                 contentType: "application/json; charset=utf-8",
@@ -452,8 +477,11 @@
             if (self.options.baseUrl){
                 $.ajax({
                     method: "GET",
-                    async: false,
                     url: self.options.baseUrl + self.getId() + "/",
+                    beforeSend: function(xhr) {
+                        xhr.setRequestHeader("X-CSRFToken", self._getCSRFToken());
+                    },
+                    async: false,
                     success: function(data){
                         if (self.$el.attr("data-key")){
                             self.originText = data[self.$el.attr("data-key")];
