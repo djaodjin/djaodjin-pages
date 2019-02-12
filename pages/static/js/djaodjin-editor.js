@@ -479,6 +479,7 @@
                 $.ajax({
                     method: "GET",
                     url: self.options.baseUrl + self.getId() + "/",
+                    contentType: "application/json; charset=utf-8",
                     beforeSend: function(xhr) {
                         xhr.setRequestHeader("X-CSRFToken", self._getCSRFToken());
                     },

@@ -53,7 +53,7 @@ initdb: install-conf
 	cd $(srcDir) && $(PYTHON) ./manage.py loaddata \
 						testsite/fixtures/default-db.json
 	cd $(srcDir) && $(installDirs) testsite/media
-	cd $(srcDir) && $(installFiles) testsite/static/vendor/css/bootstrap.css testsite/media
+	cd $(srcDir) && $(installFiles) testsite/static/vendor/bootstrap.css testsite/media
 
 doc:
 	$(installDirs) docs
@@ -76,6 +76,8 @@ vendor-assets-prerequisites: $(srcDir)/package.json
 	$(installFiles) $(installTop)/node_modules/ace-builds/src/mode-javascript.js $(ASSETS_DIR)/vendor
 	$(installFiles) $(installTop)/node_modules/ace-builds/src/worker-html.js $(ASSETS_DIR)/vendor
 	$(installFiles) $(installTop)/node_modules/angular/angular.js $(ASSETS_DIR)/vendor
+	$(installFiles) $(installTop)/node_modules/bootstrap/dist/css/bootstrap.css $(ASSETS_DIR)/vendor
+	$(installFiles) $(installTop)/node_modules/bootstrap/dist/css/bootstrap-theme.css $(ASSETS_DIR)/vendor
 	$(installFiles) $(installTop)/node_modules/bootstrap/dist/js/bootstrap.js $(ASSETS_DIR)/vendor
 	$(installFiles) $(installTop)/node_modules/bootstrap-colorpicker/dist/img/bootstrap-colorpicker/*.png $(ASSETS_DIR)/img/bootstrap-colorpicker
 	$(installFiles) $(installTop)/node_modules/bootstrap-colorpicker/dist/css/bootstrap-colorpicker.css $(ASSETS_DIR)/vendor
@@ -84,7 +86,6 @@ vendor-assets-prerequisites: $(srcDir)/package.json
 	$(installFiles) $(installTop)/node_modules/dropzone/dist/dropzone.js $(ASSETS_DIR)/vendor
 	$(installFiles) $(installTop)/node_modules/font-awesome/css/font-awesome.css $(ASSETS_DIR)/vendor
 	$(installFiles) $(installTop)/node_modules/font-awesome/fonts/* $(ASSETS_DIR)/fonts
-	$(installFiles) $(installTop)/node_modules/font-awesome/fonts/* $(ASSETS_DIR)/vendor
 	$(installFiles) $(installTop)/node_modules/jquery/dist/jquery.js $(ASSETS_DIR)/vendor
 	$(installFiles) $(installTop)/node_modules/jquery-ui-touch-punch/jquery.ui.touch-punch.js $(ASSETS_DIR)/vendor
 	$(installFiles) $(installTop)/node_modules/jquery.selection/dist/jquery.selection.js $(ASSETS_DIR)/vendor
