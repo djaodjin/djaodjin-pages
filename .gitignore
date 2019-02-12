@@ -6,7 +6,4 @@
 .timestamp
 credentials
 site.conf
-pages/migrations/
-docs/build/
 themes/
-_installTop_
