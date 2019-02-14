@@ -48,12 +48,12 @@ $(DESTDIR)$(CONFIG_DIR)/gunicorn.conf: $(srcDir)/testsite/etc/gunicorn.conf
 
 
 initdb: install-conf
-	-cd $(srcDir) && rm -rf db.sqlite3 testsite-app.log testsite/media themes
+	-cd $(srcDir) && rm -rf db.sqlite3 testsite-app.log testsite/media/vendor themes
 	cd $(srcDir) && $(PYTHON) ./manage.py migrate $(RUNSYNCDB) --noinput
 	cd $(srcDir) && $(PYTHON) ./manage.py loaddata \
 						testsite/fixtures/default-db.json
-	cd $(srcDir) && $(installDirs) testsite/media
-	cd $(srcDir) && $(installFiles) testsite/static/vendor/bootstrap.css testsite/media
+	cd $(srcDir) && $(installDirs) testsite/media/vendor themes/templates
+	cd $(srcDir) && $(installFiles) testsite/static/vendor/bootstrap.css testsite/media/vendor
 
 doc:
 	$(installDirs) docs
@@ -65,7 +65,7 @@ clean:
 vendor-assets-prerequisites: $(srcDir)/package.json
 	$(installFiles) $^ $(installTop)
 	$(NPM) install --loglevel verbose --cache $(installTop)/.npm --tmp $(installTop)/tmp --prefix $(installTop)
-	$(installDirs) -d $(ASSETS_DIR)/fonts $(ASSETS_DIR)/vendor/bootstrap/mixins $(ASSETS_DIR)/img/bootstrap-colorpicker
+	$(installDirs) -d $(ASSETS_DIR)/fonts $(ASSETS_DIR)/../media/fonts $(ASSETS_DIR)/vendor/bootstrap/mixins $(ASSETS_DIR)/img/bootstrap-colorpicker
 	$(installFiles) $(installTop)/node_modules/ace-builds/src/ace.js $(ASSETS_DIR)/vendor
 	$(installFiles) $(installTop)/node_modules/ace-builds/src/ext-language_tools.js $(ASSETS_DIR)/vendor
 	$(installFiles) $(installTop)/node_modules/ace-builds/src/ext-modelist.js $(ASSETS_DIR)/vendor
@@ -80,6 +80,7 @@ vendor-assets-prerequisites: $(srcDir)/package.json
 	$(installFiles) $(installTop)/node_modules/bootstrap/dist/css/bootstrap-theme.css $(ASSETS_DIR)/vendor
 	$(installFiles) $(installTop)/node_modules/bootstrap/dist/js/bootstrap.js $(ASSETS_DIR)/vendor
 	$(installFiles) $(installTop)/node_modules/bootstrap/dist/fonts/* $(ASSETS_DIR)/fonts
+	$(installFiles) $(installTop)/node_modules/bootstrap/dist/fonts/* $(ASSETS_DIR)/../media/fonts
 	$(installFiles) $(installTop)/node_modules/bootstrap/less/*.less $(ASSETS_DIR)/vendor/bootstrap
 	$(installFiles) $(installTop)/node_modules/bootstrap/less/mixins/*.less $(ASSETS_DIR)/vendor/bootstrap/mixins
 	$(installFiles) $(installTop)/node_modules/bootstrap-colorpicker/dist/img/bootstrap-colorpicker/*.png $(ASSETS_DIR)/img/bootstrap-colorpicker
