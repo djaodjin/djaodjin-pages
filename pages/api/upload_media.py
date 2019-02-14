@@ -1,4 +1,4 @@
-# Copyright (c) 2018, Djaodjin Inc.
+# Copyright (c) 2019, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -26,6 +26,7 @@
 import hashlib, os
 
 from django.utils.encoding import force_text
+from deployutils.helpers import datetime_or_now
 from rest_framework import parsers, status
 from rest_framework.generics import ListCreateAPIView
 from rest_framework.response import Response
@@ -72,14 +73,14 @@ class MediaListAPIView(UploadedImageMixin, AccountMixin, ListCreateAPIView):
 
     def get_queryset(self):
         tags = None
-        search = request.GET.get('q')
+        search = self.request.GET.get('q')
         if search:
             validate_title(search)
             tags = MediaTag.objects.filter(tag__startswith=search)\
                 .values_list('location', flat=True)
         results, total_count = self.list_media(
             get_default_storage(self.request, self.account), tags,
-            prefix=kwargs.get('path', '.'))
+            prefix=self.kwargs.get('path', '.'))
         return results
 
     def filter_queryset(self, queryset):
@@ -134,6 +135,7 @@ class MediaListAPIView(UploadedImageMixin, AccountMixin, ListCreateAPIView):
             response_status = status.HTTP_201_CREATED
         result.update({
             'location': storage.url(stored_filename),
+            'updated_at': datetime_or_now(),
             'tags': []
             })
         return Response(self.get_serializer().to_representation(result),
