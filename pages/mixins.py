@@ -121,11 +121,12 @@ class UploadedImageMixin(object):
                     normalized_location = location.split('?')[0]
                     if (filter_list is None
                         or normalized_location in filter_list):
+                        tags = ",".join(list(MediaTag.objects.filter(
+                            location=normalized_location).values_list(
+                            'tag', flat=True)))
                         results += [
                             {'location': location,
-                            'tags': MediaTag.objects.filter(
-                                location=normalized_location).values_list(
-                                'tag', flat=True),
+                            'tags': tags,
                             'updated_at': updated_at
                             }]
             for asset_dir in dirs:

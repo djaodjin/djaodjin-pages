@@ -71,25 +71,29 @@ class MediaListAPIView(UploadedImageMixin, AccountMixin, ListCreateAPIView):
     parser_classes = (parsers.JSONParser, parsers.FormParser,
         parsers.MultiPartParser, parsers.FileUploadParser)
 
-    def get_queryset(self):
+    def get(self, request, *args, **kwargs): #pylint:disable=unused-argument
         tags = None
-        search = self.request.GET.get('q')
+        search = request.GET.get('q')
         if search:
             validate_title(search)
             tags = MediaTag.objects.filter(tag__startswith=search)\
                 .values_list('location', flat=True)
         results, total_count = self.list_media(
             get_default_storage(self.request, self.account), tags,
-            prefix=self.kwargs.get('path', '.'))
-        return results
+            prefix=kwargs.get('path', '.'))
+        return self.get_paginated_response(results)
 
-    def filter_queryset(self, queryset):
-        return sorted(queryset, key=lambda x: x['updated_at'])
-
-    def paginate_queryset(self, queryset):
-        # XXX Deactivates pagination until it is implemented
-        # in djaodjin-sidebar-gallery.js
-        return queryset
+    def get_paginated_response(self, results):
+        # XXX - Deactivate pagination until not
+        # implemented in djaodjin-sidebar-gallery
+        # page = self.paginate_queryset(queryset['results'])
+        # if page is not None:
+        #     queryset = {'count': len(page), 'results' : page}
+        total_count = len(results)
+        return Response({
+            'count': total_count,
+            'results': sorted(results, key=lambda x: x['updated_at'])
+        })
 
     def post(self, request, *args, **kwargs):
         """
@@ -214,7 +218,7 @@ class MediaListAPIView(UploadedImageMixin, AccountMixin, ListCreateAPIView):
         """
         #pylint: disable=unused-argument
         serializer = MediaItemListSerializer(data=request.data)
-        serializer.is_valid()
+        serializer.is_valid(raise_exception=True)
 
         assets, total_count = self.list_media(
             get_default_storage(self.request, self.account),
