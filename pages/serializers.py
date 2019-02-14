@@ -1,4 +1,4 @@
-# Copyright (c) 2017, Djaodjin Inc.
+# Copyright (c) 2018, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -21,10 +21,12 @@
 # WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+from __future__ import unicode_literals
 
 import bleach
 from django.db import transaction
 from django.shortcuts import get_object_or_404
+from django.utils.translation import ugettext_lazy as _
 from rest_framework import serializers
 
 from .models import PageElement, ThemePackage, LessVariable
@@ -47,6 +49,15 @@ class HTMLField(serializers.CharField):
             bleach.clean(data, tags=self.html_tags,
             attributes=self.html_attributes, styles=self.html_styles,
             strip=self.html_strip))
+
+
+class NoModelSerializer(serializers.Serializer):
+
+    def create(self, validated_data):
+        raise RuntimeError('`create()` should not be called.')
+
+    def update(self, instance, validated_data):
+        raise RuntimeError('`update()` should not be called.')
 
 
 class EdgeCreateSerializer(serializers.Serializer):
@@ -148,29 +159,20 @@ class ThemePackageSerializer(serializers.ModelSerializer):
         fields = ('slug', 'name', 'created_at', 'updated_at', 'is_active')
 
 
-class MediaItemSerializer(serializers.Serializer):
+class AssetSerializer(NoModelSerializer):
 
-    location = serializers.CharField()
-
-    def update(self, instance, validated_data):
-        pass
-
-    def create(self, validated_data):
-        pass
+    location = serializers.CharField(
+        help_text=_("URL where the asset content is stored."))
+    updated_at = serializers.DateField(
+        help_text=_("Last date/time the asset content was updated."))
 
 
-class MediaItemListSerializer(serializers.Serializer):
+class MediaItemListSerializer(NoModelSerializer):
 
-    items = MediaItemSerializer(many=True)
+    items = AssetSerializer(many=True)
     tags = serializers.ListField(
         child=serializers.CharField(allow_blank=True),
         required=False)
-
-    def update(self, instance, validated_data):
-        pass
-
-    def create(self, validated_data):
-        pass
 
 
 class EditionFileSerializer(serializers.Serializer):

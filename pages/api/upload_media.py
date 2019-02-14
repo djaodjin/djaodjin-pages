@@ -27,22 +27,22 @@ import hashlib, os
 
 from django.utils.encoding import force_text
 from rest_framework import parsers, status
-from rest_framework.generics import GenericAPIView
+from rest_framework.generics import ListCreateAPIView
 from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
 
 from ..models import MediaTag, PageElement
 from ..mixins import AccountMixin, UploadedImageMixin
-from ..serializers import MediaItemListSerializer
+from ..serializers import AssetSerializer, MediaItemListSerializer
 from ..utils import validate_title, get_default_storage
 
 #pylint:disable=no-name-in-module,import-error
 from django.utils.six.moves.urllib.parse import urljoin, urlparse, urlunparse
 
 
-class MediaListAPIView(UploadedImageMixin, AccountMixin, GenericAPIView):
+class MediaListAPIView(UploadedImageMixin, AccountMixin, ListCreateAPIView):
     """
-    Lists asset files.
+    Lists static asset files.
 
     **Examples
 
@@ -65,12 +65,12 @@ class MediaListAPIView(UploadedImageMixin, AccountMixin, GenericAPIView):
     store_hash = True
     replace_stored = False
     content_type = None
-    serializer_class = MediaItemListSerializer
+    serializer_class = AssetSerializer
     pagination_class = PageNumberPagination
     parser_classes = (parsers.JSONParser, parsers.FormParser,
         parsers.MultiPartParser, parsers.FileUploadParser)
 
-    def get(self, request, *args, **kwargs): #pylint:disable=unused-argument
+    def get_queryset(self):
         tags = None
         search = request.GET.get('q')
         if search:
@@ -80,19 +80,19 @@ class MediaListAPIView(UploadedImageMixin, AccountMixin, GenericAPIView):
         results, total_count = self.list_media(
             get_default_storage(self.request, self.account), tags,
             prefix=kwargs.get('path', '.'))
-        # XXX - Deactivate pagination until not
-        # implemented in djaodjin-sidebar-gallery
-        # page = self.paginate_queryset(queryset['results'])
-        # if page is not None:
-        #     queryset = {'count': len(page), 'results' : page}
-        return Response({
-            'count': total_count,
-            'results': sorted(results, key=lambda x: x['updated_at'])
-        })
+        return results
+
+    def filter_queryset(self, queryset):
+        return sorted(queryset, key=lambda x: x['updated_at'])
+
+    def paginate_queryset(self, queryset):
+        # XXX Deactivates pagination until it is implemented
+        # in djaodjin-sidebar-gallery.js
+        return queryset
 
     def post(self, request, *args, **kwargs):
         """
-        Uploads asset files.
+        Uploads a static asset file.
 
         **Examples
 
@@ -136,11 +136,12 @@ class MediaListAPIView(UploadedImageMixin, AccountMixin, GenericAPIView):
             'location': storage.url(stored_filename),
             'tags': []
             })
-        return Response(result, status=response_status)
+        return Response(self.get_serializer().to_representation(result),
+            status=response_status)
 
     def delete(self, request, *args, **kwargs):
         """
-        Deletes assets file
+        Deletes static assets file
 
         **Examples
 
@@ -186,16 +187,28 @@ class MediaListAPIView(UploadedImageMixin, AccountMixin, GenericAPIView):
 
     def put(self, request, *args, **kwargs):
         """
-        Update media tag
-        {
-            items: [
-                {location: "/media/item/url1.jpg"},
-                {location: "/media/item/url2.jpg"},
-                ....
-            ],
-            tags: ['tag1', 'tag2']
-        }
-        will apply tag1 and tag2 to both media location
+        Updates meta tags on assets.
+
+        **Examples
+
+        .. code-block:: http
+
+            PUT /api/assets/ HTTP/1.1
+
+        .. code-block:: json
+
+            {
+                items: [
+                    {location: "/media/item/url1.jpg"},
+                    {location: "/media/item/url2.jpg"},
+                    ....
+                ],
+                tags: ['photo', 'homepage']
+            }
+
+        When the API returns, both assets file listed in items will be tagged
+        with 'photo' and 'homepage'. Those tags can then be used later on
+        in searches.
         """
         #pylint: disable=unused-argument
         serializer = MediaItemListSerializer(data=request.data)
@@ -218,7 +231,6 @@ class MediaListAPIView(UploadedImageMixin, AccountMixin, GenericAPIView):
             # Remove tags which are no more set for the location.
             media_tags.exclude(tag__in=tags).delete()
 
-        return Response({
-            'count': total_count,
-            'results': sorted(assets, key=lambda x: x['updated_at'])
-        }, status=status.HTTP_200_OK)
+        serializer = self.get_serializer(
+            sorted(assets, key=lambda x: x['updated_at']), many=True)
+        return self.get_paginated_response(serializer.data)

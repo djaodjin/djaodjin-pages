@@ -22,35 +22,62 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pylint: disable=no-member
+from __future__ import unicode_literals
 
 import logging, zipfile
 
-from rest_framework import parsers, status
+from django.utils.translation import ugettext_lazy as _
+from rest_framework import parsers, serializers, status
 from rest_framework.generics import GenericAPIView
 from rest_framework.response import Response
 
+from ..docs import swagger_auto_schema, OpenAPIResponse
 from ..mixins import ThemePackageMixin
-from ..serializers import ThemePackageSerializer
+from ..serializers import NoModelSerializer
 from ..themes import install_theme as install_theme_base, install_theme_fileobj
 
 
 LOGGER = logging.getLogger(__name__)
 
 
+class ThemePackageUploadBodySerializer(NoModelSerializer):
+
+    files = serializers.CharField(
+        help_text=_("Content of the theme package as a zip file."))
+
+
+class ThemePackageUploadSerializer(NoModelSerializer):
+
+    location = serializers.CharField(read_only=True,
+        help_text=_("URL where the theme package was uploaded."))
+
+
 class ThemePackageListAPIView(ThemePackageMixin, GenericAPIView):
-    """
-    POST uploads a new theme package with templates
-    to override the default ones.
-    """
 
     parser_classes = (parsers.FormParser, parsers.MultiPartParser,
         parsers.JSONParser)
-    serializer_class = ThemePackageSerializer
+    serializer_class = ThemePackageUploadBodySerializer
 
     def install_theme(self, package_uri):
         install_theme_base(self.theme, package_uri, force=True)
 
+    @swagger_auto_schema(responses={
+        200: OpenAPIResponse("Upload successful",
+            ThemePackageUploadSerializer)})
     def post(self, request, *args, **kwargs):
+        """
+        Uploads a theme package with templates that will override the default
+        ones. See `references and tutorials on creating themes
+        <https://djaodjin.com/docs/themes/>`_ for details on the theme package
+        structure and customizing the default templates.
+
+        **Examples
+
+        .. code-block:: http
+
+            POST /api/themes HTTP/1.1
+        """
+
         #pylint:disable=unused-argument
         package_uri = request.data.get('location', None)
         if package_uri and 'aws.com/' in package_uri:
@@ -67,4 +94,5 @@ class ThemePackageListAPIView(ThemePackageMixin, GenericAPIView):
         else:
             return Response({'details': "no package_uri or file specified."},
                 status=status.HTTP_400_BAD_REQUEST)
-        return Response({'location': package_uri})
+        return Response(self.get_serializer().to_representation({
+            'location': package_uri}))

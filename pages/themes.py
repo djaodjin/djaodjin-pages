@@ -1,4 +1,4 @@
-# Copyright (c) 2018, Djaodjin Inc.
+# Copyright (c) 2019, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -29,8 +29,7 @@ import logging, os, tempfile, shutil, subprocess, sys, zipfile
 from django.core.files.storage import FileSystemStorage
 from django.core.exceptions import PermissionDenied
 from django.contrib.staticfiles.templatetags.staticfiles import do_static
-from django.template.base import (Parser, NodeList,
-    TOKEN_TEXT, TOKEN_VAR, TOKEN_BLOCK, TOKEN_COMMENT)
+from django.template.base import Parser, NodeList
 from django.template.backends.jinja2 import get_exception_info
 from django.template.context import Context
 from django.template.exceptions import TemplateDoesNotExist, TemplateSyntaxError
@@ -43,7 +42,7 @@ import jinja2
 import requests
 
 from . import settings
-from .compat import get_html_engine
+from .compat import TokenType, get_html_engine
 
 #pylint:disable=no-name-in-module,import-error
 from django.utils.six.moves.urllib.parse import urlparse
@@ -93,11 +92,11 @@ class AssetsParser(Parser):
                 contents = token.contents.encode('utf8')
             else:
                 contents = token.contents
-            if token.token_type == TOKEN_TEXT:
+            if token.token_type == TokenType.TEXT:
                 self.dest_stream.write(contents)
-            elif token.token_type == TOKEN_VAR:
+            elif token.token_type == TokenType.VAR:
                 self.dest_stream.write("{{%s}}" % contents)
-            elif token.token_type == TOKEN_BLOCK:
+            elif token.token_type == TokenType.BLOCK:
                 try:
                     command = token.contents.split()[0]
                 except IndexError:
@@ -127,7 +126,7 @@ class AssetsParser(Parser):
                         do_static(self, token).render(self.context))
                 else:
                     self.dest_stream.write("{%% %s %%}" % contents)
-            elif token.token_type == TOKEN_COMMENT:
+            elif token.token_type == TokenType.COMMENT:
                 pass
 
 
@@ -284,23 +283,29 @@ def install_theme_fileobj(theme_name, zip_file, force=False):
                             check_template(template_string)
                             with open(tmp_path, 'w') as extracted_file:
                                 extracted_file.write(template_string)
-                            default_path = get_template_path(
-                                relative_path=relative_path)
-                            if (default_path and
-                                not default_path.startswith(theme_dir)):
-                                cmdline = ['diff', '-u', default_path, tmp_path]
-                                cmd = subprocess.Popen(
-                                    cmdline, stdout=subprocess.PIPE)
-                                lines = cmd.stdout.readlines()
-                                cmd.wait()
-                                # Non-zero error codes are ok here. That's how
-                                # diff indicates the files are different.
-                                if not lines:
-                                    LOGGER.info(
-                                        "%s: no differences", relative_path)
-                                    os.remove(tmp_path)
-                        except (TemplateDoesNotExist,
-                                TemplateSyntaxError) as err:
+                            try:
+                                default_path = get_template_path(
+                                    relative_path=relative_path)
+                                if (default_path and
+                                    not default_path.startswith(theme_dir)):
+                                    cmdline = [
+                                        'diff', '-u', default_path, tmp_path]
+                                    cmd = subprocess.Popen(
+                                        cmdline, stdout=subprocess.PIPE)
+                                    lines = cmd.stdout.readlines()
+                                    cmd.wait()
+                                    # Non-zero error codes are ok here.
+                                    # That's how diff indicates the files
+                                    # are different.
+                                    if not lines:
+                                        LOGGER.info(
+                                            "%s: no differences", relative_path)
+                                        os.remove(tmp_path)
+                            except TemplateDoesNotExist:
+                                # We are installing a template which is not
+                                # in the default theme, so no diff is ok.
+                                pass
+                        except TemplateSyntaxError as err:
                             LOGGER.info("error:%s: %s", relative_path, err)
 
         # Should be safe to move in-place at this point.

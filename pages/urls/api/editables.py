@@ -26,10 +26,28 @@
 
 from django.conf.urls import url
 
-from ...api.sources import SourceDetailAPIView
+from ...import settings
+from ...api.edition import (PageElementDetail, PagesElementListAPIView,
+    PageElementAddTags, PageElementRemoveTags)
+from ...api.relationship import (PageElementAliasAPIView,
+    PageElementMirrorAPIView, PageElementMoveAPIView, RelationShipListAPIView)
 
 
 urlpatterns = [
-    url(r'^sources/(?P<page>\S+)?',
-        SourceDetailAPIView.as_view(), name='pages_api_sources'),
+    url(r'^editables/relationship/',
+        RelationShipListAPIView.as_view(), name='relationships'),
+    url(r'^editables/alias(?P<path>%s)/' % settings.PATH_RE,
+        PageElementAliasAPIView.as_view(), name='api_alias_node'),
+    url(r'^editables/attach(?P<path>%s)$' % settings.PATH_RE,
+        PageElementMoveAPIView.as_view(), name='api_move_node'),
+    url(r'^editables/mirror(?P<path>%s)/' % settings.PATH_RE,
+        PageElementMirrorAPIView.as_view(), name='api_mirror_node'),
+    url(r'^editables/(?P<slug>[\w-]+)/add-tags/?',
+        PageElementAddTags.as_view(), name='page_element_add_tags'),
+    url(r'^editables/(?P<slug>[\w-]+)/remove-tags/?',
+        PageElementRemoveTags.as_view(), name='page_element_remove_tags'),
+    url(r'^editables/(?P<slug>[\w-]+)/',
+        PageElementDetail.as_view(), name='edit_page_element'),
+    url(r'^editables/',
+        PagesElementListAPIView.as_view(), name='page_elements'),
 ]
