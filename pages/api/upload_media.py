@@ -237,6 +237,10 @@ class MediaListAPIView(UploadedImageMixin, AccountMixin, ListCreateAPIView):
             # Remove tags which are no more set for the location.
             media_tags.exclude(tag__in=tags).delete()
 
+            # Update tags returned by the API.
+            item['tags'] = ",".join(list(MediaTag.objects.filter(
+                location=location).values_list('tag', flat=True)))
+
         serializer = self.get_serializer(
             sorted(assets, key=lambda x: x['updated_at']), many=True)
         return self.get_paginated_response(serializer.data)

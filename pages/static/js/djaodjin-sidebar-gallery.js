@@ -222,7 +222,9 @@ Options:
                             + "\" uploaded sucessfully to \""
                             + response.location + "\"");
                     }else if (status === 200){
-                        self.options.galleryMessage(response.message);
+                        self.options.galleryMessage("\"" + file.name
+                            + "\" has previously been uploaded to \""
+                            + response.location + "\"");
                     }
                 },
                 uploadError: function(file, resp){
