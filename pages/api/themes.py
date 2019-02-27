@@ -94,5 +94,5 @@ class ThemePackageListAPIView(ThemePackageMixin, GenericAPIView):
         else:
             return Response({'details': "no package_uri or file specified."},
                 status=status.HTTP_400_BAD_REQUEST)
-        return Response(self.get_serializer().to_representation({
+        return Response(ThemePackageUploadSerializer().to_representation({
             'location': package_uri}))
