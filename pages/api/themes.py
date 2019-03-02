@@ -1,4 +1,4 @@
-# Copyright (c) 2018, Djaodjin Inc.
+# Copyright (c) 2019, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -34,7 +34,8 @@ from rest_framework.response import Response
 from ..docs import swagger_auto_schema, OpenAPIResponse
 from ..mixins import ThemePackageMixin
 from ..serializers import NoModelSerializer
-from ..themes import install_theme as install_theme_base, install_theme_fileobj
+from ..themes import (install_theme as install_theme_base,
+    install_theme_fileobj, remove_theme)
 
 
 LOGGER = logging.getLogger(__name__)
@@ -61,6 +62,22 @@ class ThemePackageListAPIView(ThemePackageMixin, GenericAPIView):
     def install_theme(self, package_uri):
         install_theme_base(self.theme, package_uri, force=True)
 
+    def delete(self, request, *args, **kwargs):
+        """
+        Removes the custom theme templates and assets.
+
+        Pages will be using the default theme after a reset.
+
+        **Examples
+
+        .. code-block:: http
+
+            DELETE /api/themes HTTP/1.1
+        """
+        remove_theme(self.theme)
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
     @swagger_auto_schema(responses={
         200: OpenAPIResponse("Upload successful",
             ThemePackageUploadSerializer)})
@@ -73,9 +90,9 @@ class ThemePackageListAPIView(ThemePackageMixin, GenericAPIView):
 
         **Examples
 
-        .. code-block:: http
+        .. code-block:: shell
 
-            POST /api/themes HTTP/1.1
+            curl -i -u *api_key*:  -X POST -F file=@*package*.zip https://*mydomain*/api/themes/
         """
 
         #pylint:disable=unused-argument

@@ -331,3 +331,21 @@ def install_theme_fileobj(theme_name, zip_file, force=False):
     finally:
         # Always delete the temporary directory, exception raised or not.
         shutil.rmtree(tmp_dir)
+
+
+def remove_theme(theme_name):
+    """
+    Remove assets and templates directories.
+    """
+    theme_dir = get_theme_dir(theme_name)
+    public_dir = safe_join(settings.PUBLIC_ROOT, theme_name)
+    LOGGER.info("remove theme '%s', that is directories %s and %s.",
+                   theme_name, theme_dir, public_dir)
+    try:
+        shutil.rmtree(theme_dir)
+    except FileNotFoundError:
+        pass
+    try:
+        shutil.rmtree(public_dir)
+    except FileNotFoundError:
+        pass
