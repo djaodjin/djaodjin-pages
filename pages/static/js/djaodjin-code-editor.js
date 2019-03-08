@@ -7,7 +7,7 @@ function initCodeEditors(api_sources, iframe) {
         var tabsContainer = element.find("[role='tablist']");
         var contentsContainer = element.find(".tab-content");
         var idx = tabsContainer.find(">li").length;
-        var tab = $("<li" + (idx === 0 ? " class=\"active\"" : "") + "><a href=\"#tab-" + idx + "\" data-toggle=\"tab\">" + name + "</a></li>");
+        var tab = $("<li class=\"nav-item\"><a class=\"nav-link" + (idx === 0 ? " active" : "") + "\" href=\"#tab-" + idx + "\" data-toggle=\"tab\">" + name + "</a></li>");
         var content = $("<div id=\"tab-" + idx + "\" class=\"tab-pane" + (idx === 0 ? " active" : "") + " role=\"tabpanel\" style=\"width:100%;height:100%;\"><div class=\"content\" data-content=\"" + name + "\" style=\"width:100%;min-height:100%;\"></div></div>");
         if( typeof beforeElem !== 'undefined' ) {
             console.log("insert ", tab, " before", beforeElem);
@@ -34,7 +34,7 @@ function initCodeEditors(api_sources, iframe) {
     } else {
         $("#code-editor .tab-content").append("<div>No editable templates</div>");
     }
-    $("#code-editor [role='tablist']").append("<li id=\"new-source-btn\"><a href=\"#new-source\" data-toggle=\"modal\" data-target=\"#new-source\"><i class=\"fa fa-plus\"></i> New</a></li>");
+    $("#code-editor [role='tablist']").append("<li id=\"new-source-btn\" class=\"nav-item\"><a class=\"nav-link\" href=\"#new-source\" data-toggle=\"modal\" data-target=\"#new-source\"><i class=\"fa fa-plus\"></i> New</a></li>");
     $("#code-editor #new-source-submit").click(function(event) {
         event.preventDefault();
         var name = $("#code-editor #new-source [name='name']").val();

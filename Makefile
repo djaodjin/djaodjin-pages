@@ -15,7 +15,7 @@ PYTHON        := TESTSITE_SETTINGS_LOCATION=$(CONFIG_DIR) $(binDir)/python
 installDirs   ?= install -d
 installFiles  := install -p -m 644
 
-ASSETS_DIR    := $(srcDir)/testsite/static
+ASSETS_DIR    := $(srcDir)/htdocs/static
 
 # Django 1.7,1.8 sync tables without migrations by default while Django 1.9
 # requires a --run-syncdb argument.

@@ -172,18 +172,33 @@ USE_L10N = True
 
 USE_TZ = True
 
-# S3 settings
+# static assets
+# -------------
+HTDOCS = os.path.join(BASE_DIR, 'htdocs')
+
+# Absolute filesystem path to the directory that will hold user-uploaded files.
+# Example: "/var/www/example.com/media/"
+MEDIA_ROOT = HTDOCS + '/media'
+
+# URL that handles the media served from MEDIA_ROOT. Make sure to use a
+# trailing slash.
+# Examples: "http://example.com/media/", "http://media.example.com/"
 MEDIA_URL = '/media/'
 
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/1.7/howto/static-files/
-STATIC_ROOT = BASE_DIR + '/testsite/static'
+# Absolute path to the directory static files should be collected to.
+# Don't put anything in this directory yourself; store your static files
+# in apps' "static/" subdirectories and in STATICFILES_DIRS.
+# Example: "/var/www/example.com/static/"
+APP_STATIC_ROOT = HTDOCS + '/static'
+if DEBUG:
+    STATIC_ROOT = ''
+    # Additional locations of static files
+    STATICFILES_DIRS = (APP_STATIC_ROOT, HTDOCS,)
+else:
+    STATIC_ROOT = APP_STATIC_ROOT
 
-STATIC_URL = '/static/'
-
-
-MEDIA_ROOT = BASE_DIR + '/testsite/media'
-
+# Pages App
+# ---------
 PAGES = {
     'UPLOADED_TEMPLATE_DIR' : BASE_DIR + '/testsite/templates',
     'UPLOADED_STATIC_DIR' : STATIC_ROOT
