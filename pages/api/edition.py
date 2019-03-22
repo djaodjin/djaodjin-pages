@@ -80,18 +80,21 @@ class PageElementAddTags(PageElementMixin, generics.UpdateAPIView):
     """
     Add tags to a ``PageElement`` if they are not already present.
 
-    **Example request**:
+    **Tags: themes
+
+    **Example
 
     .. sourcecode:: http
 
         PUT /api/editables/_my-element_/add-tags
+
+    .. sourcecode:: json
+
         {
           "tag": "sometag"
         }
 
-    **Example response**:
-
-    .. sourcecode:: http
+    .. sourcecode:: json
 
         {
         }
@@ -116,18 +119,23 @@ class PageElementRemoveTags(PageElementMixin, generics.UpdateAPIView):
     """
     Remove tags from a ``PageElement``.
 
-    **Example request**:
+    **Tags: themes
+
+    **Examples
 
     .. sourcecode:: http
 
         PUT /api/editables/_my-element_/reomve-tags
+
+    .. sourcecode:: json
+
         {
           "tag": "sometag"
         }
 
-    **Example response**:
+    **Examples
 
-    .. sourcecode:: http
+    .. sourcecode:: json
 
         {
         }

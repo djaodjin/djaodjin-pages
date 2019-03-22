@@ -68,6 +68,8 @@ class ThemePackageListAPIView(ThemePackageMixin, GenericAPIView):
 
         Pages will be using the default theme after a reset.
 
+        **Tags: themes
+
         **Examples
 
         .. code-block:: http
@@ -87,6 +89,8 @@ class ThemePackageListAPIView(ThemePackageMixin, GenericAPIView):
         ones. See `references and tutorials on creating themes
         <https://djaodjin.com/docs/themes/>`_ for details on the theme package
         structure and customizing the default templates.
+
+        **Tags: themes
 
         **Examples
 
