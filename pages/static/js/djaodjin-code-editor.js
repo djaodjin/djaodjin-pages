@@ -112,7 +112,15 @@ function initCodeEditors(api_sources, iframe) {
                 success: function(resp){
                     self.editor.setValue(resp.text);
                     var modelist = ace.require("ace/ext/modelist");
-                    var mode = modelist.getModeForPath(resp.path).mode;
+                    var path = resp.path;
+                    if(path.indexOf('.') !== -1){
+                        var chunks = path.split('.').reverse()
+                        if(chunks[0] === 'eml'){
+                            chunks[0] = 'html'; // treat eml as html
+                            path = chunks.reverse().join('.');
+                        }
+                    }
+                    var mode = modelist.getModeForPath(path).mode;
                     self.editor.getSession().setMode(mode);
                     self.editor.focus();
                     self.editor.gotoLine(0);
