@@ -6,6 +6,7 @@
 <head>
   <title>djaodjin-pages testsite</title>
   <script type="text/javascript" src="{% static 'vendor/jquery.js' %}"></script>
+  <script type="text/javascript" src="{% url 'javascript-catalog' %}"></script>
   {% if csrf_token %}
   <meta name="csrf-token" content="{{csrf_token}}">
   <script type="text/javascript">

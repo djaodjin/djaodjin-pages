@@ -2,15 +2,15 @@
 beautifulsoup4==4.6.0
 bleach==2.0.0
 boto==2.48.0
-Django==1.11.18
+Django==1.11
 djangorestframework==3.8.2
 django-assets==0.12
-django-storages-redux==1.3.2
+django-storages==1.3.2
 djaodjin-deployutils==0.5.9
-Markdown==2.6.11
 Jinja2==2.10.1
-requests==2.21.0
+Markdown==2.6.11
 python-dateutil==2.8.0
+requests==2.21.0
 
 # testsite-only
 coverage==4.0.3

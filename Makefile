@@ -48,18 +48,19 @@ $(DESTDIR)$(CONFIG_DIR)/gunicorn.conf: $(srcDir)/testsite/etc/gunicorn.conf
 
 
 initdb: install-conf
-	-cd $(srcDir) && rm -rf db.sqlite3 testsite-app.log testsite/media/vendor themes
+	-cd $(srcDir) && rm -rf db.sqlite3 testsite-app.log htdocs/media/vendor themes
 	cd $(srcDir) && $(PYTHON) ./manage.py migrate $(RUNSYNCDB) --noinput
 	cd $(srcDir) && $(PYTHON) ./manage.py loaddata \
 						testsite/fixtures/default-db.json
-	cd $(srcDir) && $(installDirs) testsite/media/vendor themes/templates
+	cd $(srcDir) && $(installDirs) htdocs/media/vendor themes/templates
+	cd $(srcDir) && $(installFiles) htdocs/static/vendor/bootstrap.css htdocs/media/vendor
 
 doc:
 	$(installDirs) docs
 	cd $(srcDir) && sphinx-build -b html ./docs $(PWD)/docs
 
 clean:
-	-rm -rf credentials gunicorn.conf db.sqlite3 testsite-app.log testsite/media themes
+	-rm -rf credentials gunicorn.conf db.sqlite3 testsite-app.log htdocs/media themes
 
 vendor-assets-prerequisites: $(srcDir)/package.json
 	$(installFiles) $^ $(installTop)

@@ -80,8 +80,11 @@ function _showErrorMessages(resp) {
                             message = data[key].detail;
                         }
                         messages.push(key + ": " + message);
-                        $("[name=\"" + key + "\"]").parents('.form-group').addClass("has-error");
-                        var help = $("[name=\"" + key + "\"]").parents('.form-group').find('.help-block');
+                        var inputField = $("[name=\"" + key + "\"]");
+                        var parent = inputField.parents('.form-group');
+                        inputField.addClass("is-invalid");
+                        parent.addClass("has-error");
+                        var help = parent.find('.invalid-feedback');
                         if( help.length > 0 ) { help.text(message); }
                     }
                 }
@@ -96,13 +99,15 @@ function _showErrorMessages(resp) {
 
 function showErrorMessages(resp) {
     if( resp.status >= 500 && resp.status < 600 ) {
-        messages = [interpolate(gettext("Error %s: %s"
-            + ". We have been notified and have started on fixing"
-            + " the error. We apologize for the inconvinience."), resp.status, resp.statusText)];
+        messages = [interpolate(gettext("Error %s: %s. We have been notified"
+            + " and have started on fixing the error. We apologize for the"
+            + " inconvinience."), [resp.status, resp.statusText])
+        ];
     } else {
         var messages = _showErrorMessages(resp);
         if( messages.length === 0 ) {
-            messages = ["Error " + resp.status + ": " + resp.statusText];
+            messages = [interpolate(gettext("Error %s:"), [resp.status])
+                + " " + resp.statusText];
         }
     }
     showMessages(messages, "error");
@@ -122,4 +127,17 @@ function getMetaCSRFToken() {
         }
     }
     return "";
+};
+
+/** Retrieves an URL query argument.
+
+    Example:
+
+        window.location = getUrlParameter('next');
+*/
+function getUrlParameter(name) {
+    name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
+    var regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+    var results = regex.exec(location.search);
+    return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
 };
