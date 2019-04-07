@@ -35,7 +35,7 @@ urlpatterns = staticfiles_urlpatterns() \
     + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 urlpatterns += [
-    url(r'jsi18n/$', JavaScriptCatalog.as_view(), name='javascript-catalog'),
+    url(r'^jsi18n/$', JavaScriptCatalog.as_view(), name='javascript-catalog'),
     url(r'^app/$', PageView.as_view(template_name='index.html',
         body_bottom_template_name="pages/_body_bottom_edit_tools.html")),
     url(r'^$', PageView.as_view(template_name='index.html',
