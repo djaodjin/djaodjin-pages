@@ -218,13 +218,11 @@ Options:
                     }
                     if ([201, 204].indexOf(status) >= 0){
                         self.addMediaItem(response, lastIndex, false);
-                        self.options.galleryMessage('"' + file.name
-                            + '" ' + gettext('uploaded sucessfully to') + ' "'
-                            + response.location + '"');
+                        self.options.galleryMessage(interpolate(gettext('"%s" uploaded sucessfully to "%s"'),
+                            file.name, response.location));
                     }else if (status === 200){
-                        self.options.galleryMessage('"' + file.name
-                            + '" ' + gettext('has previously been uploaded to') + ' "'
-                            + response.location + '"');
+                        self.options.galleryMessage(interpolate(gettext('"%s" has previously been uploaded to "%s"'),
+                            file.name, response.location));
                     }
                 },
                 uploadError: function(file, resp){
@@ -456,7 +454,7 @@ Options:
 
         // Customize djaodjin gallery.
         buttonClass: "",
-        galleryTemplate: "<div class=\"dj-gallery\">\n  <div class=\"sidebar-gallery\">\n    <h1>Media</h1>\n    <input placeholder=\"" + gettext('Search...') + "\" class=\"dj-gallery-filter\" type=\"text\" >\n    <div class=\"dj-gallery-items\">\n    </div>\n    <div class=\"dj-gallery-info-item\"></div>\n  </div>\n</div>",
+        galleryTemplate: "<div class=\"dj-gallery\">\n  <div class=\"sidebar-gallery\">\n    <h1>" + gettext('Media') + "</h1>\n    <input placeholder=\"" + gettext('Search...') + "\" class=\"dj-gallery-filter\" type=\"text\" >\n    <div class=\"dj-gallery-items\">\n    </div>\n    <div class=\"dj-gallery-info-item\"></div>\n  </div>\n</div>",
         galleryItemOptionsTemplate: "<textarea rows=\"4\" style=\"width:100%;\" readonly data-dj-gallery-media-url></textarea>\n<button data-dj-gallery-media-location class=\"dj-gallery-delete-item\">" + gettext('Delete') + "</button>\n<button data-dj-gallery-media-location class=\"dj-gallery-preview-item\">" + gettext('Preview') + "</button>\n<br>\n<input data-dj-gallery-media-tag class=\"dj-gallery-tag-input\" type=\"text\" placeholder=\"" + gettext('Please enter tag.') + "\"><button class=\"dj-gallery-tag-item\">" + gettext('Update tags') + "</button>",
         mediaClass: "",
         selectedMediaClass: "dj-gallery-active-item",

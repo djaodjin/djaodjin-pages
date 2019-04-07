@@ -102,7 +102,7 @@ function showErrorMessages(resp) {
     } else {
         var messages = _showErrorMessages(resp);
         if( messages.length === 0 ) {
-            messages = ["Error " + resp.status + ": " + resp.statusText];
+            messages = [gettext("Error") + " " + resp.status + ": " + resp.statusText];
         }
     }
     showMessages(messages, "error");
