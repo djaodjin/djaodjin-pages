@@ -29,7 +29,7 @@
                 if( resp.details ) {
                     showMessages(resp.details, "success");
                 } else {
-                    var msg = interpolate(gettext('"%s" uploaded sucessfully'), file.name);
+                    var msg = interpolate(gettext('"%s" uploaded sucessfully'), [file.name]);
                     showMessages([msg], "success");
 //XXX                    console.log(msg + " to \"" + resp.location + "\"");
                 }
@@ -45,7 +45,7 @@
             } else {
                 if( typeof resp === "string" ) {
                     showErrorMessages(
-                        interpolate(gettext("Error: %s (while uploading '%s')"), resp, file.name));
+                        interpolate(gettext("Error: %s (while uploading '%s')"), [resp, file.name]));
                 } else {
                     showErrorMessages(resp);
                 }

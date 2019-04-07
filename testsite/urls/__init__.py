@@ -24,6 +24,7 @@
 
 from django.conf import settings
 from django.conf.urls import include, url
+from django.views.i18n import JavaScriptCatalog
 from django.conf.urls.static import static
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 
@@ -34,6 +35,7 @@ urlpatterns = staticfiles_urlpatterns() \
     + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 urlpatterns += [
+    url(r'jsi18n/$', JavaScriptCatalog.as_view(), name='javascript-catalog'),
     url(r'^app/$', PageView.as_view(template_name='index.html',
         body_bottom_template_name="pages/_body_bottom_edit_tools.html")),
     url(r'^$', PageView.as_view(template_name='index.html',

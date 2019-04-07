@@ -147,7 +147,8 @@ Options:
                             $(ui.helper).remove();
                             self.saveDroppedMedia(droppable);
                         }else{
-                            self.options.galleryMessage(interpolate(gettext("This placeholder accepts only: %s files."), self.options.acceptedImages.join(", ")));
+                            self.options.galleryMessage(interpolate(gettext("This placeholder accepts only: %s files."),
+                                [self.options.acceptedImages.join(", ")]));
                         }
                     }else if (droppable.prop("tagName") === "VIDEO"){
                         if (self.options.acceptedVideos.some(function(v) {
@@ -156,7 +157,8 @@ Options:
                             $(ui.helper).remove();
                             self.saveDroppedMedia(droppable);
                         }else{
-                            self.options.galleryMessage(interpolate(gettext("This placeholder accepts only: %s files."), self.options.acceptedVideos.join(", ")));
+                            self.options.galleryMessage(interpolate(gettext("This placeholder accepts only: %s files."),
+                                [self.options.acceptedVideos.join(", ")]));
                         }
                     }
                 }
@@ -219,10 +221,10 @@ Options:
                     if ([201, 204].indexOf(status) >= 0){
                         self.addMediaItem(response, lastIndex, false);
                         self.options.galleryMessage(interpolate(gettext('"%s" uploaded sucessfully to "%s"'),
-                            file.name, response.location));
+                            [file.name, response.location]));
                     }else if (status === 200){
                         self.options.galleryMessage(interpolate(gettext('"%s" has previously been uploaded to "%s"'),
-                            file.name, response.location));
+                            [file.name, response.location]));
                     }
                 },
                 uploadError: function(file, resp){
