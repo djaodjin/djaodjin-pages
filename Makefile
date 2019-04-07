@@ -53,7 +53,6 @@ initdb: install-conf
 	cd $(srcDir) && $(PYTHON) ./manage.py loaddata \
 						testsite/fixtures/default-db.json
 	cd $(srcDir) && $(installDirs) testsite/media/vendor themes/templates
-	cd $(srcDir) && $(installFiles) testsite/static/vendor/bootstrap.css testsite/media/vendor
 
 doc:
 	$(installDirs) docs

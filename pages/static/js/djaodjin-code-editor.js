@@ -32,7 +32,7 @@ function initCodeEditors(api_sources, iframe) {
             addPanel($("#code-editor"), templates[idx].name);
         }
     } else {
-        $("#code-editor .tab-content").append("<div>No editable templates</div>");
+        $("#code-editor .tab-content").append("<div>" + gettext('No editable templates') + "</div>");
     }
     $("#code-editor [role='tablist']").append("<li id=\"new-source-btn\" class=\"nav-item\"><a class=\"nav-link\" href=\"#new-source\" data-toggle=\"modal\" data-target=\"#new-source\"><i class=\"fa fa-plus\"></i> New</a></li>");
     $("#code-editor #new-source-submit").click(function(event) {

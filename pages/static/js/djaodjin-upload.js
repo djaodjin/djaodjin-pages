@@ -29,7 +29,7 @@
                 if( resp.details ) {
                     showMessages(resp.details, "success");
                 } else {
-                    var msg = "\"" + file.name + "\" uploaded sucessfully";
+                    var msg = '"' + file.name + '" ' + gettext('uploaded sucessfully');
                     showMessages([msg], "success");
 //XXX                    console.log(msg + " to \"" + resp.location + "\"");
                 }
@@ -45,7 +45,7 @@
             } else {
                 if( typeof resp === "string" ) {
                     showErrorMessages(
-                 "Error: " + resp + "(while uploading '" + file.name + "')");
+                 interpolate(gettext("Error: %s (while uploading '%s')"), resp, file.name));
                 } else {
                     showErrorMessages(resp);
                 }
@@ -122,9 +122,9 @@
                     : self.options.uploadUrl));
             if( !dropzoneUrl ) {
                 showErrorMessages(
-                    "instantiated djupload() with no uploadUrl specified.");
+                    gettext("instantiated djupload() with no uploadUrl specified."));
                 throw new Error(
-                    "instantiated djupload() with no uploadUrl specified.");
+                    gettext("instantiated djupload() with no uploadUrl specified."));
             }
             self.element.dropzone({
                 paramName: self.options.uploadParamName,

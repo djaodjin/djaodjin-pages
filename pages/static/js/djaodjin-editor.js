@@ -129,7 +129,7 @@
             });
 
             $(".editable").bind("hallomodified", function(event, data) {
-                $("#modified").html("Editables modified");
+                $("#modified").html(gettext("Editables modified"));
             });
             if (self.options.preventBlurOnClick !== ""){
                 $(document).on("mousedown", self.options.preventBlurOnClick, function(event){
@@ -609,7 +609,7 @@
 
     $.fn.editor.defaults = {
         baseUrl: null, // Url to send request to server
-        emptyInputText: "placeholder, type to overwrite...",
+        emptyInputText: gettext("placeholder, type to overwrite..."),
         uniqueIdentifier: "id",
         preventBlurOnClick: "",
         onSuccess: function(element, resp){

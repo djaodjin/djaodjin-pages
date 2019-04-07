@@ -147,7 +147,7 @@ Options:
                             $(ui.helper).remove();
                             self.saveDroppedMedia(droppable);
                         }else{
-                            self.options.galleryMessage("This placeholder accepts only: " + self.options.acceptedImages.join(", ") + " files.");
+                            self.options.galleryMessage(interpolate(gettext("This placeholder accepts only: %s files."), self.options.acceptedImages.join(", ")));
                         }
                     }else if (droppable.prop("tagName") === "VIDEO"){
                         if (self.options.acceptedVideos.some(function(v) {
@@ -156,7 +156,7 @@ Options:
                             $(ui.helper).remove();
                             self.saveDroppedMedia(droppable);
                         }else{
-                            self.options.galleryMessage("This placeholder accepts only: " + self.options.acceptedVideos.join(", ") + " files.");
+                            self.options.galleryMessage(interpolate(gettext("This placeholder accepts only: %s files."), self.options.acceptedVideos.join(", ")));
                         }
                     }
                 }
@@ -178,7 +178,7 @@ Options:
 
         initMediaInfo: function(){
             var self = this;
-            $(".dj-gallery-info-item").text("Click on an item to view more options");
+            $(".dj-gallery-info-item").text(gettext("Click on an item to view more options"));
         },
 
         initDropzone: function(){
@@ -218,13 +218,13 @@ Options:
                     }
                     if ([201, 204].indexOf(status) >= 0){
                         self.addMediaItem(response, lastIndex, false);
-                        self.options.galleryMessage("\"" + file.name
-                            + "\" uploaded sucessfully to \""
-                            + response.location + "\"");
+                        self.options.galleryMessage('"' + file.name
+                            + '" ' + gettext('uploaded sucessfully to') + ' "'
+                            + response.location + '"');
                     }else if (status === 200){
-                        self.options.galleryMessage("\"" + file.name
-                            + "\" has previously been uploaded to \""
-                            + response.location + "\"");
+                        self.options.galleryMessage('"' + file.name
+                            + '" ' + gettext('has previously been uploaded to') + ' "'
+                            + response.location + '"');
                     }
                 },
                 uploadError: function(file, resp){
@@ -371,7 +371,7 @@ Options:
                 success: function(){
                     $("[src=\"" + self.selectedMedia.attr("src") + "\"]").parent(".dj-gallery-item-container").remove();
                     $(".dj-gallery-info-item").empty();
-                    self.options.galleryMessage("Media correctly deleted.");
+                    self.options.galleryMessage(gettext("Media correctly deleted."));
                 },
                 error: function(resp) {
                     showErrorMessages(resp);
@@ -405,7 +405,7 @@ Options:
                             $("[src=\"" + element.location + "\"]").attr(
                                 "tags", element.tags);
                         });
-                        self.options.galleryMessage("Tags correctly updated.");
+                        self.options.galleryMessage(gettext("Tags correctly updated."));
                     },
                     error: function(resp) {
                         showErrorMessages(resp);
@@ -456,8 +456,8 @@ Options:
 
         // Customize djaodjin gallery.
         buttonClass: "",
-        galleryTemplate: "<div class=\"dj-gallery\">\n  <div class=\"sidebar-gallery\">\n    <h1>Media</h1>\n    <input placeholder=\"Search...\" class=\"dj-gallery-filter\" type=\"text\" >\n    <div class=\"dj-gallery-items\">\n    </div>\n    <div class=\"dj-gallery-info-item\"></div>\n  </div>\n</div>",
-        galleryItemOptionsTemplate: "<textarea rows=\"4\" style=\"width:100%;\" readonly data-dj-gallery-media-url></textarea>\n<button data-dj-gallery-media-location class=\"dj-gallery-delete-item\">Delete</button>\n<button data-dj-gallery-media-location class=\"dj-gallery-preview-item\">Preview</button>\n<br>\n<input data-dj-gallery-media-tag class=\"dj-gallery-tag-input\" type=\"text\" placeholder=\"Please enter tag.\"><button class=\"dj-gallery-tag-item\">Update tags</button>",
+        galleryTemplate: "<div class=\"dj-gallery\">\n  <div class=\"sidebar-gallery\">\n    <h1>Media</h1>\n    <input placeholder=\"" + gettext('Search...') + "\" class=\"dj-gallery-filter\" type=\"text\" >\n    <div class=\"dj-gallery-items\">\n    </div>\n    <div class=\"dj-gallery-info-item\"></div>\n  </div>\n</div>",
+        galleryItemOptionsTemplate: "<textarea rows=\"4\" style=\"width:100%;\" readonly data-dj-gallery-media-url></textarea>\n<button data-dj-gallery-media-location class=\"dj-gallery-delete-item\">" + gettext('Delete') + "</button>\n<button data-dj-gallery-media-location class=\"dj-gallery-preview-item\">" + gettext('Preview') + "</button>\n<br>\n<input data-dj-gallery-media-tag class=\"dj-gallery-tag-input\" type=\"text\" placeholder=\"" + gettext('Please enter tag.') + "\"><button class=\"dj-gallery-tag-item\">" + gettext('Update tags') + "</button>",
         mediaClass: "",
         selectedMediaClass: "dj-gallery-active-item",
         startLoad: false,
