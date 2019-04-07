@@ -189,6 +189,7 @@ MEDIA_URL = '/media/'
 # Don't put anything in this directory yourself; store your static files
 # in apps' "static/" subdirectories and in STATICFILES_DIRS.
 # Example: "/var/www/example.com/static/"
+STATIC_URL = '/static/'
 APP_STATIC_ROOT = HTDOCS + '/static'
 if DEBUG:
     STATIC_ROOT = ''
