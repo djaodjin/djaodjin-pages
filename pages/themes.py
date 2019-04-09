@@ -47,6 +47,11 @@ from .compat import TokenType, get_html_engine
 #pylint:disable=no-name-in-module,import-error
 from django.utils.six.moves.urllib.parse import urlparse
 
+try:
+    FileNotFoundError
+except NameError:
+    # py2
+    FileNotFoundError = IOError
 
 LOGGER = logging.getLogger(__name__)
 
