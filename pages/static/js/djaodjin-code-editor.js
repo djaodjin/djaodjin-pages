@@ -137,6 +137,7 @@ function initCodeEditors(api_sources, iframe) {
         saveSource: function(){
             var self = this;
             var path = self.$element.attr("data-content");
+            self.$element.trigger('pages.save');
             $.ajax({
                 url: self.options.api_source_code + path,
                 method: "PUT",
