@@ -47,12 +47,6 @@ from .compat import TokenType, get_html_engine
 #pylint:disable=no-name-in-module,import-error
 from django.utils.six.moves.urllib.parse import urlparse
 
-try:
-    FileNotFoundError
-except NameError:
-    # py2
-    FileNotFoundError = IOError
-
 LOGGER = logging.getLogger(__name__)
 
 
@@ -342,6 +336,12 @@ def remove_theme(theme_name):
     """
     Remove assets and templates directories.
     """
+    try:
+        FileNotFoundError
+    except NameError:
+        # py27 `rmtree` will raise an OSError executing `os.listdir(path)`
+        # if the path is not present.
+        FileNotFoundError = OSError
     theme_dir = get_theme_dir(theme_name)
     public_dir = safe_join(settings.PUBLIC_ROOT, theme_name)
     LOGGER.info("remove theme '%s', that is directories %s and %s.",
