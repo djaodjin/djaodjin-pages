@@ -30,8 +30,8 @@
                     showMessages(resp.details, "success");
                 } else {
                     showMessages([interpolate(gettext(
-                        '"%s" uploaded sucessfully to "%s"'),
-                        [file.name, response.location])], "success");
+                        '"%s" uploaded sucessfully'),
+                        [file.name])], "success");
                 }
             }
             return true;
