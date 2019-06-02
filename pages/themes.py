@@ -265,6 +265,8 @@ def install_theme_fileobj(theme_name, zip_file, force=False):
                             extracted_file.write(zip_file.read(info.filename))
                 elif base == 'templates':
                     relative_path = os.path.join(*test_parts)
+                    if relative_path in settings.TEMPLATES_BLACKLIST:
+                        continue
                     if settings.TEMPLATES_WHITELIST is not None:
                         if (os.path.join(*test_parts)
                             in settings.TEMPLATES_WHITELIST):

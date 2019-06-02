@@ -1,4 +1,4 @@
-# Copyright (c) 2018, DjaoDjin inc.
+# Copyright (c) 2019, DjaoDjin inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -29,6 +29,7 @@ from django.http import HttpResponse
 from django.views.generic import TemplateView, View
 from deployutils.apps.django.themes import package_theme
 
+from .. import settings
 from ..mixins import AccountMixin, ThemePackageMixin
 
 
@@ -66,9 +67,9 @@ class ThemePackageDownloadView(ThemePackageMixin, View):
         content = BytesIO()
         build_dir = tempfile.mkdtemp(prefix="pages-")
         try:
-            package_theme(self.theme, build_dir, excludes=[
-                'django/', 'jinja2/', 'rest_framework_swagger/',
-                'debug_toolbar/'], template_dirs=self.get_template_dirs())
+            package_theme(self.theme, build_dir,
+                excludes=settings.TEMPLATES_BLACKLIST,
+                template_dirs=self.get_template_dirs())
             with zipfile.ZipFile(content, mode="w") as zipf:
                 zipf = self.write_zipfile(zipf, from_static_dir,
                     os.path.join(self.theme, 'public'))
