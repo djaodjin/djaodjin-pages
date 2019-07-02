@@ -43,7 +43,7 @@ from django.utils.six.moves.urllib.parse import urljoin, urlparse, urlunparse
 
 class MediaListAPIView(UploadedImageMixin, AccountMixin, ListCreateAPIView):
     """
-    Lists static asset files.
+    Lists static asset files
 
     **Examples
 
@@ -97,7 +97,7 @@ class MediaListAPIView(UploadedImageMixin, AccountMixin, ListCreateAPIView):
 
     def post(self, request, *args, **kwargs):
         """
-        Uploads a static asset file.
+        Uploads a static asset file
 
         **Examples
 
@@ -193,7 +193,7 @@ class MediaListAPIView(UploadedImageMixin, AccountMixin, ListCreateAPIView):
 
     def put(self, request, *args, **kwargs):
         """
-        Updates meta tags on assets.
+        Updates meta tags on assets
 
         **Examples
 

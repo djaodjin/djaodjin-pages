@@ -64,6 +64,8 @@ class ThemePackageListAPIView(ThemePackageMixin, GenericAPIView):
 
     def delete(self, request, *args, **kwargs):
         """
+        Removes custom theme
+
         Removes the custom theme templates and assets.
 
         Pages will be using the default theme after a reset.
@@ -85,6 +87,8 @@ class ThemePackageListAPIView(ThemePackageMixin, GenericAPIView):
             ThemePackageUploadSerializer)})
     def post(self, request, *args, **kwargs):
         """
+        Uploads a theme package
+
         Uploads a theme package with templates that will override the default
         ones. See `references and tutorials on creating themes
         <https://djaodjin.com/docs/themes/>`_ for details on the theme package

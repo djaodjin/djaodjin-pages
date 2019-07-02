@@ -42,7 +42,9 @@ class LessVariableMixin(AccountMixin):
 
 
 class LessVariableListAPIView(LessVariableMixin, generics.ListAPIView):
-
+    """
+    Lists a website css variables
+    """
     serializer_class = LessVariableSerializer
 
     def get_queryset(self):
@@ -51,6 +53,9 @@ class LessVariableListAPIView(LessVariableMixin, generics.ListAPIView):
         return queryset
 
     def put(self, request):
+        """
+        Updates a website css variables
+        """
         serializer = self.serializer_class(data=request.data, many=True)
         serializer.is_valid(raise_exception=True)
         with transaction.atomic():
@@ -69,11 +74,23 @@ class LessVariableListAPIView(LessVariableMixin, generics.ListAPIView):
 class LessVariableDetail(LessVariableMixin, CreateModelMixin,
                               generics.RetrieveUpdateDestroyAPIView):
     """
-    Create or update the value of a ``LessVariable``.
+    Retrieves a css variable
     """
     lookup_field = 'name'
     lookup_url_kwarg = 'name'
     serializer_class = LessVariableSerializer
+
+    def delete(self, request, *args, **kwargs):
+        """
+        Deletes a css variable
+        """
+        return super(LessVariableDetail, self).delete(request, *args, **kwargs)
+
+    def put(self, request, *args, **kwargs):
+        """
+        Updates a css variable
+        """
+        return super(LessVariableDetail, self).put(request, *args, **kwargs)
 
     def get_queryset(self):
         return LessVariable.objects.filter(

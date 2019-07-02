@@ -35,6 +35,9 @@ from ..utils import validate_title
 
 
 class PagesElementListAPIView(AccountMixin, generics.ListCreateAPIView):
+    """
+    Lists editable nodes
+    """
 
     serializer_class = PageElementSerializer
 
@@ -52,6 +55,13 @@ class PagesElementListAPIView(AccountMixin, generics.ListCreateAPIView):
             pass
         return []
 
+    def post(self, request, *args, **kwargs):
+        """
+        Creates an editable node
+        """
+        return super(PagesElementListAPIView, self).post(
+            request, *args, **kwargs)
+
     def perform_create(self, serializer):
         serializer.save(account=self.account)
 
@@ -59,9 +69,21 @@ class PagesElementListAPIView(AccountMixin, generics.ListCreateAPIView):
 class PageElementDetail(PageElementMixin, CreateModelMixin,
                         generics.RetrieveUpdateDestroyAPIView):
     """
-    Create or Update an editable element on a ``PageElement``.
+    Retrieves an editable node
     """
     serializer_class = PageElementSerializer
+
+    def delete(self, request, *args, **kwargs):
+        """
+        Deletes an editable node
+        """
+        return super(PageElementDetail, self).delete(request, *args, **kwargs)
+
+    def put(self, request, *args, **kwargs):
+        """
+        Updates an editable node
+        """
+        return super(PageElementDetail, self).put(request, *args, **kwargs)
 
     def perform_create(self, serializer):
         serializer.save(account=self.account)
@@ -78,6 +100,8 @@ class PageElementDetail(PageElementMixin, CreateModelMixin,
 
 class PageElementAddTags(PageElementMixin, generics.UpdateAPIView):
     """
+    Adds tags to an editable node
+
     Add tags to a ``PageElement`` if they are not already present.
 
     **Tags: themes
@@ -117,6 +141,8 @@ class PageElementAddTags(PageElementMixin, generics.UpdateAPIView):
 
 class PageElementRemoveTags(PageElementMixin, generics.UpdateAPIView):
     """
+    Remove tags from an editable node
+
     Remove tags from a ``PageElement``.
 
     **Tags: themes

@@ -79,7 +79,7 @@ class EdgesUpdateAPIView(TrailMixin, generics.CreateAPIView):
 
 class PageElementAliasAPIView(EdgesUpdateAPIView):
     """
-    Alias the content of a PageElement at another node.
+    Aliases the content of an editable node
     """
     queryset = RelationShip.objects.all()
 
@@ -96,7 +96,9 @@ class PageElementAliasAPIView(EdgesUpdateAPIView):
 
 class PageElementMirrorAPIView(EdgesUpdateAPIView):
     """
-    Mirror the content of a PageElement and attach the mirror
+    Mirrors the content of an editable node
+
+    Mirrors the content of a PageElement and attach the mirror
     under another node.
     """
     queryset = RelationShip.objects.all()
@@ -142,7 +144,9 @@ class PageElementMirrorAPIView(EdgesUpdateAPIView):
 
 class PageElementMoveAPIView(EdgesUpdateAPIView):
     """
-    Move an PageElement from one attachement to another.
+    Moves an editable node
+
+    Moves a PageElement from one attachement to another.
     """
     queryset = RelationShip.objects.all()
 
@@ -172,12 +176,17 @@ class PageElementMoveAPIView(EdgesUpdateAPIView):
 
 
 class RelationShipListAPIView(DestroyModelMixin, generics.ListCreateAPIView):
-
+    """
+    Lists edges of an editable node
+    """
     model = RelationShip
     serializer_class = RelationShipSerializer
     queryset = RelationShip.objects.all()
 
     def delete(self, request, *args, **kwargs):#pylint: disable=unused-argument
+        """
+        Deletes edges of an editable node
+        """
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid()
         elements = self.queryset.filter(
@@ -185,3 +194,10 @@ class RelationShipListAPIView(DestroyModelMixin, generics.ListCreateAPIView):
             dest_element__slug__in=serializer.validated_data['dest_elements'])
         elements.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+    def post(self, request, *args, **kwargs):#pylint: disable=unused-argument
+        """
+        Creates edges of an editable node
+        """
+        return super(RelationShipListAPIView, self).post(
+            request, *args, **kwargs)

@@ -1,4 +1,4 @@
-# Copyright (c) 2017, Djaodjin Inc.
+# Copyright (c) 2019, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -25,7 +25,9 @@
 from .upload_media import MediaListAPIView
 
 class SiteCssAPIView(MediaListAPIView):
-
+    """
+    Uploads a website css static assets
+    """
     store_hash = False
     replace_stored = True
     content_type = 'text/css'

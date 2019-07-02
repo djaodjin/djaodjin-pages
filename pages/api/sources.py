@@ -64,8 +64,22 @@ class SourceCodeSerializer(serializers.Serializer):
 
 class SourceDetailAPIView(ThemePackageMixin, generics.RetrieveUpdateAPIView,
                           generics.CreateAPIView):
-
+    """
+    Retrieves a template source file
+    """
     serializer_class = SourceCodeSerializer
+
+    def post(self, request, *args, **kwargs):
+        """
+        Creates a template source file
+        """
+        return super(SourceDetailAPIView, self).post(request, *args, **kwargs)
+
+    def put(self, request, *args, **kwargs):
+        """
+        Updates a template source file
+        """
+        return super(SourceDetailAPIView, self).put(request, *args, **kwargs)
 
     def retrieve(self, request, *args, **kwargs):
         relative_path = self.kwargs.get('page')
