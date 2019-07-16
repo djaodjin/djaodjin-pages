@@ -80,6 +80,18 @@ class EdgesUpdateAPIView(TrailMixin, generics.CreateAPIView):
 class PageElementAliasAPIView(EdgesUpdateAPIView):
     """
     Aliases the content of an editable node
+
+    **Examples
+
+    .. code-block:: http
+
+        POST /api/themes/editables/alias/content-root/ HTTP/1.1
+
+    responds
+
+    .. code-block:: json
+
+        {}
     """
     queryset = RelationShip.objects.all()
 
@@ -100,6 +112,18 @@ class PageElementMirrorAPIView(EdgesUpdateAPIView):
 
     Mirrors the content of a PageElement and attach the mirror
     under another node.
+
+    **Examples
+
+    .. code-block:: http
+
+        POST /api/themes/editables/mirror/content-root/ HTTP/1.1
+
+    responds
+
+    .. code-block:: json
+
+        {}
     """
     queryset = RelationShip.objects.all()
 
@@ -147,6 +171,18 @@ class PageElementMoveAPIView(EdgesUpdateAPIView):
     Moves an editable node
 
     Moves a PageElement from one attachement to another.
+
+    **Examples
+
+    .. code-block:: http
+
+        POST /api/themes/editables/attach/content-root/ HTTP/1.1
+
+    responds
+
+    .. code-block:: json
+
+        {}
     """
     queryset = RelationShip.objects.all()
 
@@ -178,6 +214,20 @@ class PageElementMoveAPIView(EdgesUpdateAPIView):
 class RelationShipListAPIView(DestroyModelMixin, generics.ListCreateAPIView):
     """
     Lists edges of an editable node
+
+
+    **Examples
+
+    .. code-block:: http
+
+        GET /api/themes/editables/relationship/ HTTP/1.1
+
+    responds
+
+    .. code-block:: json
+
+        {
+        }
     """
     model = RelationShip
     serializer_class = RelationShipSerializer
@@ -186,7 +236,13 @@ class RelationShipListAPIView(DestroyModelMixin, generics.ListCreateAPIView):
     def delete(self, request, *args, **kwargs):#pylint: disable=unused-argument
         """
         Deletes edges of an editable node
-        """
+
+        **Examples
+
+        .. code-block:: http
+
+            DELETE /api/themes/editables/relationship/ HTTP/1.1
+       """
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid()
         elements = self.queryset.filter(
@@ -198,6 +254,25 @@ class RelationShipListAPIView(DestroyModelMixin, generics.ListCreateAPIView):
     def post(self, request, *args, **kwargs):#pylint: disable=unused-argument
         """
         Creates edges of an editable node
+
+
+        **Examples
+
+        .. code-block:: http
+
+            POST /api/themes/editables/relationship/ HTTP/1.1
+
+        .. code-block:: json
+
+             {
+             }
+
+        responds
+
+        .. code-block:: json
+
+             {
+             }
         """
         return super(RelationShipListAPIView, self).post(
             request, *args, **kwargs)

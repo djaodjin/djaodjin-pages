@@ -55,7 +55,7 @@ class MediaListAPIView(UploadedImageMixin, AccountMixin, ListCreateAPIView):
 
         {
           "count": 1,
-          results: [{
+          "results": [{
               "location": "/media/image-001.jpg",
               "updated_at": "2016-10-26T00:00:00.00000+00:00",
               "tags": []
@@ -158,10 +158,9 @@ class MediaListAPIView(UploadedImageMixin, AccountMixin, ListCreateAPIView):
         .. code-block:: json
 
             {
-                items: [
-                    {location: "/media/item/url1.jpg"},
-                    {location: "/media/item/url2.jpg"},
-                    ....
+                "items": [
+                    {"location": "/media/item/url1.jpg"},
+                    {"location": "/media/item/url2.jpg"}
                 ]
             }
 
@@ -204,12 +203,11 @@ class MediaListAPIView(UploadedImageMixin, AccountMixin, ListCreateAPIView):
         .. code-block:: json
 
             {
-                items: [
-                    {location: "/media/item/url1.jpg"},
-                    {location: "/media/item/url2.jpg"},
-                    ....
+                "items": [
+                    {"location": "/media/item/url1.jpg"},
+                    {"location": "/media/item/url2.jpg"}
                 ],
-                tags: ['photo', 'homepage']
+                "tags": ["photo", "homepage"]
             }
 
         When the API returns, both assets file listed in items will be tagged

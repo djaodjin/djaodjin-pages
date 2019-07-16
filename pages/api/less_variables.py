@@ -44,6 +44,19 @@ class LessVariableMixin(AccountMixin):
 class LessVariableListAPIView(LessVariableMixin, generics.ListAPIView):
     """
     Lists a website css variables
+
+    **Examples
+
+    .. code-block:: http
+
+        GET /api/themes/sitecss/variables/ HTTP/1.1
+
+    responds
+
+    .. code-block:: json
+
+         {
+         }
     """
     serializer_class = LessVariableSerializer
 
@@ -55,6 +68,19 @@ class LessVariableListAPIView(LessVariableMixin, generics.ListAPIView):
     def put(self, request):
         """
         Updates a website css variables
+
+        **Examples
+
+        .. code-block:: http
+
+            GET /api/themes/sitecss/variables/ HTTP/1.1
+
+        responds
+
+        .. code-block:: json
+
+             {
+             }
         """
         serializer = self.serializer_class(data=request.data, many=True)
         serializer.is_valid(raise_exception=True)
@@ -75,6 +101,19 @@ class LessVariableDetail(LessVariableMixin, CreateModelMixin,
                               generics.RetrieveUpdateDestroyAPIView):
     """
     Retrieves a css variable
+
+    **Examples
+
+    .. code-block:: http
+
+        GET /api/themes/sitecss/variables/primary-color/ HTTP/1.1
+
+    responds
+
+    .. code-block:: json
+
+         {
+         }
     """
     lookup_field = 'name'
     lookup_url_kwarg = 'name'
@@ -83,12 +122,31 @@ class LessVariableDetail(LessVariableMixin, CreateModelMixin,
     def delete(self, request, *args, **kwargs):
         """
         Deletes a css variable
+
+        **Examples
+
+        .. code-block:: http
+
+            DELETE /api/themes/sitecss/variables/primary-color/ HTTP/1.1
         """
         return super(LessVariableDetail, self).delete(request, *args, **kwargs)
 
     def put(self, request, *args, **kwargs):
         """
         Updates a css variable
+
+        **Examples
+
+        .. code-block:: http
+
+            PUT /api/themes/sitecss/variables/primary-color/ HTTP/1.1
+
+        responds
+
+        .. code-block:: json
+
+             {
+             }
         """
         return super(LessVariableDetail, self).put(request, *args, **kwargs)
 
