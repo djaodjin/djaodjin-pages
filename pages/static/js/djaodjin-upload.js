@@ -72,7 +72,8 @@
             if( self.options.uploadUrl.indexOf("/api/auth/") >= 0 ) {
                 $.ajax({
                     method: "GET",
-                    url: self.options.uploadUrl,
+                    url: self.options.uploadUrl +
+                        (self.options.acl === "public-read" ? "?public=1" : ""),
                     datatype: "json",
                     contentType: "application/json; charset=utf-8",
                     success: function(data) {

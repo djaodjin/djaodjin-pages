@@ -109,7 +109,7 @@ class ThemePackageListAPIView(ThemePackageMixin, GenericAPIView):
             self.install_theme(package_uri)
         elif 'file' in request.FILES:
             package_file = request.FILES['file']
-            LOGGER.info("install %s to %s", package_uri, self.theme)
+            LOGGER.info("install %s to %s", package_file.name, self.theme)
             try:
                 with zipfile.ZipFile(package_file, 'r') as zip_file:
                     install_theme_fileobj(self.theme, zip_file, force=True)

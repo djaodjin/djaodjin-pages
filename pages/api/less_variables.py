@@ -73,7 +73,7 @@ class LessVariableListAPIView(LessVariableMixin, generics.ListAPIView):
 
         .. code-block:: http
 
-            GET /api/themes/sitecss/variables/ HTTP/1.1
+            PUT /api/themes/sitecss/variables/ HTTP/1.1
 
         responds
 
@@ -113,6 +113,8 @@ class LessVariableDetail(LessVariableMixin, CreateModelMixin,
     .. code-block:: json
 
          {
+           "name": "primary-color",
+           "value": "#0000ff"
          }
     """
     lookup_field = 'name'
@@ -141,12 +143,19 @@ class LessVariableDetail(LessVariableMixin, CreateModelMixin,
 
             PUT /api/themes/sitecss/variables/primary-color/ HTTP/1.1
 
+            {
+                "name": "primary-color",
+                "value": "#0000ff"
+            }
+
         responds
 
         .. code-block:: json
 
-             {
-             }
+            {
+                "name": "primary-color",
+                "value": "#0000ff"
+            }
         """
         return super(LessVariableDetail, self).put(request, *args, **kwargs)
 

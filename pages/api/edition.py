@@ -217,7 +217,7 @@ class PageElementRemoveTags(PageElementMixin, generics.UpdateAPIView):
 
     Remove tags from a ``PageElement``.
 
-    **Tags: themes
+    **Tags: content
 
     **Examples
 
