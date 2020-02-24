@@ -1,6 +1,6 @@
 # djaodjin-pages
 beautifulsoup4==4.6.0
-bleach==2.0.0
+bleach==3.1.1
 boto==2.48.0
 Django==1.11.22
 djangorestframework==3.9.4
