@@ -33,4 +33,13 @@ the prerequisites, create the database then run the testsite webapp.
     # Start edit live templates
 </code></pre>
 
-Full documentation available soon at Read-the-Docs
+Release Notes
+=============
+
+0.2.8
+
+  * uses acl option to add ?public=1
+  * updates API docs
+  * adds blacklist for template files
+
+[previous release notes](changelog)

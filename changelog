@@ -1,0 +1,7 @@
+0.2.8
+
+  * uses acl option to add ?public=1
+  * updates API docs
+  * adds blacklist for template files
+
+ -- Sebastien Mirolo <smirolo@djaodjin.com>  Thu,  5 Mar 2020 09:45:00 -0700
