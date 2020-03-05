@@ -31,6 +31,7 @@ the prerequisites, create the database then run the testsite webapp.
 
     # Browse http://localhost:8000/
     # Start edit live templates
+
 </code></pre>
 
 Release Notes
