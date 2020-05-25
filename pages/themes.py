@@ -1,4 +1,4 @@
-# Copyright (c) 2019, Djaodjin Inc.
+# Copyright (c) 2020, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -28,13 +28,11 @@ import logging, os, tempfile, shutil, subprocess, sys, zipfile
 
 from django.core.files.storage import FileSystemStorage
 from django.core.exceptions import PermissionDenied
-from django.contrib.staticfiles.templatetags.staticfiles import do_static
 from django.template.base import Parser, NodeList
 from django.template.backends.jinja2 import get_exception_info
 from django.template.context import Context
 from django.template.exceptions import TemplateDoesNotExist, TemplateSyntaxError
 from django.template.loader import _engine_list, get_template
-from django.utils import six
 from django.utils._os import safe_join
 from django.utils.encoding import force_text
 from django_assets.templatetags.assets import assets
@@ -42,10 +40,8 @@ import jinja2
 import requests
 
 from . import settings
-from .compat import TokenType, get_html_engine
+from .compat import TokenType, do_static, get_html_engine, six, urlparse
 
-#pylint:disable=no-name-in-module,import-error
-from django.utils.six.moves.urllib.parse import urlparse
 
 LOGGER = logging.getLogger(__name__)
 
