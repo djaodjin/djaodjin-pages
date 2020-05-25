@@ -1,4 +1,4 @@
-# Copyright (c) 2019, Djaodjin Inc.
+# Copyright (c) 2020, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -37,8 +37,7 @@ from ..mixins import AccountMixin, UploadedImageMixin
 from ..serializers import AssetSerializer, MediaItemListSerializer
 from ..utils import validate_title, get_default_storage
 
-#pylint:disable=no-name-in-module,import-error
-from django.utils.six.moves.urllib.parse import urljoin, urlparse, urlunparse
+from ..compat import urljoin, urlparse, urlunparse
 
 
 class MediaListAPIView(UploadedImageMixin, AccountMixin, ListCreateAPIView):

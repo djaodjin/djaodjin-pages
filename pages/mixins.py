@@ -1,4 +1,4 @@
-# Copyright (c) 2018, DjaoDjin inc.
+# Copyright (c) 2020 DjaoDjin inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -27,15 +27,12 @@ import logging
 from boto.exception import S3ResponseError
 from django.http import Http404
 from django.utils._os import safe_join
-from django.utils import six
 from rest_framework.generics import get_object_or_404
 
 from . import settings
+from .compat import six, urlsplit
 from .models import MediaTag, PageElement
 from .extras import AccountMixinBase
-
-#pylint:disable=no-name-in-module,import-error
-from django.utils.six.moves.urllib.parse import urlsplit
 
 
 LOGGER = logging.getLogger(__name__)

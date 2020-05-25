@@ -1,4 +1,4 @@
-# Copyright (c) 2018, Djaodjin Inc.
+# Copyright (c) 2020, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -29,10 +29,10 @@ import logging, random
 from django.db import IntegrityError, models, transaction
 from django.db.models import Max
 from django.template.defaultfilters import slugify
-from django.utils.encoding import python_2_unicode_compatible
 from rest_framework.exceptions import ValidationError
 
 from . import settings
+from .compat import python_2_unicode_compatible
 
 
 LOGGER = logging.getLogger(__name__)

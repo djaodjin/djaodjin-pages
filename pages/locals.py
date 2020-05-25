@@ -1,4 +1,4 @@
-# Copyright (c) 2018, DjaoDjin inc.
+# Copyright (c) 2020, DjaoDjin inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -30,9 +30,9 @@ from django.template import loader, Template
 from django.template.backends.django import DjangoTemplates
 from django.test.signals import template_rendered
 from django.test.utils import instrumented_test_render
-from django.utils import six
 
 from . import settings
+from .compat import six
 from .signals import template_loaded
 
 try:

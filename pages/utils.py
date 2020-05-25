@@ -1,4 +1,4 @@
-# Copyright (c) 2018, DjaoDjin inc.
+# Copyright (c) 2020, DjaoDjin inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -31,8 +31,7 @@ from django.core.validators import RegexValidator
 from django.utils.module_loading import import_string
 from django.utils.translation import ugettext_lazy as _
 
-#pylint:disable=no-name-in-module,import-error
-from django.utils.six.moves.urllib.parse import urljoin
+from .compat import urljoin
 
 
 LOGGER = logging.getLogger(__name__)

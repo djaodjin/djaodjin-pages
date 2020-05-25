@@ -1,4 +1,4 @@
-# Copyright (c) 2019, DjaoDjin inc.
+# Copyright (c) 2020, DjaoDjin inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -23,17 +23,33 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pylint: disable=no-name-in-module,unused-import
+from functools import WRAPPER_ASSIGNMENTS
+import six
+
+#pylint:disable=no-name-in-module,import-error
+from six.moves.urllib.parse import urljoin, urlparse, urlsplit, urlunparse
+
+
+try:
+    from django.utils.decorators import available_attrs
+except ImportError: # django < 3.0
+    def available_attrs(func):      #pylint:disable=unused-argument
+        return WRAPPER_ASSIGNMENTS
+
+try:
+    from django.utils.encoding import python_2_unicode_compatible
+except ImportError: # django < 3.0
+    python_2_unicode_compatible = six.python_2_unicode_compatible
+
 
 from django import VERSION as DJANGO_VERSION
 from django.conf import settings as django_settings
 from django.template import RequestContext
 
-
 try:
-    from django.utils.module_loading import import_string
-except ImportError: # django < 1.7
-    from django.utils.module_loading import import_by_path as import_string
-
+    from django.templatetags.static import do_static
+except ImportError: # django < 2.1
+    from django.contrib.staticfiles.templatetags import do_static
 
 try:
     from django.template.context_processors import csrf
@@ -52,6 +68,11 @@ except ImportError: # <= Django 1.10, Python<3.6
 except ModuleNotFoundError: #pylint:disable=undefined-variable
     # <= Django 1.10, Python>=3.6
     from django.core.urlresolvers import NoReverseMatch, reverse, reverse_lazy
+
+try:
+    from django.utils.module_loading import import_string
+except ImportError: # django < 1.7
+    from django.utils.module_loading import import_by_path as import_string
 
 
 def get_loaders():
