@@ -26,8 +26,8 @@
             if( self.options.uploadSuccess ) {
                 self.options.uploadSuccess(file, resp);
             } else {
-                if( resp.details ) {
-                    showMessages(resp.details, "success");
+                if( resp.detail ) {
+                    showMessages(resp.detail, "success");
                 } else {
                     showMessages([interpolate(gettext(
                         '"%s" uploaded sucessfully'),

@@ -49,9 +49,18 @@ class PagesElementListAPIView(AccountMixin, generics.ListCreateAPIView):
     .. code-block:: json
 
         {
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [{
+            "slug": "hello",
+            "path": "/hello",
+            "text": "Hello",
+            "orig_elements": [],
+            "dest_elements": []
+          }]
         }
     """
-
     serializer_class = PageElementSerializer
 
     def get_queryset(self):
@@ -108,16 +117,16 @@ class PageElementDetail(PageElementMixin, CreateModelMixin,
 
         GET /api/editables/content-root/ HTTP/1.1
 
-    .. code-block:: json
-
-        {
-        }
-
     responds
 
     .. code-block:: json
 
         {
+            "slug": "content-root",
+            "path": "/content-root",
+            "text": "Hello",
+            "orig_elements": [],
+            "dest_elements": []
         }
     """
     serializer_class = PageElementSerializer

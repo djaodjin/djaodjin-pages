@@ -1,4 +1,4 @@
-# Copyright (c) 2017, DjaoDjin inc.
+# Copyright (c) 2020, DjaoDjin inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -61,7 +61,7 @@ class EdgesUpdateAPIView(TrailMixin, generics.CreateAPIView):
                     is_prefix = False
                     break
             if is_prefix:
-                raise ValidationError({"details": "'%s' cannot be attached"\
+                raise ValidationError({'detail': "'%s' cannot be attached"\
                     " under '%s' as it is a leading prefix. That would create"\
                     " a loop." % (
                     " > ".join([source.title for source in sources]),
@@ -86,6 +86,12 @@ class PageElementAliasAPIView(EdgesUpdateAPIView):
     .. code-block:: http
 
         POST /api/themes/editables/alias/content-root/ HTTP/1.1
+
+    .. code-block:: json
+
+        {
+          "source": "getting-started"
+        }
 
     responds
 
@@ -118,6 +124,12 @@ class PageElementMirrorAPIView(EdgesUpdateAPIView):
     .. code-block:: http
 
         POST /api/themes/editables/mirror/content-root/ HTTP/1.1
+
+    .. code-block:: json
+
+        {
+          "source": "getting-started"
+        }
 
     responds
 
@@ -178,6 +190,12 @@ class PageElementMoveAPIView(EdgesUpdateAPIView):
 
         POST /api/themes/editables/attach/content-root/ HTTP/1.1
 
+    .. code-block:: json
+
+        {
+          "source": "getting-started"
+        }
+
     responds
 
     .. code-block:: json
@@ -227,6 +245,13 @@ class RelationShipListAPIView(DestroyModelMixin, generics.ListCreateAPIView):
     .. code-block:: json
 
         {
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [{
+            "orig_elements": ["readme"],
+            "dest_elements": []
+          }]
         }
     """
     model = RelationShip
