@@ -6,7 +6,7 @@ Django==2.2.13
 djangorestframework==3.11.0
 django-assets==0.12
 django-storages==1.7
-djaodjin-deployutils==0.5.9
+djaodjin-deployutils==0.5.20
 Jinja2==2.10.1
 Markdown==2.6.11
 python-dateutil==2.8.1
