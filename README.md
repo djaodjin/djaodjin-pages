@@ -9,9 +9,10 @@ Major Features:
 
 Tested with
 
-- **Python:** 2.7, **Django:** 1.11.20 ([LTS](https://www.djangoproject.com/download/)), **Django Rest Framework:** 3.8.2
-- **Python:** 3.6, **Django:** 1.11.20 ([LTS](https://www.djangoproject.com/download/)), **Django Rest Framework:** 3.8.2
-- **Python:** 3.6, **Django:** 2.1.5 (latest),       **Django Rest Framework:** 3.8.2
+- **Python:** 2.7, **Django:** 1.11, **Django Rest Framework:** 3.9.4
+- **Python:** 3.6, **Django:** 2.2 ([LTS](https://www.djangoproject.com/download/)), **Django Rest Framework:** 3.11
+- **Python:** 3.6, **Django:** 3.0 (latest), **Django Rest Framework:** 3.11
+
 
 Development
 ===========
