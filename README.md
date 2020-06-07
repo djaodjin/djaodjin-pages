@@ -37,10 +37,9 @@ the prerequisites, create the database then run the testsite webapp.
 Release Notes
 =============
 
-0.2.8
+0.2.9
 
-  * uses acl option to add ?public=1
-  * updates API docs
-  * adds blacklist for template files
+  * compatibles with Django3
+  * uses `detail` consistently to return user-friendly messages
 
 [previous release notes](changelog)
