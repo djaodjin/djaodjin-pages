@@ -27,7 +27,35 @@
 try:
     from drf_yasg.openapi import Response as OpenAPIResponse
     from drf_yasg.utils import no_body, swagger_auto_schema
-except (ImportError, ModuleNotFoundError):
+except ImportError:
+    from functools import wraps
+    from .compat import available_attrs
+
+    class no_body(object):
+        pass
+
+    def swagger_auto_schema(function=None, **kwargs):
+        """
+        Dummy decorator when drf_yasg is not present.
+        """
+        def decorator(view_func):
+            @wraps(view_func, assigned=available_attrs(view_func))
+            def _wrapped_view(request, *args, **kwargs):
+                return view_func(request, *args, **kwargs)
+            return _wrapped_view
+
+        if function:
+            return decorator(function)
+        return decorator
+
+    class OpenAPIResponse(object):
+        """
+        Dummy response object to document API.
+        """
+        def __init__(self, *args, **kwargs):
+            pass
+except ModuleNotFoundError:
+    # Django>=3.0, Python>=3.6
     from functools import wraps
     from .compat import available_attrs
 
