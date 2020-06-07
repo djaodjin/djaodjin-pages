@@ -27,6 +27,28 @@ from .upload_media import MediaListAPIView
 class SiteCssAPIView(MediaListAPIView):
     """
     Uploads a website css static assets
+
+    **Examples
+
+    .. code-block:: http
+
+        GET /api/sitecss/ HTTP/1.1
+
+    responds
+
+    .. code-block:: json
+
+        {
+          "count": 1,
+          "previous": null,
+          "next": null,
+          "results": [{
+              "location": "/media/image-001.jpg",
+              "updated_at": "2016-10-26T00:00:00.00000+00:00",
+              "tags": ""
+          }]
+        }
+
     """
     store_hash = False
     replace_stored = True

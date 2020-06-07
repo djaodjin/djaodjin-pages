@@ -50,14 +50,18 @@ class MediaListAPIView(UploadedImageMixin, AccountMixin, ListCreateAPIView):
 
         GET /api/assets/ HTTP/1.1
 
+    responds
+
     .. code-block:: json
 
         {
           "count": 1,
+          "previous": null,
+          "next": null,
           "results": [{
               "location": "/media/image-001.jpg",
               "updated_at": "2016-10-26T00:00:00.00000+00:00",
-              "tags": []
+              "tags": ""
           }]
         }
 

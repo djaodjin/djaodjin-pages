@@ -56,6 +56,15 @@ class LessVariableListAPIView(LessVariableMixin, generics.ListAPIView):
     .. code-block:: json
 
          {
+          "count": 1,
+          "previous": null,
+          "next": null,
+          "results": [{
+            "name": "primary-color",
+            "value": "#ff0000",
+            "created_at": "20200530T00:00:00Z",
+            "updated_at": "20200530T00:00:00Z"
+          }]
          }
     """
     serializer_class = LessVariableSerializer
@@ -75,11 +84,29 @@ class LessVariableListAPIView(LessVariableMixin, generics.ListAPIView):
 
             PUT /api/themes/sitecss/variables/ HTTP/1.1
 
+        .. code-block:: json
+
+             {
+               "name": "primary-color",
+               "value": "#ff0000",
+               "created_at": "20200530T00:00:00Z",
+               "updated_at": "20200530T00:00:00Z"
+             }
+
         responds
 
         .. code-block:: json
 
              {
+               "count": 1,
+               "previous": null,
+               "next": null,
+               "results": [{
+                 "name": "primary-color",
+                 "value": "#ff0000",
+                 "created_at": "20200530T00:00:00Z",
+                 "updated_at": "20200530T00:00:00Z"
+               }]
              }
         """
         serializer = self.serializer_class(data=request.data, many=True)
