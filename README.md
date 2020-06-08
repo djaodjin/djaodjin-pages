@@ -9,9 +9,10 @@ Major Features:
 
 Tested with
 
-- **Python:** 2.7, **Django:** 1.11.20 ([LTS](https://www.djangoproject.com/download/)), **Django Rest Framework:** 3.8.2
-- **Python:** 3.6, **Django:** 1.11.20 ([LTS](https://www.djangoproject.com/download/)), **Django Rest Framework:** 3.8.2
-- **Python:** 3.6, **Django:** 2.1.5 (latest),       **Django Rest Framework:** 3.8.2
+- **Python:** 2.7, **Django:** 1.11, **Django Rest Framework:** 3.9.4
+- **Python:** 3.6, **Django:** 2.2 ([LTS](https://www.djangoproject.com/download/)), **Django Rest Framework:** 3.11
+- **Python:** 3.6, **Django:** 3.0 (latest), **Django Rest Framework:** 3.11
+
 
 Development
 ===========
@@ -34,13 +35,13 @@ the prerequisites, create the database then run the testsite webapp.
 
 </code></pre>
 
+
 Release Notes
 =============
 
-0.2.8
+0.2.9
 
-  * uses acl option to add ?public=1
-  * updates API docs
-  * adds blacklist for template files
+  * compatibles with Django3
+  * uses `detail` consistently to return user-friendly messages
 
 [previous release notes](changelog)

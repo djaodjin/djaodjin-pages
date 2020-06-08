@@ -13,7 +13,7 @@ NPM           ?= npm
 PIP           := $(binDir)/pip
 PYTHON        := TESTSITE_SETTINGS_LOCATION=$(CONFIG_DIR) $(binDir)/python
 installDirs   ?= install -d
-installFiles  := install -p -m 644
+installFiles  := install -m 644
 
 ASSETS_DIR    := $(srcDir)/htdocs/static
 
@@ -37,8 +37,7 @@ install-conf:: $(DESTDIR)$(CONFIG_DIR)/credentials \
 $(DESTDIR)$(CONFIG_DIR)/credentials: $(srcDir)/testsite/etc/credentials
 	install -d $(dir $@)
 	[ -f $@ ] || \
-		SECRET_KEY=`python -c 'import sys ; from random import choice ; sys.stdout.write("".join([choice("abcdefghijklmnopqrstuvwxyz0123456789!@#$%^*-_=+") for i in range(50)]))'` && sed \
-		-e "s,\%(SECRET_KEY)s,$${SECRET_KEY}," $< > $@
+		sed -e "s,\%(SECRET_KEY)s,`$(PYTHON) -c 'import sys ; from random import choice ; sys.stdout.write("".join([choice("abcdefghijklmnopqrstuvwxyz0123456789!@#$%^*-_=+") for i in range(50)]))'`," $< > $@
 
 
 $(DESTDIR)$(CONFIG_DIR)/gunicorn.conf: $(srcDir)/testsite/etc/gunicorn.conf
@@ -47,11 +46,11 @@ $(DESTDIR)$(CONFIG_DIR)/gunicorn.conf: $(srcDir)/testsite/etc/gunicorn.conf
 		-e 's,%(LOCALSTATEDIR)s,$(LOCALSTATEDIR),' $< > $@
 
 
-initdb: install-conf
+initdb: install-conf $(srcDir)/htdocs/static/vendor/bootstrap.css
 	-cd $(srcDir) && rm -rf db.sqlite3 testsite-app.log htdocs/media/vendor themes
 	cd $(srcDir) && $(PYTHON) ./manage.py migrate $(RUNSYNCDB) --noinput
 	cd $(srcDir) && $(PYTHON) ./manage.py loaddata \
-						testsite/fixtures/default-db.json
+		testsite/fixtures/default-db.json
 	cd $(srcDir) && $(installDirs) htdocs/media/vendor themes/templates
 	cd $(srcDir) && $(installFiles) htdocs/static/vendor/bootstrap.css htdocs/media/vendor
 
@@ -62,7 +61,9 @@ doc:
 clean:
 	-rm -rf credentials gunicorn.conf db.sqlite3 testsite-app.log htdocs/media themes
 
-vendor-assets-prerequisites: $(srcDir)/package.json
+vendor-assets-prerequisites: $(srcDir)/htdocs/static/vendor/bootstrap.css
+
+$(srcDir)/htdocs/static/vendor/bootstrap.css: $(srcDir)/package.json
 	$(installFiles) $^ $(installTop)
 	$(NPM) install --loglevel verbose --cache $(installTop)/.npm --tmp $(installTop)/tmp --prefix $(installTop)
 	$(installDirs) -d $(ASSETS_DIR)/fonts $(ASSETS_DIR)/../media/fonts $(ASSETS_DIR)/vendor/bootstrap/mixins $(ASSETS_DIR)/img/bootstrap-colorpicker
