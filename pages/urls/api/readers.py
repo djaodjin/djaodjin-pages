@@ -1,4 +1,4 @@
-# Copyright (c) 2018, DjaoDjin inc.
+# Copyright (c) 2020, DjaoDjin inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -22,13 +22,19 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-'''API URLs for the pages application'''
-
+"""
+API URLs for readers who could be unauthenticated
+"""
 from django.conf.urls import include, url
 
+from ...settings import PATH_RE
+from ...api.edition import PageElementSearchAPIView, PageElementTreeAPIView
+
+
 urlpatterns = [
-    url(r'^themes/editables/', include('pages.urls.api.editables')),
-    url(r'^themes/', include('pages.urls.api.assets')),
-    url(r'^themes/', include('pages.urls.api.templates')),
-    url(r'^themes/', include('pages.urls.api.themes')),
+    url(r'^search/?',
+        PageElementSearchAPIView.as_view(), name='api_page_element_search'),
+    url(r'(?P<path>%s)/?' % PATH_RE,
+        PageElementTreeAPIView.as_view(),
+        name="api_content"),
 ]

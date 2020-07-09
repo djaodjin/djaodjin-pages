@@ -1,4 +1,4 @@
-# Copyright (c) 2017, DjaoDjin inc.
+# Copyright (c) 2020, DjaoDjin inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -58,7 +58,8 @@ def inject_edition_tools(response, request=None, context=None,
                 'api_less_overrides': reverse('pages_api_less_overrides'),
                 'api_sitecss': reverse('edit_sitecss'),
                 'api_sources': reverse('pages_api_sources'),
-                'api_page_elements': reverse('page_elements'),
+                'api_page_element_base': reverse('api_page_element',
+                    kwargs={'path':''}),
                 'api_medias': reverse('uploaded_media_elements',
                     kwargs={'path':''})}}})
     context.update(csrf(request))
@@ -240,7 +241,8 @@ class EditView(AccountMixin, TemplateView):
                     'api_sitecss': reverse('edit_sitecss'),
                     'api_less_overrides': reverse('pages_api_less_overrides'),
                     'api_sources': reverse('pages_api_sources'),
-                    'api_page_elements': reverse('page_elements'),
+                    'api_page_element_base': reverse('api_page_element',
+                        kwargs={'path':''}),
                     'api_medias': reverse('uploaded_media_elements',
                         kwargs={'path':''})}}})
         context = _add_editable_styles_context(context=context)
