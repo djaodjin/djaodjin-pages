@@ -1,4 +1,4 @@
-# Copyright (c) 2018, DjaoDjin inc.
+# Copyright (c) 2020, DjaoDjin inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -27,27 +27,25 @@
 from django.conf.urls import url
 
 from ...import settings
-from ...api.edition import (PageElementDetail, PagesElementListAPIView,
+from ...api.edition import (PageElementDetail, PageElementSearchAPIView,
     PageElementAddTags, PageElementRemoveTags)
 from ...api.relationship import (PageElementAliasAPIView,
     PageElementMirrorAPIView, PageElementMoveAPIView, RelationShipListAPIView)
 
 
 urlpatterns = [
-    url(r'^editables/relationship/',
+    url(r'^relationship/',
         RelationShipListAPIView.as_view(), name='relationships'),
-    url(r'^editables/alias(?P<path>%s)/' % settings.PATH_RE,
+    url(r'^alias(?P<path>%s)/?$' % settings.PATH_RE,
         PageElementAliasAPIView.as_view(), name='api_alias_node'),
-    url(r'^editables/attach(?P<path>%s)$' % settings.PATH_RE,
+    url(r'^attach(?P<path>%s)/?$' % settings.PATH_RE,
         PageElementMoveAPIView.as_view(), name='api_move_node'),
-    url(r'^editables/mirror(?P<path>%s)/' % settings.PATH_RE,
+    url(r'^mirror(?P<path>%s)/?$' % settings.PATH_RE,
         PageElementMirrorAPIView.as_view(), name='api_mirror_node'),
-    url(r'^editables/(?P<slug>[\w-]+)/add-tags/?',
+    url(r'^(?P<slug>[\w-]+)/add-tags/?$',
         PageElementAddTags.as_view(), name='page_element_add_tags'),
-    url(r'^editables/(?P<slug>[\w-]+)/remove-tags/?',
+    url(r'^(?P<slug>[\w-]+)/remove-tags/?$',
         PageElementRemoveTags.as_view(), name='page_element_remove_tags'),
-    url(r'^editables/(?P<slug>[\w-]+)/',
-        PageElementDetail.as_view(), name='edit_page_element'),
-    url(r'^editables/',
-        PagesElementListAPIView.as_view(), name='page_elements'),
+    url(r'^(?P<path>%s)/?$' % settings.PATH_RE,
+        PageElementDetail.as_view(), name='api_page_element'),
 ]

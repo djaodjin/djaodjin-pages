@@ -141,6 +141,21 @@ class PageElementTagSerializer(serializers.ModelSerializer):
         fields = ('tag',)
 
 
+class NodeElementSerializer(serializers.ModelSerializer):
+    """
+    Serializes a PageElement as a node in a content tree
+    """
+    title = serializers.CharField()
+    picture = serializers.CharField()
+    extra = serializers.CharField()
+
+    class Meta:
+        model = PageElement
+        fields = ('title', 'picture', 'extra', 'children')
+
+NodeElementSerializer._declared_fields['children'] = NodeElementSerializer(many=True)
+
+
 class LessVariableSerializer(serializers.ModelSerializer):
     class Meta:
         model = LessVariable

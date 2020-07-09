@@ -1,4 +1,4 @@
-# Copyright (c) 2017, Djaodjin Inc.
+# Copyright (c) 2020, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -21,22 +21,30 @@
 # WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+import json, logging
+from collections import OrderedDict
 
 from django.http import Http404
 from django.core.exceptions import ValidationError
 from django.db.models import Q
 from rest_framework.mixins import CreateModelMixin
-from rest_framework import generics
+from rest_framework import generics, response as api_response
 
-from ..models import PageElement
-from ..serializers import PageElementSerializer, PageElementTagSerializer
-from ..mixins import AccountMixin, PageElementMixin
+from ..models import PageElement, RelationShip
+from ..serializers import (NodeElementSerializer, PageElementSerializer,
+    PageElementTagSerializer)
+from ..mixins import AccountMixin, PageElementMixin, TrailMixin
 from ..utils import validate_title
 
 
-class PagesElementListAPIView(AccountMixin, generics.ListCreateAPIView):
+LOGGER = logging.getLogger(__name__)
+
+
+class PageElementSearchAPIView(AccountMixin, generics.ListAPIView):
     """
-    Lists editable nodes
+    Search through editable page elements
+
+    **Tags: content
 
     **Example
 
@@ -77,39 +85,187 @@ class PagesElementListAPIView(AccountMixin, generics.ListCreateAPIView):
             pass
         return []
 
-    def post(self, request, *args, **kwargs):
+
+class PageElementTreeAPIView(TrailMixin, generics.RetrieveAPIView):
+    """
+    Retrieves a content tree
+
+    **Tags: content
+
+    **Example
+
+    .. code-block:: http
+
+        GET /api/content HTTP/1.1
+
+    responds
+
+    .. code-block:: json
+
+        {
+            "slug": "content-root",
+            "path": "/content-root",
+            "title": "Content root",
+            "picture": null,
+            "extra": null,
+            "children": {}
+        }
+    """
+    serializer_class = NodeElementSerializer
+    queryset = PageElement.objects.all()
+
+    def retrieve(self, request, *args, **kwargs):
+        prefix = self.kwargs.get('path')
+        path_parts = self.get_full_element_path(prefix)
+        roots = path_parts[-1] if path_parts else None
+        content_tree = self.build_content_tree(roots=roots, prefix=prefix)
+        self.attach_picture(content_tree, self.get_pictures())
+        return api_response.Response(content_tree)
+
+    def get_roots(self):
+        # XXX return self.get_queryset().get_roots()
+        # XXX exception `AttributeError: 'QuerySet' object has no attribute 'get_roots'`
+        return PageElement.objects.get_roots()
+
+    def get_pictures(self):
+        results = {}
+        for item in self.get_queryset().filter(
+            text__endswith='.png').values('slug', 'text'):
+            results.update({item['slug']: item['text']})
+        return results
+
+    def attach_picture(self, content_tree, pictures, prefix_picture=None):
+        for path, node in content_tree.items():
+            slug = path.split('/')[-1]
+            prefix_picture = pictures.get(slug, prefix_picture)
+            node[0].update({'picture': prefix_picture})
+            self.attach_picture(
+                node[1], pictures, prefix_picture=prefix_picture)
+
+    def build_content_tree(self, roots=None, prefix=None, cut=None):
         """
-        Creates an editable node
+        Returns a content tree from a list of roots.
 
-        **Example
+        code::
 
-        .. code-block:: http
-
-            POST /api/editables HTTP/1.1
-
-        .. code-block:: json
-
+            build_content_tree(roots=[PageElement<boxes-and-enclosures>])
             {
-            }
-
-        responds
-
-        .. code-block:: json
-
-            {
+              "/boxes-and-enclosures": [
+                { ... data for node ... },
+                {
+                  "boxes-and-enclosures/management": [
+                  { ... data for node ... },
+                  {}],
+                  "boxes-and-enclosures/design": [
+                  { ... data for node ... },
+                  {}],
+                }]
             }
         """
-        return super(PagesElementListAPIView, self).post(
-            request, *args, **kwargs)
+        #pylint:disable=too-many-locals,too-many-statements
+        # Implementation Note: The structure of the content in the database
+        # is stored in terms of `PageElement` (node) and `Relationship` (edge).
+        # We use a breadth-first search algorithm here such as to minimize
+        # the number of queries to the database.
+        if roots is None:
+            roots = self.get_roots()
+            if prefix and prefix != '/':
+                LOGGER.warning("[build_content_tree] prefix=%s but no roots"\
+                    " were defined", prefix)
+            else:
+                prefix = ''
+        else:
+            if not prefix:
+                LOGGER.warning("[build_content_tree] roots=%s but not prefix"\
+                    " was defined", roots)
+        # insures the `prefix` will match a `PATH_RE` (starts with a '/' and
+        # does not end with one).
+        if not prefix.startswith("/"):
+            prefix = "/" + prefix
+        if prefix.endswith("/"):
+            prefix = prefix[:-1]
 
-    def perform_create(self, serializer):
-        serializer.save(account=self.account)
+        results = OrderedDict()
+        pks_to_leafs = {}
+        for root in roots:
+            if isinstance(root, PageElement):
+                slug = root.slug
+                orig_element_id = root.pk
+                title = root.title
+                extra = root.tag
+            else:
+                slug = root.get('slug', root.get('dest_element__slug'))
+                orig_element_id = root.get('dest_element__pk')
+                title = root.get('dest_element__title')
+                extra = root.get('dest_element__tag')
+            leaf_slug = "/" + slug
+            if prefix.endswith(leaf_slug):
+                # Workaround because we sometimes pass a prefix and sometimes
+                # a path `from_root`.
+                base = prefix
+            else:
+                base = prefix + leaf_slug
+            try:
+                extra = json.loads(extra)
+            except (TypeError, ValueError):
+                pass
+            result_node = {'title': title}
+            if extra:
+                result_node.update({'extra': extra})
+            pks_to_leafs[orig_element_id] = {
+                'path': base,
+                'node': (result_node, OrderedDict())
+            }
+            results.update({base: pks_to_leafs[orig_element_id]['node']})
+
+        args = tuple([])
+        edges = RelationShip.objects.filter(
+            orig_element__in=list(roots)).values(
+            'orig_element_id', 'dest_element_id', 'rank',
+            'dest_element__slug', 'dest_element__title',
+            'dest_element__tag', *args).order_by('rank', 'pk')
+        while edges:
+            next_pks_to_leafs = {}
+            for edge in edges:
+                orig_element_id = edge.get('orig_element_id')
+                dest_element_id = edge.get('dest_element_id')
+                slug = edge.get('slug', edge.get('dest_element__slug'))
+                base = pks_to_leafs[orig_element_id]['path'] + "/" + slug
+                title = edge.get('dest_element__title')
+                extra = edge.get('dest_element__tag')
+                try:
+                    extra = json.loads(extra)
+                except (TypeError, ValueError):
+                    pass
+                result_node = {'title': title}
+                if extra:
+                    result_node.update({'extra': extra})
+                text = edge.get('dest_element__text', None)
+                if text:
+                    result_node.update({'text': text})
+                pivot = (result_node, OrderedDict())
+                pks_to_leafs[orig_element_id]['node'][1].update({base: pivot})
+                if cut is None or cut.enter(tag):
+                    next_pks_to_leafs[dest_element_id] = {
+                        'path': base,
+                        'node': pivot
+                    }
+            pks_to_leafs = next_pks_to_leafs
+            next_pks_to_leafs = {}
+            edges = RelationShip.objects.filter(
+                orig_element_id__in=pks_to_leafs.keys()).values(
+                'orig_element_id', 'dest_element_id', 'rank',
+                'dest_element__slug', 'dest_element__title',
+                'dest_element__tag', *args).order_by('rank', 'pk')
+        return results
 
 
 class PageElementDetail(PageElementMixin, CreateModelMixin,
                         generics.RetrieveUpdateDestroyAPIView):
     """
-    Retrieves an editable node
+    Retrieves an editable page element
+
+    **Tags: content
 
     **Example
 
@@ -133,14 +289,46 @@ class PageElementDetail(PageElementMixin, CreateModelMixin,
 
     def delete(self, request, *args, **kwargs):
         """
-        Deletes an editable node
+        Deletes an editable page element
+
+        **Tags: content
+
         **Example
 
         .. code-block:: http
 
             DELETE /api/editables/content-root/ HTTP/1.1
         """
+        #pylint:disable=useless-super-delegation
         return super(PageElementDetail, self).delete(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        """
+        Creates an editable page element
+
+        **Tags: content
+
+        **Example
+
+        .. code-block:: http
+
+            POST /api/editables/content-root/ HTTP/1.1
+
+        .. code-block:: json
+
+            {
+            }
+
+        responds
+
+        .. code-block:: json
+
+            {
+            }
+        """
+        #pylint:disable=useless-super-delegation
+        return super(PageElementDetail, self).post(
+            request, *args, **kwargs)
 
     def put(self, request, *args, **kwargs):
         """
@@ -164,6 +352,7 @@ class PageElementDetail(PageElementMixin, CreateModelMixin,
             {
             }
         """
+        #pylint:disable=useless-super-delegation
         return super(PageElementDetail, self).put(request, *args, **kwargs)
 
     def perform_create(self, serializer):
@@ -184,6 +373,8 @@ class PageElementAddTags(PageElementMixin, generics.UpdateAPIView):
     Adds tags to an editable node
 
     Add tags to a ``PageElement`` if they are not already present.
+
+    **Tags: content
 
     **Example
 
