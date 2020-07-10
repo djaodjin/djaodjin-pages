@@ -327,8 +327,7 @@ class PageElementDetail(PageElementMixin, CreateModelMixin,
             }
         """
         #pylint:disable=useless-super-delegation
-        return super(PageElementDetail, self).post(
-            request, *args, **kwargs)
+        return super(PageElementDetail, self).create(request, *args, **kwargs)
 
     def put(self, request, *args, **kwargs):
         """
