@@ -27,8 +27,8 @@
 from django.conf.urls import url
 
 from ...import settings
-from ...api.edition import (PageElementDetail, PageElementSearchAPIView,
-    PageElementAddTags, PageElementRemoveTags)
+from ...api.edition import (PageElementDetail, PageElementAddTags,
+    PageElementRemoveTags)
 from ...api.relationship import (PageElementAliasAPIView,
     PageElementMirrorAPIView, PageElementMoveAPIView, RelationShipListAPIView)
 

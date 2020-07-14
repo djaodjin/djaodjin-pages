@@ -1,4 +1,4 @@
-# Copyright (c) 2018, Djaodjin Inc.
+# Copyright (c) 2020, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -32,7 +32,7 @@ from rest_framework import serializers
 from .models import PageElement, ThemePackage, LessVariable
 from .settings import ALLOWED_TAGS, ALLOWED_ATTRIBUTES, ALLOWED_STYLES
 
-#pylint: disable=no-init,old-style-class,abstract-method
+#pylint: disable=no-init,abstract-method
 
 
 class HTMLField(serializers.CharField):
@@ -90,11 +90,14 @@ class PageElementSerializer(serializers.ModelSerializer):
     Serializes a PageElement.
     """
 
-    slug = serializers.SlugField(required=False)
+    slug = serializers.SlugField(required=False,
+        help_text=_("Unique identifier that can be used in URL paths"))
     path = serializers.SerializerMethodField()
     text = HTMLField(html_tags=ALLOWED_TAGS, html_attributes=ALLOWED_ATTRIBUTES,
-        html_styles=ALLOWED_STYLES, required=False)
-    tag = serializers.CharField(required=False)
+        html_styles=ALLOWED_STYLES, required=False,
+        help_text=_("Long description of the page element"))
+    tag = serializers.CharField(required=False,
+        help_text=_("Extra meta data (can be stringify JSON)"))
     orig_elements = serializers.ListField(
         child=serializers.SlugField(required=False), required=False
         )
@@ -146,14 +149,17 @@ class NodeElementSerializer(serializers.ModelSerializer):
     Serializes a PageElement as a node in a content tree
     """
     title = serializers.CharField()
-    picture = serializers.CharField()
-    extra = serializers.CharField()
+    picture = serializers.CharField(required=False, allow_null=True,
+        help_text=_("Picture icon that can be displayed alongside the title"))
+    extra = serializers.CharField(required=False, allow_null=True,
+        help_text=_("Extra meta data (can be stringify JSON)"))
 
     class Meta:
         model = PageElement
         fields = ('title', 'picture', 'extra', 'children')
 
-NodeElementSerializer._declared_fields['children'] = NodeElementSerializer(many=True)
+NodeElementSerializer._declared_fields['children'] = NodeElementSerializer(
+    many=True)
 
 
 class LessVariableSerializer(serializers.ModelSerializer):

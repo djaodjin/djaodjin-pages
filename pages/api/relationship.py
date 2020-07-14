@@ -85,7 +85,7 @@ class PageElementAliasAPIView(EdgesUpdateAPIView):
 
     .. code-block:: http
 
-        POST /api/themes/editables/alias/content-root/ HTTP/1.1
+        POST /api/content/editables/alias/content-root/ HTTP/1.1
 
     .. code-block:: json
 
@@ -123,7 +123,7 @@ class PageElementMirrorAPIView(EdgesUpdateAPIView):
 
     .. code-block:: http
 
-        POST /api/themes/editables/mirror/content-root/ HTTP/1.1
+        POST /api/content/editables/mirror/content-root/ HTTP/1.1
 
     .. code-block:: json
 
@@ -188,7 +188,7 @@ class PageElementMoveAPIView(EdgesUpdateAPIView):
 
     .. code-block:: http
 
-        POST /api/themes/editables/attach/content-root/ HTTP/1.1
+        POST /api/content/editables/attach/content-root/ HTTP/1.1
 
     .. code-block:: json
 
@@ -238,7 +238,7 @@ class RelationShipListAPIView(DestroyModelMixin, generics.ListCreateAPIView):
 
     .. code-block:: http
 
-        GET /api/themes/editables/relationship/ HTTP/1.1
+        GET /api/content/editables/relationship/ HTTP/1.1
 
     responds
 
@@ -266,7 +266,7 @@ class RelationShipListAPIView(DestroyModelMixin, generics.ListCreateAPIView):
 
         .. code-block:: http
 
-            DELETE /api/themes/editables/relationship/ HTTP/1.1
+            DELETE /api/content/editables/relationship/ HTTP/1.1
        """
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid()
@@ -276,7 +276,7 @@ class RelationShipListAPIView(DestroyModelMixin, generics.ListCreateAPIView):
         elements.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-    def post(self, request, *args, **kwargs):#pylint: disable=unused-argument
+    def post(self, request, *args, **kwargs):
         """
         Creates edges of an editable node
 
@@ -285,7 +285,7 @@ class RelationShipListAPIView(DestroyModelMixin, generics.ListCreateAPIView):
 
         .. code-block:: http
 
-            POST /api/themes/editables/relationship/ HTTP/1.1
+            POST /api/content/editables/relationship/ HTTP/1.1
 
         .. code-block:: json
 
@@ -299,5 +299,6 @@ class RelationShipListAPIView(DestroyModelMixin, generics.ListCreateAPIView):
              {
              }
         """
+        #pylint: disable=unused-argument,useless-super-delegation
         return super(RelationShipListAPIView, self).post(
             request, *args, **kwargs)

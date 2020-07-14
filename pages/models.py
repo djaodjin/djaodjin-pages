@@ -29,6 +29,7 @@ import logging, random
 from django.db import IntegrityError, models, transaction
 from django.db.models import Max
 from django.template.defaultfilters import slugify
+from django.utils.translation import ugettext_lazy as _
 from rest_framework.exceptions import ValidationError
 
 from . import settings
@@ -122,15 +123,19 @@ class PageElement(models.Model):
     """
     objects = PageElementManager()
 
-    slug = models.SlugField(unique=True)
-    title = models.CharField(max_length=720, blank=True)
-    text = models.TextField(blank=True)
+    slug = models.SlugField(unique=True,
+        help_text=_("Unique identifier that can be used in URL paths"))
+    title = models.CharField(max_length=720, blank=True,
+        help_text=_("Title of the page element"))
+    text = models.TextField(blank=True,
+        help_text=_("Long description of the page element"))
     account = models.ForeignKey(
         settings.ACCOUNT_MODEL, related_name='account_page_element',
         null=True, on_delete=models.SET_NULL)
     relationships = models.ManyToManyField("self",
         related_name='related_to', through='RelationShip', symmetrical=False)
-    tag = models.CharField(max_length=255, null=True, blank=True)
+    tag = models.CharField(max_length=255, null=True, blank=True,
+        help_text=_("Extra meta data (can be stringify JSON)"))
 
     def __str__(self):
         return self.slug

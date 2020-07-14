@@ -25,7 +25,7 @@
 """
 API URLs for readers who could be unauthenticated
 """
-from django.conf.urls import include, url
+from django.conf.urls import url
 
 from ...settings import PATH_RE
 from ...api.edition import PageElementSearchAPIView, PageElementTreeAPIView
