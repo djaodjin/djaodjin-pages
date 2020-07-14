@@ -1,3 +1,11 @@
+0.3.0
+
+  * adds an API end point to retrieve a content tree
+  * adds an API end point to search for page elements
+  * replaces api_page_elements by api_page_element_base
+
+ -- Sebastien Mirolo <smirolo@djaodjin.com>  Sun,  14 Jul 2020 13:59:00 -0700
+
 0.2.9
 
   * compatibles with Django3

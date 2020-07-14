@@ -39,9 +39,10 @@ the prerequisites, create the database then run the testsite webapp.
 Release Notes
 =============
 
-0.2.9
+0.3.0
 
-  * compatibles with Django3
-  * uses `detail` consistently to return user-friendly messages
+  * adds an API end point to retrieve a content tree
+  * adds an API end point to search for page elements
+  * replaces api_page_elements by api_page_element_base
 
 [previous release notes](changelog)

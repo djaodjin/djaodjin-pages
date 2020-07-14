@@ -1,4 +1,4 @@
-# Copyright (c) 2018, DjaoDjin inc.
+# Copyright (c) 2020, DjaoDjin inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -27,8 +27,9 @@
 from django.conf.urls import include, url
 
 urlpatterns = [
-    url(r'^themes/editables/', include('pages.urls.api.editables')),
+    url(r'^themes/', include('pages.urls.api.editables')),
     url(r'^themes/', include('pages.urls.api.assets')),
     url(r'^themes/', include('pages.urls.api.templates')),
     url(r'^themes/', include('pages.urls.api.themes')),
+    url(r'^themes/', include('pages.urls.api.readers')),
 ]

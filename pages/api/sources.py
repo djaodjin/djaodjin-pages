@@ -1,4 +1,4 @@
-# Copyright (c) 2019, Djaodjin Inc.
+# Copyright (c) 2020, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -107,6 +107,7 @@ class SourceDetailAPIView(ThemePackageMixin, generics.RetrieveUpdateAPIView,
                "text": "..."
              }
         """
+        #pylint:disable=useless-super-delegation
         return super(SourceDetailAPIView, self).post(request, *args, **kwargs)
 
     def put(self, request, *args, **kwargs):
@@ -133,6 +134,7 @@ class SourceDetailAPIView(ThemePackageMixin, generics.RetrieveUpdateAPIView,
                "text": "..."
              }
         """
+        #pylint:disable=useless-super-delegation
         return super(SourceDetailAPIView, self).put(request, *args, **kwargs)
 
     def retrieve(self, request, *args, **kwargs):

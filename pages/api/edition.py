@@ -50,7 +50,7 @@ class PageElementSearchAPIView(AccountMixin, generics.ListAPIView):
 
     .. code-block:: http
 
-        GET /api/editables HTTP/1.1
+        GET /api/content/search HTTP/1.1
 
     responds
 
@@ -63,9 +63,7 @@ class PageElementSearchAPIView(AccountMixin, generics.ListAPIView):
           "results": [{
             "slug": "hello",
             "path": "/hello",
-            "text": "Hello",
-            "orig_elements": [],
-            "dest_elements": []
+            "title": "Hello"
           }]
         }
     """
@@ -103,12 +101,12 @@ class PageElementTreeAPIView(TrailMixin, generics.RetrieveAPIView):
     .. code-block:: json
 
         {
-            "slug": "content-root",
-            "path": "/content-root",
+            "slug": "boxes-enclosures",
+            "path": "/boxes-enclosures",
             "title": "Content root",
             "picture": null,
             "extra": null,
-            "children": {}
+            "children": []
         }
     """
     serializer_class = NodeElementSerializer
@@ -124,7 +122,8 @@ class PageElementTreeAPIView(TrailMixin, generics.RetrieveAPIView):
 
     def get_roots(self):
         # XXX return self.get_queryset().get_roots()
-        # XXX exception `AttributeError: 'QuerySet' object has no attribute 'get_roots'`
+        # XXX exception `AttributeError: 'QuerySet' object has no attribute
+        # XXX 'get_roots'`
         return PageElement.objects.get_roots()
 
     def get_pictures(self):
@@ -245,7 +244,7 @@ class PageElementTreeAPIView(TrailMixin, generics.RetrieveAPIView):
                     result_node.update({'text': text})
                 pivot = (result_node, OrderedDict())
                 pks_to_leafs[orig_element_id]['node'][1].update({base: pivot})
-                if cut is None or cut.enter(tag):
+                if cut is None or cut.enter(extra):
                     next_pks_to_leafs[dest_element_id] = {
                         'path': base,
                         'node': pivot
@@ -263,7 +262,7 @@ class PageElementTreeAPIView(TrailMixin, generics.RetrieveAPIView):
 class PageElementDetail(PageElementMixin, CreateModelMixin,
                         generics.RetrieveUpdateDestroyAPIView):
     """
-    Retrieves an editable page element
+    Retrieves details on an editable page element
 
     **Tags: content
 
@@ -271,18 +270,16 @@ class PageElementDetail(PageElementMixin, CreateModelMixin,
 
     .. code-block:: http
 
-        GET /api/editables/content-root/ HTTP/1.1
+        GET /api/content/editables/boxes-enclosures/ HTTP/1.1
 
     responds
 
     .. code-block:: json
 
         {
-            "slug": "content-root",
-            "path": "/content-root",
-            "text": "Hello",
-            "orig_elements": [],
-            "dest_elements": []
+            "slug": "boxes-enclosures",
+            "path": "/boxes-enclosures",
+            "text": "Hello"
         }
     """
     serializer_class = PageElementSerializer
@@ -297,7 +294,7 @@ class PageElementDetail(PageElementMixin, CreateModelMixin,
 
         .. code-block:: http
 
-            DELETE /api/editables/content-root/ HTTP/1.1
+            DELETE /api/content/editables/boxes-enclosures/ HTTP/1.1
         """
         #pylint:disable=useless-super-delegation
         return super(PageElementDetail, self).delete(request, *args, **kwargs)
@@ -312,11 +309,12 @@ class PageElementDetail(PageElementMixin, CreateModelMixin,
 
         .. code-block:: http
 
-            POST /api/editables/content-root/ HTTP/1.1
+            POST /api/content/editables/boxes-enclosures/ HTTP/1.1
 
         .. code-block:: json
 
             {
+                "title": "Boxes enclosures"
             }
 
         responds
@@ -324,24 +322,28 @@ class PageElementDetail(PageElementMixin, CreateModelMixin,
         .. code-block:: json
 
             {
+                "slug": "boxes-enclosures",
+                "text": "Hello"
             }
+
         """
         #pylint:disable=useless-super-delegation
         return super(PageElementDetail, self).create(request, *args, **kwargs)
 
     def put(self, request, *args, **kwargs):
         """
-        Updates an editable node
+        Updates an editable page element
 
         **Example
 
         .. code-block:: http
 
-            PUT /api/editables/content-root/ HTTP/1.1
+            PUT /api/content/editables/boxes-enclosures/ HTTP/1.1
 
         .. code-block:: json
 
             {
+                "title": "Boxes and enclosures"
             }
 
         responds
@@ -349,6 +351,8 @@ class PageElementDetail(PageElementMixin, CreateModelMixin,
         .. code-block:: json
 
             {
+                "slug": "boxes-enclosures",
+                "text": "Hello"
             }
         """
         #pylint:disable=useless-super-delegation
@@ -379,7 +383,7 @@ class PageElementAddTags(PageElementMixin, generics.UpdateAPIView):
 
     .. code-block:: http
 
-        PUT /api/editables/_my-element_/add-tags HTTP/1.1
+        PUT /api/content/editables/boxes-and-enclosures/add-tags/ HTTP/1.1
 
     .. code-block:: json
 
@@ -422,7 +426,7 @@ class PageElementRemoveTags(PageElementMixin, generics.UpdateAPIView):
 
     .. code-block:: http
 
-        PUT /api/editables/_my-element_/reomve-tags HTTP/1.1
+        PUT /api/content/editables/boxes-and-enclosures/remove-tags/ HTTP/1.1
 
     .. code-block:: json
 

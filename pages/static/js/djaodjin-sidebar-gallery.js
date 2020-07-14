@@ -414,6 +414,13 @@ Options:
             }
         },
 
+        elementUrl: function(idElement) {
+            var self = this;
+            var path = idElement;
+            if( path.indexOf('/') != 0 ) path = '/' + path
+            return self.options.saveDroppedMediaUrl + path;
+        },
+
         previewMedia: function(event){
             var self = this;
             event.preventDefault();
@@ -432,7 +439,7 @@ Options:
             $.ajax({
                 method: "PUT",
                 async: false,
-                url: self.options.saveDroppedMediaUrl + idElement + "/",
+                url: self.elementUrl(idElement),
                 data: data,
                 beforeSend: function(xhr, settings) {
                     xhr.setRequestHeader("X-CSRFToken", getMetaCSRFToken());

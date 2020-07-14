@@ -80,6 +80,28 @@ class PageElementMixin(AccountMixin):
     def get_queryset(self):
         return PageElement.objects.filter(account=self.account)
 
+    def get_object(self):
+        queryset = self.filter_queryset(self.get_queryset())
+
+        lookup_value = None
+        lookup_url_kwarg = self.lookup_url_kwarg or self.lookup_field
+        if lookup_url_kwarg in self.kwargs:
+            lookup_value = self.kwargs[lookup_url_kwarg]
+        else:
+            parts = self.kwargs.get('path').split('/')
+            for part in reversed(parts):
+                if part:
+                    lookup_value = part
+                    break
+
+        filter_kwargs = {self.lookup_field: lookup_value}
+        obj = get_object_or_404(queryset, **filter_kwargs)
+
+        # May raise a permission denied
+        self.check_object_permissions(self.request, obj)
+
+        return obj
+
 
 class UploadedImageMixin(object):
 

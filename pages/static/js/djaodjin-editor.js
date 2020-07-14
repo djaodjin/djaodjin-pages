@@ -48,11 +48,18 @@
             return slug;
         },
 
+        elementUrl: function() {
+            var self = this;
+            var path = self.getId();
+            if( path.indexOf('/') != 0 ) path = '/' + path
+            return self.options.baseUrl + path;
+        },
+
         addTags: function(tags) {
             var self = this;
             $.ajax({
                 method: "PUT",
-                url: self.options.baseUrl + self.getId() + "/add-tags/",
+                url: self.elementUrl() + "/add-tags/",
                 beforeSend: function(xhr) {
                     xhr.setRequestHeader("X-CSRFToken", self._getCSRFToken());
                 },
@@ -70,7 +77,7 @@
             var self = this;
             $.ajax({
                 method: "PUT",
-                url: self.options.baseUrl + self.getId() + "/remove-tags/",
+                url: self.elementUrl() + "/remove-tags/",
                 beforeSend: function(xhr) {
                     xhr.setRequestHeader("X-CSRFToken", self._getCSRFToken());
                 },
@@ -219,7 +226,7 @@
             }
             $.ajax({
                 method: method,
-                url: self.options.baseUrl + self.getId() + "/",
+                url: self.elementUrl(),
                 beforeSend: function(xhr) {
                     xhr.setRequestHeader("X-CSRFToken", self._getCSRFToken());
                 },
@@ -478,7 +485,7 @@
             if (self.options.baseUrl){
                 $.ajax({
                     method: "GET",
-                    url: self.options.baseUrl + self.getId() + "/",
+                    url: self.elementUrl(),
                     contentType: "application/json; charset=utf-8",
                     beforeSend: function(xhr) {
                         xhr.setRequestHeader("X-CSRFToken", self._getCSRFToken());

@@ -187,7 +187,6 @@ def install_theme(app_name, package_uri, force=False):
             basename = os.path.basename(package_uri)
             package_storage = FileSystemStorage(
                 os.path.dirname(package_uri))
-            #pylint:disable=redefined-variable-type
             package_file = package_storage.open(basename)
         if not app_name:
             app_name = os.path.splitext(basename)[0]
