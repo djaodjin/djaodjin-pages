@@ -279,9 +279,7 @@ class PageElementDetail(PageElementMixin, CreateModelMixin,
         {
             "slug": "boxes-enclosures",
             "path": "/boxes-enclosures",
-            "text": "Hello",
-            "orig_elements": [],
-            "dest_elements": []
+            "text": "Hello"
         }
     """
     serializer_class = PageElementSerializer

@@ -30,6 +30,6 @@ from ...api.themes import ThemePackageListAPIView
 
 
 urlpatterns = [
-    url(r'^',
+    url(r'^$',
         ThemePackageListAPIView.as_view(), name='pages_api_themes'),
 ]
