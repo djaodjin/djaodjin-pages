@@ -24,7 +24,8 @@
 
 from __future__ import unicode_literals
 
-import logging, random
+import json, logging, random
+from collections import OrderedDict
 
 from django.db import IntegrityError, models, transaction
 from django.db.models import Max
@@ -107,12 +108,29 @@ class RelationShip(models.Model):
         return "%s to %s" % (
             self.orig_element.slug, self.dest_element.slug) #pylint: disable=no-member
 
+
+class PageElementQuerySet(models.QuerySet):
+
+
+    def build_content_tree(self, prefix="", cut=None):
+        return build_content_tree(roots=self, prefix=prefix, cut=cut)
+
+
 class PageElementManager(models.Manager):
+
+    def get_queryset(self):
+        return PageElementQuerySet(self.model, using=self._db)
 
     def get_roots(self):
         return self.all().extra(where=[
             '(SELECT COUNT(*) FROM pages_relationship'\
             ' WHERE pages_relationship.dest_element_id = pages_pageelement.id)'\
+            ' = 0'])
+
+    def get_leafs(self):
+        return self.all().extra(where=[
+            '(SELECT COUNT(*) FROM pages_relationship'\
+            ' WHERE pages_relationship.orig_element_id = pages_pageelement.id)'\
             ' = 0'])
 
 
@@ -249,7 +267,7 @@ class MediaTag(models.Model):
     tag = models.CharField(max_length=50)
 
     def __str__(self):
-        return self.tag
+        return str(self.tag)
 
 
 @python_2_unicode_compatible
@@ -291,6 +309,127 @@ class ThemePackage(models.Model):
         if self.account:
             return '%s-%s' % (self.account, self.name)
         return self.name
+
+
+def build_content_tree(roots=None, prefix=None, cut=None):
+    """
+    Returns a content tree from a list of roots.
+
+    code::
+
+        build_content_tree(roots=[PageElement<boxes-and-enclosures>])
+        {
+          "/boxes-and-enclosures": [
+            { ... data for node ... },
+            {
+              "boxes-and-enclosures/management": [
+              { ... data for node ... },
+              {}],
+              "boxes-and-enclosures/design": [
+              { ... data for node ... },
+              {}],
+            }]
+        }
+    """
+    #pylint:disable=too-many-locals,too-many-statements
+    # Implementation Note: The structure of the content in the database
+    # is stored in terms of `PageElement` (node) and `Relationship` (edge).
+    # We use a breadth-first search algorithm here such as to minimize
+    # the number of queries to the database.
+    if roots is None:
+        roots = PageElement.objects.get_roots()
+        if prefix and prefix != '/':
+            LOGGER.warning("[build_content_tree] prefix=%s but no roots"\
+                " were defined", prefix)
+        else:
+            prefix = ''
+    else:
+        if not prefix:
+            LOGGER.warning("[build_content_tree] roots=%s but not prefix"\
+                " was defined", roots)
+    # insures the `prefix` will match a `PATH_RE` (starts with a '/' and
+    # does not end with one).
+    if not prefix.startswith("/"):
+        prefix = "/" + prefix
+    if prefix.endswith("/"):
+        prefix = prefix[:-1]
+
+    results = OrderedDict()
+    pks_to_leafs = {}
+    roots_after_cut = []
+    for root in roots:
+        if isinstance(root, PageElement):
+            slug = root.slug
+            orig_element_id = root.pk
+            title = root.title
+            extra = root.tag
+        else:
+            slug = root.get('slug', root.get('dest_element__slug'))
+            orig_element_id = root.get('dest_element__pk')
+            title = root.get('dest_element__title')
+            extra = root.get('dest_element__tag')
+        leaf_slug = "/" + slug
+        if prefix.endswith(leaf_slug):
+            # Workaround because we sometimes pass a prefix and sometimes
+            # a path `from_root`.
+            base = prefix
+        else:
+            base = prefix + leaf_slug
+        try:
+            extra = json.loads(extra)
+        except (TypeError, ValueError):
+            pass
+        result_node = {'title': title}
+        if extra:
+            result_node.update({'extra': extra})
+        pks_to_leafs[orig_element_id] = {
+            'path': base,
+            'node': (result_node, OrderedDict())
+        }
+        results.update({base: pks_to_leafs[orig_element_id]['node']})
+        if cut is None or cut.enter(extra):
+            roots_after_cut += [root]
+
+    args = tuple([])
+    edges = RelationShip.objects.filter(
+        orig_element__in=roots_after_cut).values(
+        'orig_element_id', 'dest_element_id', 'rank',
+        'dest_element__slug', 'dest_element__title',
+        'dest_element__tag', *args).order_by('rank', 'pk')
+    while edges:
+        next_pks_to_leafs = {}
+        for edge in edges:
+            orig_element_id = edge.get('orig_element_id')
+            dest_element_id = edge.get('dest_element_id')
+            slug = edge.get('slug', edge.get('dest_element__slug'))
+            base = pks_to_leafs[orig_element_id]['path'] + "/" + slug
+            title = edge.get('dest_element__title')
+            extra = edge.get('dest_element__tag')
+            try:
+                extra = json.loads(extra)
+            except (TypeError, ValueError):
+                pass
+            result_node = {'title': title}
+            if extra:
+                result_node.update({'extra': extra})
+            text = edge.get('dest_element__text', None)
+            if text:
+                result_node.update({'text': text})
+            pivot = (result_node, OrderedDict())
+            pks_to_leafs[orig_element_id]['node'][1].update({base: pivot})
+            if cut is None or cut.enter(extra):
+                next_pks_to_leafs[dest_element_id] = {
+                    'path': base,
+                    'node': pivot
+                }
+        pks_to_leafs = next_pks_to_leafs
+        next_pks_to_leafs = {}
+        edges = RelationShip.objects.filter(
+            orig_element_id__in=pks_to_leafs.keys()).values(
+            'orig_element_id', 'dest_element_id', 'rank',
+            'dest_element__slug', 'dest_element__title',
+            'dest_element__tag', *args).order_by('rank', 'pk')
+    return results
 
 
 def get_active_theme():
