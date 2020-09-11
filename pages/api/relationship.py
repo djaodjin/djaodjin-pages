@@ -69,7 +69,7 @@ class EdgesUpdateAPIView(TrailMixin, generics.CreateAPIView):
 
 
     def perform_create(self, serializer):
-        targets = self.get_full_element_path(self.kwargs.get('path', None))
+        targets = self.get_full_element_path(self.path)
         sources = self.get_full_element_path(serializer.validated_data.get(
             'source'))
         self.valid_against_loop(sources, targets)
@@ -170,8 +170,8 @@ class PageElementMirrorAPIView(EdgesUpdateAPIView):
         LOGGER.debug("mirror node %s under %s with rank=%s", node, root, rank)
         with transaction.atomic():
             new_node = self.mirror_recursive(node,
-                prefix="/" + "/".join([elm.slug for elm in sources[:-1]]),
-                new_prefix="/" + "/".join([elm.slug for elm in targets]))
+                prefix='/%s' % "/".join([elm.slug for elm in sources[:-1]]),
+                new_prefix='/%s' % "/".join([elm.slug for elm in targets]))
             RelationShip.objects.create(
                 orig_element=root, dest_element=new_node,
                 rank=self.rank_or_max(root, rank))

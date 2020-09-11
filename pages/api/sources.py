@@ -142,7 +142,7 @@ class SourceDetailAPIView(ThemePackageMixin, generics.RetrieveUpdateAPIView,
         with open(get_template_path(
                 relative_path=relative_path)) as source_file:
             source_content = source_file.read()
-        return Response({"path": relative_path, "text": source_content})
+        return Response({'path': relative_path, 'text': source_content})
 
     def update(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)

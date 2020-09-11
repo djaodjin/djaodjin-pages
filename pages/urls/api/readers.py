@@ -27,14 +27,14 @@ API URLs for readers who could be unauthenticated
 """
 from django.conf.urls import url
 
-from ...settings import PATH_RE
+from ... import settings
 from ...api.edition import PageElementSearchAPIView, PageElementTreeAPIView
 
 
 urlpatterns = [
-    url(r'^search/?',
+    url(r'^search',
         PageElementSearchAPIView.as_view(), name='api_page_element_search'),
-    url(r'(?P<path>%s)/?' % PATH_RE,
+    url(r'(?P<path>%s)' % settings.PATH_RE,
         PageElementTreeAPIView.as_view(),
         name="api_content"),
 ]
