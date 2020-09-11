@@ -51,8 +51,11 @@
         elementUrl: function() {
             var self = this;
             var path = self.getId();
+            // We make sure that if either `baseUrl` or `path` ends with,
+            // respectively starts with, a '/' or not, concatenation will
+            // not result in a '//'.
             if( path.indexOf('/') != 0 ) path = '/' + path
-            return self.options.baseUrl + path;
+            return self.options.baseUrl.replace(/\/+$/, "") + path;
         },
 
         addTags: function(tags) {

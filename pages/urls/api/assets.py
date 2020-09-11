@@ -33,7 +33,7 @@ from ...api.sitecss import SiteCssAPIView
 
 
 urlpatterns = [
-    url(r'^assets/(?P<path>%s)/' % settings.PATH_RE,
+    url(r'^assets/(?P<path>%s)' % settings.PATH_RE,
         MediaListAPIView.as_view(), name='uploaded_media_elements'),
     url(r'^sitecss/variables/(?P<name>[\w-]+)/',
         LessVariableDetail.as_view(), name='pages_api_less_override'),
