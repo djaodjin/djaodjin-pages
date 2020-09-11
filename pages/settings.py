@@ -76,7 +76,7 @@ ACTIVE_THEME_CALLABLE = _SETTINGS.get('ACTIVE_THEME_CALLABLE')
 THEME_DIR_CALLABLE = _SETTINGS.get('THEME_DIR_CALLABLE')
 
 SLUG_RE = r'[a-zA-Z0-9_\-]+'
-PATH_RE = r'(/[a-zA-Z0-9\-]+)*'
+PATH_RE = r'([a-zA-Z0-9-]+(/[a-zA-Z0-9\-]+)*)?'
 
 # Sanitizer settings
 ALLOWED_TAGS = [

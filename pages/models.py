@@ -350,7 +350,7 @@ def build_content_tree(roots=None, prefix=None, cut=None):
     # insures the `prefix` will match a `PATH_RE` (starts with a '/' and
     # does not end with one).
     if not prefix.startswith("/"):
-        prefix = "/" + prefix
+        prefix = '/%s' % prefix
     if prefix.endswith("/"):
         prefix = prefix[:-1]
 
@@ -368,7 +368,7 @@ def build_content_tree(roots=None, prefix=None, cut=None):
             orig_element_id = root.get('dest_element__pk')
             title = root.get('dest_element__title')
             extra = root.get('dest_element__tag')
-        leaf_slug = "/" + slug
+        leaf_slug = '/%s' % slug
         if prefix.endswith(leaf_slug):
             # Workaround because we sometimes pass a prefix and sometimes
             # a path `from_root`.

@@ -47,6 +47,14 @@ class TrailMixin(object):
     Generate a trail of PageElement based on a path.
     """
 
+    @property
+    def path(self):
+        if not hasattr(self, '_path'):
+            self._path = self.kwargs.get('path', '')
+            if self._path and not self._path.startswith('/'):
+                self._path = '/' + self._path
+        return self._path
+
     @staticmethod
     def get_full_element_path(path):
         if not path:

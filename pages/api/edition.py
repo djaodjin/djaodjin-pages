@@ -112,10 +112,9 @@ class PageElementTreeAPIView(TrailMixin, generics.RetrieveAPIView):
     queryset = PageElement.objects.all()
 
     def retrieve(self, request, *args, **kwargs):
-        prefix = self.kwargs.get('path')
-        path_parts = self.get_full_element_path(prefix)
+        path_parts = self.get_full_element_path(self.path)
         roots = path_parts[-1] if path_parts else None
-        content_tree = build_content_tree(roots=roots, prefix=prefix)
+        content_tree = build_content_tree(roots=roots, prefix=self.path)
         self.attach_picture(content_tree, self.get_pictures())
         return api_response.Response(content_tree)
 
