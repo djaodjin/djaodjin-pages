@@ -14,7 +14,7 @@ Tested with
 - **Python:** 3.6, **Django:** 3.0 (latest), **Django Rest Framework:** 3.11
 
 
-Development
+Development :
 ===========
 
 After cloning the repository, create a virtualenv environment, install
