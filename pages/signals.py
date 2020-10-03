@@ -1,4 +1,4 @@
-# Copyright (c) 2017, DjaoDjin inc.
+# Copyright (c) 2020, DjaoDjin inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -26,3 +26,6 @@ from django.dispatch import Signal
 
 #pylint: disable=invalid-name
 template_loaded = Signal(providing_args=["template"])
+
+#pylint: disable=invalid-name
+question_new = Signal(providing_args=['request', 'question'])

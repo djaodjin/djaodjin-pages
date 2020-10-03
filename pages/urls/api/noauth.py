@@ -22,15 +22,24 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-'''API URLs for the pages application'''
+"""
+API URLs for readers who could be unauthenticated
+"""
+from django.conf.urls import url
 
-from django.conf.urls import include, url
+from ... import settings
+from ...api.edition import (PageElementSearchAPIView, PageElementTreeAPIView,
+  PageElementDetailAPIView)
+from ...api.reactions import (FollowAPIView, UnfollowAPIView, UpvoteAPIView,
+  DownvoteAPIView, CommentListCreateAPIView)
 
 urlpatterns = [
-    url(r'^themes/', include('pages.urls.api.assets')),
-    url(r'^themes/', include('pages.urls.api.templates')),
-    url(r'^themes/', include('pages.urls.api.themes')),
-    url(r'^content/editables/', include('pages.urls.api.editables')),
-    url(r'^content/', include('pages.urls.api.readers')),
-    url(r'^content/', include('pages.urls.api.noauth')),
+    url(r'^search',
+        PageElementSearchAPIView.as_view(), name='api_page_element_search'),
+    url(r'detail/(?P<path>%s)$' % settings.PATH_RE,
+        PageElementDetailAPIView.as_view(),
+        name='pages_api_pageelement'),
+    url(r'(?P<path>%s)$' % settings.PATH_RE,
+        PageElementTreeAPIView.as_view(),
+        name="api_content"),
 ]

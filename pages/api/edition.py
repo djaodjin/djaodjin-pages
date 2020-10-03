@@ -41,7 +41,7 @@ LOGGER = logging.getLogger(__name__)
 
 class PageElementSearchAPIView(AccountMixin, generics.ListAPIView):
     """
-    Search through editable page elements
+    Search through page elements
 
     **Tags: content
 
@@ -83,9 +83,9 @@ class PageElementSearchAPIView(AccountMixin, generics.ListAPIView):
         return []
 
 
-class PageElementTreeAPIView(TrailMixin, generics.RetrieveAPIView):
+class PageElementTreeAPIView(TrailMixin, generics.ListAPIView):
     """
-    Retrieves a content tree
+    Lists a tree of page elements
 
     **Tags: content
 
@@ -93,19 +93,34 @@ class PageElementTreeAPIView(TrailMixin, generics.RetrieveAPIView):
 
     .. code-block:: http
 
-        GET /api/content HTTP/1.1
+        GET /api/content/boxes-enclosures HTTP/1.1
 
     responds
 
     .. code-block:: json
 
         {
-            "slug": "boxes-enclosures",
-            "path": "/boxes-enclosures",
-            "title": "Content root",
-            "picture": null,
-            "extra": null,
-            "children": []
+          "count": 8,
+          "next": null,
+          "previous": null,
+          "results": [
+          {
+            "path": null,
+            "title": "Metal structures & equipment",
+            "indent": 0
+          },
+          {
+            "path": "/metal/boxes-and-enclosures",
+            "title": "Boxes & enclosures",
+            "indent": 1,
+            "tags": [
+              "industry",
+              "pagebreak",
+              "public",
+              "scorecard"
+            ]
+          }
+          ]
         }
     """
     serializer_class = NodeElementSerializer
@@ -118,7 +133,8 @@ class PageElementTreeAPIView(TrailMixin, generics.RetrieveAPIView):
         self.attach_picture(content_tree, self.get_pictures())
         return api_response.Response(content_tree)
 
-    def get_roots(self):
+    @staticmethod
+    def get_roots():
         # XXX return self.get_queryset().get_roots()
         # XXX exception `AttributeError: 'QuerySet' object has no attribute
         # XXX 'get_roots'`
@@ -140,12 +156,38 @@ class PageElementTreeAPIView(TrailMixin, generics.RetrieveAPIView):
                 node[1], pictures, prefix_picture=prefix_picture)
 
 
-class PageElementDetail(PageElementMixin, CreateModelMixin,
-                        generics.RetrieveUpdateDestroyAPIView):
+class PageElementDetailAPIView(PageElementMixin, generics.RetrieveAPIView):
     """
-    Retrieves details on an editable page element
+    Retrieves details on a page element
 
     **Tags: content
+
+    **Example
+
+    .. code-block:: http
+
+        GET /api/content/detail/adjust-air-fuel-ratio HTTP/1.1
+
+    responds
+
+    .. code-block:: json
+
+        {
+            "slug": "boxes-enclosures",
+            "path": "/boxes-enclosures",
+            "text": "Hello"
+        }
+    """
+    serializer_class = PageElementSerializer
+
+
+
+class PageElementEditableDetail(PageElementMixin, CreateModelMixin,
+                        generics.RetrieveUpdateDestroyAPIView):
+    """
+    Retrieves an editable page element
+
+    **Tags: editors
 
     **Example
 
@@ -167,9 +209,9 @@ class PageElementDetail(PageElementMixin, CreateModelMixin,
 
     def delete(self, request, *args, **kwargs):
         """
-        Deletes an editable page element
+        Deletes a page element
 
-        **Tags: content
+        **Tags: editors
 
         **Example
 
@@ -182,9 +224,9 @@ class PageElementDetail(PageElementMixin, CreateModelMixin,
 
     def post(self, request, *args, **kwargs):
         """
-        Creates an editable page element
+        Creates a page element
 
-        **Tags: content
+        **Tags: editors
 
         **Example
 
@@ -213,7 +255,9 @@ class PageElementDetail(PageElementMixin, CreateModelMixin,
 
     def put(self, request, *args, **kwargs):
         """
-        Updates an editable page element
+        Updates a page element
+
+        **Tags: editors
 
         **Example
 
@@ -258,8 +302,6 @@ class PageElementAddTags(PageElementMixin, generics.UpdateAPIView):
 
     Add tags to a ``PageElement`` if they are not already present.
 
-    **Tags: content
-
     **Example
 
     .. code-block:: http
@@ -300,8 +342,6 @@ class PageElementRemoveTags(PageElementMixin, generics.UpdateAPIView):
     Remove tags from an editable node
 
     Remove tags from a ``PageElement``.
-
-    **Tags: content
 
     **Examples
 

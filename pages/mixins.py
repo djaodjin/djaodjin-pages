@@ -30,7 +30,7 @@ from django.utils._os import safe_join
 from rest_framework.generics import get_object_or_404
 
 from . import settings
-from .compat import six, urlsplit
+from .compat import import_string, six, urlsplit
 from .models import MediaTag, PageElement
 from .extras import AccountMixinBase
 
@@ -190,7 +190,6 @@ class ThemePackageMixin(AccountMixin):
     @staticmethod
     def get_templates_dir(theme):
         if isinstance(settings.THEME_DIR_CALLABLE, six.string_types):
-            from .compat import import_string
             settings.THEME_DIR_CALLABLE = import_string(
                 settings.THEME_DIR_CALLABLE)
         theme_dir = settings.THEME_DIR_CALLABLE(theme)

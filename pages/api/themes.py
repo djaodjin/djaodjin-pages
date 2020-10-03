@@ -78,6 +78,7 @@ class ThemePackageListAPIView(ThemePackageMixin, GenericAPIView):
 
             DELETE /api/themes HTTP/1.1
         """
+        #pylint:disable=unused-argument
         remove_theme(self.theme)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -100,7 +101,8 @@ class ThemePackageListAPIView(ThemePackageMixin, GenericAPIView):
 
         .. code-block:: shell
 
-            curl -i -u *api_key*:  -X POST -F file=@*package*.zip https://*mydomain*/api/themes/
+            curl -i -u *api_key*:  -X POST -F file=@*package*.zip \
+https://*mydomain*/api/themes/
         """
 
         #pylint:disable=unused-argument

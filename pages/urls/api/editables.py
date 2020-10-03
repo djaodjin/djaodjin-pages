@@ -27,25 +27,20 @@
 from django.conf.urls import url
 
 from ...import settings
-from ...api.edition import (PageElementDetail, PageElementAddTags,
-    PageElementRemoveTags)
+from ...api.edition import PageElementEditableDetail
 from ...api.relationship import (PageElementAliasAPIView,
     PageElementMirrorAPIView, PageElementMoveAPIView, RelationShipListAPIView)
 
 
 urlpatterns = [
-    url(r'^editables/relationship',
+    url(r'^relationship',
         RelationShipListAPIView.as_view(), name='relationships'),
-    url(r'^editables/alias/(?P<path>%s)' % settings.PATH_RE,
-        PageElementAliasAPIView.as_view(), name='api_alias_node'),
-    url(r'^editables/attach/(?P<path>%s)' % settings.PATH_RE,
-        PageElementMoveAPIView.as_view(), name='api_move_node'),
-    url(r'^editables/mirror/(?P<path>%s)' % settings.PATH_RE,
-        PageElementMirrorAPIView.as_view(), name='api_mirror_node'),
-    url(r'^editables/(?P<slug>[\w-]+)/add-tags/?$',
-        PageElementAddTags.as_view(), name='page_element_add_tags'),
-    url(r'^editables/(?P<slug>[\w-]+)/remove-tags/?$',
-        PageElementRemoveTags.as_view(), name='page_element_remove_tags'),
-    url(r'^editables/(?P<path>%s)' % settings.PATH_RE,
-        PageElementDetail.as_view(), name='api_page_element'),
+    url(r'^alias/(?P<path>%s)$' % settings.PATH_RE,
+        PageElementAliasAPIView.as_view(), name='pages_api_alias_node'),
+    url(r'^attach/(?P<path>%s)$' % settings.PATH_RE,
+        PageElementMoveAPIView.as_view(), name='pages_api_move_node'),
+    url(r'^mirror/(?P<path>%s)$' % settings.PATH_RE,
+        PageElementMirrorAPIView.as_view(), name='pages_api_mirror_node'),
+    url(r'^(?P<path>%s)$' % settings.PATH_RE,
+        PageElementEditableDetail.as_view(), name='pages_api_element'),
 ]
