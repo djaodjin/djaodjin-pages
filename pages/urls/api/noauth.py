@@ -30,8 +30,6 @@ from django.conf.urls import url
 from ... import settings
 from ...api.edition import (PageElementSearchAPIView, PageElementTreeAPIView,
   PageElementDetailAPIView)
-from ...api.reactions import (FollowAPIView, UnfollowAPIView, UpvoteAPIView,
-  DownvoteAPIView, CommentListCreateAPIView)
 
 urlpatterns = [
     url(r'^search',

@@ -23,9 +23,12 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 from __future__ import unicode_literals
 
+from deployutils.helpers import datetime_or_now
+from django.core.exceptions import PermissionDenied
 from rest_framework import generics, status
 from rest_framework.response import Response
 
+from ..compat import is_authenticated
 from ..mixins import PageElementMixin
 from ..models import Follow, Vote
 from ..serializers import CommentSerializer, PageElementSerializer
@@ -67,11 +70,12 @@ class FollowAPIView(PageElementMixin, generics.CreateAPIView):
         self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
         return Response(PageElementSerializer().to_representation(
-            self.get_object()), status=status.HTTP_201_CREATED, headers=headers)
+            self.element), status=status.HTTP_201_CREATED, headers=headers)
 
     def perform_create(self, serializer):
-        if self.request.user.is_authenticated():
-            Follow.objects.subscribe(self.get_object(), user=self.request.user)
+        if not is_authenticated(self.request):
+            raise PermissionDenied()
+        Follow.objects.subscribe(self.element, user=self.request.user)
 
 
 class UnfollowAPIView(PageElementMixin, generics.CreateAPIView):
@@ -110,12 +114,12 @@ class UnfollowAPIView(PageElementMixin, generics.CreateAPIView):
         self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
         return Response(PageElementSerializer().to_representation(
-            self.get_object()), status=status.HTTP_201_CREATED, headers=headers)
+            self.element), status=status.HTTP_201_CREATED, headers=headers)
 
     def perform_create(self, serializer):
-        if self.request.user.is_authenticated():
-            Follow.objects.unsubscribe(
-                self.get_object(), user=self.request.user)
+        if not is_authenticated(self.request):
+            raise PermissionDenied()
+        Follow.objects.unsubscribe(self.element, user=self.request.user)
 
 
 class UpvoteAPIView(PageElementMixin, generics.CreateAPIView):
@@ -149,8 +153,9 @@ class UpvoteAPIView(PageElementMixin, generics.CreateAPIView):
     serializer_class = PageElementSerializer
 
     def perform_create(self, serializer):
-        if self.request.user.is_authenticated():
-            Vote.objects.vote_up(self.get_object(), user=self.request.user)
+        if not is_authenticated(self.request):
+            raise PermissionDenied()
+        Vote.objects.vote_up(self.element, user=self.request.user)
 
 
 class DownvoteAPIView(PageElementMixin, generics.CreateAPIView):
@@ -184,8 +189,9 @@ class DownvoteAPIView(PageElementMixin, generics.CreateAPIView):
     serializer_class = PageElementSerializer
 
     def perform_create(self, serializer):
-        if self.request.user.is_authenticated():
-            Vote.objects.vote_down(self.get_object(), user=self.request.user)
+        if not is_authenticated(self.request):
+            raise PermissionDenied()
+        Vote.objects.vote_down(self.element, user=self.request.user)
 
 
 class CommentListCreateAPIView(PageElementMixin, generics.ListCreateAPIView):
@@ -256,3 +262,9 @@ class CommentListCreateAPIView(PageElementMixin, generics.ListCreateAPIView):
         #pylint:disable=useless-super-delegation
         return super(CommentListCreateAPIView, self).post(
             request, *args, **kwargs)
+
+    def perform_create(self, serializer):
+        if not is_authenticated(self.request):
+            raise PermissionDenied()
+        serializer.save(created_at=datetime_or_now(),
+            element=self.element, user=self.request.user)

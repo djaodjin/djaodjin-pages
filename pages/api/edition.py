@@ -127,6 +127,7 @@ class PageElementTreeAPIView(TrailMixin, generics.ListAPIView):
     queryset = PageElement.objects.all()
 
     def retrieve(self, request, *args, **kwargs):
+        #pylint:disable=unused-argument
         path_parts = self.get_full_element_path(self.path)
         roots = path_parts[-1] if path_parts else None
         content_tree = build_content_tree(roots=roots, prefix=self.path)
@@ -180,6 +181,8 @@ class PageElementDetailAPIView(PageElementMixin, generics.RetrieveAPIView):
     """
     serializer_class = PageElementSerializer
 
+    def get_object(self):
+        return self.element
 
 
 class PageElementEditableDetail(PageElementMixin, CreateModelMixin,
@@ -207,6 +210,9 @@ class PageElementEditableDetail(PageElementMixin, CreateModelMixin,
     """
     serializer_class = PageElementSerializer
 
+    def get_object(self):
+        return self.element
+
     def delete(self, request, *args, **kwargs):
         """
         Deletes a page element
@@ -220,7 +226,8 @@ class PageElementEditableDetail(PageElementMixin, CreateModelMixin,
             DELETE /api/content/editables/boxes-enclosures/ HTTP/1.1
         """
         #pylint:disable=useless-super-delegation
-        return super(PageElementDetail, self).delete(request, *args, **kwargs)
+        return super(PageElementEditableDetail, self).delete(
+            request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
         """
@@ -251,7 +258,8 @@ class PageElementEditableDetail(PageElementMixin, CreateModelMixin,
 
         """
         #pylint:disable=useless-super-delegation
-        return super(PageElementDetail, self).create(request, *args, **kwargs)
+        return super(PageElementEditableDetail, self).create(
+            request, *args, **kwargs)
 
     def put(self, request, *args, **kwargs):
         """
@@ -281,19 +289,21 @@ class PageElementEditableDetail(PageElementMixin, CreateModelMixin,
             }
         """
         #pylint:disable=useless-super-delegation
-        return super(PageElementDetail, self).put(request, *args, **kwargs)
+        return super(PageElementEditableDetail, self).put(
+            request, *args, **kwargs)
 
     def perform_create(self, serializer):
         serializer.save(account=self.account)
 
     def update(self, request, *args, **kwargs):
         try:
-            _ = self.get_object()
-            return super(PageElementDetail, self).update(
+            _ = self.element
+            return super(PageElementEditableDetail, self).update(
                 request, *args, **kwargs)
         except Http404:
             pass
-        return super(PageElementDetail, self).create(request, *args, **kwargs)
+        return super(PageElementEditableDetail, self).create(
+            request, *args, **kwargs)
 
 
 class PageElementAddTags(PageElementMixin, generics.UpdateAPIView):
@@ -322,6 +332,9 @@ class PageElementAddTags(PageElementMixin, generics.UpdateAPIView):
         }
     """
     serializer_class = PageElementTagSerializer
+
+    def get_object(self):
+        return self.element
 
     def perform_update(self, serializer):
         curr_tags = serializer.instance.tag
@@ -365,6 +378,9 @@ class PageElementRemoveTags(PageElementMixin, generics.UpdateAPIView):
         }
     """
     serializer_class = PageElementTagSerializer
+
+    def get_object(self):
+        return self.element
 
     def perform_update(self, serializer):
         curr_tags = serializer.instance.tag

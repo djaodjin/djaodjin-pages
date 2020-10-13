@@ -158,6 +158,7 @@ class LessVariableDetail(LessVariableMixin, CreateModelMixin,
 
             DELETE /api/themes/sitecss/variables/primary-color/ HTTP/1.1
         """
+        #pylint:disable=useless-super-delegation
         return super(LessVariableDetail, self).delete(request, *args, **kwargs)
 
     def put(self, request, *args, **kwargs):
@@ -184,6 +185,7 @@ class LessVariableDetail(LessVariableMixin, CreateModelMixin,
                 "value": "#0000ff"
             }
         """
+        #pylint:disable=useless-super-delegation
         return super(LessVariableDetail, self).put(request, *args, **kwargs)
 
     def get_queryset(self):

@@ -24,12 +24,10 @@
 from __future__ import unicode_literals
 
 import bleach
-from django.db import transaction
-from django.shortcuts import get_object_or_404
 from django.utils.translation import ugettext_lazy as _
 from rest_framework import serializers
 
-from .models import PageElement, ThemePackage, LessVariable
+from .models import Comment, PageElement, ThemePackage, LessVariable
 from .settings import ALLOWED_TAGS, ALLOWED_ATTRIBUTES, ALLOWED_STYLES
 
 #pylint: disable=no-init,abstract-method
@@ -96,7 +94,7 @@ class CommentSerializer(serializers.ModelSerializer):
         help_text=_("Long description of the page element"))
 
     class Meta:
-        model = PageElement
+        model = Comment
         fields = ('text',)
         read_only_fields = ('created_at', 'user')
 

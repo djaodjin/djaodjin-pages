@@ -31,7 +31,7 @@ except ImportError:
     from functools import wraps
     from .compat import available_attrs
 
-    class no_body(object):
+    class no_body(object):#pylint:disable=invalid-name
         pass
 
     def swagger_auto_schema(function=None, **kwargs):
@@ -54,12 +54,12 @@ except ImportError:
         """
         def __init__(self, *args, **kwargs):
             pass
-except ModuleNotFoundError:
+except ModuleNotFoundError: #pylint:disable=bad-except-order
     # Django>=3.0, Python>=3.6
     from functools import wraps
     from .compat import available_attrs
 
-    class no_body(object):
+    class no_body(object): #pylint:disable=invalid-name
         pass
 
     def swagger_auto_schema(function=None, **kwargs):

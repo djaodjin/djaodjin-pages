@@ -274,7 +274,8 @@ class Comment(models.Model):
         unpack_ipv4=True, blank=True, null=True)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name=_('user'),
         related_name="%(class)s_comments", on_delete=models.CASCADE)
-    element = models.ForeignKey(PageElement, on_delete=models.CASCADE)
+    element = models.ForeignKey(PageElement, on_delete=models.CASCADE,
+        related_name='comments')
 
     def __str__(self):
         return str(self.text)

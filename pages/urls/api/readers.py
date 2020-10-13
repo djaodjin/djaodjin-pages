@@ -28,7 +28,6 @@ API URLs for readers who must be authenticated
 from django.conf.urls import url
 
 from ... import settings
-from ...api.edition import PageElementSearchAPIView, PageElementTreeAPIView
 from ...api.reactions import (FollowAPIView, UnfollowAPIView, UpvoteAPIView,
   DownvoteAPIView, CommentListCreateAPIView)
 

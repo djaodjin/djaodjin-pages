@@ -163,3 +163,9 @@ def get_html_engine():
             return engine, engine.template_libraries, engine.template_builtins
     except ImportError: # django < 1.8
         return DjangoTemplate()
+
+
+def is_authenticated(request):
+    if callable(request.user.is_authenticated):
+        return request.user.is_authenticated()
+    return request.user.is_authenticated
