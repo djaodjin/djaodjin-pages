@@ -23,18 +23,26 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 """
-API URLs for readers who could be unauthenticated
+API URLs for readers who must be authenticated
 """
 from django.conf.urls import url
 
 from ... import settings
-from ...api.edition import PageElementSearchAPIView, PageElementTreeAPIView
-
+from ...api.reactions import (FollowAPIView, UnfollowAPIView, UpvoteAPIView,
+  DownvoteAPIView, CommentListCreateAPIView)
 
 urlpatterns = [
-    url(r'^search',
-        PageElementSearchAPIView.as_view(), name='api_page_element_search'),
-    url(r'(?P<path>%s)' % settings.PATH_RE,
-        PageElementTreeAPIView.as_view(),
-        name="api_content"),
+    # Following
+    url(r'^follow/(?P<path>%s)$' % settings.PATH_RE,
+        FollowAPIView.as_view(), name='pages_api_follow'),
+    url(r'^unfollow/(?P<path>%s)$' % settings.PATH_RE,
+        UnfollowAPIView.as_view(), name='pages_api_unfollow'),
+    # Votes
+    url(r'^upvote/(?P<path>%s)$' % settings.PATH_RE,
+        UpvoteAPIView.as_view(), name='pages_api_upvote'),
+    url(r'^downvote/(?P<path>%s)$' % settings.PATH_RE,
+        DownvoteAPIView.as_view(), name='pages_api_downvote'),
+    # Comments
+    url(r'^comments/(?P<path>%s)$' % settings.PATH_RE,
+        CommentListCreateAPIView.as_view(), name='pages_api_comments'),
 ]

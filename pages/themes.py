@@ -114,7 +114,7 @@ class AssetsParser(Parser):
                         if hasattr(self, 'error'):
                             raise self.error(token, err)
                         # Django < 1.8
-                        elif not self.compile_function_error(token, err):
+                        if not self.compile_function_error(token, err):
                             raise
                 elif command == 'static':
                     self.dest_stream.write(
@@ -338,7 +338,7 @@ def remove_theme(theme_name):
     except NameError:
         # py27 `rmtree` will raise an OSError executing `os.listdir(path)`
         # if the path is not present.
-        FileNotFoundError = OSError
+        FileNotFoundError = OSError #pylint:disable=redefined-builtin
     theme_dir = get_theme_dir(theme_name)
     public_dir = safe_join(settings.PUBLIC_ROOT, theme_name)
     LOGGER.info("remove theme '%s', that is directories %s and %s.",

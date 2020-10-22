@@ -65,7 +65,7 @@ try:
     from django.urls import NoReverseMatch, reverse, reverse_lazy
 except ImportError: # <= Django 1.10, Python<3.6
     from django.core.urlresolvers import NoReverseMatch, reverse, reverse_lazy
-except ModuleNotFoundError: #pylint:disable=undefined-variable
+except ModuleNotFoundError: #pylint:disable=undefined-variable,bad-except-order
     # <= Django 1.10, Python>=3.6
     from django.core.urlresolvers import NoReverseMatch, reverse, reverse_lazy
 
@@ -78,6 +78,7 @@ except ImportError: # django < 1.7
 def get_loaders():
     loaders = []
     try:
+        #pylint:disable=import-outside-toplevel
         from django.template.loader import _engine_list
         engines = _engine_list()
         for engine in engines:
@@ -91,6 +92,7 @@ def get_loaders():
                 pass
 
     except ImportError:# django < 1.8
+        #pylint:disable=import-outside-toplevel
         from django.template.loader import find_template_loader
         for loader_name in django_settings.TEMPLATE_LOADERS:
             template_loader = find_template_loader(loader_name)
@@ -139,6 +141,7 @@ class DjangoTemplate(object):
 
     @property
     def template_builtins(self):
+        #pylint:disable=import-outside-toplevel
         from django.template.base import builtins
         return builtins
 
@@ -150,6 +153,7 @@ class DjangoTemplate(object):
 
 def get_html_engine():
     try:
+        #pylint:disable=import-outside-toplevel
         from django.template import engines
         from django.template.utils import InvalidTemplateEngineError
         try:
@@ -159,3 +163,9 @@ def get_html_engine():
             return engine, engine.template_libraries, engine.template_builtins
     except ImportError: # django < 1.8
         return DjangoTemplate()
+
+
+def is_authenticated(request):
+    if callable(request.user.is_authenticated):
+        return request.user.is_authenticated()
+    return request.user.is_authenticated

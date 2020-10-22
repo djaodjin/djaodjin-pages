@@ -27,6 +27,7 @@ from __future__ import unicode_literals
 import json, logging, random
 from collections import OrderedDict
 
+from django.contrib.auth import get_user_model
 from django.db import IntegrityError, models, transaction
 from django.db.models import Max
 from django.template.defaultfilters import slugify
@@ -34,7 +35,7 @@ from django.utils.translation import ugettext_lazy as _
 from rest_framework.exceptions import ValidationError
 
 from . import settings
-from .compat import python_2_unicode_compatible
+from .compat import import_string, python_2_unicode_compatible
 
 
 LOGGER = logging.getLogger(__name__)
@@ -261,6 +262,129 @@ class PageElement(models.Model):
 
 
 @python_2_unicode_compatible
+class Comment(models.Model):
+    """
+    A user comments about a PageElement.
+    """
+    created_at = models.DateTimeField(_('date/time submitted'),
+        default=None, db_index=True)
+    text = models.TextField(_('text'), max_length=settings.COMMENT_MAX_LENGTH)
+
+    ip_address = models.GenericIPAddressField(_('IP address'),
+        unpack_ipv4=True, blank=True, null=True)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name=_('user'),
+        related_name="%(class)s_comments", on_delete=models.CASCADE)
+    element = models.ForeignKey(PageElement, on_delete=models.CASCADE,
+        related_name='comments')
+
+    def __str__(self):
+        return str(self.text)
+
+
+class FollowManager(models.Manager):
+
+    @staticmethod
+    def get_followers(element):
+        """
+        Get a list of followers for a Element.
+        """
+        return get_user_model().objects.filter(follows__element=element)
+
+    def subscribe(self, element, user):
+        """
+        Subscribe a User to changes to a Element.
+        """
+        self.get_or_create(user=user, element=element)
+
+    def unsubscribe(self, element, user):
+        """
+        Unsubscribe a User from changes to a Element.
+        """
+        try:
+            self.get(user=user, element=element).delete()
+        except models.ObjectDoesNotExist:
+            pass
+
+
+
+@python_2_unicode_compatible
+class Follow(models.Model):
+    """
+    A relationship intended for a User to follow comments on a Element.
+    """
+    objects = FollowManager()
+
+    created_at = models.DateTimeField(editable=False, auto_now_add=True)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, db_column='user_id',
+         related_name='follows', on_delete=models.CASCADE)
+    element = models.ForeignKey(PageElement,
+        related_name='followers', on_delete=models.CASCADE)
+
+    class Meta:
+        unique_together = (('user', 'element'),)
+
+    def __str__(self):
+        return u'%s follows %s' % (self.user, self.element)
+
+
+class VoteManager(models.Manager):
+
+    def vote_up(self, element, user):
+        """
+        Vote a Element up by a User.
+        """
+        vote, created = self.get_or_create(user=user, element=element,
+            defaults={'vote': Vote.UP_VOTE})
+        if not created:
+            vote.vote = Vote.UP_VOTE
+            vote.save()
+
+    def vote_down(self, element, user):
+        """
+        Vote a Element down by a User.
+        """
+        vote, created = self.get_or_create(user=user, element=element,
+            defaults={'vote': Vote.DOWN_VOTE})
+        if not created:
+            vote.vote = Vote.DOWN_VOTE
+            vote.save()
+
+
+@python_2_unicode_compatible
+class Vote(models.Model):
+    """
+    A vote on an element by a User.
+    """
+    objects = VoteManager()
+
+    UP_VOTE = 1
+    DOWN_VOTE = -1
+    SCORES = (
+        (UP_VOTE, u'+1'),
+        (DOWN_VOTE, u'-1'),
+    )
+
+    created_at = models.DateTimeField(editable=False, auto_now_add=True)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    element = models.ForeignKey(PageElement,
+        related_name='votes', on_delete=models.CASCADE)
+    vote = models.SmallIntegerField(choices=SCORES)
+
+    class Meta:
+        # One vote per user per Element
+        unique_together = (('user', 'element'),)
+
+    def __str__(self):
+        return u'%s: %s on %s' % (self.user, self.vote, self.element)
+
+    def is_upvote(self):
+        return self.vote == self.UP_VOTE
+
+    def is_downvote(self):
+        return self.vote == self.DOWN_VOTE
+
+
+@python_2_unicode_compatible
 class MediaTag(models.Model):
 
     location = models.CharField(max_length=250)
@@ -437,7 +561,6 @@ def get_active_theme():
     Returns the active theme from a request.
     """
     if settings.ACTIVE_THEME_CALLABLE:
-        from .compat import import_string  # Because AppRegistryNotReady
         theme_slug = import_string(settings.ACTIVE_THEME_CALLABLE)()
         LOGGER.debug("pages: get_active_theme('%s')", theme_slug)
         try:

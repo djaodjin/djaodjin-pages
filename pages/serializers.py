@@ -24,12 +24,10 @@
 from __future__ import unicode_literals
 
 import bleach
-from django.db import transaction
-from django.shortcuts import get_object_or_404
 from django.utils.translation import ugettext_lazy as _
 from rest_framework import serializers
 
-from .models import PageElement, ThemePackage, LessVariable
+from .models import Comment, PageElement, ThemePackage, LessVariable
 from .settings import ALLOWED_TAGS, ALLOWED_ATTRIBUTES, ALLOWED_STYLES
 
 #pylint: disable=no-init,abstract-method
@@ -77,13 +75,29 @@ class EdgeCreateSerializer(serializers.Serializer):
     external_key = serializers.CharField(required=False)
 
 
-class RelationShipSerializer(serializers.Serializer): #pylint: disable=abstract-method
+class RelationShipSerializer(serializers.Serializer):
+    #pylint: disable=abstract-method
     orig_elements = serializers.ListField(
         child=serializers.SlugField(), required=False
         )
     dest_elements = serializers.ListField(
         child=serializers.SlugField(), required=False
         )
+
+
+class CommentSerializer(serializers.ModelSerializer):
+    """
+    Serializes a Comment.
+    """
+    text = HTMLField(html_tags=ALLOWED_TAGS, html_attributes=ALLOWED_ATTRIBUTES,
+        html_styles=ALLOWED_STYLES, required=False,
+        help_text=_("Long description of the page element"))
+
+    class Meta:
+        model = Comment
+        fields = ('text',)
+        read_only_fields = ('created_at', 'user')
+
 
 class PageElementSerializer(serializers.ModelSerializer):
     """
@@ -92,23 +106,17 @@ class PageElementSerializer(serializers.ModelSerializer):
 
     slug = serializers.SlugField(required=False,
         help_text=_("Unique identifier that can be used in URL paths"))
-    path = serializers.SerializerMethodField()
+    picture = serializers.CharField(required=False, allow_null=True,
+        help_text=_("Picture icon that can be displayed alongside the title"))
     text = HTMLField(html_tags=ALLOWED_TAGS, html_attributes=ALLOWED_ATTRIBUTES,
         html_styles=ALLOWED_STYLES, required=False,
         help_text=_("Long description of the page element"))
-    tag = serializers.CharField(required=False,
+    extra = serializers.CharField(required=False,
         help_text=_("Extra meta data (can be stringify JSON)"))
-    orig_elements = serializers.ListField(
-        child=serializers.SlugField(required=False), required=False
-        )
-    dest_elements = serializers.ListField(
-        child=serializers.SlugField(required=False), required=False
-        )
 
     class Meta:
         model = PageElement
-        fields = ('slug', 'path', 'title', 'text', 'tag',
-                  'orig_elements', 'dest_elements')
+        fields = ('slug', 'picture', 'title', 'text', 'extra',)
 
     def get_path(self, obj):
         prefix = self.context.get('prefix', "")
@@ -118,23 +126,6 @@ class PageElementSerializer(serializers.ModelSerializer):
                 prefix = '/%s' % "/".join(
                     [parent.slug for parent in parents[0][:-1]])
         return "%s/%s" % (prefix, obj.slug)
-
-    def create(self, validated_data):
-        orig_elements = validated_data.pop('orig_elements', None)
-        dest_elements = validated_data.pop('dest_elements', None)
-        with transaction.atomic():
-            instance = super(PageElementSerializer, self).create(validated_data)
-            if orig_elements:
-                for orig_element in orig_elements:
-                    orig_element = get_object_or_404(
-                        PageElement, slug=orig_element)
-                    orig_element.add_relationship(instance)
-            if dest_elements:
-                for dest_element in dest_elements:
-                    dest_element = get_object_or_404(
-                        PageElement, slug=dest_element)
-                    instance.add_relationship(dest_element)
-        return instance
 
 
 class PageElementTagSerializer(serializers.ModelSerializer):
@@ -148,18 +139,16 @@ class NodeElementSerializer(serializers.ModelSerializer):
     """
     Serializes a PageElement as a node in a content tree
     """
-    title = serializers.CharField()
+    indent = serializers.IntegerField()
     picture = serializers.CharField(required=False, allow_null=True,
         help_text=_("Picture icon that can be displayed alongside the title"))
     extra = serializers.CharField(required=False, allow_null=True,
         help_text=_("Extra meta data (can be stringify JSON)"))
 
+
     class Meta:
         model = PageElement
-        fields = ('title', 'picture', 'extra', 'children')
-
-NodeElementSerializer._declared_fields['children'] = NodeElementSerializer(
-    many=True)
+        fields = ('slug', 'title', 'picture', 'indent', 'extra')
 
 
 class LessVariableSerializer(serializers.ModelSerializer):

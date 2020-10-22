@@ -85,7 +85,7 @@ class PageElementAliasAPIView(EdgesUpdateAPIView):
 
     .. code-block:: http
 
-        POST /api/content/editables/alias/content-root/ HTTP/1.1
+        POST /api/content/editables/envconnect/alias/content-root HTTP/1.1
 
     .. code-block:: json
 

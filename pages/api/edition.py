@@ -41,7 +41,7 @@ LOGGER = logging.getLogger(__name__)
 
 class PageElementSearchAPIView(AccountMixin, generics.ListAPIView):
     """
-    Search through editable page elements
+    Search through page elements
 
     **Tags: content
 
@@ -83,9 +83,9 @@ class PageElementSearchAPIView(AccountMixin, generics.ListAPIView):
         return []
 
 
-class PageElementTreeAPIView(TrailMixin, generics.RetrieveAPIView):
+class PageElementTreeAPIView(TrailMixin, generics.ListAPIView):
     """
-    Retrieves a content tree
+    Lists a tree of page elements
 
     **Tags: content
 
@@ -93,32 +93,49 @@ class PageElementTreeAPIView(TrailMixin, generics.RetrieveAPIView):
 
     .. code-block:: http
 
-        GET /api/content HTTP/1.1
+        GET /api/content/boxes-enclosures HTTP/1.1
 
     responds
 
     .. code-block:: json
 
         {
-            "slug": "boxes-enclosures",
-            "path": "/boxes-enclosures",
-            "title": "Content root",
-            "picture": null,
-            "extra": null,
-            "children": []
+          "count": 8,
+          "next": null,
+          "previous": null,
+          "results": [
+          {
+            "path": null,
+            "title": "Metal structures & equipment",
+            "indent": 0
+          },
+          {
+            "path": "/metal/boxes-and-enclosures",
+            "title": "Boxes & enclosures",
+            "indent": 1,
+            "tags": [
+              "industry",
+              "pagebreak",
+              "public",
+              "scorecard"
+            ]
+          }
+          ]
         }
     """
     serializer_class = NodeElementSerializer
     queryset = PageElement.objects.all()
 
     def retrieve(self, request, *args, **kwargs):
+        #pylint:disable=unused-argument
         path_parts = self.get_full_element_path(self.path)
         roots = path_parts[-1] if path_parts else None
         content_tree = build_content_tree(roots=roots, prefix=self.path)
         self.attach_picture(content_tree, self.get_pictures())
         return api_response.Response(content_tree)
 
-    def get_roots(self):
+    @staticmethod
+    def get_roots():
         # XXX return self.get_queryset().get_roots()
         # XXX exception `AttributeError: 'QuerySet' object has no attribute
         # XXX 'get_roots'`
@@ -140,12 +157,40 @@ class PageElementTreeAPIView(TrailMixin, generics.RetrieveAPIView):
                 node[1], pictures, prefix_picture=prefix_picture)
 
 
-class PageElementDetail(PageElementMixin, CreateModelMixin,
-                        generics.RetrieveUpdateDestroyAPIView):
+class PageElementDetailAPIView(PageElementMixin, generics.RetrieveAPIView):
     """
-    Retrieves details on an editable page element
+    Retrieves details on a page element
 
     **Tags: content
+
+    **Example
+
+    .. code-block:: http
+
+        GET /api/content/detail/adjust-air-fuel-ratio HTTP/1.1
+
+    responds
+
+    .. code-block:: json
+
+        {
+            "slug": "boxes-enclosures",
+            "path": "/boxes-enclosures",
+            "text": "Hello"
+        }
+    """
+    serializer_class = PageElementSerializer
+
+    def get_object(self):
+        return self.element
+
+
+class PageElementEditableDetail(PageElementMixin, CreateModelMixin,
+                        generics.RetrieveUpdateDestroyAPIView):
+    """
+    Retrieves an editable page element
+
+    **Tags: editors
 
     **Example
 
@@ -165,11 +210,14 @@ class PageElementDetail(PageElementMixin, CreateModelMixin,
     """
     serializer_class = PageElementSerializer
 
+    def get_object(self):
+        return self.element
+
     def delete(self, request, *args, **kwargs):
         """
-        Deletes an editable page element
+        Deletes a page element
 
-        **Tags: content
+        **Tags: editors
 
         **Example
 
@@ -178,13 +226,14 @@ class PageElementDetail(PageElementMixin, CreateModelMixin,
             DELETE /api/content/editables/boxes-enclosures/ HTTP/1.1
         """
         #pylint:disable=useless-super-delegation
-        return super(PageElementDetail, self).delete(request, *args, **kwargs)
+        return super(PageElementEditableDetail, self).delete(
+            request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
         """
-        Creates an editable page element
+        Creates a page element
 
-        **Tags: content
+        **Tags: editors
 
         **Example
 
@@ -209,11 +258,14 @@ class PageElementDetail(PageElementMixin, CreateModelMixin,
 
         """
         #pylint:disable=useless-super-delegation
-        return super(PageElementDetail, self).create(request, *args, **kwargs)
+        return super(PageElementEditableDetail, self).create(
+            request, *args, **kwargs)
 
     def put(self, request, *args, **kwargs):
         """
-        Updates an editable page element
+        Updates a page element
+
+        **Tags: editors
 
         **Example
 
@@ -237,19 +289,21 @@ class PageElementDetail(PageElementMixin, CreateModelMixin,
             }
         """
         #pylint:disable=useless-super-delegation
-        return super(PageElementDetail, self).put(request, *args, **kwargs)
+        return super(PageElementEditableDetail, self).put(
+            request, *args, **kwargs)
 
     def perform_create(self, serializer):
         serializer.save(account=self.account)
 
     def update(self, request, *args, **kwargs):
         try:
-            _ = self.get_object()
-            return super(PageElementDetail, self).update(
+            _ = self.element
+            return super(PageElementEditableDetail, self).update(
                 request, *args, **kwargs)
         except Http404:
             pass
-        return super(PageElementDetail, self).create(request, *args, **kwargs)
+        return super(PageElementEditableDetail, self).create(
+            request, *args, **kwargs)
 
 
 class PageElementAddTags(PageElementMixin, generics.UpdateAPIView):
@@ -257,8 +311,6 @@ class PageElementAddTags(PageElementMixin, generics.UpdateAPIView):
     Adds tags to an editable node
 
     Add tags to a ``PageElement`` if they are not already present.
-
-    **Tags: content
 
     **Example
 
@@ -281,6 +333,9 @@ class PageElementAddTags(PageElementMixin, generics.UpdateAPIView):
     """
     serializer_class = PageElementTagSerializer
 
+    def get_object(self):
+        return self.element
+
     def perform_update(self, serializer):
         curr_tags = serializer.instance.tag
         if curr_tags:
@@ -300,8 +355,6 @@ class PageElementRemoveTags(PageElementMixin, generics.UpdateAPIView):
     Remove tags from an editable node
 
     Remove tags from a ``PageElement``.
-
-    **Tags: content
 
     **Examples
 
@@ -325,6 +378,9 @@ class PageElementRemoveTags(PageElementMixin, generics.UpdateAPIView):
         }
     """
     serializer_class = PageElementTagSerializer
+
+    def get_object(self):
+        return self.element
 
     def perform_update(self, serializer):
         curr_tags = serializer.instance.tag

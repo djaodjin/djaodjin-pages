@@ -30,7 +30,7 @@ from django.utils._os import safe_join
 from rest_framework.generics import get_object_or_404
 
 from . import settings
-from .compat import six, urlsplit
+from .compat import import_string, six, urlsplit
 from .models import MediaTag, PageElement
 from .extras import AccountMixinBase
 
@@ -82,33 +82,27 @@ class TrailMixin(object):
 
 class PageElementMixin(AccountMixin):
 
-    lookup_field = 'slug'
-    lookup_url_kwarg = 'slug'
+    element_field = 'slug'
+    element_url_kwarg = 'slug'
 
-    def get_queryset(self):
-        return PageElement.objects.filter(account=self.account)
-
-    def get_object(self):
-        queryset = self.filter_queryset(self.get_queryset())
-
-        lookup_value = None
-        lookup_url_kwarg = self.lookup_url_kwarg or self.lookup_field
-        if lookup_url_kwarg in self.kwargs:
-            lookup_value = self.kwargs[lookup_url_kwarg]
-        else:
-            parts = self.kwargs.get('path').split('/')
-            for part in reversed(parts):
-                if part:
-                    lookup_value = part
-                    break
-
-        filter_kwargs = {self.lookup_field: lookup_value}
-        obj = get_object_or_404(queryset, **filter_kwargs)
-
-        # May raise a permission denied
-        self.check_object_permissions(self.request, obj)
-
-        return obj
+    @property
+    def element(self):
+        if not hasattr(self, '_element'):
+            element_value = None
+            element_url_kwarg = self.element_url_kwarg or self.element_field
+            if element_url_kwarg in self.kwargs:
+                element_value = self.kwargs[element_url_kwarg]
+            else:
+                parts = self.kwargs.get('path').split('/')
+                for part in reversed(parts):
+                    if part:
+                        element_value = part
+                        break
+            filter_kwargs = {self.element_field: element_value}
+            self._element = get_object_or_404(
+                PageElement.objects.filter(account=self.account),
+                **filter_kwargs)
+        return self._element
 
 
 class UploadedImageMixin(object):
@@ -129,6 +123,7 @@ class UploadedImageMixin(object):
         """
         Return a list of media from default storage
         """
+        #pylint:disable=too-many-locals
         results = []
         total_count = 0
         if prefix.startswith('/'):
@@ -190,7 +185,6 @@ class ThemePackageMixin(AccountMixin):
     @staticmethod
     def get_templates_dir(theme):
         if isinstance(settings.THEME_DIR_CALLABLE, six.string_types):
-            from .compat import import_string
             settings.THEME_DIR_CALLABLE = import_string(
                 settings.THEME_DIR_CALLABLE)
         theme_dir = settings.THEME_DIR_CALLABLE(theme)

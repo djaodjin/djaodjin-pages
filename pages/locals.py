@@ -51,6 +51,7 @@ LOGGER = logging.getLogger(__name__)
 #pylint:disable=protected-access
 for engine in loader._engine_list():
     if isinstance(engine, DjangoTemplates):
+        #pylint:disable=comparison-with-callable
         if Template._render != instrumented_test_render:
             Template.original_render = Template._render
             Template._render = instrumented_test_render

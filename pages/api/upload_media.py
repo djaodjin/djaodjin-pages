@@ -86,16 +86,16 @@ class MediaListAPIView(UploadedImageMixin, AccountMixin, ListCreateAPIView):
             prefix=kwargs.get('path', '.'))
         return self.get_paginated_response(results)
 
-    def get_paginated_response(self, results):
+    def get_paginated_response(self, data):
         # XXX - Deactivate pagination until not
         # implemented in djaodjin-sidebar-gallery
         # page = self.paginate_queryset(queryset['results'])
         # if page is not None:
         #     queryset = {'count': len(page), 'results' : page}
-        total_count = len(results)
+        total_count = len(data)
         return Response({
             'count': total_count,
-            'results': sorted(results, key=lambda x: x['updated_at'])
+            'results': sorted(data, key=lambda x: x['updated_at'])
         })
 
     def post(self, request, *args, **kwargs):

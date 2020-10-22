@@ -32,6 +32,7 @@ def theme_dir(account): #pylint:disable=unused-argument
     return os.path.join(settings.BASE_DIR, 'themes')
 
 _SETTINGS = {
+    'AUTH_USER_MODEL': getattr(settings, 'AUTH_USER_MODEL', None),
     'ACCOUNT_MODEL': getattr(settings, 'AUTH_USER_MODEL', None),
     'ACCOUNT_URL_KWARG': None,
     'ACTIVE_THEME_CALLABLE': None,
@@ -42,6 +43,7 @@ _SETTINGS = {
             getattr(settings, 'APP_NAME',
                 None)),
     'BUCKET_NAME_FROM_FIELDS': ['bucket_name'],
+    'COMMENT_MAX_LENGTH': getattr(settings, 'COMMENT_MAX_LENGTH', 3000),
     'DEFAULT_ACCOUNT_CALLABLE': '',
     'DEFAULT_STORAGE_CALLABLE': '',
     'EXTRA_MIXIN': object,
@@ -57,11 +59,13 @@ _SETTINGS = {
 
 _SETTINGS.update(getattr(settings, 'PAGES', {}))
 
+AUTH_USER_MODEL = _SETTINGS.get('AUTH_USER_MODEL')
 ACCOUNT_MODEL = _SETTINGS.get('ACCOUNT_MODEL')
 ACCOUNT_URL_KWARG = _SETTINGS.get('ACCOUNT_URL_KWARG')
 APP_NAME = _SETTINGS.get('APP_NAME')
 AWS_STORAGE_BUCKET_NAME = _SETTINGS.get('AWS_STORAGE_BUCKET_NAME')
 BUCKET_NAME_FROM_FIELDS = _SETTINGS.get('BUCKET_NAME_FROM_FIELDS')
+COMMENT_MAX_LENGTH = _SETTINGS.get('COMMENT_MAX_LENGTH')
 DEFAULT_ACCOUNT_CALLABLE = _SETTINGS.get('DEFAULT_ACCOUNT_CALLABLE')
 DEFAULT_STORAGE_CALLABLE = _SETTINGS.get('DEFAULT_STORAGE_CALLABLE')
 EXTRA_MIXIN = _SETTINGS.get('EXTRA_MIXIN')
