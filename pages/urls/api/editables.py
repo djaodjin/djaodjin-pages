@@ -42,5 +42,5 @@ urlpatterns = [
     url(r'^mirror/(?P<path>%s)$' % settings.PATH_RE,
         PageElementMirrorAPIView.as_view(), name='pages_api_mirror_node'),
     url(r'^(?P<path>%s)$' % settings.PATH_RE,
-        PageElementEditableDetail.as_view(), name='pages_api_element'),
+        PageElementEditableDetail.as_view(), name='pages_api_edit_element'),
 ]
