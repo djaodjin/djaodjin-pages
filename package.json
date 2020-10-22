@@ -4,7 +4,7 @@
   "description": "browser client code for djaodjin-pages",
   "dependencies": {
     "ace-builds": "1.2.2",
-    "angular": "1.4.10",
+    "angular": "1.8.2",
     "bootstrap": "3.3.6",
     "bootstrap-colorpicker": "2.5.2",
     "dropzone": "4.2.0",
