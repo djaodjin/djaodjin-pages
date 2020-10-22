@@ -188,8 +188,10 @@ Options:
             var uploadUrl = self.options.mediaUrl;
             if( self.options.S3DirectUploadUrl &&
                 self.options.S3DirectUploadUrl.indexOf("/api/auth/") >= 0 ) {
-                uploadUrl = self.options.S3DirectUploadUrl + "?public=1";
-                self.options.acl = "public-read";
+                uploadUrl = self.options.S3DirectUploadUrl;
+                if( uploadUrl.indexOf("?public=1") >= 0 ) {
+                    self.options.acl = "public-read";
+                }
             }
 
             self.element.djupload({
@@ -417,8 +419,11 @@ Options:
         elementUrl: function(idElement) {
             var self = this;
             var path = idElement;
+            // We make sure that if either `baseUrl` or `path` ends with,
+            // respectively starts with, a '/' or not, concatenation will
+            // not result in a '//'.
             if( path.indexOf('/') != 0 ) path = '/' + path
-            return self.options.saveDroppedMediaUrl + path;
+            return self.options.saveDroppedMediaUrl.replace(/\/+$/, "") + path;
         },
 
         previewMedia: function(event){
