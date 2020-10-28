@@ -48,6 +48,17 @@ class TrailMixin(object):
     """
 
     @property
+    def element(self):
+        if not hasattr(self, '_element'):
+            parts = self.path.split('/')
+            if parts:
+                self._element = get_object_or_404(
+                    PageElement.objects.all(), slug=parts[-1])
+            else:
+                self._element = None
+        return self._element
+
+    @property
     def path(self):
         if not hasattr(self, '_path'):
             self._path = self.kwargs.get('path', '')

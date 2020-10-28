@@ -144,7 +144,7 @@ class PageElement(models.Model):
 
     slug = models.SlugField(unique=True,
         help_text=_("Unique identifier that can be used in URL paths"))
-    title = models.CharField(max_length=720, blank=True,
+    title = models.CharField(max_length=1024, blank=True,
         help_text=_("Title of the page element"))
     text = models.TextField(blank=True,
         help_text=_("Long description of the page element"))
