@@ -39,10 +39,9 @@ the prerequisites, create the database then run the testsite webapp.
 Release Notes
 =============
 
-0.3.0
+0.3.3
 
-  * adds an API end point to retrieve a content tree
-  * adds an API end point to search for page elements
-  * replaces api_page_elements by api_page_element_base
+  * adds follow/upvote/comment reactions
+  * insures API endpoint consistently ends without a trailing '/'
 
 [previous release notes](changelog)
