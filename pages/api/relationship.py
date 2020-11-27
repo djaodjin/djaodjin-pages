@@ -85,7 +85,7 @@ class PageElementAliasAPIView(EdgesUpdateAPIView):
 
     .. code-block:: http
 
-        POST /api/content/editables/envconnect/alias/content-root HTTP/1.1
+        POST /api/content/editables/envconnect/alias/construction HTTP/1.1
 
     .. code-block:: json
 
@@ -97,7 +97,9 @@ class PageElementAliasAPIView(EdgesUpdateAPIView):
 
     .. code-block:: json
 
-        {}
+        {
+          "source": "getting-started"
+        }
     """
     queryset = RelationShip.objects.all()
 
@@ -123,19 +125,21 @@ class PageElementMirrorAPIView(EdgesUpdateAPIView):
 
     .. code-block:: http
 
-        POST /api/content/editables/mirror/content-root/ HTTP/1.1
+        POST /api/content/editables/envconnect/mirror/construction HTTP/1.1
 
     .. code-block:: json
 
         {
-          "source": "getting-started"
+          "source": "/boxes-enclosure/governance"
         }
 
     responds
 
     .. code-block:: json
 
-        {}
+        {
+          "source": "/boxes-enclosure/governance"
+        }
     """
     queryset = RelationShip.objects.all()
 
@@ -188,19 +192,21 @@ class PageElementMoveAPIView(EdgesUpdateAPIView):
 
     .. code-block:: http
 
-        POST /api/content/editables/attach/content-root/ HTTP/1.1
+        POST /api/content/editables/envconnect/attach/construction HTTP/1.1
 
     .. code-block:: json
 
         {
-          "source": "getting-started"
+          "source": "/boxes-enclosures/governance"
         }
 
     responds
 
     .. code-block:: json
 
-        {}
+        {
+          "source": "/boxes-enclosures/governance"
+        }
     """
     queryset = RelationShip.objects.all()
 
@@ -238,7 +244,7 @@ class RelationShipListAPIView(DestroyModelMixin, generics.ListCreateAPIView):
 
     .. code-block:: http
 
-        GET /api/content/editables/relationship/ HTTP/1.1
+        GET /api/content/editables/envconnect/relationship HTTP/1.1
 
     responds
 
@@ -266,7 +272,7 @@ class RelationShipListAPIView(DestroyModelMixin, generics.ListCreateAPIView):
 
         .. code-block:: http
 
-            DELETE /api/content/editables/relationship/ HTTP/1.1
+            DELETE /api/content/editables/envconnect/relationship HTTP/1.1
        """
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid()
@@ -285,7 +291,7 @@ class RelationShipListAPIView(DestroyModelMixin, generics.ListCreateAPIView):
 
         .. code-block:: http
 
-            POST /api/content/editables/relationship/ HTTP/1.1
+            POST /api/content/editables/envconnect/relationship HTTP/1.1
 
         .. code-block:: json
 

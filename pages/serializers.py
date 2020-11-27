@@ -23,11 +23,15 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 from __future__ import unicode_literals
 
+import json
+
 import bleach
 from django.utils.translation import ugettext_lazy as _
 from rest_framework import serializers
 
-from .models import Comment, PageElement, ThemePackage, LessVariable
+from .compat import six, is_authenticated
+from .models import (Comment, Follow, LessVariable, PageElement, ThemePackage,
+    Vote)
 from .settings import ALLOWED_TAGS, ALLOWED_ATTRIBUTES, ALLOWED_STYLES
 
 #pylint: disable=no-init,abstract-method
@@ -92,10 +96,11 @@ class CommentSerializer(serializers.ModelSerializer):
     text = HTMLField(html_tags=ALLOWED_TAGS, html_attributes=ALLOWED_ATTRIBUTES,
         html_styles=ALLOWED_STYLES, required=False,
         help_text=_("Long description of the page element"))
+    user = serializers.SlugRelatedField(read_only=True, slug_field='username')
 
     class Meta:
         model = Comment
-        fields = ('text',)
+        fields = ('text', 'created_at', 'user')
         read_only_fields = ('created_at', 'user')
 
 
@@ -113,10 +118,31 @@ class PageElementSerializer(serializers.ModelSerializer):
         help_text=_("Long description of the page element"))
     extra = serializers.CharField(required=False,
         help_text=_("Extra meta data (can be stringify JSON)"))
+    nb_upvotes = serializers.IntegerField(required=False)
+    nb_followers = serializers.IntegerField(required=False)
+    upvote = serializers.SerializerMethodField(required=False, allow_null=True)
+    follow = serializers.SerializerMethodField(required=False, allow_null=True)
 
     class Meta:
         model = PageElement
-        fields = ('slug', 'picture', 'title', 'text', 'extra',)
+        fields = ('slug', 'picture', 'title', 'text', 'extra',
+            'nb_upvotes', 'nb_followers', 'upvote', 'follow')
+
+    def get_upvote(self, data):
+        request = self.context.get('request')
+        if request and is_authenticated(request):
+            vote = Vote.objects.filter(
+                user=request.user, element=self.instance).first()
+            return vote and vote.vote == Vote.UP_VOTE
+        return None
+
+    def get_follow(self, data):
+       request = self.context.get('request')
+       if request and is_authenticated(request):
+           follow = Follow.objects.filter(
+               user=request.user, element=self.instance).first()
+           return follow is not None
+       return None
 
     def get_path(self, obj):
         prefix = self.context.get('prefix', "")
@@ -149,6 +175,7 @@ class NodeElementSerializer(serializers.ModelSerializer):
     class Meta:
         model = PageElement
         fields = ('slug', 'title', 'picture', 'indent', 'extra')
+        read_only_fields = ('slug',)
 
 
 class LessVariableSerializer(serializers.ModelSerializer):
