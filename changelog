@@ -1,3 +1,9 @@
+0.3.4
+
+  * adds reactions in API for page element detail
+
+ -- Sebastien Mirolo <smirolo@djaodjin.com>  Thu,  26 Nov 2020 21:06:00 -0700
+
 0.3.3
 
   * adds follow/upvote/comment reactions
