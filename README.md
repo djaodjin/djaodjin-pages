@@ -39,9 +39,8 @@ the prerequisites, create the database then run the testsite webapp.
 Release Notes
 =============
 
-0.3.3
+0.3.4
 
-  * adds follow/upvote/comment reactions
-  * insures API endpoint consistently ends without a trailing '/'
+  * adds reactions in API for page element detail
 
 [previous release notes](changelog)
