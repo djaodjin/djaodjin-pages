@@ -1,3 +1,16 @@
+0.3.4
+
+  * adds reactions in API for page element detail
+
+ -- Sebastien Mirolo <smirolo@djaodjin.com>  Thu,  26 Nov 2020 21:06:00 -0700
+
+0.3.3
+
+  * adds follow/upvote/comment reactions
+  * insures API endpoint consistently ends without a trailing '/'
+
+ -- Sebastien Mirolo <smirolo@djaodjin.com>  Wed,  28 Oct 2020 14:33:00 -0700
+
 0.3.0
 
   * adds an API end point to retrieve a content tree

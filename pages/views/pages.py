@@ -209,7 +209,7 @@ class PageElementListView(ListView):
     def get_queryset(self):
         queryset = self.model.objects.all()
         if self.tag:
-            queryset = queryset.filter(tag=self.tag)
+            queryset = queryset.filter(extra__contains=self.tag)
         return queryset
 
 

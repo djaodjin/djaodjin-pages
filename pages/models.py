@@ -40,6 +40,16 @@ from .compat import import_string, python_2_unicode_compatible
 
 LOGGER = logging.getLogger(__name__)
 
+
+def get_extra_field_class():
+    extra_class = settings._SETTINGS.get('EXTRA_FIELD')
+    if extra_class is None:
+        extra_class = models.TextField
+    elif isinstance(extra_class, str):
+        extra_class = import_string(extra_class)
+    return extra_class
+
+
 class RelationShipManager(models.Manager):
 
     def insert_available_rank(self, root, pos=0, node=None):
@@ -153,11 +163,18 @@ class PageElement(models.Model):
         null=True, on_delete=models.SET_NULL)
     relationships = models.ManyToManyField("self",
         related_name='related_to', through='RelationShip', symmetrical=False)
-    tag = models.CharField(max_length=255, null=True, blank=True,
-        help_text=_("Extra meta data (can be stringify JSON)"))
+    extra = get_extra_field_class()(null=True, blank=True)
 
     def __str__(self):
         return self.slug
+
+    @property
+    def nb_upvotes(self):
+        return Vote.objects.filter(element=self, vote=Vote.UP_VOTE).count()
+
+    @property
+    def nb_followers(self):
+        return Follow.objects.filter(element=self).count()
 
     def add_relationship(self, element, tag=None):
         rank = RelationShip.objects.filter(
@@ -486,12 +503,12 @@ def build_content_tree(roots=None, prefix=None, cut=None):
             slug = root.slug
             orig_element_id = root.pk
             title = root.title
-            extra = root.tag
+            extra = root.extra
         else:
             slug = root.get('slug', root.get('dest_element__slug'))
             orig_element_id = root.get('dest_element__pk')
             title = root.get('dest_element__title')
-            extra = root.get('dest_element__tag')
+            extra = root.get('dest_element__extra')
         leaf_slug = '/%s' % slug
         if prefix.endswith(leaf_slug):
             # Workaround because we sometimes pass a prefix and sometimes
@@ -519,7 +536,7 @@ def build_content_tree(roots=None, prefix=None, cut=None):
         orig_element__in=roots_after_cut).values(
         'orig_element_id', 'dest_element_id', 'rank',
         'dest_element__slug', 'dest_element__title',
-        'dest_element__tag', *args).order_by('rank', 'pk')
+        'dest_element__extra', *args).order_by('rank', 'pk')
     while edges:
         next_pks_to_leafs = {}
         for edge in edges:
@@ -528,7 +545,7 @@ def build_content_tree(roots=None, prefix=None, cut=None):
             slug = edge.get('slug', edge.get('dest_element__slug'))
             base = pks_to_leafs[orig_element_id]['path'] + "/" + slug
             title = edge.get('dest_element__title')
-            extra = edge.get('dest_element__tag')
+            extra = edge.get('dest_element__extra')
             try:
                 extra = json.loads(extra)
             except (TypeError, ValueError):
@@ -552,7 +569,7 @@ def build_content_tree(roots=None, prefix=None, cut=None):
             orig_element_id__in=pks_to_leafs.keys()).values(
             'orig_element_id', 'dest_element_id', 'rank',
             'dest_element__slug', 'dest_element__title',
-            'dest_element__tag', *args).order_by('rank', 'pk')
+            'dest_element__extra', *args).order_by('rank', 'pk')
     return results
 
 

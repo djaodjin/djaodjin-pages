@@ -75,7 +75,7 @@ class PageElementSearchAPIView(AccountMixin, generics.ListAPIView):
             if search_string is not None:
                 validate_title(search_string)
                 queryset = queryset.filter(
-                    Q(tag__icontains=search_string)
+                    Q(extra__icontains=search_string)
                     | Q(title__icontains=search_string))
                 return queryset
         except ValidationError:
@@ -105,11 +105,13 @@ class PageElementTreeAPIView(TrailMixin, generics.ListAPIView):
           "previous": null,
           "results": [
           {
+            "slug": "metal",
             "path": null,
             "title": "Metal structures & equipment",
             "indent": 0
           },
           {
+            "slug": "boxes-and-enclosures",
             "path": "/metal/boxes-and-enclosures",
             "title": "Boxes & enclosures",
             "indent": 1,
@@ -126,7 +128,7 @@ class PageElementTreeAPIView(TrailMixin, generics.ListAPIView):
     serializer_class = NodeElementSerializer
     queryset = PageElement.objects.all()
 
-    def retrieve(self, request, *args, **kwargs):
+    def list(self, request, *args, **kwargs):
         #pylint:disable=unused-argument
         path_parts = self.get_full_element_path(self.path)
         roots = path_parts[-1] if path_parts else None
@@ -174,9 +176,11 @@ class PageElementDetailAPIView(PageElementMixin, generics.RetrieveAPIView):
     .. code-block:: json
 
         {
-            "slug": "boxes-enclosures",
-            "path": "/boxes-enclosures",
-            "text": "Hello"
+            "slug": "adjust-air-fuel-ratio",
+            "picture": null,
+            "title": "Adjust air/fuel ratio",
+            "text": "<h2>Background</h2><p>Some manufacturing processes may involve heating operations.</p>",
+            "extra": null
         }
     """
     serializer_class = PageElementSerializer
@@ -337,7 +341,7 @@ class PageElementAddTags(PageElementMixin, generics.UpdateAPIView):
         return self.element
 
     def perform_update(self, serializer):
-        curr_tags = serializer.instance.tag
+        curr_tags = serializer.instance.extra
         if curr_tags:
             curr_tags = curr_tags.split(',')
         else:
@@ -346,7 +350,7 @@ class PageElementAddTags(PageElementMixin, generics.UpdateAPIView):
         for tag in add_tags:
             if not tag in curr_tags:
                 curr_tags.append(tag)
-        serializer.instance.tag = ','.join(curr_tags)
+        serializer.instance.extra = ','.join(curr_tags)
         serializer.instance.save()
 
 
@@ -383,7 +387,7 @@ class PageElementRemoveTags(PageElementMixin, generics.UpdateAPIView):
         return self.element
 
     def perform_update(self, serializer):
-        curr_tags = serializer.instance.tag
+        curr_tags = serializer.instance.extra
         if curr_tags:
             curr_tags = curr_tags.split(',')
         else:
@@ -392,5 +396,5 @@ class PageElementRemoveTags(PageElementMixin, generics.UpdateAPIView):
         for tag in remove_tags:
             if tag in curr_tags:
                 curr_tags.remove(tag)
-        serializer.instance.tag = ','.join(curr_tags)
+        serializer.instance.extra = ','.join(curr_tags)
         serializer.instance.save()

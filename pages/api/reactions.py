@@ -30,7 +30,7 @@ from rest_framework.response import Response
 
 from ..compat import is_authenticated
 from ..mixins import PageElementMixin
-from ..models import Follow, Vote
+from ..models import Comment, Follow, Vote
 from ..serializers import CommentSerializer, PageElementSerializer
 
 
@@ -197,6 +197,10 @@ class DownvoteAPIView(PageElementMixin, generics.CreateAPIView):
 class CommentListCreateAPIView(PageElementMixin, generics.ListCreateAPIView):
 
     serializer_class = CommentSerializer
+
+    def get_queryset(self):
+        return Comment.objects.filter(
+            element=self.element).select_related('user')
 
     def get(self, request, *args, **kwargs):
         """
