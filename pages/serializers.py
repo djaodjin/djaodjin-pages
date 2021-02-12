@@ -132,7 +132,7 @@ class PageElementSerializer(serializers.ModelSerializer):
         request = self.context.get('request')
         if request and is_authenticated(request):
             vote = Vote.objects.filter(
-                user=request.user, element=self.instance).first()
+                user=request.user, element=data).first()
             return vote and vote.vote == Vote.UP_VOTE
         return None
 
@@ -140,7 +140,7 @@ class PageElementSerializer(serializers.ModelSerializer):
        request = self.context.get('request')
        if request and is_authenticated(request):
            follow = Follow.objects.filter(
-               user=request.user, element=self.instance).first()
+               user=request.user, element=data).first()
            return follow is not None
        return None
 
