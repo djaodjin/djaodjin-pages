@@ -271,14 +271,16 @@ def install_theme_fileobj(theme_name, zip_file, force=False):
                     if tmp_path:
                         if not os.path.isdir(os.path.dirname(tmp_path)):
                             os.makedirs(os.path.dirname(tmp_path))
-                        template_string = zip_file.read(info.filename)
-                        if hasattr(template_string, 'decode'):
-                            template_string = template_string.decode('utf-8')
+                        template_bytes = zip_file.read(info.filename)
+                        if hasattr(template_bytes, 'decode'):
+                            template_string = template_bytes.decode('utf-8')
+                        else:
+                            template_string = template_bytes
                         template_string = force_text(template_string)
                         try:
                             check_template(template_string)
-                            with open(tmp_path, 'w') as extracted_file:
-                                extracted_file.write(template_string)
+                            with open(tmp_path, 'wb') as extracted_file:
+                                extracted_file.write(template_bytes)
                             try:
                                 default_path = get_template_path(
                                     relative_path=relative_path)
