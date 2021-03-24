@@ -1,4 +1,4 @@
-# Copyright (c) 2020, Djaodjin Inc.
+# Copyright (c) 2021, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -25,6 +25,7 @@ import logging
 
 from django.http import Http404
 from django.core.exceptions import ValidationError
+from django.db import transaction
 from django.db.models import Q
 from rest_framework.mixins import CreateModelMixin
 from rest_framework import generics, response as api_response
@@ -300,14 +301,15 @@ class PageElementEditableDetail(PageElementMixin, CreateModelMixin,
         serializer.save(account=self.account)
 
     def update(self, request, *args, **kwargs):
-        try:
-            _ = self.element
-            return super(PageElementEditableDetail, self).update(
+        with transaction.atomic():
+            try:
+                _ = self.element
+                return super(PageElementEditableDetail, self).update(
+                    request, *args, **kwargs)
+            except Http404:
+                pass
+            return super(PageElementEditableDetail, self).create(
                 request, *args, **kwargs)
-        except Http404:
-            pass
-        return super(PageElementEditableDetail, self).create(
-            request, *args, **kwargs)
 
 
 class PageElementAddTags(PageElementMixin, generics.UpdateAPIView):

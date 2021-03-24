@@ -1,4 +1,4 @@
-# Copyright (c) 2020, Djaodjin Inc.
+# Copyright (c) 2021, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -25,6 +25,7 @@
 
 import hashlib, os
 
+from django.db import transaction
 from django.utils.encoding import force_text
 from deployutils.helpers import datetime_or_now
 from rest_framework import parsers, status
@@ -169,28 +170,29 @@ class MediaListAPIView(UploadedImageMixin, AccountMixin, ListCreateAPIView):
 
         """
         #pylint: disable=unused-argument,too-many-locals
-        storage = get_default_storage(self.request, self.account)
         serializer = MediaItemListSerializer(data=request.data)
-        serializer.is_valid()
-        validated_data = serializer.validated_data
-        filter_list = self.build_filter_list(validated_data)
-        results, _ = self.list_media(storage, filter_list,
-            prefix=kwargs.get('path', '.'))
-        if not results:
+        serializer.is_valid(raise_exception=True)
+
+        storage = get_default_storage(self.request, self.account)
+        assets, total_count = self.list_media(
+            storage,
+            self.build_filter_list(serializer.validated_data))
+        if not assets:
             return Response({}, status=status.HTTP_404_NOT_FOUND)
 
         base = storage.url('')
-        for item in results:
-            location = item['location']
+        for item in assets:
+            parts = urlparse(item['location'])
+            location = urlunparse((parts.scheme, parts.netloc, parts.path,
+                None, None, None))
             if location.startswith(base):
-                location = location[len(base):]
-                storage.delete(location)
-                # Delete all MediaTag and PageElement using this location
-                MediaTag.objects.filter(location=location).delete()
-                elements = PageElement.objects.filter(text=location)
-                for element in elements:
-                    element.text = ""
-                    element.save()
+                storage.delete(location[len(base):])
+            # Delete all MediaTag and PageElement using this location
+            MediaTag.objects.filter(location=location).delete()
+            elements = PageElement.objects.filter(text=location)
+            for element in elements:
+                element.text = ""
+                element.save()
         return Response({}, status=status.HTTP_204_NO_CONTENT)
 
     def put(self, request, *args, **kwargs):
@@ -232,11 +234,12 @@ class MediaListAPIView(UploadedImageMixin, AccountMixin, ListCreateAPIView):
             parts = urlparse(item['location'])
             location = urlunparse((parts.scheme, parts.netloc, parts.path,
                 None, None, None))
-            media_tags = MediaTag.objects.filter(location=location)
-            for tag in tags:
-                MediaTag.objects.get_or_create(location=location, tag=tag)
-            # Remove tags which are no more set for the location.
-            media_tags.exclude(tag__in=tags).delete()
+            with transaction.atomic():
+                media_tags = MediaTag.objects.filter(location=location)
+                for tag in tags:
+                    MediaTag.objects.get_or_create(location=location, tag=tag)
+                # Remove tags which are no more set for the location.
+                media_tags.exclude(tag__in=tags).delete()
 
             # Update tags returned by the API.
             item['tags'] = ",".join(list(MediaTag.objects.filter(
