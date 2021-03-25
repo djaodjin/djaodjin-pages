@@ -39,8 +39,11 @@ the prerequisites, create the database then run the testsite webapp.
 Release Notes
 =============
 
-0.3.4
+0.3.5
 
-  * adds reactions in API for page element detail
+  * chages DELETE media to take a query parameter instead of a body
+  * moves all translated strings to the server
+  * fixes installing theme with unicode characters in template files
+  * fixes reactions APIs
 
 [previous release notes](changelog)

@@ -1,3 +1,12 @@
+0.3.5
+
+  * chages DELETE media to take a query parameter instead of a body
+  * moves all translated strings to the server
+  * fixes installing theme with unicode characters in template files
+  * fixes reactions APIs
+
+ -- Sebastien Mirolo <smirolo@djaodjin.com>  Wed,  24 Mar 2020 23:37:00 -0700
+
 0.3.4
 
   * adds reactions in API for page element detail
