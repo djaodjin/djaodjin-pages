@@ -1,4 +1,4 @@
-# Copyright (c) 2018, DjaoDjin inc.
+# Copyright (c) 2021, DjaoDjin inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -22,9 +22,13 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import json
+
 from django import template
 from django.contrib.messages.api import get_messages
 from django.forms import BaseForm
+from django.utils.safestring import mark_safe
+import six
 
 register = template.Library()
 
@@ -37,3 +41,10 @@ def messages(obj):
     if isinstance(obj, BaseForm):
         return obj.non_field_errors()
     return get_messages(obj)
+
+
+@register.filter
+def to_json(value):
+    if isinstance(value, six.string_types):
+        return value
+    return mark_safe(json.dumps(value))

@@ -1,0 +1,22 @@
+<div>
+  <h4>[[comments.count]] Comments</h4>
+  <table>
+    <tr v-for="comment in comments.results">
+      <td>
+        [[comment.user]]<br />
+        <small>[[comment.created_at]]</small>
+      </td>
+      <td >[[comment.text]]</td>
+    </tr>
+  </table>
+  {% if user.is_authenticated %}
+  <form id="form_comment" action="." method="POST"
+        @submit.prevent="submitComment($event)">
+    <input type="hidden" name="csrfmiddlewaretoken" value="{{csrf_token}}">
+    <textarea id="id_comment" cols="40" rows="10" name="comment" v-model="message"></textarea>
+    <input type="submit" />
+  </form>
+  {% else %}
+  <p>Please <a href="{% url 'login' %}">log in</a> to leave a comment.</p>
+  {% endif %}
+</div>

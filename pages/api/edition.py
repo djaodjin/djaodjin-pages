@@ -1,4 +1,4 @@
-# Copyright (c) 2020, Djaodjin Inc.
+# Copyright (c) 2021, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -25,10 +25,13 @@ import logging
 
 from django.http import Http404
 from django.core.exceptions import ValidationError
-from django.db.models import Q
-from rest_framework.mixins import CreateModelMixin
+from django.db import transaction
+from django.db.models import Q, Count
 from rest_framework import generics, response as api_response
+from rest_framework.mixins import CreateModelMixin
+from rest_framework.filters import SearchFilter
 
+from .. import settings
 from ..models import PageElement, build_content_tree
 from ..serializers import (NodeElementSerializer, PageElementSerializer,
     PageElementTagSerializer)
@@ -189,6 +192,89 @@ class PageElementDetailAPIView(PageElementMixin, generics.RetrieveAPIView):
         return self.element
 
 
+class PageElementEditableListAPIView(TrailMixin, generics.ListAPIView):
+    """
+    Lists page elements
+
+    **Tags**: content
+
+    **Examples
+
+    .. code-block:: http
+
+        GET /api/content/construction HTTP/1.1
+
+    responds
+
+    .. code-block:: json
+
+        {
+            "count": 5,
+            "next": null,
+            "previous": null,
+            "results": [
+                {
+                    "path": null,
+                    "title": "Construction",
+                    "tags": ["public"],
+                    "indent": 0
+                },
+                {
+                    "path": null,
+                    "title": "Governance & management",
+                    "picture": "https://assets.tspproject.org/management.png",
+                    "indent": 1
+                },
+                {
+                    "path": "/construction/governance/the-assessment\
+-process-is-rigorous",
+                    "title": "The assessment process is rigorous",
+                    "indent": 2,
+                    "environmental_value": 1,
+                    "business_value": 1,
+                    "profitability": 1,
+                    "implementation_ease": 1,
+                    "avg_value": 1
+                },
+                {
+                    "path": null,
+                    "title": "Production",
+                    "picture": "https://assets.tspproject.org/production.png",
+                    "indent": 1
+                },
+                {
+                    "path": "/construction/production/adjust-air-fuel\
+-ratio",
+                    "title": "Adjust Air fuel ratio",
+                    "indent": 2,
+                    "environmental_value": 2,
+                    "business_value": 2,
+                    "profitability": 2,
+                    "implementation_ease": 2,
+                    "avg_value": 2
+                }
+            ]
+        }
+    """
+    serializer_class = NodeElementSerializer
+    filter_backends = (SearchFilter,)
+
+    def get_queryset(self):
+        """
+        Returns a list of heading and best practices
+        """
+        account_url_kwarg = settings.ACCOUNT_URL_KWARG
+        if account_url_kwarg in self.kwargs:
+            queryset = PageElement.objects.filter(account=self.account)
+        else:
+            queryset = PageElement.objects.all()
+        if self.path:
+            queryset = queryset.filter(consumption__path__startswith=self.path)
+#        queryset = queryset.annotate(
+#            nb_referencing_practices=Count('consumption')).order_by('title')
+        return queryset
+
+
 class PageElementEditableDetail(PageElementMixin, CreateModelMixin,
                         generics.RetrieveUpdateDestroyAPIView):
     """
@@ -300,14 +386,15 @@ class PageElementEditableDetail(PageElementMixin, CreateModelMixin,
         serializer.save(account=self.account)
 
     def update(self, request, *args, **kwargs):
-        try:
-            _ = self.element
-            return super(PageElementEditableDetail, self).update(
+        with transaction.atomic():
+            try:
+                _ = self.element
+                return super(PageElementEditableDetail, self).update(
+                    request, *args, **kwargs)
+            except Http404:
+                pass
+            return super(PageElementEditableDetail, self).create(
                 request, *args, **kwargs)
-        except Http404:
-            pass
-        return super(PageElementEditableDetail, self).create(
-            request, *args, **kwargs)
 
 
 class PageElementAddTags(PageElementMixin, generics.UpdateAPIView):

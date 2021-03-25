@@ -6,7 +6,6 @@
 <head>
   <title>djaodjin-pages testsite</title>
   <script type="text/javascript" src="{% static 'vendor/jquery.js' %}"></script>
-  <script type="text/javascript" src="{% url 'javascript-catalog' %}"></script>
   {% if csrf_token %}
   <meta name="csrf-token" content="{{csrf_token}}">
   <script type="text/javascript">
@@ -31,13 +30,13 @@
 <body>
   {% block menubar %}
   <div>
-  <a href="/">Home</a>
-  {% if request.user.is_authenticated %}
-  | <a id="authenticated-user" href="/users/">{{request.user.username}}</a>
-  | <a href="/logout/">Sign Out</a>
-  {% else %}
-  | <a href="/login/">Sign In</a>
-  {% endif %}
+    <a href="/">Home</a>
+    {% if request.user.is_authenticated %}
+    | <a id="authenticated-user" href="/users/">{{request.user.username}}</a>
+    | <a href="/logout/">Sign Out</a>
+    {% else %}
+    | <a href="/login/">Sign In</a>
+    {% endif %}
   </div>
   {% endblock %}
   <div id="messages">
@@ -56,9 +55,31 @@
       </div>
       {% endfor %}
       {% endif %}
+      <script type="text/javascript">
+        var _showErrorMessagesProviderNotified = "We have been notified"
+            + " and have started on fixing the error. We apologize for the"
+            + " inconvinience.";
+      </script>
     </div>
   </div>
   {% block content %}{% endblock %}
-  {% block bodyscripts %}{% endblock %}
+  {% block bodyscripts %}
+<script type="text/javascript" charset="utf-8" src="/static/vendor/vue.js"></script>
+<script type="text/javascript">
+Vue.prototype.$itemsPerPage =
+    {% if items_per_page %}{{items_per_page}}{% else %}25{% endif %};
+Vue.prototype.$urls = {% if urls %}{{urls|to_json}}{% else %}{}{% endif %};
+</script>
+<script type="text/javascript" charset="utf-8" src="/static/js/djaodjin-resources.js"></script>
+<script type="text/javascript" charset="utf-8" src="/static/js/djaodjin-resources-vue.js"></script>
+<script type="text/javascript" charset="utf-8" src="/static/js/djaodjin-pages-vue.js"></script>
+<script type="text/javascript">
+var app = new Vue({
+  el: '#app',
+  delimiters: ["[[","]]"],
+});
+</script>
+  {% block pages_scripts %}{% endblock %}
+  {% endblock %}
 </body>
 </html>

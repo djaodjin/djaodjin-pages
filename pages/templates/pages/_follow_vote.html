@@ -1,0 +1,12 @@
+<div style="display: inline-block;">
+  <button type="submit"
+    @click="submitFollow()" v-if="itemLoaded && item.follow">Unfollow</button>
+  <button type="submit"
+    @click="submitFollow()" v-if="itemLoaded && !item.follow">Follow</button>
+  <button type="submit"
+    @click="submitVote()" v-if="itemLoaded && !item.upvote">Upvote</button>
+  <button type="submit"
+    @click="submitVote()" v-if="itemLoaded && item.upvote">Reset vote</button>
+  <a class="disabled" v-if="itemLoaded">[[item.nb_followers]] followers</a>
+  <a class="disabled" v-if="itemLoaded">[[item.nb_upvotes]] upvotes</a>
+</div>

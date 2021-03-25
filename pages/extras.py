@@ -1,4 +1,4 @@
-# Copyright (c) 2018, DjaoDjin inc.
+# Copyright (c) 2021, DjaoDjin inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -25,7 +25,7 @@
 from django.shortcuts import get_object_or_404
 
 from .compat import NoReverseMatch, reverse
-from .utils import get_account_model, get_current_account
+from .utils import get_account_model, get_current_account, update_context_urls
 
 
 class AccountMixinBase(object):
@@ -52,9 +52,14 @@ class AccountMixinBase(object):
         for url_kwarg in [settings.ACCOUNT_URL_KWARG]:
             if url_kwarg in kwargs:
                 url_kwargs.update({url_kwarg: kwargs[url_kwarg]})
-        urls_pages = {
-            'api_sources': reverse(
-                'pages_api_sources', kwargs=url_kwargs)}
+        urls_pages = {}
+        try:
+            urls_pages.update({
+                'api_sources': reverse(
+                    'pages_api_sources', kwargs=url_kwargs),})
+        except NoReverseMatch:
+            # Page editor is optional
+            pass
         try:
             urls_pages.update({
                 'api_themes': reverse(
@@ -66,11 +71,5 @@ class AccountMixinBase(object):
         except NoReverseMatch:
             # Themes are optional
             pass
-        if 'urls' in context:
-            if 'pages' in context['urls']:
-                context['urls']['pages'].update(urls_pages)
-            else:
-                context['urls'].update({'pages': urls_pages})
-        else:
-            context.update({'urls': {'pages': urls_pages}})
+        context = update_context_urls(context, {'pages': urls_pages})
         return context

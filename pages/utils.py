@@ -1,4 +1,4 @@
-# Copyright (c) 2020, DjaoDjin inc.
+# Copyright (c) 2021, DjaoDjin inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -31,7 +31,7 @@ from django.core.validators import RegexValidator
 from django.utils.module_loading import import_string
 from django.utils.translation import ugettext_lazy as _
 
-from .compat import urljoin
+from .compat import six, urljoin
 
 
 LOGGER = logging.getLogger(__name__)
@@ -151,3 +151,20 @@ def _get_media_prefix(account=None):
         if not media_prefix:
             media_prefix = str(account)
     return media_prefix
+
+
+def update_context_urls(context, urls):
+    if 'urls' in context:
+        for key, val in six.iteritems(urls):
+            if key in context['urls']:
+                if isinstance(val, dict):
+                    context['urls'][key].update(val)
+                else:
+                    # Because organization_create url is added in this mixin
+                    # and in ``OrganizationRedirectView``.
+                    context['urls'][key] = val
+            else:
+                context['urls'].update({key: val})
+    else:
+        context.update({'urls': urls})
+    return context

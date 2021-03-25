@@ -30,7 +30,6 @@ var edition_sources = [
   "jQuery(document).ready(function($) {\
     $('.editable').editor({\
       baseUrl: '{{ urls.edit.api_page_element_base }}',\
-      preventBlurOnClick: '#toggle-media-gallery, .dj-gallery-item'\
     });\
   });"
 ];
@@ -121,7 +120,19 @@ if( view.length > 0 ) {
             </div>
           </div>
         </div>
-        <div class="dj-gallery-info-item"></div>
+        <div class="dj-gallery-info-item">
+            <div class="dj-gallery-info-item-empty">
+                Click on an item to view more options
+            </div>
+            <div class="dj-gallery-info-item-selected" style="display: none;">
+                <textarea rows="4" style="width:100%;" readonly data-dj-gallery-media-url></textarea>
+                <button data-dj-gallery-media-location class="dj-gallery-delete-item">Delete</button>
+                <button data-dj-gallery-media-location class="dj-gallery-preview-item">Preview</button>
+                <br />
+                <input data-dj-gallery-media-tag class="dj-gallery-tag-input" type="text" placeholder="Please enter tag." />
+                <button class="dj-gallery-tag-item">Update tags</button>
+            </div>
+        </div>
       </div>
     </div>
   </div>
@@ -173,12 +184,15 @@ jQuery(document).ready(function($) {
         }, 2000);
       }
     },
-    galleryItemOptionsTemplate: "<div class=\"input-group\"><input type=\"text\" class=\"form-control\" readonly data-dj-gallery-media-url><span class=\"input-group-btn\"><button data-dj-gallery-media-location class=\"dj-gallery-preview-item btn btn-primary\" type=\"button\"><i class=\"glyphicon glyphicon-eye-open\"></i></button></span></div>\n<br><div class=\"input-group\"><input type=\"text\" data-dj-gallery-media-tag class=\"dj-gallery-tag-input form-control\" placeholder=\"tags...\" aria-describedby=\"basic-addon1\"><span class=\"input-group-btn\"><button class=\"dj-gallery-tag-item btn btn-primary\" type=\"button\">Tag</button></span></div><span class=\"help-block\">Tags must be separated by a comma. ex: video, title</span>\n<button data-dj-gallery-media-location class=\"dj-gallery-delete-item btn btn-primary btn-block\"><i class=\"glyphicon glyphicon-trash\"></i> Delete</button>\n",
     galleryMessage: function(message, type){
-      if (!type){
-        type = "success";
+      if( type == 'error' ) {
+          showErrorMessages(message, type);
+      } else {
+          if( !type ) {
+              type = "success";
+          }
+          showMessages([message], type);
       }
-      showMessages([message], type);
     },
     previewMediaItem: function(src, type){
       $("#modal-preview-media .modal-body").empty();

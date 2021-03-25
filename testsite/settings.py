@@ -110,6 +110,15 @@ TEMPLATES = [
 ]
 
 
+REST_FRAMEWORK = {
+    'PAGE_SIZE': 25,
+    'DEFAULT_PAGINATION_CLASS':
+        'rest_framework.pagination.PageNumberPagination',
+    'ORDERING_PARAM': 'o',
+    'SEARCH_PARAM': 'q'
+}
+
+
 # Applications
 # ------------
 
