@@ -1,4 +1,4 @@
-# Copyright (c) 2017, Djaodjin Inc.
+# Copyright (c) 2021, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -27,5 +27,6 @@ from pages.views.pages import EditView
 
 urlpatterns = [
     url(r'^api/', include('pages.urls.api')),
+    url(r'^', include('pages.urls.editables')),
     url(r'^', include('pages.urls.themes')),
 ]

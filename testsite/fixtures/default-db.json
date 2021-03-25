@@ -12,5 +12,11 @@
       "username": "alice"
     },
     "model": "auth.User", "pk": 1
+},
+{
+  "fields": {
+    "title": "Construction",
+    "slug": "construction"
+  },
+  "model": "pages.PageElement", "pk": 1
 }]
-

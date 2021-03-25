@@ -80,7 +80,8 @@ class ThemePackageListAPIView(ThemePackageMixin, GenericAPIView):
         """
         #pylint:disable=unused-argument
         remove_theme(self.theme)
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response({'detail': _("reset to default theme")},
+            status=status.HTTP_200_OK)
 
 
     @swagger_auto_schema(responses={

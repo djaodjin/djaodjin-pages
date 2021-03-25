@@ -135,10 +135,6 @@
             self.$el.on("mouseover mouseleave", function(event){
                 self.hoverElement(event);
             });
-
-            $(".editable").bind("hallomodified", function(event, data) {
-                $("#modified").html(gettext("Editables modified"));
-            });
             if( self.options.focus ) {
                 self.toggleEdition();
             }
@@ -215,9 +211,8 @@
                 };
             }
 
-            if( self.options.debug ){
-                console.log("data-key:", self.$el.attr("data-key"),
-                    "send:", data);
+            if( self.options.debug ) { console.log("data-key:",
+                self.$el.attr("data-key"), "send:", data);
             }
             $.ajax({
                 method: method,
@@ -608,9 +603,8 @@
 
     $.fn.editor.defaults = {
         baseUrl: null, // Url to send request to server
-        emptyInputText: gettext("placeholder, type to overwrite..."),
+        emptyInputText: "placeholder, type to overwrite...",
         uniqueIdentifier: "id",
-        preventBlurOnClick: "",
         onSuccess: function(element, resp){
             return true;
         },

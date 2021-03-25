@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section  id="app">
+  <editables-list inline-template id="editables-detail">
+    <div>
+      <div v-show="itemsLoaded && items.results.length > 0">
+        <div v-for="item in items.results">
+          <a :href="item.slug + '/'">[[item.title]]</a>
+        </div>
+      </div>
+    </div>
+  </editables-list>
+</section>
+{% endblock %}

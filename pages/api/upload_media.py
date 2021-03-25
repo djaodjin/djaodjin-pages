@@ -27,6 +27,7 @@ import hashlib, os
 
 from django.db import transaction
 from django.utils.encoding import force_text
+from django.utils.translation import ugettext_lazy as _
 from deployutils.helpers import datetime_or_now
 from rest_framework import parsers, status
 from rest_framework.generics import ListCreateAPIView
@@ -157,26 +158,15 @@ class MediaListAPIView(UploadedImageMixin, AccountMixin, ListCreateAPIView):
 
         .. code-block:: http
 
-            DELETE /api/assets/ HTTP/1.1
-
-        .. code-block:: json
-
-            {
-                "items": [
-                    {"location": "/media/item/url1.jpg"},
-                    {"location": "/media/item/url2.jpg"}
-                ]
-            }
+            DELETE /api/assets/?location=/media/item/url1.jpg HTTP/1.1
 
         """
         #pylint: disable=unused-argument,too-many-locals
-        serializer = MediaItemListSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-
         storage = get_default_storage(self.request, self.account)
         assets, total_count = self.list_media(
             storage,
-            self.build_filter_list(serializer.validated_data))
+            self.build_filter_list({'items': [
+                {'location': request.query_params.get('location')}]}))
         if not assets:
             return Response({}, status=status.HTTP_404_NOT_FOUND)
 
@@ -193,7 +183,9 @@ class MediaListAPIView(UploadedImageMixin, AccountMixin, ListCreateAPIView):
             for element in elements:
                 element.text = ""
                 element.save()
-        return Response({}, status=status.HTTP_204_NO_CONTENT)
+        return Response({
+            'detail': _('Media correctly deleted.')},
+            status=status.HTTP_200_OK)
 
     def put(self, request, *args, **kwargs):
         """
@@ -247,4 +239,6 @@ class MediaListAPIView(UploadedImageMixin, AccountMixin, ListCreateAPIView):
 
         serializer = self.get_serializer(
             sorted(assets, key=lambda x: x['updated_at']), many=True)
-        return self.get_paginated_response(serializer.data)
+        http_resp = self.get_paginated_response(serializer.data)
+        http_resp.data.update({'detail': _("Tags correctly updated.")})
+        return http_resp

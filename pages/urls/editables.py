@@ -22,8 +22,14 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-"""
-PEP 386-compliant version number for the pages django app.
-"""
+from django.conf.urls import url
 
-__version__ = '0.3.6-dev'
+from .. import settings
+from ..views.editables import PageElementEditableView
+
+urlpatterns = [
+    url(r'^editables/(?P<path>%s)/' % settings.PATH_RE,
+        PageElementEditableView.as_view(), name='pages_edit_element'),
+    url(r'^editables/',
+        PageElementEditableView.as_view(), name='pages_edit_element_base'),
+]

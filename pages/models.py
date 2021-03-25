@@ -1,4 +1,4 @@
-# Copyright (c) 2020, Djaodjin Inc.
+# Copyright (c) 2021, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -24,7 +24,7 @@
 
 from __future__ import unicode_literals
 
-import json, logging, random
+import datetime, json, logging, random
 from collections import OrderedDict
 
 from django.contrib.auth import get_user_model
@@ -161,9 +161,16 @@ class PageElement(models.Model):
     account = models.ForeignKey(
         settings.ACCOUNT_MODEL, related_name='account_page_element',
         null=True, on_delete=models.SET_NULL)
+    picture = models.URLField(_("URL to a icon picture"), max_length=2083,
+        null=True, blank=True, help_text=_("Icon picture"))
+    reading_time = models.DurationField(null=True,
+        default=datetime.timedelta,  # stored in microseconds
+        help_text=_("Reading time of the material (in hh:mm:ss)"))
+    lang = models.CharField(_("Language the material is written in"),
+         default=settings.LANGUAGE_CODE, max_length=5)
+    extra = get_extra_field_class()(null=True, blank=True)
     relationships = models.ManyToManyField("self",
         related_name='related_to', through='RelationShip', symmetrical=False)
-    extra = get_extra_field_class()(null=True, blank=True)
 
     def __str__(self):
         return self.slug

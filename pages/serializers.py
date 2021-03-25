@@ -1,4 +1,4 @@
-# Copyright (c) 2020, Djaodjin Inc.
+# Copyright (c) 2021, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -111,6 +111,9 @@ class PageElementSerializer(serializers.ModelSerializer):
 
     slug = serializers.SlugField(required=False,
         help_text=_("Unique identifier that can be used in URL paths"))
+    account = serializers.SlugRelatedField(slug_field='slug',
+        read_only=True, required=False,
+        help_text=("Account that can edit the page element"))
     picture = serializers.CharField(required=False, allow_null=True,
         help_text=_("Picture icon that can be displayed alongside the title"))
     text = HTMLField(html_tags=ALLOWED_TAGS, html_attributes=ALLOWED_ATTRIBUTES,
@@ -125,7 +128,8 @@ class PageElementSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = PageElement
-        fields = ('slug', 'picture', 'title', 'text', 'extra',
+        fields = ('slug', 'picture', 'title', 'text', 'reading_time',
+            'lang', 'account', 'extra',
             'nb_upvotes', 'nb_followers', 'upvote', 'follow')
 
     def get_upvote(self, data):
@@ -165,17 +169,25 @@ class NodeElementSerializer(serializers.ModelSerializer):
     """
     Serializes a PageElement as a node in a content tree
     """
-    indent = serializers.IntegerField()
+    indent = serializers.SerializerMethodField()
+    account = serializers.SlugRelatedField(slug_field='slug',
+        read_only=True, required=False,
+        help_text=("Account that can edit the page element"))
     picture = serializers.CharField(required=False, allow_null=True,
         help_text=_("Picture icon that can be displayed alongside the title"))
-    extra = serializers.CharField(required=False, allow_null=True,
+    extra = serializers.SerializerMethodField(required=False, allow_null=True,
         help_text=_("Extra meta data (can be stringify JSON)"))
-
 
     class Meta:
         model = PageElement
-        fields = ('slug', 'title', 'picture', 'indent', 'extra')
+        fields = ('slug', 'account', 'title', 'picture', 'indent', 'extra')
         read_only_fields = ('slug',)
+
+    def get_indent(self, obj):
+        return obj.indent if hasattr(obj, 'indent') else 0
+
+    def get_extra(self, obj):
+        return obj.extra
 
 
 class LessVariableSerializer(serializers.ModelSerializer):

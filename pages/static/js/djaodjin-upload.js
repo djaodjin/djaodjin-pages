@@ -23,15 +23,13 @@
         _uploadSuccess: function(file, resp) {
             var self = this;
             self.element.trigger("djupload.success", resp.location);
-            if( self.options.uploadSuccess ) {
+            if( self.options.uploadSuccess &&
+                {}.toString.call(self.options.uploadSuccess)
+                === '[object Function]' ) {
                 self.options.uploadSuccess(file, resp);
             } else {
                 if( resp.detail ) {
                     showMessages(resp.detail, "success");
-                } else {
-                    showMessages([interpolate(gettext(
-                        '"%s" uploaded sucessfully'),
-                        [file.name])], "success");
                 }
             }
             return true;
@@ -43,14 +41,7 @@
             if( self.options.uploadError ) {
                 self.options.uploadError(file, resp);
             } else {
-                if( typeof resp === "string" ) {
-                    showErrorMessages(
-                        interpolate(gettext("Error %s: %s"),
-                            [resp.status, resp + " " + interpolate(gettext(
-                                "(while uploading '%s')"), [file.name])]));
-                } else {
-                    showErrorMessages(resp);
-                }
+                showErrorMessages(resp);
             }
         },
 
@@ -124,10 +115,8 @@
                     self.element.attr("data-complete-url")
                     : self.options.uploadUrl));
             if( !dropzoneUrl ) {
-                showErrorMessages(
-                    gettext("instantiated djupload() with no uploadUrl specified."));
-                throw new Error(
-                    gettext("instantiated djupload() with no uploadUrl specified."));
+                showErrorMessages(self.options.configError);
+                throw new Error(self.options.configError);
             }
             self.element.dropzone({
                 paramName: self.options.uploadParamName,
@@ -302,9 +291,16 @@
         amzServerSideEncryption: null,
 
         // callback
-        uploadSuccess: null,
+        uploadSuccess: function(file, resp) {
+            showMessages(['"' + file.name + '" uploaded sucessfully'],
+                'success');
+        },
         uploadError: null,
-        uploadProgress: null
+        uploadProgress: null,
+
+        // error messages
+        configError: "instantiated djupload() with no uploadUrl specified."
+
     };
 
     Dropzone.autoDiscover = false;

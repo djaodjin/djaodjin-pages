@@ -10,7 +10,6 @@ function initCodeEditors(api_sources, iframe) {
         var tab = $("<li class=\"nav-item\"><a class=\"nav-link" + (idx === 0 ? " active" : "") + "\" href=\"#tab-" + idx + "\" data-toggle=\"tab\">" + name + "</a></li>");
         var content = $("<div id=\"tab-" + idx + "\" class=\"tab-pane" + (idx === 0 ? " active" : "") + " role=\"tabpanel\" style=\"width:100%;height:100%;\"><div class=\"content\" data-content=\"" + name + "\" style=\"width:100%;min-height:100%;\"></div></div>");
         if( typeof beforeElem !== 'undefined' ) {
-            console.log("insert ", tab, " before", beforeElem);
             beforeElem.before(tab);
         } else {
             tabsContainer.append(tab);
@@ -28,11 +27,10 @@ function initCodeEditors(api_sources, iframe) {
         templates = iframe.contentWindow.templateNames || [];
     }
     if( templates.length > 0 ) {
+        $("#code-editor .tab-content").empty();
         for( var idx = 0; idx < templates.length; ++idx ) {
             addPanel($("#code-editor"), templates[idx].name);
         }
-    } else {
-        $("#code-editor .tab-content").append("<div>" + gettext('No editable templates') + "</div>");
     }
     $("#code-editor [role='tablist']").append("<li id=\"new-source-btn\" class=\"nav-item\"><a class=\"nav-link\" href=\"#new-source\" data-toggle=\"modal\" data-target=\"#new-source\"><i class=\"fa fa-plus\"></i> New</a></li>");
     $("#code-editor #new-source-submit").click(function(event) {

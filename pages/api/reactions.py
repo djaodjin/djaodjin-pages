@@ -64,18 +64,11 @@ class FollowAPIView(PageElementMixin, generics.CreateAPIView):
     """
     serializer_class = PageElementSerializer
 
-    def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        self.perform_create(serializer)
-        headers = self.get_success_headers(serializer.data)
-        return Response(PageElementSerializer().to_representation(
-            self.element), status=status.HTTP_201_CREATED, headers=headers)
-
     def perform_create(self, serializer):
         if not is_authenticated(self.request):
             raise PermissionDenied()
         Follow.objects.subscribe(self.element, user=self.request.user)
+        serializer.instance = self.element
 
 
 class UnfollowAPIView(PageElementMixin, generics.CreateAPIView):
@@ -108,18 +101,11 @@ class UnfollowAPIView(PageElementMixin, generics.CreateAPIView):
     """
     serializer_class = PageElementSerializer
 
-    def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        self.perform_create(serializer)
-        headers = self.get_success_headers(serializer.data)
-        return Response(PageElementSerializer().to_representation(
-            self.element), status=status.HTTP_201_CREATED, headers=headers)
-
     def perform_create(self, serializer):
         if not is_authenticated(self.request):
             raise PermissionDenied()
         Follow.objects.unsubscribe(self.element, user=self.request.user)
+        serializer.instance = self.element
 
 
 class UpvoteAPIView(PageElementMixin, generics.CreateAPIView):
@@ -156,6 +142,7 @@ class UpvoteAPIView(PageElementMixin, generics.CreateAPIView):
         if not is_authenticated(self.request):
             raise PermissionDenied()
         Vote.objects.vote_up(self.element, user=self.request.user)
+        serializer.instance = self.element
 
 
 class DownvoteAPIView(PageElementMixin, generics.CreateAPIView):
@@ -192,6 +179,7 @@ class DownvoteAPIView(PageElementMixin, generics.CreateAPIView):
         if not is_authenticated(self.request):
             raise PermissionDenied()
         Vote.objects.vote_down(self.element, user=self.request.user)
+        serializer.instance = self.element
 
 
 class CommentListCreateAPIView(PageElementMixin, generics.ListCreateAPIView):

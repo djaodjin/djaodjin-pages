@@ -27,7 +27,9 @@
                     datatype: "json",
                     contentType: "application/json; charset=utf-8",
                     success: function(resp) {
-                        showMessages([gettext("reset to default theme")], "success");
+                        if( resp.detail ) {
+                            showMessages([resp.detail], "success");
+                        }
                     },
                     error: function(resp) {
                         showErrorMessages(resp);

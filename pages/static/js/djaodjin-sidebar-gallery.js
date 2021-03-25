@@ -1,5 +1,5 @@
 /* jshint multistr: true */
-/* global Dropzone jQuery :true */
+/* global getMetaCSRFToken Dropzone jQuery :true */
 
 /* relies on:
     - jquery-ui.js
@@ -42,8 +42,7 @@ PUT mediaUrl:
         ...
     }
 
-DELETE mediaUrl 200 OK
-    - request: {items: [{location: "/media/item/url1.jpg"}, {location: "/media/item/url2.jpg"}]}
+DELETE mediaUrl?location=/media/item/url1.jpg 200 OK
     - response: 200 OK
 
 Options:
@@ -66,7 +65,6 @@ Options:
     acceptedImages :                    default: [".jpg", ".png", ".gif"], type: Array
     acceptedVideos :                    default: [".mp4"], type: Array
     buttonClass :                       type: String
-    galleryItemOptionsTemplate :        type: String, template used when a media item is selected
     selectedMediaClass :                type: String, class when a media item is selected
     startLoad :                         type: Boolean, if true load image on document ready
     itemUploadProgress :                type:function, params:progress, return the progress on upload
@@ -146,9 +144,11 @@ Options:
                             droppable.attr("src", location);
                             $(ui.helper).remove();
                             self.saveDroppedMedia(droppable);
-                        }else{
-                            self.options.galleryMessage(interpolate(gettext("This placeholder accepts only: %s files."),
-                                [self.options.acceptedImages.join(", ")]));
+                        } else {
+                            self.options.galleryMessage(
+                                self.options.placeholderAcceptsErrorMessage(
+                                    self.options.acceptedImages.join(", ")),
+                                'error');
                         }
                     }else if (droppable.prop("tagName") === "VIDEO"){
                         if (self.options.acceptedVideos.some(function(v) {
@@ -156,9 +156,11 @@ Options:
                             droppable.attr("src", location);
                             $(ui.helper).remove();
                             self.saveDroppedMedia(droppable);
-                        }else{
-                            self.options.galleryMessage(interpolate(gettext("This placeholder accepts only: %s files."),
-                                [self.options.acceptedVideos.join(", ")]));
+                        } else {
+                            self.options.galleryMessage(
+                                self.options.placeholderAcceptsErrorMessage(
+                                    self.options.acceptedVideos.join(", ")),
+                                'error');
                         }
                     }
                 }
@@ -180,7 +182,8 @@ Options:
 
         initMediaInfo: function(){
             var self = this;
-            $(".dj-gallery-info-item").text(gettext("Click on an item to view more options"));
+            $(".dj-gallery-info-item>.dj-gallery-info-item-selected").hide();
+            $(".dj-gallery-info-item>.dj-gallery-info-item-empty").show();
         },
 
         initDropzone: function(){
@@ -220,13 +223,17 @@ Options:
                     }else{
                         lastIndex = 0;
                     }
-                    if ([201, 204].indexOf(status) >= 0){
+                    var filename = file.name;
+                    var location = response.location;
+                    if( [201, 204].indexOf(status) >= 0 ){
                         self.addMediaItem(response, lastIndex, false);
-                        self.options.galleryMessage(interpolate(gettext('"%s" uploaded sucessfully to "%s"'),
-                            [file.name, response.location]));
-                    }else if (status === 200){
-                        self.options.galleryMessage(interpolate(gettext('"%s" has previously been uploaded to "%s"'),
-                            [file.name, response.location]));
+                        self.options.galleryMessage(
+                            self.options.uploadSuccessMessage(
+                                filename, location));
+                    } else if( status === 200 ) {
+                        self.options.galleryMessage(
+                            self.options.uploadPreviousSuccessMessage(
+                                filename, location));
                     }
                 },
                 uploadError: function(file, resp){
@@ -262,7 +269,7 @@ Options:
                     });
                 },
                 error: function(resp) {
-                    showErrorMessages(resp);
+                    self.options.galleryMessage(resp, 'error');
                 }
             });
         },
@@ -348,13 +355,15 @@ Options:
                 location = self._mediaLocation(refElem.attr("src"));
             }
             var icon = item.find("[src]").attr("src");
-            $elem.find(".dj-gallery-info-item").html(
-                self.options.galleryItemOptionsTemplate);
+
             $elem.find("[data-dj-gallery-media-src]").attr("src", icon);
             $elem.find("[data-dj-gallery-media-location]").attr(
                 "location", location);
             $elem.find("[data-dj-gallery-media-url]").val(location);
             $elem.find("[data-dj-gallery-media-tag]").val(item.attr("tags"));
+
+            $(".dj-gallery-info-item>.dj-gallery-info-item-selected").show();
+            $(".dj-gallery-info-item>.dj-gallery-info-item-empty").hide();
         },
 
         deleteMedia: function(event){
@@ -363,20 +372,19 @@ Options:
             var location = self._mediaLocation(self.selectedMedia.attr("src"));
             $.ajax({
                 method: "DELETE",
-                url: self.options.mediaUrl,
-                data: JSON.stringify({"items": [{"location": location}]}),
+                url: self.options.mediaUrl + "?location=" + location,
                 datatype: "json",
                 contentType: "application/json; charset=utf-8",
                 beforeSend: function(xhr, settings) {
                     xhr.setRequestHeader("X-CSRFToken", getMetaCSRFToken());
                 },
-                success: function(){
+                success: function(resp){
                     $("[src=\"" + self.selectedMedia.attr("src") + "\"]").parent(".dj-gallery-item-container").remove();
-                    $(".dj-gallery-info-item").empty();
-                    self.options.galleryMessage(gettext("Media correctly deleted."));
+                    self.initMediaInfo();
+                    self.options.galleryMessage(resp.detail);
                 },
                 error: function(resp) {
-                    showErrorMessages(resp);
+                    self.options.galleryMessage(resp, 'error');
                 }
             });
         },
@@ -402,15 +410,15 @@ Options:
                     beforeSend: function(xhr, settings) {
                         xhr.setRequestHeader("X-CSRFToken", getMetaCSRFToken());
                     },
-                    success: function(response){
-                        $.each(response.results, function(index, element) {
+                    success: function(resp){
+                        $.each(resp.results, function(index, element) {
                             $("[src=\"" + element.location + "\"]").attr(
                                 "tags", element.tags);
                         });
-                        self.options.galleryMessage(gettext("Tags correctly updated."));
+                        self.options.galleryMessage(resp.detail);
                     },
                     error: function(resp) {
-                        showErrorMessages(resp);
+                        self.options.galleryMessage(resp, 'error');
                     }
                 });
             }
@@ -468,8 +476,7 @@ Options:
 
         // Customize djaodjin gallery.
         buttonClass: "",
-        galleryTemplate: "<div class=\"dj-gallery\">\n  <div class=\"sidebar-gallery\">\n    <h1>" + gettext('Media') + "</h1>\n    <input placeholder=\"" + gettext('Search...') + "\" class=\"dj-gallery-filter\" type=\"text\" >\n    <div class=\"dj-gallery-items\">\n    </div>\n    <div class=\"dj-gallery-info-item\"></div>\n  </div>\n</div>",
-        galleryItemOptionsTemplate: "<textarea rows=\"4\" style=\"width:100%;\" readonly data-dj-gallery-media-url></textarea>\n<button data-dj-gallery-media-location class=\"dj-gallery-delete-item\">" + gettext('Delete') + "</button>\n<button data-dj-gallery-media-location class=\"dj-gallery-preview-item\">" + gettext('Preview') + "</button>\n<br>\n<input data-dj-gallery-media-tag class=\"dj-gallery-tag-input\" type=\"text\" placeholder=\"" + gettext('Please enter tag.') + "\"><button class=\"dj-gallery-tag-item\">" + gettext('Update tags') + "</button>",
+        galleryTemplate: "<div class=\"dj-gallery\"><div class=\"sidebar-gallery\"><h1>Media</h1><input placeholder=\"Search...\" class=\"dj-gallery-filter\" type=\"text\"><div class=\"dj-gallery-items\"></div><div class=\"dj-gallery-info-item\"><div class=\"dj-gallery-info-item-empty\">Click on an item to view more options</div><div class=\"dj-gallery-info-item-selected\" style=\"display: none;\"><textarea rows=\"4\" style=\"width:100%;\" readonly data-dj-gallery-media-url></textarea><button data-dj-gallery-media-location class=\"dj-gallery-delete-item\">Delete</button><button data-dj-gallery-media-location class=\"dj-gallery-preview-item\">Preview</button><br /><input data-dj-gallery-media-tag class=\"dj-gallery-tag-input\" type=\"text\" placeholder=\"Please enter tag.\"><button class=\"dj-gallery-tag-item\">Update tags</button></div></div></div></div>",
         mediaClass: "",
         selectedMediaClass: "dj-gallery-active-item",
         startLoad: false,
@@ -497,10 +504,20 @@ Options:
         // Custom droppable media item and callback
         mediaPlaceholder: ".droppable-image",
         saveDroppedMediaUrl: null,
-        droppedMediaCallback: function(reponse) { return true; }
+        droppedMediaCallback: function(reponse) { return true; },
+
+        // messages
+        uploadSuccessMessage: function(filename, location) {
+            return '"' + filename + '" uploaded sucessfully to "' + location + '"';
+        },
+        uploadPreviousSuccessMessage: function(filename, location) {
+            return '"' + filename + '" has previously been uploaded to "' + location + '"';
+        },
+        placeholderAcceptsErrorMessage: function(filetypes) {
+            return 'This placeholder accepts only: ' + filetypes + ' files.';
+        }
     };
 
-    Dropzone.autoDiscover = false;
 
     /** Sliding panel
 
