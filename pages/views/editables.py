@@ -67,9 +67,9 @@ class PageElementEditableView(AccountMixin, TrailMixin, TemplateView):
         context = update_context_urls(context, {
             'edit': {
                 'api_page_element_base': reverse('pages_api_edit_element',
-                    kwargs={'path':''}),
+                    kwargs=url_kwargs),
                 'api_medias': reverse('uploaded_media_elements',
-                    kwargs={'path':''}),
+                    kwargs=url_kwargs),
             }
         })
         if self.is_prefix:
