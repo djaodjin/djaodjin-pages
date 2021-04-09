@@ -102,10 +102,11 @@ def get_default_storage_base(request, account=None, **kwargs):
         for key in ['access_key', 'secret_key', 'security_token']:
             if key in request.session:
                 storage_kwargs[key] = request.session[key]
-        return storage_class(
-            bucket=_get_bucket_name(account),
-            location=_get_media_prefix(account),
-            **storage_kwargs)
+        bucket = _get_bucket_name(account)
+        location = _get_media_prefix(account)
+        LOGGER.debug("create %s(bucket='%s', location='%s', %s)",
+            storage_class.__name__, bucket, location, storage_kwargs)
+        return storage_class(bucket=bucket, location=location, **storage_kwargs)
     except AttributeError:
         LOGGER.debug("``%s`` does not contain a ``bucket_name``"\
             " field, default to FileSystemStorage.", storage_class)
