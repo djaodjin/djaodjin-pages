@@ -1,4 +1,4 @@
-# Copyright (c) 2020, Djaodjin Inc.
+# Copyright (c) 2021, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -24,7 +24,7 @@
 
 import os
 
-from storages.backends.s3boto import S3BotoStorage
+from storages.backends.s3boto3 import S3Boto3Storage as S3Storage
 
 from ..compat import urlparse
 
@@ -32,6 +32,6 @@ from ..compat import urlparse
 def get_package_file_from_s3(package_uri):
     parts = urlparse(package_uri)
     basename = os.path.basename(parts.path)
-    package_storage = S3BotoStorage(bucket_name=parts.netloc,
+    package_storage = S3Storage(bucket_name=parts.netloc,
         location=os.path.dirname(parts.path))
     return package_storage.open(basename)

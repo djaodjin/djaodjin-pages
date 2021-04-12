@@ -1,4 +1,4 @@
-# Copyright (c) 2020 DjaoDjin inc.
+# Copyright (c) 2021 DjaoDjin inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -24,7 +24,6 @@
 
 import logging
 
-from boto.exception import S3ResponseError
 from django.http import Http404
 from django.utils._os import safe_join
 from rest_framework.generics import get_object_or_404
@@ -171,7 +170,7 @@ class UploadedImageMixin(object):
             if storage.exists('.'):
                 LOGGER.exception(
                     "Unable to list objects in %s.", storage.__class__.__name__)
-        except S3ResponseError:
+        except storage.connection_response_error:
             LOGGER.exception(
                 "Unable to list objects in 's3://%s/%s/%s'.",
                 storage.bucket_name, storage.location, prefix)

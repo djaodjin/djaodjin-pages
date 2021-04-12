@@ -149,7 +149,7 @@ class SourceDetailAPIView(ThemePackageMixin, generics.RetrieveUpdateAPIView,
         serializer.is_valid(raise_exception=True)
         relative_path = self.kwargs.get('page')
         template_path = get_template_path(relative_path=relative_path)
-        theme_base = get_theme_dir(self.account)
+        theme_base = get_theme_dir(self.theme)
         if not template_path.startswith(theme_base):
             resp_status = status.HTTP_201_CREATED
             template_path = safe_join(theme_base, 'templates', relative_path)
@@ -166,7 +166,7 @@ class SourceDetailAPIView(ThemePackageMixin, generics.RetrieveUpdateAPIView,
 
     def perform_create(self, serializer): #pylint:disable=unused-argument
         relative_path = self.kwargs.get('page')
-        theme_base = get_theme_dir(self.account)
+        theme_base = get_theme_dir(self.theme)
         template_path = safe_join(theme_base, 'templates', relative_path)
         write_template(template_path, '''{% extends "base.html" %}
 

@@ -215,7 +215,7 @@ PAGES = {
 }
 
 if 'AWS_STORAGE_BUCKET_NAME' in locals():
-    DEFAULT_FILE_STORAGE = 'storages.backends.s3boto.S3BotoStorage'
+    DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
 
 
 # XXX - to define
