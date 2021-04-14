@@ -30,7 +30,7 @@ from rest_framework.generics import get_object_or_404
 
 from . import settings
 from .compat import import_string, six, urlsplit
-from .models import MediaTag, PageElement
+from .models import MediaTag, PageElement, get_active_theme
 from .extras import AccountMixinBase
 
 
@@ -189,7 +189,7 @@ class ThemePackageMixin(AccountMixin):
         if not hasattr(self, '_theme'):
             self._theme = self.kwargs.get(self.theme_url_kwarg)
             if not self._theme:
-                self._theme = settings.APP_NAME
+                self._theme = get_active_theme()
         return self._theme
 
     @staticmethod
