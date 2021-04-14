@@ -585,10 +585,5 @@ def get_active_theme():
     Returns the active theme from a request.
     """
     if settings.ACTIVE_THEME_CALLABLE:
-        theme_slug = import_string(settings.ACTIVE_THEME_CALLABLE)()
-        LOGGER.debug("pages: get_active_theme('%s')", theme_slug)
-        try:
-            return ThemePackage.objects.get(slug=theme_slug)
-        except ThemePackage.DoesNotExist:
-            pass
-    return None
+        return import_string(settings.ACTIVE_THEME_CALLABLE)()
+    return settings.APP_NAME
