@@ -1,4 +1,5 @@
 
+
 Vue.component('editables-list', {
     mixins: [
         itemListMixin
@@ -25,6 +26,11 @@ Vue.component('editables-detail', {
     data: function() {
         return {
             url: this.$urls.pages.api_content,
+            tags: [],
+            isFollowing: false,
+            nbFollowers: 0,
+            isUpVote: 0,
+            nbUpVotes: 0,
             comments: {count: 0, results: []},
             message: ""
         }
@@ -64,7 +70,15 @@ Vue.component('editables-detail', {
     },
     mounted: function() {
         var vm = this;
-        vm.get()
+        vm.get(function success(resp) {
+            vm.isFollowing = resp.data.is_following;
+            vm.nbFollowers = resp.data.nb_followers;
+            vm.isUpVote = resp.data.is_upvote;
+            vm.nbUpVotes = resp.data.nb_upvotes;
+            if( resp.data.extra && resp.data.extra.tags ) {
+                vm.tags = resp.data.extra.tags;
+            }
+        });
         vm.reqGet(this.$urls.pages.api_comments,
         function success(resp) {
             vm.comments = resp;
