@@ -38,7 +38,7 @@ LOGGER = logging.getLogger(__name__)
 
 class PageElementEditableView(AccountMixin, TrailMixin, TemplateView):
 
-    template_name = 'pages/element.html'
+    template_name = 'pages/index.html'
 
     @property
     def is_prefix(self):
@@ -53,17 +53,20 @@ class PageElementEditableView(AccountMixin, TrailMixin, TemplateView):
     def get_template_names(self):
         if self.is_prefix:
             # It is not a leaf, let's return the list view
-            return ['pages/index.html']
-        return super(PageElementEditableView, self).get_template_names()
+            return super(PageElementEditableView, self).get_template_names()
+        return ['pages/element.html']
 
-    def get_context_data(self, **kwargs):
-        context = super(PageElementEditableView, self).get_context_data(
-            **kwargs)
+    def get_url_kwargs(self, **kwargs):
         url_kwargs = {'path': self.path.strip('/')}
         for url_kwarg in [settings.ACCOUNT_URL_KWARG]:
             if url_kwarg in kwargs:
                 url_kwargs.update({url_kwarg: kwargs[url_kwarg]})
+        return url_kwargs
 
+    def get_context_data(self, **kwargs):
+        context = super(
+            PageElementEditableView, self).get_context_data(**kwargs)
+        url_kwargs = self.get_url_kwargs()
         context = update_context_urls(context, {
             'edit': {
                 'api_page_element_base': reverse('pages_api_edit_element',

@@ -162,7 +162,8 @@ class PageElementTreeAPIView(TrailMixin, generics.ListAPIView):
                 node[1], pictures, prefix_picture=prefix_picture)
 
 
-class PageElementDetailAPIView(PageElementMixin, generics.RetrieveAPIView):
+class PageElementDetailAPIView(AccountMixin, PageElementMixin,
+                               generics.RetrieveAPIView):
     """
     Retrieves details on a page element
 
@@ -275,8 +276,9 @@ class PageElementEditableListAPIView(TrailMixin, generics.ListAPIView):
         return queryset
 
 
-class PageElementEditableDetail(PageElementMixin, CreateModelMixin,
-                        generics.RetrieveUpdateDestroyAPIView):
+class PageElementEditableDetail(AccountMixin, PageElementMixin,
+                                CreateModelMixin,
+                                generics.RetrieveUpdateDestroyAPIView):
     """
     Retrieves an editable page element
 
@@ -397,7 +399,8 @@ class PageElementEditableDetail(PageElementMixin, CreateModelMixin,
                 request, *args, **kwargs)
 
 
-class PageElementAddTags(PageElementMixin, generics.UpdateAPIView):
+class PageElementAddTags(AccountMixin, PageElementMixin,
+                         generics.UpdateAPIView):
     """
     Adds tags to an editable node
 
@@ -441,7 +444,8 @@ class PageElementAddTags(PageElementMixin, generics.UpdateAPIView):
         serializer.instance.save()
 
 
-class PageElementRemoveTags(PageElementMixin, generics.UpdateAPIView):
+class PageElementRemoveTags(AccountMixin, PageElementMixin,
+                            generics.UpdateAPIView):
     """
     Remove tags from an editable node
 

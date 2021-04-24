@@ -90,7 +90,7 @@ class TrailMixin(object):
         return results
 
 
-class PageElementMixin(AccountMixin):
+class PageElementMixin(object):
 
     element_field = 'slug'
     element_url_kwarg = 'slug'
@@ -110,8 +110,7 @@ class PageElementMixin(AccountMixin):
                         break
             filter_kwargs = {self.element_field: element_value}
             self._element = get_object_or_404(
-                PageElement.objects.filter(account=self.account),
-                **filter_kwargs)
+                PageElement.objects.all(), **filter_kwargs)
         return self._element
 
 
