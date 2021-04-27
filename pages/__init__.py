@@ -26,4 +26,4 @@
 PEP 386-compliant version number for the pages django app.
 """
 
-__version__ = '0.3.6-dev'
+__version__ = '0.3.7-dev'

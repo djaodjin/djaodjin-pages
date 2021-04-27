@@ -9,9 +9,9 @@ Major Features:
 
 Tested with
 
-- **Python:** 2.7, **Django:** 1.11, **Django Rest Framework:** 3.9.4
-- **Python:** 3.6, **Django:** 2.2 ([LTS](https://www.djangoproject.com/download/)), **Django Rest Framework:** 3.11
-- **Python:** 3.6, **Django:** 3.0 (latest), **Django Rest Framework:** 3.11
+- **Python:** 3.6, **Django:** 2.2 ([LTS](https://www.djangoproject.com/download/)), **Django Rest Framework:** 3.12
+- **Python:** 3.6, **Django:** 3.0 (latest), **Django Rest Framework:** 3.12
+- **Python:** 2.7, **Django:** 1.11 (legacy), **Django Rest Framework:** 3.9.4
 
 
 Development
@@ -39,11 +39,9 @@ the prerequisites, create the database then run the testsite webapp.
 Release Notes
 =============
 
-0.3.5
+0.3.6
 
-  * chages DELETE media to take a query parameter instead of a body
-  * moves all translated strings to the server
-  * fixes installing theme with unicode characters in template files
-  * fixes reactions APIs
+  * uses the correct active theme on create and read
+  * switches default from S3BotoStorage to S3Boto3Storage
 
 [previous release notes](changelog)

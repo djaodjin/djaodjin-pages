@@ -89,7 +89,7 @@ TEMPLATE_CONTEXT_PROCESSORS = (
 )
 
 TEMPLATE_DIRS = (
-    BASE_DIR + '/themes/templates',
+    BASE_DIR + '/themes/djaodjin-pages/templates',
     BASE_DIR + '/testsite/templates',
 )
 
