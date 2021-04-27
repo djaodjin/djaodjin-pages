@@ -1,3 +1,10 @@
+0.3.6
+
+  * uses the correct active theme on create and read
+  * switches default from S3BotoStorage to S3Boto3Storage
+
+ -- Sebastien Mirolo <smirolo@djaodjin.com>  Mon,  26 Apr 2021 23:40:00 -0700
+
 0.3.5
 
   * chages DELETE media to take a query parameter instead of a body
