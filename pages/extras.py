@@ -30,6 +30,8 @@ from .utils import get_account_model, get_current_account, update_context_urls
 
 class AccountMixinBase(object):
 
+    account_url_kwarg = None
+
     @property
     def account(self):
         if not hasattr(self, '_account'):
@@ -37,21 +39,27 @@ class AccountMixinBase(object):
         return self._account
 
     def get_account(self):
-        from . import settings
-        account_url_kwarg = settings.ACCOUNT_URL_KWARG
-        if account_url_kwarg in self.kwargs:
+        if not self.account_url_kwarg:
+            from . import settings
+            self.account_url_kwarg = settings.ACCOUNT_URL_KWARG
+        if self.account_url_kwarg in self.kwargs:
             return get_object_or_404(get_account_model(),
-                slug=self.kwargs.get(account_url_kwarg))
+                slug=self.kwargs.get(self.account_url_kwarg))
         return get_current_account()
 
+    def get_url_kwargs(self, **kwargs):
+        if not self.account_url_kwarg:
+            from . import settings
+            self.account_url_kwarg = settings.ACCOUNT_URL_KWARG
+        url_kwargs = {}
+        for url_kwarg in [self.account_url_kwarg]:
+            if url_kwarg in kwargs:
+                url_kwargs.update({url_kwarg: kwargs[url_kwarg]})
+        return url_kwargs
 
     def get_context_data(self, **kwargs):
         context = super(AccountMixinBase, self).get_context_data(**kwargs)
-        from . import settings
-        url_kwargs = {}
-        for url_kwarg in [settings.ACCOUNT_URL_KWARG]:
-            if url_kwarg in kwargs:
-                url_kwargs.update({url_kwarg: kwargs[url_kwarg]})
+        url_kwargs = self.get_url_kwargs(**kwargs)
         urls_pages = {}
         try:
             urls_pages.update({

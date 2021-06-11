@@ -45,34 +45,33 @@ class TrailMixin(object):
     """
     Generate a trail of PageElement based on a path.
     """
+    URL_PATH_SEP = '/'
 
     @property
     def element(self):
         if not hasattr(self, '_element'):
-            parts = self.path.split('/')
-            if parts:
+            path = self.path.strip(self.URL_PATH_SEP)
+            if not path:
+                self._element = None
+            else:
+                parts = path.split(self.URL_PATH_SEP)
                 self._element = get_object_or_404(
                     PageElement.objects.all(), slug=parts[-1])
-            else:
-                self._element = None
         return self._element
 
     @property
     def path(self):
         if not hasattr(self, '_path'):
             self._path = self.kwargs.get('path', '')
-            if self._path and not self._path.startswith('/'):
-                self._path = '/' + self._path
+            if self._path and not self._path.startswith(self.URL_PATH_SEP):
+                self._path = self.URL_PATH_SEP + self._path
         return self._path
 
-    @staticmethod
-    def get_full_element_path(path):
+    def get_full_element_path(self, path):
         if not path:
             return []
-        parts = path.split('/')
-        if not parts[0]:
-            parts.pop(0)
         results = []
+        parts = path.strip(self.URL_PATH_SEP).split(self.URL_PATH_SEP)
         if parts:
             element = get_object_or_404(
                 PageElement.objects.all(), slug=parts[-1])
@@ -89,8 +88,16 @@ class TrailMixin(object):
             results = candidates[0]
         return results
 
+    def get_url_kwargs(self, **kwargs):
+        url_kwargs = super(TrailMixin, self).get_url_kwargs(**kwargs)
+        if 'path' in self.kwargs:
+            url_kwargs.update({'path': self.kwargs.get('path')})
+        return url_kwargs
+
 
 class PageElementMixin(object):
+
+    URL_PATH_SEP = '/'
 
     element_field = 'slug'
     element_url_kwarg = 'slug'
@@ -103,11 +110,11 @@ class PageElementMixin(object):
             if element_url_kwarg in self.kwargs:
                 element_value = self.kwargs[element_url_kwarg]
             else:
-                parts = self.kwargs.get('path').split('/')
-                for part in reversed(parts):
-                    if part:
-                        element_value = part
-                        break
+                path = self.kwargs.get('path', '').strip(self.URL_PATH_SEP)
+                if not path:
+                    raise Http404()
+                parts = path.split(self.URL_PATH_SEP)
+                element_value = parts[-1]
             filter_kwargs = {self.element_field: element_value}
             self._element = get_object_or_404(
                 PageElement.objects.all(), **filter_kwargs)

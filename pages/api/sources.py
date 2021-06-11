@@ -1,4 +1,4 @@
-# Copyright (c) 2020, Djaodjin Inc.
+# Copyright (c) 2021, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -26,6 +26,7 @@
 import logging, os, tempfile
 
 from django.template import TemplateSyntaxError
+from django.template.loader import _engine_list
 from django.utils._os import safe_join
 from rest_framework import status, generics, serializers
 from rest_framework.response import Response
@@ -159,6 +160,15 @@ class SourceDetailAPIView(ThemePackageMixin, generics.RetrieveUpdateAPIView,
         # We only write the file if the template syntax is correct.
         try:
             write_template(template_path, serializer.validated_data['text'])
+
+            # clear template loaders caches
+            engines = _engine_list(using=None)
+            for engine in engines:
+                try:
+                    engine.env.cache.clear()
+                except AttributeError:
+                    pass
+
         except TemplateSyntaxError as err:
             LOGGER.debug("%s", err, extra={'request': request})
             return self.retrieve(request, *args, **kwargs)

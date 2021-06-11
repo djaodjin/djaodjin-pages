@@ -44,8 +44,9 @@ class PageElementEditableView(AccountMixin, TrailMixin, TemplateView):
     def is_prefix(self):
         if not hasattr(self, '_is_prefix'):
             try:
-                self._is_prefix = RelationShip.objects.filter(
-                    orig_element=self.element).exists()
+                self._is_prefix = (not self.element or
+                    RelationShip.objects.filter(
+                        orig_element=self.element).exists())
             except Http404:
                 self._is_prefix = True
         return self._is_prefix
@@ -56,33 +57,31 @@ class PageElementEditableView(AccountMixin, TrailMixin, TemplateView):
             return super(PageElementEditableView, self).get_template_names()
         return ['pages/element.html']
 
-    def get_url_kwargs(self, **kwargs):
-        url_kwargs = {'path': self.path.strip('/')}
-        for url_kwarg in [settings.ACCOUNT_URL_KWARG]:
-            if url_kwarg in kwargs:
-                url_kwargs.update({url_kwarg: kwargs[url_kwarg]})
-        return url_kwargs
-
     def get_context_data(self, **kwargs):
         context = super(
             PageElementEditableView, self).get_context_data(**kwargs)
-        url_kwargs = self.get_url_kwargs()
-        context = update_context_urls(context, {
-            'edit': {
-                'api_page_element_base': reverse('pages_api_edit_element',
-                    kwargs=url_kwargs),
-                'api_medias': reverse('uploaded_media_elements',
-                    kwargs=url_kwargs),
-            }
-        })
+        url_kwargs = self.get_url_kwargs(**kwargs)
         if self.is_prefix:
-            context = update_context_urls(context, {
-                'pages': {
-                    'api_content': reverse('pages_api_edit', kwargs=url_kwargs),
-                }
-            })
+            if url_kwargs:
+                update_context_urls(context, {
+                    'edit': {
+                        # API end point to add content in the tree
+                        'api_page_element_base': reverse(
+                            'pages_api_edit_element', kwargs=url_kwargs),
+                    },
+                    'pages': {
+                        'api_content': reverse(
+                            'pages_api_edit_element', kwargs=url_kwargs),
+                    }
+                })
         else:
-            context = update_context_urls(context, {
+            update_context_urls(context, {
+                'edit': {
+                    'api_page_element_base': reverse(
+                        'pages_api_edit_element', kwargs=url_kwargs),
+                    'api_medias': reverse(
+                        'uploaded_media_elements', kwargs=url_kwargs),
+                },
                 'pages': {
                     'api_content': reverse(
                         'pages_api_edit_element', kwargs=url_kwargs),

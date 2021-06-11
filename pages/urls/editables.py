@@ -28,8 +28,6 @@ from .. import settings
 from ..views.editables import PageElementEditableView
 
 urlpatterns = [
-    url(r'^editables/(?P<path>%s)/' % settings.PATH_RE,
+    url(r'^editables/(?P<path>%s)$' % settings.PATH_RE,
         PageElementEditableView.as_view(), name='pages_edit_element'),
-    url(r'^editables/',
-        PageElementEditableView.as_view(), name='pages_edit_element_base'),
 ]

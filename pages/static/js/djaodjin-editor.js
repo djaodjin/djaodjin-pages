@@ -564,11 +564,7 @@
                 self.$valueSelector.attr("min", self.$el.data("range-min"))
                     .attr("max", self.$el.data("range-max"))
                     .attr("step", self.$el.data("range-step"))
-                    .val(self.originText).css({
-                        position: "absolute",
-                        width: self.$el.outerWidth(),
-                        left: self.$el.offset().left + "px"
-                    });
+                    .val(self.originText);
 
                 if (self.options.rangePosition === "middle"){
                     self.$valueSelector.css({top: (self.$el.offset().top + (self.$el.height() / 2)) + "px"});
