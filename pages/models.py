@@ -217,7 +217,7 @@ class PageElement(models.Model):
             return [[self]]
         if hints:
             for parent in parents:
-                if parent.slug == hints[-1]:
+                if parent.slug == str(hints[-1]):
                     # we found a way to cut the search space early.
                     parents = [parent]
                     hints = hints[:-1]
@@ -231,7 +231,7 @@ class PageElement(models.Model):
                     term_index = 0
                     if hints:
                         for node in grandparent:
-                            if node.slug == hints[term_index]:
+                            if node.slug == str(hints[term_index]):
                                 term_index += 1
                                 if term_index >= len(hints):
                                     break
