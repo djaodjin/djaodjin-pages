@@ -47,12 +47,21 @@ class AccountMixinBase(object):
                 slug=self.kwargs.get(self.account_url_kwarg))
         return get_current_account()
 
-    def get_url_kwargs(self, **kwargs):
+    def get_reverse_kwargs(self):
+        """
+        List of kwargs taken from the url that needs to be passed through
+        to ``reverse``.
+        """
         if not self.account_url_kwarg:
             from . import settings
             self.account_url_kwarg = settings.ACCOUNT_URL_KWARG
+        if self.account_url_kwarg:
+            return [self.account_url_kwarg]
+        return []
+
+    def get_url_kwargs(self, **kwargs):
         url_kwargs = {}
-        for url_kwarg in [self.account_url_kwarg]:
+        for url_kwarg in self.get_reverse_kwargs():
             if url_kwarg in kwargs:
                 url_kwargs.update({url_kwarg: kwargs[url_kwarg]})
         return url_kwargs
