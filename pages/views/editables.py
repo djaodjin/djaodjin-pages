@@ -26,8 +26,7 @@ import logging
 from django.http import Http404
 from django.views.generic import TemplateView
 
-from .. import settings
-from ..compat import NoReverseMatch, reverse
+from ..compat import reverse
 from ..models import RelationShip
 from ..mixins import AccountMixin, TrailMixin
 from ..utils import update_context_urls
@@ -63,17 +62,30 @@ class PageElementEditableView(AccountMixin, TrailMixin, TemplateView):
         url_kwargs = self.get_url_kwargs(**kwargs)
         if self.is_prefix:
             if url_kwargs:
-                update_context_urls(context, {
-                    'edit': {
-                        # API end point to add content in the tree
-                        'api_page_element_base': reverse(
-                            'pages_api_edit_element', kwargs=url_kwargs),
-                    },
-                    'pages': {
-                        'api_content': reverse(
-                            'pages_api_edit_element', kwargs=url_kwargs),
-                    }
-                })
+                if 'path' in url_kwargs:
+                    update_context_urls(context, {
+                        'edit': {
+                            # API end point to add content in the tree
+                            'api_page_element_base': reverse(
+                                'pages_api_edit_element', kwargs=url_kwargs),
+                        },
+                        'pages': {
+                            'api_content': reverse(
+                                'pages_api_edit_element', kwargs=url_kwargs),
+                        }
+                    })
+                else:
+                    update_context_urls(context, {
+                        'edit': {
+                            # API end point to add content in the tree
+                            'api_page_element_base': reverse(
+                                'pages_api_edit', kwargs=url_kwargs),
+                        },
+                        'pages': {
+                            'api_content': reverse(
+                                'pages_api_edit', kwargs=url_kwargs),
+                        }
+                    })
         else:
             update_context_urls(context, {
                 'edit': {

@@ -457,14 +457,14 @@ var httpRequestMixin = {
                 },
             }).done(successCallback).fail(failureCallback);
         },
-        /** This method generates a DELETE HTTP request to `url` with a query
-            string built of a `queryParams` dictionnary.
+        /** This method generates multiple queries, and execute
+            success/failure callbacks when all have completed.
 
             It supports the following prototypes:
 
-            - reqDELETE(url)
-            - reqDELETE(url, successCallback)
-            - reqDELETE(url, successCallback, failureCallback)
+            - reqMultiple(queryArray)
+            - reqMultiple(queryArray, successCallback)
+            - reqMultiple(queryArray, successCallback, failureCallback)
 
             `successCallback` and `failureCallback` must be Javascript
             functions (i.e. instance of type `Function`).

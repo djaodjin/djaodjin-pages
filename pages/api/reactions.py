@@ -25,8 +25,7 @@ from __future__ import unicode_literals
 
 from deployutils.helpers import datetime_or_now
 from django.core.exceptions import PermissionDenied
-from rest_framework import generics, status
-from rest_framework.response import Response
+from rest_framework import generics
 
 from ..compat import is_authenticated
 from ..mixins import PageElementMixin

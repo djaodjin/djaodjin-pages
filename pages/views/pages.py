@@ -58,8 +58,8 @@ def inject_edition_tools(response, request=None, context=None,
                 'api_less_overrides': reverse('pages_api_less_overrides'),
                 'api_sitecss': reverse('edit_sitecss'),
                 'api_sources': reverse('pages_api_sources'),
-                'api_page_element_base': reverse('pages_api_edit_element',
-                    kwargs={'path':''}),
+                'api_page_element_base': reverse(
+                    'pages_api_edit_template_base'),
                 'api_medias': reverse('uploaded_media_elements',
                     kwargs={'path':''})}}})
     context.update(csrf(request))

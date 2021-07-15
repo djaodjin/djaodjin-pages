@@ -23,20 +23,33 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pylint: disable=no-member
 
-import logging, os, tempfile
+import logging, os, subprocess, tempfile
+from io import StringIO
 
-from django.template import TemplateSyntaxError
+from bs4 import BeautifulSoup
+from django.conf import settings as django_settings
+from django.http import Http404
+from django.template.base import TemplateSyntaxError
+from django.template.backends.jinja2 import Jinja2 as Jinja2Templates
 from django.template.loader import _engine_list
+from django.utils.encoding import force_text
 from django.utils._os import safe_join
-from rest_framework import status, generics, serializers
+from jinja2.lexer import Lexer
+from rest_framework import status, generics
 from rest_framework.response import Response
 
+from ..compat import DebugLexer, TokenType, get_html_engine, six
 from ..mixins import ThemePackageMixin
+from ..views.pages import PageMixin
 from ..themes import check_template, get_theme_dir, get_template_path
-
+from ..serializers import SourceCodeSerializer, SourceElementSerializer
 
 LOGGER = logging.getLogger(__name__)
 
+STATE_DIRECTIVE_BEGIN = 1
+STATE_BLOCK_BEGIN = 2
+STATE_BLOCK_CONTENT = 3
+STATE_BLOCK_CONTENT_ESCAPE = 4
 
 def write_template(template_path, template_source):
     check_template(template_source)
@@ -51,16 +64,286 @@ def write_template(template_path, template_source):
     LOGGER.info("pid %d wrote to %s", os.getpid(), template_path)
 
 
-class SourceCodeSerializer(serializers.Serializer):
+class SourceEditAPIView(ThemePackageMixin, PageMixin, generics.UpdateAPIView):
 
-    path = serializers.CharField(required=False, max_length=255)
-    text = serializers.CharField(required=False, max_length=100000)
+    serializer_class = SourceElementSerializer
 
-    def update(self, instance, validated_data):
-        pass
+    def put(self, request, *args, **kwargs):
+        """
+        Updates an element inside a template source file
 
-    def create(self, validated_data):
-        pass
+        **Examples
+
+        .. code-block:: http
+
+            PUT /api/themes/sources/editables/heading HTTP/1.1
+
+        .. code-block:: json
+
+             {
+               "text": "...",
+               "hints": [
+                   {"name": "index.html"},
+                   {"name": "base.html"}
+               ]
+             }
+
+        responds
+
+        .. code-block:: json
+
+             {
+               "text": "..."
+             }
+        """
+        #pylint:disable=useless-super-delegation
+        return super(SourceEditAPIView, self).put(request, *args, **kwargs)
+
+    @staticmethod
+    def tokens_as_text(buffered_tokens):
+        block_text = ""
+        for tok in buffered_tokens:
+            if tok.token_type == TokenType.BLOCK:
+                block_text += "{%% %s %%}" % (
+                    tok.contents.encode('utf-8') if six.PY2
+                    else str(tok.contents))
+            elif tok.token_type == TokenType.VAR:
+                block_text += "{{%s}}" % (
+                    tok.contents.encode('utf-8') if six.PY2
+                    else str(tok.contents))
+            else:
+                block_text += (
+                    tok.contents.encode('utf-8') if six.PY2
+                    else str(tok.contents))
+        return block_text
+
+
+    def update_block(self, element_id, element_text, block_text, dest,
+                     template_path=None):
+        #pylint:disable=too-many-arguments
+        LOGGER.debug("%slooking for element id='%s' in '%s'",
+            "(%s) " % template_path if template_path else "",
+            element_id, block_text)
+        soup = BeautifulSoup(block_text, 'html5lib')
+        editable = soup.find(id=element_id)
+        if editable:
+            if 'edit-formatted' in editable['class']:
+                self.insert_formatted(editable, element_text)
+            elif 'edit-markdown' in editable['class']:
+                self.insert_markdown(editable, element_text)
+            elif 'edit-currency' in editable['class']:
+                self.insert_currency(editable, element_text)
+            elif 'droppable-image' in editable['class']:
+                editable['src'] = element_text
+            else:
+                editable.string = element_text
+            # Implementation Note:
+            # 1. we have to use ``.body.next`` here
+            #    because html5lib "fixes" our HTML by adding missing
+            #    html/body tags.
+            # 2. str(soup) instead of soup.prettify() to avoid
+            #    trailing whitespace on a reformatted HTML textarea
+            dest.write("\n%s\n" % str(soup.body.next))
+        else:
+            dest.write(block_text)
+
+    def update(self, request, *args, **kwargs):
+        #pylint:disable=too-many-locals,too-many-nested-blocks
+        #pylint:disable=too-many-statements
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        element_id = self.kwargs.get('path')
+        element_text = serializer.validated_data.get('text')
+        found = False
+        dest = None
+        dest_hint = None
+        for hint in serializer.validated_data.get('hints', []):
+            relative_path = hint.get('name')
+            template_path = get_template_path(relative_path=relative_path)
+            dest = StringIO()
+            dest_hint = hint
+            dest_path = template_path
+            theme_base = get_theme_dir(self.theme)
+            if not template_path.startswith(theme_base):
+                resp_status = status.HTTP_201_CREATED
+                dest_path = safe_join(
+                    theme_base, 'templates', relative_path)
+            else:
+                resp_status = status.HTTP_200_OK
+
+            LOGGER.info("searching for %s in %s ...", element_id, template_path)
+            with open(template_path) as template_file:
+                template_string = template_file.read()
+            try:
+                template_string = force_text(template_string)
+                engine, unused_libraries, unused_builtins = get_html_engine()
+                buffered_tokens = []
+                block_depth = 0
+                state = None
+                if isinstance(engine, Jinja2Templates):
+                    template_name = None
+                    tokens = Lexer(engine.env).tokeniter(template_string,
+                        template_name, filename=template_path)
+                    escaped_tokens = []
+                    for token in tokens:
+                        LOGGER.debug("XXX block_depth=%d state=%s token=%s",
+                            block_depth, state, token)
+                        token_type = token[1]
+                        token_value = token[2]
+                        if state is None:
+                            if token_type == 'block_begin':
+                                state = STATE_DIRECTIVE_BEGIN
+                            dest.write(token_value.encode('utf-8') if six.PY2
+                                else str(token_value))
+                        elif state == STATE_DIRECTIVE_BEGIN:
+                            if token_type == 'block_end':
+                                state = None
+                            elif (token_type == 'name' and
+                                  token_value == 'block'):
+                                state = STATE_BLOCK_BEGIN
+                                block_depth = block_depth + 1
+                            dest.write(token_value.encode('utf-8') if six.PY2
+                                else str(token_value))
+                        elif state == STATE_BLOCK_BEGIN:
+                            if token_type == 'block_end':
+                                state = STATE_BLOCK_CONTENT
+                            dest.write(token_value.encode('utf-8') if six.PY2
+                                else str(token_value))
+                        elif state == STATE_BLOCK_CONTENT:
+                            if token_type == 'block_begin':
+                                state = STATE_BLOCK_CONTENT_ESCAPE
+                                escaped_tokens = [token]
+                            else:
+                                buffered_tokens += [token]
+                        elif state == STATE_BLOCK_CONTENT_ESCAPE:
+                            escaped_tokens += [token]
+                            if token_type == 'block_end':
+                                buffered_tokens += escaped_tokens
+                                escaped_tokens = []
+                                state = STATE_BLOCK_CONTENT
+                            elif (token_type == 'name' and
+                                  token_value == 'block'):
+                                block_depth = block_depth + 1
+                                buffered_tokens += escaped_tokens
+                                escaped_tokens = []
+                                state = STATE_BLOCK_CONTENT
+                            elif (token_type == 'name' and
+                                  token_value == 'endblock'):
+                                block_depth = block_depth - 1
+                                if block_depth:
+                                    buffered_tokens += escaped_tokens
+                                    escaped_tokens = []
+                                    state = STATE_BLOCK_CONTENT
+                                else:
+                                    state = None
+                                    if buffered_tokens:
+                                        block_text = "%s" % ''.join([
+                                            tok[2] for tok in buffered_tokens])
+                                        self.update_block(
+                                            element_id, element_text,
+                                            block_text, dest,
+                                            template_path=template_path)
+                                        buffered_tokens = []
+                                    if escaped_tokens:
+                                        dest.write("%s" % ''.join([tok[2]
+                                            for tok in escaped_tokens]))
+                                        escaped_tokens = []
+                    if buffered_tokens:
+                        block_text = "%s" % ''.join([
+                            tok[2] for tok in buffered_tokens])
+                        self.update_block(
+                            element_id, element_text,
+                            block_text, dest,
+                            template_path=template_path)
+                        buffered_tokens = []
+                    if escaped_tokens:
+                        dest.write("%s" % ''.join([
+                            tok[2] for tok in escaped_tokens]))
+                        escaped_tokens = []
+                    dest.write("\n")
+                else:
+                    # DjangoTemplates
+                    lexer = DebugLexer(template_string)
+                    state = None
+                    for token in lexer.tokenize():
+                        LOGGER.debug("XXX block_depth=%d state=%s token=%s",
+                            block_depth, state, token)
+                        token_value = token.contents
+                        if state is None:
+                            if token.token_type == TokenType.BLOCK:
+                                if token.contents.startswith('block'):
+                                    block_depth = block_depth + 1
+                                    state = STATE_BLOCK_CONTENT
+                                dest.write("{%% %s %%}" % (
+                                    token_value.encode('utf-8') if six.PY2
+                                    else str(token_value)))
+                            elif token.token_type == TokenType.VAR:
+                                dest.write("{{%s}}" % (
+                                    token_value.encode('utf-8') if six.PY2
+                                    else str(token_value)))
+                            else:
+                                dest.write(
+                                    token_value.encode('utf-8') if six.PY2
+                                    else str(token_value))
+                        elif state == STATE_BLOCK_CONTENT:
+                            if token.token_type == TokenType.BLOCK:
+                                if token.contents.startswith('block'):
+                                    block_depth = block_depth + 1
+                                    buffered_tokens += [token]
+                                elif token.contents.startswith('endblock'):
+                                    block_depth = block_depth - 1
+                                    if block_depth:
+                                        buffered_tokens += [token]
+                                    else:
+                                        if buffered_tokens:
+                                            block_text = self.tokens_as_text(
+                                                buffered_tokens)
+                                            self.update_block(
+                                                element_id, element_text,
+                                                block_text, dest,
+                                                template_path=template_path)
+                                            buffered_tokens = []
+                                        dest.write("{%% %s %%}" % (
+                                            token_value.encode('utf-8')
+                                            if six.PY2 else str(token_value)))
+                                        state = None
+                                else:
+                                    buffered_tokens += [token]
+                            else:
+                                buffered_tokens += [token]
+
+                    if buffered_tokens:
+                        block_text = self.tokens_as_text(buffered_tokens)
+                        self.update_block(
+                            element_id, element_text,
+                            block_text, dest,
+                            template_path=template_path)
+                        buffered_tokens = []
+
+            except UnicodeDecodeError:
+                LOGGER.warning("%s: Templates can only be constructed "
+                    "from unicode or UTF-8 strings.", template_path)
+            dest = dest.getvalue()
+            if dest and dest != template_string:
+                if not os.path.exists(os.path.dirname(dest_path)):
+                    os.makedirs(os.path.dirname(dest_path))
+                with open(dest_path, 'w') as dest_file:
+                    dest_file.write(dest)
+                if django_settings.DEBUG:
+                    try:
+                        cmdline = ['diff', '-u', template_path, dest_path]
+                        LOGGER.info(' '.join(cmdline))
+                        LOGGER.info(subprocess.check_output(cmdline))
+                    except subprocess.CalledProcessError:
+                        pass
+                found = True
+                break
+        if not found:
+            raise Http404()
+        return Response(self.get_serializer().to_representation({
+                'text': dest,
+                'hints': [dest_hint]
+            }), status=resp_status)
 
 
 class SourceDetailAPIView(ThemePackageMixin, generics.RetrieveUpdateAPIView,
