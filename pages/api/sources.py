@@ -39,8 +39,7 @@ from rest_framework import status, generics
 from rest_framework.response import Response
 
 from ..compat import DebugLexer, TokenType, get_html_engine, six
-from ..mixins import ThemePackageMixin
-from ..views.pages import PageMixin
+from ..mixins import ThemePackageMixin, UpdateEditableMixin
 from ..themes import check_template, get_theme_dir, get_template_path
 from ..serializers import SourceCodeSerializer, SourceElementSerializer
 
@@ -64,7 +63,8 @@ def write_template(template_path, template_source):
     LOGGER.info("pid %d wrote to %s", os.getpid(), template_path)
 
 
-class SourceEditAPIView(ThemePackageMixin, PageMixin, generics.UpdateAPIView):
+class SourceEditAPIView(ThemePackageMixin, UpdateEditableMixin,
+                        generics.UpdateAPIView):
 
     serializer_class = SourceElementSerializer
 

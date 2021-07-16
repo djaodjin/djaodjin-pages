@@ -449,11 +449,16 @@ Options:
             var self = this;
             var idElement = element.attr("id");
             var data = {slug: idElement, text: element.attr("src")};
+            if( self.options.hints ) {
+                data['hints'] = self.options.hints;
+            }
             $.ajax({
                 method: "PUT",
                 async: false,
                 url: self.elementUrl(idElement),
-                data: data,
+                data: JSON.stringify(data),
+                datatype: "json",
+                contentType: "application/json; charset=utf-8",
                 beforeSend: function(xhr, settings) {
                     xhr.setRequestHeader("X-CSRFToken", getMetaCSRFToken());
                 },
@@ -504,6 +509,7 @@ Options:
         // Custom droppable media item and callback
         mediaPlaceholder: ".droppable-image",
         saveDroppedMediaUrl: null,
+        hints: null,
         droppedMediaCallback: function(reponse) { return true; },
 
         // messages

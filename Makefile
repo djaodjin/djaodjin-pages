@@ -47,11 +47,11 @@ $(DESTDIR)$(CONFIG_DIR)/gunicorn.conf: $(srcDir)/testsite/etc/gunicorn.conf
 
 
 initdb: install-conf $(srcDir)/htdocs/static/vendor/bootstrap.css
-	-cd $(srcDir) && rm -rf db.sqlite3 testsite-app.log htdocs/media/vendor themes
+	-cd $(srcDir) && rm -rf db.sqlite3 testsite-app.log htdocs/media/vendor/* themes/*
 	cd $(srcDir) && $(PYTHON) ./manage.py migrate $(RUNSYNCDB) --noinput
 	cd $(srcDir) && $(PYTHON) ./manage.py loaddata \
 		testsite/fixtures/default-db.json
-	cd $(srcDir) && $(installDirs) htdocs/media/vendor themes/templates
+	cd $(srcDir) && $(installDirs) htdocs/media/vendor themes
 	cd $(srcDir) && $(installFiles) htdocs/static/vendor/bootstrap.css htdocs/media/vendor
 
 doc:
