@@ -314,7 +314,6 @@ class SourceEditAPIView(ThemePackageMixin, UpdateEditableMixin,
                         buffered_tokens = []
 
             except UnicodeDecodeError as err:
-                LOGGER.exception(err)
                 LOGGER.warning("%s: Templates can only be constructed "
                     "from unicode or UTF-8 strings.", template_path)
             dest = dest.getvalue()
@@ -337,6 +336,7 @@ class SourceEditAPIView(ThemePackageMixin, UpdateEditableMixin,
                 break
         if not found:
             raise Http404()
+        LOGGER.info("XXX typeof(dest)=%s" % dest.__class__)
         return Response(self.get_serializer().to_representation({
                 'text': dest,
                 'hints': [dest_hint]
