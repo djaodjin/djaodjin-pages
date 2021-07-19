@@ -186,15 +186,16 @@ class SourceEditAPIView(ThemePackageMixin, UpdateEditableMixin,
                         template_name, filename=template_path)
                     escaped_tokens = []
                     for token in tokens:
-                        LOGGER.debug("XXX block_depth=%d state=%s token=%s",
+                        LOGGER.debug("block_depth=%d state=%s token=%s",
                             block_depth, state, token)
                         token_type = token[1]
                         token_value = token[2]
+                        if six.PY2 and hasattr(token_value, 'encode'):
+                            token_value = token_value.encode('utf-8')
                         if state is None:
                             if token_type == 'block_begin':
                                 state = STATE_DIRECTIVE_BEGIN
-                            dest.write(token_value.encode('utf-8') if six.PY2
-                                else str(token_value))
+                            dest.write(str(token_value))
                         elif state == STATE_DIRECTIVE_BEGIN:
                             if token_type == 'block_end':
                                 state = None
@@ -202,13 +203,11 @@ class SourceEditAPIView(ThemePackageMixin, UpdateEditableMixin,
                                   token_value == 'block'):
                                 state = STATE_BLOCK_BEGIN
                                 block_depth = block_depth + 1
-                            dest.write(token_value.encode('utf-8') if six.PY2
-                                else str(token_value))
+                            dest.write(str(token_value))
                         elif state == STATE_BLOCK_BEGIN:
                             if token_type == 'block_end':
                                 state = STATE_BLOCK_CONTENT
-                            dest.write(token_value.encode('utf-8') if six.PY2
-                                else str(token_value))
+                            dest.write(str(token_value))
                         elif state == STATE_BLOCK_CONTENT:
                             if token_type == 'block_begin':
                                 state = STATE_BLOCK_CONTENT_ESCAPE
@@ -266,25 +265,21 @@ class SourceEditAPIView(ThemePackageMixin, UpdateEditableMixin,
                     lexer = DebugLexer(template_string)
                     state = None
                     for token in lexer.tokenize():
-                        LOGGER.debug("XXX block_depth=%d state=%s token=%s",
+                        LOGGER.debug("block_depth=%d state=%s token=%s",
                             block_depth, state, token)
                         token_value = token.contents
+                        if six.PY2 and hasattr(token_value, 'encode'):
+                            token_value = token_value.encode('utf-8')
                         if state is None:
                             if token.token_type == TokenType.BLOCK:
                                 if token.contents.startswith('block'):
                                     block_depth = block_depth + 1
                                     state = STATE_BLOCK_CONTENT
-                                dest.write("{%% %s %%}" % (
-                                    token_value.encode('utf-8') if six.PY2
-                                    else str(token_value)))
+                                dest.write("{%% %s %%}" % token_value)
                             elif token.token_type == TokenType.VAR:
-                                dest.write("{{%s}}" % (
-                                    token_value.encode('utf-8') if six.PY2
-                                    else str(token_value)))
+                                dest.write("{{%s}}" % token_value)
                             else:
-                                dest.write(
-                                    token_value.encode('utf-8') if six.PY2
-                                    else str(token_value))
+                                dest.write(str(token_value))
                         elif state == STATE_BLOCK_CONTENT:
                             if token.token_type == TokenType.BLOCK:
                                 if token.contents.startswith('block'):
@@ -303,9 +298,7 @@ class SourceEditAPIView(ThemePackageMixin, UpdateEditableMixin,
                                                 block_text, dest,
                                                 template_path=template_path)
                                             buffered_tokens = []
-                                        dest.write("{%% %s %%}" % (
-                                            token_value.encode('utf-8')
-                                            if six.PY2 else str(token_value)))
+                                        dest.write("{%% %s %%}" % token_value)
                                         state = None
                                 else:
                                     buffered_tokens += [token]

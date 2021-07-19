@@ -14,6 +14,9 @@ import logging, os
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 RUN_DIR = os.getcwd()
 
+ALLOWED_HOSTS = ('*',)
+
+
 def load_config(confpath):
     '''
     Given a path to a file, parse its lines in ini-like format, and then
@@ -73,12 +76,6 @@ INSTALLED_APPS = (
 # Templates
 # ---------
 TEMPLATE_DEBUG = True
-
-# Django 1.7 and below
-#TEMPLATE_LOADERS = (
-#    'django.template.loaders.filesystem.Loader',
-#    'django.template.loaders.app_directories.Loader',
-#)
 
 TEMPLATE_CONTEXT_PROCESSORS = (
     'django.contrib.auth.context_processors.auth',
@@ -156,8 +153,6 @@ ROOT_URLCONF = 'testsite.urls'
 
 WSGI_APPLICATION = 'testsite.wsgi.application'
 
-ALLOWED_HOSTS = []
-
 # Database
 # https://docs.djangoproject.com/en/1.7/ref/settings/#databases
 
@@ -167,6 +162,8 @@ DATABASES = {
         'NAME': os.path.join(RUN_DIR, 'db.sqlite3')
     }
 }
+
+DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 
 # Internationalization
 # https://docs.djangoproject.com/en/1.7/topics/i18n/
