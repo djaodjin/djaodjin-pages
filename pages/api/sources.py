@@ -104,8 +104,6 @@ class SourceEditAPIView(ThemePackageMixin, UpdateEditableMixin,
         block_text = ""
         for tok in buffered_tokens:
             token_value = tok.contents
-            if six.PY2 and hasattr(token_value, 'encode'):
-                token_value = token_value.encode('utf-8')
             if tok.token_type == TokenType.BLOCK:
                 block_text += "{%% %s %%}" % token_value
             elif tok.token_type == TokenType.VAR:
