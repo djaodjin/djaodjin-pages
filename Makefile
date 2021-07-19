@@ -76,14 +76,8 @@ $(srcDir)/htdocs/static/vendor/bootstrap.css: $(srcDir)/testsite/package.json
 	$(installFiles) $(installTop)/node_modules/ace-builds/src/mode-css.js $(ASSETS_DIR)/vendor
 	$(installFiles) $(installTop)/node_modules/ace-builds/src/mode-javascript.js $(ASSETS_DIR)/vendor
 	$(installFiles) $(installTop)/node_modules/ace-builds/src/worker-html.js $(ASSETS_DIR)/vendor
-	$(installFiles) $(installTop)/node_modules/angular/angular.js $(ASSETS_DIR)/vendor
 	$(installFiles) $(installTop)/node_modules/bootstrap/dist/css/bootstrap.css $(ASSETS_DIR)/vendor
-	$(installFiles) $(installTop)/node_modules/bootstrap/dist/css/bootstrap-theme.css $(ASSETS_DIR)/vendor
 	$(installFiles) $(installTop)/node_modules/bootstrap/dist/js/bootstrap.js $(ASSETS_DIR)/vendor
-	$(installFiles) $(installTop)/node_modules/bootstrap/dist/fonts/* $(ASSETS_DIR)/fonts
-	$(installFiles) $(installTop)/node_modules/bootstrap/dist/fonts/* $(ASSETS_DIR)/../media/fonts
-	$(installFiles) $(installTop)/node_modules/bootstrap/less/*.less $(ASSETS_DIR)/vendor/bootstrap
-	$(installFiles) $(installTop)/node_modules/bootstrap/less/mixins/*.less $(ASSETS_DIR)/vendor/bootstrap/mixins
 	$(installFiles) $(installTop)/node_modules/bootstrap-colorpicker/dist/img/bootstrap-colorpicker/*.png $(ASSETS_DIR)/img/bootstrap-colorpicker
 	$(installFiles) $(installTop)/node_modules/bootstrap-colorpicker/dist/css/bootstrap-colorpicker.css $(ASSETS_DIR)/vendor
 	$(installFiles) $(installTop)/node_modules/bootstrap-colorpicker/dist/js/bootstrap-colorpicker.js $(ASSETS_DIR)/vendor
