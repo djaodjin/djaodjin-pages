@@ -63,7 +63,7 @@ clean:
 
 vendor-assets-prerequisites: $(srcDir)/htdocs/static/vendor/bootstrap.css
 
-$(srcDir)/htdocs/static/vendor/bootstrap.css: $(srcDir)/package.json
+$(srcDir)/htdocs/static/vendor/bootstrap.css: $(srcDir)/testsite/package.json
 	$(installFiles) $^ $(installTop)
 	$(NPM) install --loglevel verbose --cache $(installTop)/.npm --tmp $(installTop)/tmp --prefix $(installTop)
 	$(installDirs) -d $(ASSETS_DIR)/fonts $(ASSETS_DIR)/../media/fonts $(ASSETS_DIR)/vendor/bootstrap/mixins $(ASSETS_DIR)/img/bootstrap-colorpicker
