@@ -336,11 +336,8 @@ class SourceEditAPIView(ThemePackageMixin, UpdateEditableMixin,
                 break
         if not found:
             raise Http404()
-        LOGGER.info("XXX typeof(dest)=%s" % dest.__class__)
-        if dest and six.PY2 and hasattr(dest, 'encode'):
-            dest = dest.encode('utf-8')
         return Response(self.get_serializer().to_representation({
-                'text': str(dest),
+                'text': dest,
                 'hints': [dest_hint]
             }), status=resp_status)
 
