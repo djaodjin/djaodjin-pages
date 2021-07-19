@@ -35,7 +35,7 @@ from django.utils.translation import ugettext_lazy as _
 from rest_framework.exceptions import ValidationError
 
 from . import settings
-from .compat import import_string, python_2_unicode_compatible
+from .compat import import_string, python_2_unicode_compatible, six
 
 
 LOGGER = logging.getLogger(__name__)
@@ -510,11 +510,13 @@ def build_content_tree(roots=None, prefix=None, cut=None):
             slug = root.slug
             orig_element_id = root.pk
             title = root.title
+            picture = root.picture
             extra = root.extra
         else:
             slug = root.get('slug', root.get('dest_element__slug'))
             orig_element_id = root.get('dest_element__pk')
             title = root.get('dest_element__title')
+            picture = root.get('dest_element__picture')
             extra = root.get('dest_element__extra')
         leaf_slug = '/%s' % slug
         if prefix.endswith(leaf_slug):
@@ -541,9 +543,9 @@ def build_content_tree(roots=None, prefix=None, cut=None):
     args = tuple([])
     edges = RelationShip.objects.filter(
         orig_element__in=roots_after_cut).values(
-        'orig_element_id', 'dest_element_id', 'rank',
-        'dest_element__slug', 'dest_element__title',
-        'dest_element__extra', *args).order_by('rank', 'pk')
+        'orig_element_id', 'dest_element_id', 'rank', 'dest_element__slug',
+        'dest_element__extra', 'dest_element__picture', 'dest_element__title',
+        *args).order_by('rank', 'pk')
     while edges:
         next_pks_to_leafs = {}
         for edge in edges:
@@ -552,12 +554,15 @@ def build_content_tree(roots=None, prefix=None, cut=None):
             slug = edge.get('slug', edge.get('dest_element__slug'))
             base = pks_to_leafs[orig_element_id]['path'] + "/" + slug
             title = edge.get('dest_element__title')
+            picture = edge.get('dest_element__picture')
             extra = edge.get('dest_element__extra')
             try:
                 extra = json.loads(extra)
             except (TypeError, ValueError):
                 pass
             result_node = {'title': title}
+            if picture:
+                result_node.update({'picture': picture})
             if extra:
                 result_node.update({'extra': extra})
             text = edge.get('dest_element__text', None)
@@ -574,9 +579,26 @@ def build_content_tree(roots=None, prefix=None, cut=None):
         next_pks_to_leafs = {}
         edges = RelationShip.objects.filter(
             orig_element_id__in=pks_to_leafs.keys()).values(
-            'orig_element_id', 'dest_element_id', 'rank',
-            'dest_element__slug', 'dest_element__title',
-            'dest_element__extra', *args).order_by('rank', 'pk')
+            'orig_element_id', 'dest_element_id', 'rank', 'dest_element__slug',
+            'dest_element__extra', 'dest_element__picture',
+            'dest_element__title', *args).order_by('rank', 'pk')
+    return results
+
+
+def flatten_content_tree(roots, depth=0):
+    """
+    Transforms a tree into a list with ``indent`` as the depth of a node
+    in the original tree.
+    """
+    results = []
+    for key, values in six.iteritems(roots):
+        elem, nodes = values
+        elem.update({
+            'path': key,
+            'indent': depth
+        })
+        results += [elem]
+        results += flatten_content_tree(nodes, depth=depth + 1)
     return results
 
 

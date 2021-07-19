@@ -159,6 +159,7 @@ jQuery(document).ready(function($) {
     csrfToken: "{{csrf_token}}",
     loadImageEvent: "gallery-opened",
     saveDroppedMediaUrl: "{{ urls.edit.api_page_element_base }}",
+    {% if templates %}hints: {{templates|safe}},{% endif %}
     mediaPrefix: "{{media_prefix}}",
 {% if access_key %}
     accessKey: "{{access_key}}",

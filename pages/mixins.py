@@ -24,6 +24,8 @@
 
 import logging
 
+import markdown
+from bs4 import BeautifulSoup
 from django.http import Http404
 from django.utils._os import safe_join
 from rest_framework.generics import get_object_or_404
@@ -46,6 +48,7 @@ class TrailMixin(object):
     Generate a trail of PageElement based on a path.
     """
     URL_PATH_SEP = '/'
+    DB_PATH_SEP = '/'
 
     @property
     def element(self):
@@ -66,6 +69,16 @@ class TrailMixin(object):
             if self._path and not self._path.startswith(self.URL_PATH_SEP):
                 self._path = self.URL_PATH_SEP + self._path
         return self._path
+
+    @property
+    def full_path(self):
+        if not hasattr(self, '_full_path'):
+            self._full_path = self.DB_PATH_SEP.join(
+                [str(elem) for elem in self.get_full_element_path(self.path)])
+            if (self._full_path and
+                not self._full_path.startswith(self.DB_PATH_SEP)):
+                self._full_path = self.DB_PATH_SEP + self._full_path
+        return self._full_path
 
     def get_full_element_path(self, path):
         if not path:
@@ -209,3 +222,48 @@ class ThemePackageMixin(AccountMixin):
     @staticmethod
     def get_statics_dir(theme):
         return safe_join(settings.PUBLIC_ROOT, theme, 'static')
+
+
+class UpdateEditableMixin(object):
+    """
+    Edit an element in a page.
+    """
+    @staticmethod
+    def insert_formatted(editable, new_text):
+        new_text = BeautifulSoup(new_text, 'html5lib')
+        for image in new_text.find_all('img'):
+            image['style'] = "max-width:100%"
+        if editable.name == 'div':
+            editable.clear()
+            editable.append(new_text)
+        else:
+            editable.string = "ERROR : Impossible to insert HTML into \
+                \"<%s></%s>\" element. It should be \"<div></div>\"." %\
+                (editable.name, editable.name)
+            editable['style'] = "color:red;"
+            # Prevent edition of error notification
+            editable['class'] = editable['class'].remove("editable")
+
+    @staticmethod
+    def insert_currency(editable, new_text):
+        amount = float(new_text)
+        editable.string = "$%.2f" % (amount/100)
+
+    @staticmethod
+    def insert_markdown(editable, new_text):
+        new_text = markdown.markdown(new_text,)
+        new_text = BeautifulSoup(new_text, 'html.parser')
+        for image in new_text.find_all('img'):
+            image['style'] = "max-width:100%"
+        editable.name = 'div'
+        editable.string = ''
+        children_done = []
+        for element in new_text.find_all():
+            if element.name != 'html' and\
+                element.name != 'body':
+                if element.findChildren():
+                    for sub_el in element.findChildren():
+                        element.append(sub_el)
+                        children_done += [sub_el]
+                if not element in children_done:
+                    editable.append(element)

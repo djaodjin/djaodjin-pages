@@ -26,13 +26,13 @@ import logging
 from django.http import Http404
 from django.core.exceptions import ValidationError
 from django.db import transaction
-from django.db.models import Q, Count
+from django.db.models import Q
 from rest_framework import generics, response as api_response
 from rest_framework.mixins import CreateModelMixin
 from rest_framework.filters import SearchFilter
 
 from .. import settings
-from ..models import PageElement, build_content_tree
+from ..models import PageElement, build_content_tree, flatten_content_tree
 from ..serializers import (NodeElementSerializer, PageElementSerializer,
     PageElementTagSerializer)
 from ..mixins import AccountMixin, PageElementMixin, TrailMixin
@@ -86,7 +86,7 @@ class PageElementSearchAPIView(AccountMixin, generics.ListAPIView):
         return []
 
 
-class PageElementTreeAPIView(TrailMixin, generics.ListAPIView):
+class PageElementAPIView(TrailMixin, generics.ListAPIView):
     """
     Lists a tree of page elements
 
@@ -96,7 +96,7 @@ class PageElementTreeAPIView(TrailMixin, generics.ListAPIView):
 
     .. code-block:: http
 
-        GET /api/content/boxes-enclosures HTTP/1.1
+        GET /api/content/boxes-and-enclosures HTTP/1.1
 
     responds
 
@@ -128,38 +128,26 @@ class PageElementTreeAPIView(TrailMixin, generics.ListAPIView):
           ]
         }
     """
-    serializer_class = NodeElementSerializer
+    serializer_class = PageElementSerializer
     queryset = PageElement.objects.all()
+
+    def attach(self, elements):
+        return elements
 
     def list(self, request, *args, **kwargs):
         #pylint:disable=unused-argument
-        path_parts = self.get_full_element_path(self.path)
-        roots = path_parts[-1] if path_parts else None
-        content_tree = build_content_tree(roots=roots, prefix=self.path)
-        self.attach_picture(content_tree, self.get_pictures())
-        return api_response.Response(content_tree)
+        content_tree = build_content_tree(
+            roots=[self.element] if self.element else None,
+            prefix=self.full_path)
+        results = flatten_content_tree(content_tree)
+        self.attach(results)
 
-    @staticmethod
-    def get_roots():
-        # XXX return self.get_queryset().get_roots()
-        # XXX exception `AttributeError: 'QuerySet' object has no attribute
-        # XXX 'get_roots'`
-        return PageElement.objects.get_roots()
-
-    def get_pictures(self):
-        results = {}
-        for item in self.get_queryset().filter(
-            text__endswith='.png').values('slug', 'text'):
-            results.update({item['slug']: item['text']})
-        return results
-
-    def attach_picture(self, content_tree, pictures, prefix_picture=None):
-        for path, node in content_tree.items():
-            slug = path.split('/')[-1]
-            prefix_picture = pictures.get(slug, prefix_picture)
-            node[0].update({'picture': prefix_picture})
-            self.attach_picture(
-                node[1], pictures, prefix_picture=prefix_picture)
+        results.pop(0)
+        self.element.path = self.full_path
+        self.element.results = results
+        self.element.count = len(results)
+        serializer = self.get_serializer(self.element)
+        return api_response.Response(serializer.data)
 
 
 class PageElementDetailAPIView(AccountMixin, PageElementMixin,
@@ -183,7 +171,8 @@ class PageElementDetailAPIView(AccountMixin, PageElementMixin,
             "slug": "adjust-air-fuel-ratio",
             "picture": null,
             "title": "Adjust air/fuel ratio",
-            "text": "<h2>Background</h2><p>Some manufacturing processes may involve heating operations.</p>",
+            "text": "<h2>Background</h2><p>Some manufacturing processes may\
+ involve heating operations.</p>",
             "extra": null
         }
     """
@@ -193,17 +182,20 @@ class PageElementDetailAPIView(AccountMixin, PageElementMixin,
         return self.element
 
 
-class PageElementEditableListAPIView(TrailMixin, generics.ListAPIView):
+class PageElementEditableListAPIView(TrailMixin, generics.ListCreateAPIView):
     """
-    Lists page elements
+    List editable page elements
 
-    **Tags**: content
+    This API endpoint lists page elements that are owned and thus editable
+    by an account.
+
+    **Tags**: editors
 
     **Examples
 
     .. code-block:: http
 
-        GET /api/content/construction HTTP/1.1
+        GET /api/content/editables/energy-utility/ HTTP/1.1
 
     responds
 

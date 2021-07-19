@@ -15,9 +15,9 @@ into the edited page one of two ways:
 </ol>
     </div>
     <div>
-      <h2 id="leaderboard-subtitle" class="editable">Server-side decorator</h2>
+      <h2 class="editable" id="leaderboard-subtitle">Server-side decorator</h2>
       <div>
-          <a id="inject-edit-mode" href="/">click here</a>
+          <a href="/" id="inject-edit-mode">click here</a>
       </div>
       <div>
 Features
@@ -41,12 +41,11 @@ Features
 <li>There is effectively two HTTP requests (one for the EditView and one
 for the edited page).<sup>3</sup></li>
 </ul>
-<p id="leaderboard-message" class="lead editable edit-markdown" data-intro="Paragraph editable in markdown" data-position="bottom">
+<p class="lead editable edit-markdown" data-intro="Paragraph editable in markdown" data-position="bottom" id="leaderboard-message">
 <sup>1</sup> The server URL could be configured so that all editable pages
 are servered under a /content/ prefix. Example:
 </p>
-<pre class="code">
-testsite/urls/content.py:
+<pre class="code">testsite/urls/content.py:
     url(r'^$', TemplateView.as_view(template_name='index.html')),
 
 testsite/urls/__init__.py:
@@ -72,16 +71,16 @@ into the iframe). I haven't tried to use <code>&lt;iframe srcdoc=&quot;...&quot;
         <h2 class="editable" id="more-properties">More PageElement editors</h2>
         <h3>Currencies</h3>
         <div class="editable edit-currency" id="main-currency">$10.00</div>
-        <div class="editable edit-currency" id="main-currency2"
-             data-currency-unit="&euro;"
-             data-currency-position="after">23.99&euro;</div>
+        <div class="editable edit-currency" data-currency-position="after" data-currency-unit="&euro;" id="main-currency2">23.99&euro;</div>
         <h3>Ranges</h3>
-        <div class="editable edit-range" id="main-range"
-             data-range-max="3" data-range-min="1" data-range-step="1">1</div>
+        <div class="editable edit-range" data-range-max="3" data-range-min="1" data-range-step="1" id="main-range">1</div>
         <h3>Images</h3>
-        <img id="site-feedback-portrait" class="img-responsive img-circle editable droppable-image" style="width:150px;height:150px;margin-left:auto;margin-right:auto;margin-top:15px;margin-bottom:15px;" src="data:image/gif;base64,R0lGODlhAQABAIAAAMLCwgAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw==" alt="Portrait of statisfied customer">
+        <img alt="Portrait of statisfied customer" class="img-responsive img-circle editable droppable-image" id="site-feedback-portrait" src="data:image/gif;base64,R0lGODlhAQABAIAAAMLCwgAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw==" style="width:150px;height:150px;margin-left:auto;margin-right:auto;margin-top:15px;margin-bottom:15px;"/>
     </div>
 </div>
+{% endblock content %}
+
+{% block pages_scripts %}
 <script type="text/javascript">
 jQuery(document).ready(function($) {
     $("#inject-edit-mode").click(function(event) {
@@ -95,4 +94,4 @@ jQuery(document).ready(function($) {
     });
 });
 </script>
-{% endblock content %}
+{% endblock %}

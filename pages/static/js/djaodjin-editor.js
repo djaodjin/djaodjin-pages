@@ -104,6 +104,7 @@
     $.fn.baseEditor.defaults = {
         baseUrl: null, // Url to send request to server
         uniqueIdentifier: "id",
+        hints: null,
         onSuccess: function(element, resp){
             return true;
         },
@@ -210,9 +211,13 @@
                     text: savedText
                 };
             }
+            if( self.options.hints ) {
+                data['hints'] = self.options.hints;
+            }
 
-            if( self.options.debug ) { console.log("data-key:",
-                self.$el.attr("data-key"), "send:", data);
+            if( self.options.debug ) {
+                console.log("data-key:", self.$el.attr("data-key"),
+                    "send:", data);
             }
             $.ajax({
                 method: method,

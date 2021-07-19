@@ -81,7 +81,7 @@ THEME_DIR_CALLABLE = _SETTINGS.get('THEME_DIR_CALLABLE')
 
 LANGUAGE_CODE = getattr(settings, 'LANGUAGE_CODE')
 
-SLUG_RE = r'[a-zA-Z0-9_\-]+'
+SLUG_RE = r'[a-zA-Z0-9_\-\+\.]+'
 PATH_RE = r'([a-zA-Z0-9\-]+/)*[a-zA-Z0-9\-]*'
 NON_EMPTY_PATH_RE = r'([a-zA-Z0-9\-]+/)*[a-zA-Z0-9\-]+'
 

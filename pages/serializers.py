@@ -29,7 +29,7 @@ import bleach
 from django.utils.translation import ugettext_lazy as _
 from rest_framework import serializers
 
-from .compat import six, is_authenticated
+from .compat import is_authenticated
 from .models import (Comment, Follow, LessVariable, PageElement, ThemePackage,
     Vote)
 from .settings import ALLOWED_TAGS, ALLOWED_ATTRIBUTES, ALLOWED_STYLES
@@ -104,11 +104,54 @@ class CommentSerializer(serializers.ModelSerializer):
         read_only_fields = ('created_at', 'user')
 
 
+class NodeElementSerializer(serializers.ModelSerializer):
+    """
+    Serializes a PageElement as a node in a content tree
+    """
+    path = serializers.CharField(allow_null=True)
+    indent = serializers.SerializerMethodField()
+    account = serializers.SlugRelatedField(slug_field='slug',
+        read_only=True, required=False,
+        help_text=("Account that can edit the page element"))
+    picture = serializers.CharField(required=False, allow_null=True,
+        help_text=_("Picture icon that can be displayed alongside the title"))
+    extra = serializers.SerializerMethodField(required=False, allow_null=True,
+        help_text=_("Extra meta data (can be stringify JSON)"))
+
+    class Meta:
+        model = PageElement
+        fields = ('path', 'account', 'title', 'picture', 'indent', 'extra')
+        read_only_fields = ('slug',)
+
+    def get_extra(self, obj):
+        try:
+            return obj.get('extra', {})
+        except AttributeError:
+            pass
+        try:
+            return obj.extra
+        except AttributeError:
+            pass
+        return {}
+
+    def get_indent(self, obj):
+        try:
+            return obj.get('indent', 0)
+        except AttributeError:
+            pass
+        try:
+            return obj.indent
+        except AttributeError:
+            pass
+        return 0
+
+
 class PageElementSerializer(serializers.ModelSerializer):
     """
     Serializes a PageElement.
     """
 
+    path = serializers.CharField(required=False, allow_null=True)
     slug = serializers.SlugField(required=False,
         help_text=_("Unique identifier that can be used in URL paths"))
     account = serializers.SlugRelatedField(slug_field='slug',
@@ -119,18 +162,33 @@ class PageElementSerializer(serializers.ModelSerializer):
     text = HTMLField(html_tags=ALLOWED_TAGS, html_attributes=ALLOWED_ATTRIBUTES,
         html_styles=ALLOWED_STYLES, required=False,
         help_text=_("Long description of the page element"))
-    extra = serializers.CharField(required=False,
+    extra = serializers.SerializerMethodField(required=False, allow_null=True,
         help_text=_("Extra meta data (can be stringify JSON)"))
     nb_upvotes = serializers.IntegerField(required=False)
     nb_followers = serializers.IntegerField(required=False)
     upvote = serializers.SerializerMethodField(required=False, allow_null=True)
     follow = serializers.SerializerMethodField(required=False, allow_null=True)
+    count = serializers.IntegerField(required=False)
+    results = serializers.ListField(required=False,
+        child=NodeElementSerializer())
 
     class Meta:
         model = PageElement
-        fields = ('slug', 'picture', 'title', 'text', 'reading_time',
+        fields = ('path', 'slug', 'picture', 'title', 'text', 'reading_time',
             'lang', 'account', 'extra',
-            'nb_upvotes', 'nb_followers', 'upvote', 'follow')
+            'nb_upvotes', 'nb_followers', 'upvote', 'follow',
+            'count', 'results')
+        read_only_fields = ('path', 'slug', 'account',
+            'nb_upvotes', 'nb_followers', 'upvote', 'follow',
+            'count', 'results')
+
+    def get_extra(self, obj):
+        if not isinstance(obj.extra, dict):
+            try:
+                return json.loads(obj.extra)
+            except (TypeError, ValueError):
+                pass
+        return obj.extra
 
     def get_upvote(self, data):
         request = self.context.get('request')
@@ -141,12 +199,12 @@ class PageElementSerializer(serializers.ModelSerializer):
         return None
 
     def get_follow(self, data):
-       request = self.context.get('request')
-       if request and is_authenticated(request):
-           follow = Follow.objects.filter(
-               user=request.user, element=data).first()
-           return follow is not None
-       return None
+        request = self.context.get('request')
+        if request and is_authenticated(request):
+            follow = Follow.objects.filter(
+                user=request.user, element=data).first()
+            return follow is not None
+        return None
 
     def get_path(self, obj):
         prefix = self.context.get('prefix', "")
@@ -165,31 +223,6 @@ class PageElementTagSerializer(serializers.ModelSerializer):
     class Meta:
         model = PageElement
         fields = ('tag',)
-
-
-class NodeElementSerializer(serializers.ModelSerializer):
-    """
-    Serializes a PageElement as a node in a content tree
-    """
-    indent = serializers.SerializerMethodField()
-    account = serializers.SlugRelatedField(slug_field='slug',
-        read_only=True, required=False,
-        help_text=("Account that can edit the page element"))
-    picture = serializers.CharField(required=False, allow_null=True,
-        help_text=_("Picture icon that can be displayed alongside the title"))
-    extra = serializers.SerializerMethodField(required=False, allow_null=True,
-        help_text=_("Extra meta data (can be stringify JSON)"))
-
-    class Meta:
-        model = PageElement
-        fields = ('slug', 'account', 'title', 'picture', 'indent', 'extra')
-        read_only_fields = ('slug',)
-
-    def get_indent(self, obj):
-        return obj.indent if hasattr(obj, 'indent') else 0
-
-    def get_extra(self, obj):
-        return obj.extra
 
 
 class LessVariableSerializer(serializers.ModelSerializer):
@@ -229,3 +262,21 @@ class MediaItemListSerializer(NoModelSerializer):
 
 class EditionFileSerializer(serializers.Serializer):
     text = serializers.CharField(allow_blank=True)
+
+
+class SourceCodeSerializer(NoModelSerializer):
+
+    path = serializers.CharField(required=False, max_length=255)
+    text = serializers.CharField(required=False, max_length=100000)
+
+
+class HintSerializer(NoModelSerializer):
+
+    index = serializers.IntegerField()
+    name = serializers.CharField()
+
+
+class SourceElementSerializer(SourceCodeSerializer):
+
+    hints = serializers.ListField(
+        child=HintSerializer(), required=False)

@@ -1,4 +1,4 @@
-# Copyright (c) 2020, DjaoDjin inc.
+# Copyright (c) 2021, DjaoDjin inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -24,8 +24,6 @@
 
 #pylint:disable=unused-argument
 
-import markdown
-
 from bs4 import BeautifulSoup
 from django.template import loader
 from django.views.generic import ListView, DetailView, TemplateView
@@ -34,7 +32,7 @@ from django.template.response import TemplateResponse
 from ..compat import csrf, render_template, reverse
 from ..locals import (enable_instrumentation, _add_editable_styles_context,
     get_edition_tools_context_data)
-from ..mixins import AccountMixin, UploadedImageMixin
+from ..mixins import AccountMixin, UploadedImageMixin, UpdateEditableMixin
 from ..models import PageElement
 
 
@@ -58,8 +56,8 @@ def inject_edition_tools(response, request=None, context=None,
                 'api_less_overrides': reverse('pages_api_less_overrides'),
                 'api_sitecss': reverse('edit_sitecss'),
                 'api_sources': reverse('pages_api_sources'),
-                'api_page_element_base': reverse('pages_api_edit_element',
-                    kwargs={'path':''}),
+                'api_page_element_base': reverse(
+                    'pages_api_edit_template_base'),
                 'api_medias': reverse('uploaded_media_elements',
                     kwargs={'path':''})}}})
     context.update(csrf(request))
@@ -101,7 +99,7 @@ def inject_edition_tools(response, request=None, context=None,
     return soup
 
 
-class PageMixin(object):
+class PageMixin(UpdateEditableMixin):
     """
     Display or Edit a ``Page`` of a ``Project``.
     """
@@ -115,46 +113,6 @@ class PageMixin(object):
         return inject_edition_tools(
             response, request=self.request, context=context,
             body_bottom_template_name=self.body_bottom_template_name)
-
-    @staticmethod
-    def insert_formatted(editable, new_text):
-        new_text = BeautifulSoup(new_text, 'html5lib')
-        for image in new_text.find_all('img'):
-            image['style'] = "max-width:100%"
-        if editable.name == 'div':
-            editable.clear()
-            editable.append(new_text)
-        else:
-            editable.string = "ERROR : Impossible to insert HTML into \
-                \"<%s></%s>\" element. It should be \"<div></div>\"." %\
-                (editable.name, editable.name)
-            editable['style'] = "color:red;"
-            # Prevent edition of error notification
-            editable['class'] = editable['class'].remove("editable")
-
-    @staticmethod
-    def insert_currency(editable, new_text):
-        amount = float(new_text)
-        editable.string = "$%.2f" % (amount/100)
-
-    @staticmethod
-    def insert_markdown(editable, new_text):
-        new_text = markdown.markdown(new_text,)
-        new_text = BeautifulSoup(new_text, 'html.parser')
-        for image in new_text.find_all('img'):
-            image['style'] = "max-width:100%"
-        editable.name = 'div'
-        editable.string = ''
-        children_done = []
-        for element in new_text.find_all():
-            if element.name != 'html' and\
-                element.name != 'body':
-                if element.findChildren():
-                    for sub_el in element.findChildren():
-                        element.append(sub_el)
-                        children_done += [sub_el]
-                if not element in children_done:
-                    editable.append(element)
 
     def get(self, request, *args, **kwargs):
         #pylint: disable=too-many-statements, too-many-locals

@@ -28,7 +28,7 @@ API URLs for readers who could be unauthenticated
 from django.conf.urls import url
 
 from ... import settings
-from ...api.edition import (PageElementSearchAPIView, PageElementTreeAPIView,
+from ...api.edition import (PageElementSearchAPIView, PageElementAPIView,
   PageElementDetailAPIView)
 
 urlpatterns = [
@@ -38,6 +38,6 @@ urlpatterns = [
         PageElementDetailAPIView.as_view(),
         name='pages_api_pageelement'),
     url(r'(?P<path>%s)$' % settings.PATH_RE,
-        PageElementTreeAPIView.as_view(),
+        PageElementAPIView.as_view(),
         name="api_content"),
 ]

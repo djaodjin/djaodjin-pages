@@ -1,4 +1,4 @@
-# Copyright (c) 2018, DjaoDjin inc.
+# Copyright (c) 2021, DjaoDjin inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -26,10 +26,15 @@
 
 from django.conf.urls import url
 
-from ...api.sources import SourceDetailAPIView
+from ...import settings
+from ...api.sources import SourceEditAPIView, SourceDetailAPIView
 
 
 urlpatterns = [
+    url(r'^sources/editables/(?P<path>%s)$' % settings.NON_EMPTY_PATH_RE,
+        SourceEditAPIView.as_view(), name='pages_api_edit_template'),
+    url(r'^sources/editables$',
+        SourceEditAPIView.as_view(), name='pages_api_edit_template_base'),
     url(r'^sources/(?P<page>\S+)?',
         SourceDetailAPIView.as_view(), name='pages_api_sources'),
 ]

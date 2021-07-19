@@ -10,7 +10,7 @@ Major Features:
 Tested with
 
 - **Python:** 3.6, **Django:** 2.2 ([LTS](https://www.djangoproject.com/download/)), **Django Rest Framework:** 3.12
-- **Python:** 3.6, **Django:** 3.0 (latest), **Django Rest Framework:** 3.12
+- **Python:** 3.6, **Django:** 3.2 (latest), **Django Rest Framework:** 3.12
 - **Python:** 2.7, **Django:** 1.11 (legacy), **Django Rest Framework:** 3.9.4
 
 
@@ -39,9 +39,9 @@ the prerequisites, create the database then run the testsite webapp.
 Release Notes
 =============
 
-0.3.6
+0.4.0
 
-  * uses the correct active theme on create and read
-  * switches default from S3BotoStorage to S3Boto3Storage
+  * edits template wysiwyg-style directly
+  * settles API for PageElements
 
 [previous release notes](changelog)

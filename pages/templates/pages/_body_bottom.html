@@ -17,20 +17,20 @@
 <script type="text/javascript" src="{% static 'vendor/Markdown.Sanitizer.js' %}"></script>
 <script type="text/javascript" src="{% static 'vendor/dropzone.js' %}"></script>
 <script type="text/javascript" src="{% static 'js/djaodjin-editor.js' %}"></script>
+
+{# For the template code editors #}
 <script type="text/javascript">
+{% if templates %}
+templateNames = {{templates|safe}};
+{% endif %}
+
 jQuery(document).ready(function($) {
     $('.editable').editor({
       baseUrl: '{{ urls.edit.api_page_element_base }}',
+      hints: {{templates|safe}}
     });
   });
 </script>
-
-{# For the template code editors #}
-{% if templates %}
-<script type="text/javascript">
-templateNames = {{templates|safe}};
-</script>
-{% endif %}
 
 {# For the style editors #}
 <script type="text/javascript">
