@@ -143,7 +143,6 @@ class SourceEditAPIView(ThemePackageMixin, UpdateEditableMixin,
                 body_text = body_text.decode('utf-8')
             dest.write("\n%s\n" % body_text)
         else:
-            LOGGER.info("XXX typeof(block_text)=%s" % block_text.__class__)
             if six.PY2 and hasattr(block_text, 'decode'):
                 block_text = block_text.decode('utf-8')
             dest.write(block_text)
@@ -319,13 +318,14 @@ class SourceEditAPIView(ThemePackageMixin, UpdateEditableMixin,
                 LOGGER.warning("%s: Templates can only be constructed "
                     "from unicode or UTF-8 strings.", template_path)
             dest = dest.getvalue()
-            if six.PY2 and hasattr(dest, 'encode'):
-                dest = dest.encode('utf-8')
             if dest and dest != template_string:
+                block_text = dest
+                if six.PY2 and hasattr(block_text, 'encode'):
+                    block_text  = block_text.encode('utf-8')
                 if not os.path.exists(os.path.dirname(dest_path)):
                     os.makedirs(os.path.dirname(dest_path))
                 with open(dest_path, 'w') as dest_file:
-                    dest_file.write(dest)
+                    dest_file.write(block_text)
                 if django_settings.DEBUG:
                     try:
                         cmdline = ['diff', '-u', template_path, dest_path]
