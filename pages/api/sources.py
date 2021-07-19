@@ -146,7 +146,7 @@ class SourceEditAPIView(ThemePackageMixin, UpdateEditableMixin,
             dest.write("\n%s\n" % body_text)
         else:
             LOGGER.info("XXX typeof(block_text)=%s" % block_text.__class__)
-            if six.PY2 and hasattr(body_text, 'decode'):
+            if six.PY2 and hasattr(block_text, 'decode'):
                 block_text = block_text.decode('utf-8')
             dest.write(block_text)
 
