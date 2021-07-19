@@ -103,18 +103,15 @@ class SourceEditAPIView(ThemePackageMixin, UpdateEditableMixin,
     def tokens_as_text(buffered_tokens):
         block_text = ""
         for tok in buffered_tokens:
+            token_value = tok.contents
+            if six.PY2 and hasattr(token_value, 'encode'):
+                token_value = token_value.encode('utf-8')
             if tok.token_type == TokenType.BLOCK:
-                block_text += "{%% %s %%}" % (
-                    tok.contents.encode('utf-8') if six.PY2
-                    else str(tok.contents))
+                block_text += "{%% %s %%}" % token_value
             elif tok.token_type == TokenType.VAR:
-                block_text += "{{%s}}" % (
-                    tok.contents.encode('utf-8') if six.PY2
-                    else str(tok.contents))
+                block_text += "{{%s}}" % token_value
             else:
-                block_text += (
-                    tok.contents.encode('utf-8') if six.PY2
-                    else str(tok.contents))
+                block_text += token_value
         return block_text
 
 
@@ -313,7 +310,8 @@ class SourceEditAPIView(ThemePackageMixin, UpdateEditableMixin,
                             template_path=template_path)
                         buffered_tokens = []
 
-            except UnicodeDecodeError:
+            except UnicodeDecodeError as err:
+                LOGGER.exception(err)
                 LOGGER.warning("%s: Templates can only be constructed "
                     "from unicode or UTF-8 strings.", template_path)
             dest = dest.getvalue()
@@ -333,7 +331,6 @@ class SourceEditAPIView(ThemePackageMixin, UpdateEditableMixin,
                 break
         if not found:
             raise Http404()
-        LOGGER.info("XXX typeof(dest)=%s" % dest.__class__)
         if six.PY2 and hasattr(dest, 'encode'):
             dest = dest.encode('utf-8')
         return Response(self.get_serializer().to_representation({
