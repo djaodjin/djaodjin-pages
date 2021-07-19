@@ -22,6 +22,7 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pylint: disable=no-member
+from __future__ import unicode_literals
 
 import logging, os, subprocess, tempfile
 
@@ -332,6 +333,7 @@ class SourceEditAPIView(ThemePackageMixin, UpdateEditableMixin,
                 break
         if not found:
             raise Http404()
+        LOGGER.info("XXX typeof(dest)=%s" % dest.__class__)
         if six.PY2 and hasattr(dest, 'encode'):
             dest = dest.encode('utf-8')
         return Response(self.get_serializer().to_representation({
