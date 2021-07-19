@@ -141,7 +141,6 @@ class SourceEditAPIView(ThemePackageMixin, UpdateEditableMixin,
             # 2. str(soup) instead of soup.prettify() to avoid
             #    trailing whitespace on a reformatted HTML textarea
             body_text = str(soup.body.next)
-            LOGGER.info("XXX typeof(body_text=%s)" % body_text.__class__)
             if six.PY2 and hasattr(body_text, 'decode'):
                 body_text = body_text.decode('utf-8')
             dest.write("\n%s\n" % body_text)
@@ -322,6 +321,9 @@ class SourceEditAPIView(ThemePackageMixin, UpdateEditableMixin,
             if dest and dest != template_string:
                 if not os.path.exists(os.path.dirname(dest_path)):
                     os.makedirs(os.path.dirname(dest_path))
+                LOGGER.info("XXX typeof(dest=%s)" % dest.__class__)
+                if six.PY2 and hasattr(dest, 'decode'):
+                    dest = dest.decode('utf-8')
                 with open(dest_path, 'w') as dest_file:
                     dest_file.write(dest)
                 if django_settings.DEBUG:
@@ -335,8 +337,6 @@ class SourceEditAPIView(ThemePackageMixin, UpdateEditableMixin,
                 break
         if not found:
             raise Http404()
-        if six.PY2 and hasattr(dest, 'encode'):
-            dest = dest.encode('utf-8')
         return Response(self.get_serializer().to_representation({
                 'text': dest,
                 'hints': [dest_hint]
