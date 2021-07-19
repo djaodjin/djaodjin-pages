@@ -24,7 +24,6 @@
 #pylint: disable=no-member
 
 import logging, os, subprocess, tempfile
-from io import StringIO
 
 from bs4 import BeautifulSoup
 from django.conf import settings as django_settings
@@ -160,7 +159,7 @@ class SourceEditAPIView(ThemePackageMixin, UpdateEditableMixin,
         for hint in serializer.validated_data.get('hints', []):
             relative_path = hint.get('name')
             template_path = get_template_path(relative_path=relative_path)
-            dest = StringIO()
+            dest = six.StringIO()
             dest_hint = hint
             dest_path = template_path
             theme_base = get_theme_dir(self.theme)
