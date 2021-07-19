@@ -141,8 +141,9 @@ class SourceEditAPIView(ThemePackageMixin, UpdateEditableMixin,
             # 2. str(soup) instead of soup.prettify() to avoid
             #    trailing whitespace on a reformatted HTML textarea
             body_text = str(soup.body.next)
-            if six.PY2 and hasattr(body_text, 'encode'):
-                body_text = body_text.encode('utf-8')
+            LOGGER.info("XXX typeof(body_text=%s)" % body_text.__class__)
+            if six.PY2 and hasattr(body_text, 'decode'):
+                body_text = body_text.decode('utf-8')
             dest.write("\n%s\n" % body_text)
         else:
             dest.write(block_text)
