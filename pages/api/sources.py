@@ -322,8 +322,8 @@ class SourceEditAPIView(ThemePackageMixin, UpdateEditableMixin,
                 if not os.path.exists(os.path.dirname(dest_path)):
                     os.makedirs(os.path.dirname(dest_path))
                 LOGGER.info("XXX typeof(dest=%s)" % dest.__class__)
-                if six.PY2 and hasattr(dest, 'decode'):
-                    dest = dest.decode('utf-8')
+                if six.PY2 and hasattr(dest, 'encode'):
+                    dest = dest.encode('utf-8')
                 with open(dest_path, 'w') as dest_file:
                     dest_file.write(dest)
                 if django_settings.DEBUG:
