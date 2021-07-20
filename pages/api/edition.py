@@ -142,11 +142,16 @@ class PageElementAPIView(TrailMixin, generics.ListAPIView):
         results = flatten_content_tree(content_tree)
         self.attach(results)
 
-        results.pop(0)
-        self.element.path = self.full_path
-        self.element.results = results
-        self.element.count = len(results)
-        serializer = self.get_serializer(self.element)
+        if self.element:
+            element = self.element
+            results.pop(0)
+        else:
+            # We have multiple roots so we create an unifying top-level root.
+            element = PageElement()
+        element.path = self.full_path
+        element.results = results
+        element.count = len(results)
+        serializer = self.get_serializer(element)
         return api_response.Response(serializer.data)
 
 
