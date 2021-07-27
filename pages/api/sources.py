@@ -320,7 +320,7 @@ class SourceEditAPIView(ThemePackageMixin, UpdateEditableMixin,
             if dest and dest != template_string:
                 block_text = dest
                 if six.PY2 and hasattr(block_text, 'encode'):
-                    block_text  = block_text.encode('utf-8')
+                    block_text = block_text.encode('utf-8')
                 if not os.path.exists(os.path.dirname(dest_path)):
                     os.makedirs(os.path.dirname(dest_path))
                 with open(dest_path, 'w') as dest_file:
