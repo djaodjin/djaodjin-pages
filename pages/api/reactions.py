@@ -25,8 +25,10 @@ from __future__ import unicode_literals
 
 from deployutils.helpers import datetime_or_now
 from django.core.exceptions import PermissionDenied
+from django.db import transaction
 from rest_framework import generics
 
+from .. import signals
 from ..compat import is_authenticated
 from ..mixins import PageElementMixin
 from ..models import Comment, Follow, Vote
@@ -257,5 +259,12 @@ class CommentListCreateAPIView(PageElementMixin, generics.ListCreateAPIView):
     def perform_create(self, serializer):
         if not is_authenticated(self.request):
             raise PermissionDenied()
-        serializer.save(created_at=datetime_or_now(),
-            element=self.element, user=self.request.user)
+
+        with transaction.atomic():
+            serializer.save(created_at=datetime_or_now(),
+                element=self.element, user=self.request.user)
+            # Subscribe the commenting user to this element
+            Follow.objects.subscribe(self.element, user=self.request.user)
+
+        signals.comment_was_posted.send(
+            sender=__name__, comment=serializer.instance, request=self.request)
