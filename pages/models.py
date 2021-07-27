@@ -30,11 +30,13 @@ from collections import OrderedDict
 from django.contrib.auth import get_user_model
 from django.db import IntegrityError, models, transaction
 from django.db.models import Max
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 from django.template.defaultfilters import slugify
 from django.utils.translation import ugettext_lazy as _
 from rest_framework.exceptions import ValidationError
 
-from . import settings
+from . import settings, signals
 from .compat import import_string, python_2_unicode_compatible, six
 
 
@@ -303,6 +305,14 @@ class Comment(models.Model):
 
     def __str__(self):
         return str(self.text)
+
+
+@receiver(post_save, sender=Comment)
+def on_comment_post_save(sender, instance, created, raw, **kwargs):
+    #pylint:disable=unused-argument
+    if not raw:
+        if created:
+            signals.comment_was_posted.send(sender=sender, comment=instance)
 
 
 class FollowManager(models.Manager):
