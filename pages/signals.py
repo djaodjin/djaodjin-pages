@@ -1,4 +1,4 @@
-# Copyright (c) 2020, DjaoDjin inc.
+# Copyright (c) 2021, DjaoDjin inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -28,4 +28,5 @@ from django.dispatch import Signal
 template_loaded = Signal(providing_args=["template"])
 
 #pylint: disable=invalid-name
-question_new = Signal(providing_args=['request', 'question'])
+question_new = Signal(providing_args=['question', 'request'])
+comment_was_posted = Signal(providing_args=['comment', 'request'])
