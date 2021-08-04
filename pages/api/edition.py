@@ -187,7 +187,8 @@ class PageElementDetailAPIView(AccountMixin, PageElementMixin,
         return self.element
 
 
-class PageElementEditableListAPIView(TrailMixin, generics.ListCreateAPIView):
+class PageElementEditableListAPIView(TrailMixin, AccountMixin,
+                                     generics.ListCreateAPIView):
     """
     List editable page elements
 
@@ -255,6 +256,11 @@ class PageElementEditableListAPIView(TrailMixin, generics.ListCreateAPIView):
         }
     """
     serializer_class = NodeElementSerializer
+
+    search_fields = (
+        'title',
+        'extra'
+    )
     filter_backends = (SearchFilter,)
 
     def get_queryset(self):
@@ -268,8 +274,16 @@ class PageElementEditableListAPIView(TrailMixin, generics.ListCreateAPIView):
             queryset = PageElement.objects.all()
         if self.path:
             queryset = queryset.filter(consumption__path__startswith=self.path)
-#        queryset = queryset.annotate(
-#            nb_referencing_practices=Count('consumption')).order_by('title')
+        try:
+            search_string = self.request.query_params.get('q', None)
+            if search_string is not None:
+                validate_title(search_string)
+                queryset = queryset.filter(
+                    Q(extra__icontains=search_string)
+                    | Q(title__icontains=search_string))
+                return queryset
+        except ValidationError:
+            pass
         return queryset
 
 
