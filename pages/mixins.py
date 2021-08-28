@@ -49,6 +49,7 @@ class TrailMixin(object):
     """
     URL_PATH_SEP = '/'
     DB_PATH_SEP = '/'
+    path_url_kwarg = 'path'
 
     @property
     def element(self):
@@ -65,7 +66,7 @@ class TrailMixin(object):
     @property
     def path(self):
         if not hasattr(self, '_path'):
-            self._path = self.kwargs.get('path', '')
+            self._path = self.kwargs.get(self.path_url_kwarg, '')
             if self._path and not self._path.startswith(self.URL_PATH_SEP):
                 self._path = self.URL_PATH_SEP + self._path
         return self._path
@@ -101,17 +102,20 @@ class TrailMixin(object):
             results = candidates[0]
         return results
 
-    def get_url_kwargs(self, **kwargs):
-        url_kwargs = super(TrailMixin, self).get_url_kwargs(**kwargs)
-        if 'path' in self.kwargs:
-            url_kwargs.update({'path': self.kwargs.get('path')})
-        return url_kwargs
+    def get_reverse_kwargs(self):
+        """
+        List of kwargs taken from the url that needs to be passed through
+        to ``reverse``.
+        """
+        reverse_url_kwargs = super(TrailMixin, self).get_reverse_kwargs()
+        reverse_url_kwargs += [self.path_url_kwarg]
+        return reverse_url_kwargs
 
 
 class PageElementMixin(object):
 
     URL_PATH_SEP = '/'
-
+    path_url_kwarg = 'path'
     element_field = 'slug'
     element_url_kwarg = 'slug'
 
@@ -123,7 +127,8 @@ class PageElementMixin(object):
             if element_url_kwarg in self.kwargs:
                 element_value = self.kwargs[element_url_kwarg]
             else:
-                path = self.kwargs.get('path', '').strip(self.URL_PATH_SEP)
+                path = self.kwargs.get(self.path_url_kwarg, '').strip(
+                    self.URL_PATH_SEP)
                 if not path:
                     raise Http404()
                 parts = path.split(self.URL_PATH_SEP)

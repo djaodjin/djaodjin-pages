@@ -108,8 +108,8 @@ class NodeElementSerializer(serializers.ModelSerializer):
     """
     Serializes a PageElement as a node in a content tree
     """
-    path = serializers.CharField(allow_null=True)
-    indent = serializers.SerializerMethodField()
+    path = serializers.CharField(read_only=True, allow_null=True)
+    indent = serializers.SerializerMethodField(required=False, allow_null=True)
     account = serializers.SlugRelatedField(slug_field='slug',
         read_only=True, required=False,
         help_text=("Account that can edit the page element"))
@@ -121,7 +121,7 @@ class NodeElementSerializer(serializers.ModelSerializer):
     class Meta:
         model = PageElement
         fields = ('path', 'account', 'title', 'picture', 'indent', 'extra')
-        read_only_fields = ('slug',)
+        read_only_fields = ('slug', 'path')
 
     def get_extra(self, obj):
         try:

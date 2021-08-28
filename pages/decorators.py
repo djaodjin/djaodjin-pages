@@ -43,8 +43,8 @@ def inject_edition_tools(function=None):
             disable_instrumentation()
             if isinstance(response, TemplateResponse):
                 # We could use ``SingleTemplateResponse`` to catch both
-                # django and restframework responses. Unfortunately
-                # the content_type on restframework responses is set
+                # django and rest_framework responses. Unfortunately
+                # the content_type on rest_framework responses is set
                 # very late (render), while at the same time django
                 # defaults it to text/html until then.
                 response.render()
