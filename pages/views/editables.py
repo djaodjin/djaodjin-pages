@@ -90,13 +90,16 @@ class PageElementEditableView(AccountMixin, TrailMixin, TemplateView):
             update_context_urls(context, {
                 'edit': {
                     'api_page_element_base': reverse(
-                        'pages_api_edit_element', kwargs=url_kwargs),
+                        'pages_api_edit_element',
+                        args=(self.element.account, self.element)),
                     'api_medias': reverse(
-                        'uploaded_media_elements', kwargs=url_kwargs),
+                        'uploaded_media_elements',
+                        args=(self.element.account, self.element)),
                 },
                 'pages': {
                     'api_content': reverse(
-                        'pages_api_edit_element', kwargs=url_kwargs),
+                        'pages_api_edit_element',
+                        args=(self.element.account, self.element)),
                     'api_follow': reverse('pages_api_follow',
                         args=(self.element,)),
                     'api_unfollow': reverse('pages_api_unfollow',
