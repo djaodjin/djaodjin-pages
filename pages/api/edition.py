@@ -29,7 +29,7 @@ from django.db import transaction
 from django.db.models import Q
 from rest_framework import generics, response as api_response
 from rest_framework.mixins import CreateModelMixin
-from rest_framework.filters import SearchFilter
+from rest_framework.filters import OrderingFilter, SearchFilter
 
 from .. import settings
 from ..models import PageElement, build_content_tree, flatten_content_tree
@@ -261,7 +261,12 @@ class PageElementEditableListAPIView(TrailMixin, AccountMixin,
         'title',
         'extra'
     )
-    filter_backends = (SearchFilter,)
+    ordering_fields = (
+        ('title', 'title'),
+    )
+    ordering = ('title',)
+
+    filter_backends = (SearchFilter, OrderingFilter,)
 
     def get_queryset(self):
         """
@@ -285,6 +290,9 @@ class PageElementEditableListAPIView(TrailMixin, AccountMixin,
         except ValidationError:
             pass
         return queryset
+
+    def perform_create(self, serializer):
+        serializer.save(account=self.account)
 
 
 class PageElementEditableDetail(AccountMixin, PageElementMixin,

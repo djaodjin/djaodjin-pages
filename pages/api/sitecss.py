@@ -32,7 +32,7 @@ class SiteCssAPIView(MediaListAPIView):
 
     .. code-block:: http
 
-        GET /api/sitecss/ HTTP/1.1
+        GET /api/themes/sitecss HTTP/1.1
 
     responds
 
@@ -53,3 +53,4 @@ class SiteCssAPIView(MediaListAPIView):
     store_hash = False
     replace_stored = True
     content_type = 'text/css'
+    schema = None

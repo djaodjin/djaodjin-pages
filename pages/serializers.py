@@ -108,7 +108,7 @@ class NodeElementSerializer(serializers.ModelSerializer):
     """
     Serializes a PageElement as a node in a content tree
     """
-    path = serializers.CharField(read_only=True, allow_null=True)
+    path = serializers.SerializerMethodField(read_only=True, allow_null=True)
     indent = serializers.SerializerMethodField(required=False, allow_null=True)
     account = serializers.SlugRelatedField(slug_field='slug',
         read_only=True, required=False,
@@ -120,8 +120,9 @@ class NodeElementSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = PageElement
-        fields = ('path', 'account', 'title', 'picture', 'indent', 'extra')
-        read_only_fields = ('slug', 'path')
+        fields = ('slug', 'path', 'indent', 'account',
+                  'title', 'picture', 'extra')
+        read_only_fields = ('slug', 'path', 'indent', 'account')
 
     def get_extra(self, obj):
         try:
@@ -144,6 +145,17 @@ class NodeElementSerializer(serializers.ModelSerializer):
         except AttributeError:
             pass
         return 0
+
+    def get_path(self, obj):
+        try:
+            return obj.get('path', None)
+        except AttributeError:
+            pass
+        try:
+            return obj.path
+        except AttributeError:
+            pass
+        return "/%s" % obj.slug
 
 
 class PageElementSerializer(serializers.ModelSerializer):
@@ -249,7 +261,7 @@ class AssetSerializer(NoModelSerializer):
         help_text=_("URL where the asset content is stored."))
     updated_at = serializers.DateTimeField(required=False,
         help_text=_("Last date/time the asset content was updated."))
-    tags = serializers.CharField(required=False,
+    tags = serializers.CharField(required=False, allow_blank=True,
         help_text=_("Tags associated to the asset."))
 
 class MediaItemListSerializer(NoModelSerializer):

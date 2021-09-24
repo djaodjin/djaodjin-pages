@@ -25,6 +25,7 @@ import logging
 
 from django.http import Http404
 from django.views.generic import TemplateView
+from deployutils.apps.django.mixins import AccessiblesMixin
 
 from ..compat import reverse
 from ..models import RelationShip
@@ -35,7 +36,8 @@ from ..utils import update_context_urls
 LOGGER = logging.getLogger(__name__)
 
 
-class PageElementEditableView(AccountMixin, TrailMixin, TemplateView):
+class PageElementEditableView(AccessiblesMixin,
+                              AccountMixin, TrailMixin, TemplateView):
 
     template_name = 'pages/index.html'
 
@@ -87,6 +89,7 @@ class PageElementEditableView(AccountMixin, TrailMixin, TemplateView):
                         }
                     })
         else:
+            context.update({'edit_perm': self.manages(self.element.account)})
             update_context_urls(context, {
                 'edit': {
                     'api_page_element_base': reverse(
