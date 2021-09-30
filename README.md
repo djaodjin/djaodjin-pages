@@ -39,9 +39,10 @@ the prerequisites, create the database then run the testsite webapp.
 Release Notes
 =============
 
-0.4.0
+0.4.1
 
-  * edits template wysiwyg-style directly
-  * settles API for PageElements
+  * adds comment_was_posted signal
+  * enables to customize html/css for pagination links
+  * fitlers list of page elements by search criteria
 
 [previous release notes](changelog)
