@@ -81,11 +81,14 @@ class SourceEditAPIView(ThemePackageMixin, UpdateEditableMixin,
         .. code-block:: json
 
              {
-               "text": "...",
-               "hints": [
-                   {"name": "index.html"},
-                   {"name": "base.html"}
-               ]
+               "text": "New heading",
+               "hints": [{
+                 "index": 0,
+                 "name": "index.html"
+               }, {
+                 "index": 1,
+                 "name": "base.html"
+               }]
              }
 
         responds
@@ -93,7 +96,7 @@ class SourceEditAPIView(ThemePackageMixin, UpdateEditableMixin,
         .. code-block:: json
 
              {
-               "text": "..."
+               "text": "New heading"
              }
         """
         return self.update(request, *args, **kwargs)

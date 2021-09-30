@@ -122,6 +122,8 @@ class LessVariableDetail(LessVariableMixin, CreateModelMixin,
 
             PUT /api/themes/sitecss/variables/primary-color/ HTTP/1.1
 
+        .. code-block:: json
+
             {
                 "name": "primary-color",
                 "value": "#0000ff"
