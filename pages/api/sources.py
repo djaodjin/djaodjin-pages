@@ -64,7 +64,7 @@ def write_template(template_path, template_source):
 
 
 class SourceEditAPIView(ThemePackageMixin, UpdateEditableMixin,
-                        generics.UpdateAPIView):
+                        generics.GenericAPIView):
 
     serializer_class = SourceElementSerializer
 
@@ -81,11 +81,14 @@ class SourceEditAPIView(ThemePackageMixin, UpdateEditableMixin,
         .. code-block:: json
 
              {
-               "text": "...",
-               "hints": [
-                   {"name": "index.html"},
-                   {"name": "base.html"}
-               ]
+               "text": "New heading",
+               "hints": [{
+                 "index": 0,
+                 "name": "index.html"
+               }, {
+                 "index": 1,
+                 "name": "base.html"
+               }]
              }
 
         responds
@@ -93,11 +96,10 @@ class SourceEditAPIView(ThemePackageMixin, UpdateEditableMixin,
         .. code-block:: json
 
              {
-               "text": "..."
+               "text": "New heading"
              }
         """
-        #pylint:disable=useless-super-delegation
-        return super(SourceEditAPIView, self).put(request, *args, **kwargs)
+        return self.update(request, *args, **kwargs)
 
     @staticmethod
     def tokens_as_text(buffered_tokens):
@@ -340,6 +342,14 @@ class SourceEditAPIView(ThemePackageMixin, UpdateEditableMixin,
                 'text': dest,
                 'hints': [dest_hint]
             }), status=resp_status)
+
+
+class SourceEditBaseAPIView(SourceEditAPIView):
+    """
+    To prevent duplicate operationId when generating documentation.
+    """
+    schema = None
+
 
 
 class SourceDetailAPIView(ThemePackageMixin, generics.RetrieveUpdateAPIView,

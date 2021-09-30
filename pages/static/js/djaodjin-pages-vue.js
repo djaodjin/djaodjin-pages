@@ -9,10 +9,20 @@ Vue.component('editables-list', {
             url: this.$urls.pages.api_content,
             params: {
                 o: '-created_at'
-            }
+            },
+            newItem: {title: ""},
         }
     },
-
+    methods: {
+        create: function() {
+            var vm = this;
+            vm.reqPost(vm.url,{title: vm.newItem.title},
+            function success(resp) {
+                window.location = resp.path.substr(1) + '/';
+            });
+            return false;
+        },
+    },
     mounted: function(){
         this.get()
     }

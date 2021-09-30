@@ -70,19 +70,18 @@ class ThemePackageListAPIView(ThemePackageMixin, GenericAPIView):
 
         Pages will be using the default theme after a reset.
 
-        **Tags: themes
+        **Tags: themes, broker, appmodel
 
         **Examples
 
         .. code-block:: http
 
-            DELETE /api/themes HTTP/1.1
+            DELETE /api/themes/ HTTP/1.1
         """
         #pylint:disable=unused-argument
         remove_theme(self.theme)
         return Response({'detail': _("reset to default theme")},
             status=status.HTTP_200_OK)
-
 
     @swagger_auto_schema(responses={
         200: OpenAPIResponse("Upload successful",
@@ -96,7 +95,7 @@ class ThemePackageListAPIView(ThemePackageMixin, GenericAPIView):
         <https://djaodjin.com/docs/themes/>`_ for details on the theme package
         structure and customizing the default templates.
 
-        **Tags: themes
+        **Tags: themes, broker, appmodel
 
         **Examples
 
@@ -104,6 +103,21 @@ class ThemePackageListAPIView(ThemePackageMixin, GenericAPIView):
 
             curl -i -u *api_key*:  -X POST -F file=@*package*.zip \
 https://*mydomain*/api/themes/
+
+        .. code-block:: http
+
+            POST /api/themes/ HTTP/1.1
+
+            Content-Disposition: form-data; name="file"; filename="theme.zip"
+            Content-Type: application/x-zip
+
+        responds
+
+        .. code-block:: json
+
+            {
+              "location": "https://themes.*mydomain*/"
+            }
         """
 
         #pylint:disable=unused-argument

@@ -34,6 +34,7 @@ from rest_framework.generics import ListCreateAPIView
 from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
 
+from ..docs import OpenAPIResponse, swagger_auto_schema
 from ..models import MediaTag, PageElement
 from ..mixins import AccountMixin, UploadedImageMixin
 from ..serializers import AssetSerializer, MediaItemListSerializer
@@ -50,7 +51,7 @@ class MediaListAPIView(UploadedImageMixin, AccountMixin, ListCreateAPIView):
 
     .. code-block:: http
 
-        GET /api/assets/ HTTP/1.1
+        GET /api/themes/assets/ HTTP/1.1
 
     responds
 
@@ -75,6 +76,11 @@ class MediaListAPIView(UploadedImageMixin, AccountMixin, ListCreateAPIView):
     pagination_class = PageNumberPagination
     parser_classes = (parsers.JSONParser, parsers.FormParser,
         parsers.MultiPartParser, parsers.FileUploadParser)
+
+    def get_serializer_class(self):
+        if self.request.method.lower() in ('put', 'patch'):
+            return MediaItemListSerializer
+        return super(MediaListAPIView, self).get_serializer_class()
 
     def get(self, request, *args, **kwargs): #pylint:disable=unused-argument
         tags = None
@@ -108,8 +114,17 @@ class MediaListAPIView(UploadedImageMixin, AccountMixin, ListCreateAPIView):
 
         .. code-block:: http
 
-            POST /api/assets/ HTTP/1.1
+            POST /api/themes/assets/ HTTP/1.1
 
+        responds
+
+        .. code-block:: json
+
+            {
+              "location": "/media/image-001.jpg",
+              "updated_at": "2016-10-26T00:00:00.00000+00:00",
+              "tags": ""
+            }
         """
         #pylint: disable=unused-argument,too-many-locals
         uploaded_file = request.data['file']
@@ -158,7 +173,7 @@ class MediaListAPIView(UploadedImageMixin, AccountMixin, ListCreateAPIView):
 
         .. code-block:: http
 
-            DELETE /api/assets/?location=/media/item/url1.jpg HTTP/1.1
+            DELETE /api/themes/assets/?location=/media/item/url1.jpg HTTP/1.1
 
         """
         #pylint: disable=unused-argument,too-many-locals
@@ -187,6 +202,8 @@ class MediaListAPIView(UploadedImageMixin, AccountMixin, ListCreateAPIView):
             'detail': _('Media correctly deleted.')},
             status=status.HTTP_200_OK)
 
+    @swagger_auto_schema(responses={
+      200: OpenAPIResponse("Update successful", AssetSerializer(many=True))})
     def put(self, request, *args, **kwargs):
         """
         Updates meta tags on assets
@@ -195,7 +212,7 @@ class MediaListAPIView(UploadedImageMixin, AccountMixin, ListCreateAPIView):
 
         .. code-block:: http
 
-            PUT /api/assets/ HTTP/1.1
+            PUT /api/themes/assets/ HTTP/1.1
 
         .. code-block:: json
 
@@ -210,6 +227,21 @@ class MediaListAPIView(UploadedImageMixin, AccountMixin, ListCreateAPIView):
         When the API returns, both assets file listed in items will be tagged
         with 'photo' and 'homepage'. Those tags can then be used later on
         in searches.
+
+        responds
+
+        .. code-block:: json
+
+            {
+              "count": 1,
+              "previous": null,
+              "next": null,
+              "results": [{
+                  "location": "/media/image-001.jpg",
+                  "updated_at": "2016-10-26T00:00:00.00000+00:00",
+                  "tags": ""
+              }]
+            }
         """
         #pylint: disable=unused-argument
         serializer = MediaItemListSerializer(data=request.data)

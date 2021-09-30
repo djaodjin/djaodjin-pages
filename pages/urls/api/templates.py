@@ -27,14 +27,15 @@
 from django.conf.urls import url
 
 from ...import settings
-from ...api.sources import SourceEditAPIView, SourceDetailAPIView
+from ...api.sources import (SourceEditAPIView, SourceEditBaseAPIView,
+    SourceDetailAPIView)
 
 
 urlpatterns = [
     url(r'^sources/editables/(?P<path>%s)$' % settings.NON_EMPTY_PATH_RE,
         SourceEditAPIView.as_view(), name='pages_api_edit_template'),
     url(r'^sources/editables$',
-        SourceEditAPIView.as_view(), name='pages_api_edit_template_base'),
+        SourceEditBaseAPIView.as_view(), name='pages_api_edit_template_base'),
     url(r'^sources/(?P<page>\S+)?',
         SourceDetailAPIView.as_view(), name='pages_api_sources'),
 ]

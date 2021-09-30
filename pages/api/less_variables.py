@@ -74,55 +74,6 @@ class LessVariableListAPIView(LessVariableMixin, generics.ListAPIView):
             account=self.account, cssfile=self.get_cssfile())
         return queryset
 
-    def put(self, request):
-        """
-        Updates a website css variables
-
-        **Examples
-
-        .. code-block:: http
-
-            PUT /api/themes/sitecss/variables/ HTTP/1.1
-
-        .. code-block:: json
-
-             {
-               "name": "primary-color",
-               "value": "#ff0000",
-               "created_at": "20200530T00:00:00Z",
-               "updated_at": "20200530T00:00:00Z"
-             }
-
-        responds
-
-        .. code-block:: json
-
-             {
-               "count": 1,
-               "previous": null,
-               "next": null,
-               "results": [{
-                 "name": "primary-color",
-                 "value": "#ff0000",
-                 "created_at": "20200530T00:00:00Z",
-                 "updated_at": "20200530T00:00:00Z"
-               }]
-             }
-        """
-        serializer = self.serializer_class(data=request.data, many=True)
-        serializer.is_valid(raise_exception=True)
-        with transaction.atomic():
-            any_created = False
-            for var in serializer.validated_data:
-                _, created = LessVariable.objects.update_or_create(
-                    account=self.account,
-                    cssfile=self.get_cssfile(),
-                    name=var['name'],
-                    defaults={'value': var['value']})
-                any_created |= created
-        return Response(serializer.data,
-            status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
-
 
 class LessVariableDetail(LessVariableMixin, CreateModelMixin,
                               generics.RetrieveUpdateDestroyAPIView):
@@ -170,6 +121,8 @@ class LessVariableDetail(LessVariableMixin, CreateModelMixin,
         .. code-block:: http
 
             PUT /api/themes/sitecss/variables/primary-color/ HTTP/1.1
+
+        .. code-block:: json
 
             {
                 "name": "primary-color",

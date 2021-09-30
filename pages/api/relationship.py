@@ -173,9 +173,10 @@ class PageElementMirrorAPIView(EdgesUpdateAPIView):
         node = sources[-1]
         LOGGER.debug("mirror node %s under %s with rank=%s", node, root, rank)
         with transaction.atomic():
+            prefix = '/%s' % "/".join([elm.slug for elm in sources[:-1]])
+            new_prefix = '/%s' % "/".join([elm.slug for elm in targets])
             new_node = self.mirror_recursive(node,
-                prefix='/%s' % "/".join([elm.slug for elm in sources[:-1]]),
-                new_prefix='/%s' % "/".join([elm.slug for elm in targets]))
+                prefix=prefix, new_prefix=new_prefix)
             RelationShip.objects.create(
                 orig_element=root, dest_element=new_node,
                 rank=self.rank_or_max(root, rank))

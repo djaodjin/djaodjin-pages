@@ -1,3 +1,11 @@
+0.4.1
+
+  * adds comment_was_posted signal
+  * enables to customize html/css for pagination links
+  * fitlers list of page elements by search criteria
+
+ -- Sebastien Mirolo <smirolo@djaodjin.com>  Thu,  30 Sep 2021 00:00:00 -0700
+
 0.4.0
 
   * edits template wysiwyg-style directly
