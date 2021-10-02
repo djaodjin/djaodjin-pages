@@ -244,7 +244,7 @@ class MediaListAPIView(UploadedImageMixin, AccountMixin, ListCreateAPIView):
             }
         """
         #pylint: disable=unused-argument
-        serializer = MediaItemListSerializer(data=request.data)
+        serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
         assets, total_count = self.list_media(
@@ -269,7 +269,7 @@ class MediaListAPIView(UploadedImageMixin, AccountMixin, ListCreateAPIView):
             item['tags'] = ",".join(list(MediaTag.objects.filter(
                 location=location).values_list('tag', flat=True)))
 
-        serializer = self.get_serializer(
+        serializer = self.serializer_class(
             sorted(assets, key=lambda x: x['updated_at']), many=True)
         http_resp = self.get_paginated_response(serializer.data)
         http_resp.data.update({'detail': _("Tags correctly updated.")})

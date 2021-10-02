@@ -338,6 +338,15 @@ class SourceEditAPIView(ThemePackageMixin, UpdateEditableMixin,
                 break
         if not found:
             raise Http404()
+
+        # clear template loaders caches
+        engines = _engine_list(using=None)
+        for engine in engines:
+            try:
+                engine.env.cache.clear()
+            except AttributeError:
+                pass
+
         return Response(self.get_serializer().to_representation({
                 'text': dest,
                 'hints': [dest_hint]
