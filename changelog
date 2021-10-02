@@ -1,3 +1,9 @@
+0.4.2
+
+  * clears cache for Jinja2>=2.9
+
+ -- Sebastien Mirolo <smirolo@djaodjin.com>  Sat,  2 Oct 2021 16:40:00 -0700
+
 0.4.1
 
   * adds comment_was_posted signal
