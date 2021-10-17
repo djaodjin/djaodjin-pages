@@ -163,7 +163,7 @@ class PageElementSerializer(serializers.ModelSerializer):
     Serializes a PageElement.
     """
 
-    path = serializers.CharField(required=False, allow_null=True)
+    path = serializers.SerializerMethodField()
     slug = serializers.SlugField(required=False,
         help_text=_("Unique identifier that can be used in URL paths"))
     account = serializers.SlugRelatedField(slug_field='slug',

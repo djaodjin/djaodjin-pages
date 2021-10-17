@@ -17,8 +17,11 @@ Vue.component('editables-list', {
         create: function() {
             var vm = this;
             vm.reqPost(vm.url,{title: vm.newItem.title},
-            function success(resp) {
-                window.location = resp.path.substr(1) + '/';
+            function success(resp, textStatus, jqXHR) {
+                var location = jqXHR.getResponseHeader('Location');
+                if( location ) {
+                    window.location = location;
+                }
             });
             return false;
         },
@@ -42,10 +45,24 @@ Vue.component('editables-detail', {
             isUpVote: 0,
             nbUpVotes: 0,
             comments: {count: 0, results: []},
-            message: ""
+            message: "",
+            newItem: {title: ""},
         }
     },
     methods: {
+        // functions available to editors
+        create: function() {
+            var vm = this;
+            vm.reqPost(vm.url,{title: vm.newItem.title},
+            function success(resp, textStatus, jqXHR) {
+                var location = jqXHR.getResponseHeader('Location');
+                if( location ) {
+                    window.location = location;
+                }
+            });
+            return false;
+        },
+        // functions available to readers
         submitFollow: function() {
             var vm = this;
             vm.reqPost(vm.isFollowing ? this.$urls.pages.api_unfollow

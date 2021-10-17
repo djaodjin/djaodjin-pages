@@ -26,13 +26,15 @@ import logging
 from django.http import Http404
 from django.core.exceptions import ValidationError
 from django.db import transaction
-from django.db.models import Q
+from django.db.models import Max, Q
 from rest_framework import generics, response as api_response
 from rest_framework.mixins import CreateModelMixin
 from rest_framework.filters import OrderingFilter, SearchFilter
 
 from .. import settings
-from ..models import PageElement, build_content_tree, flatten_content_tree
+from ..compat import reverse
+from ..models import (PageElement, RelationShip, build_content_tree,
+    flatten_content_tree)
 from ..serializers import (NodeElementSerializer, PageElementSerializer,
     PageElementTagSerializer)
 from ..mixins import AccountMixin, PageElementMixin, TrailMixin
@@ -322,6 +324,7 @@ class PageElementEditableDetail(AccountMixin, PageElementMixin,
     serializer_class = PageElementSerializer
 
     def get_object(self):
+        self.element.results = self.element.get_relationships()
         return self.element
 
     def delete(self, request, *args, **kwargs):
@@ -404,7 +407,22 @@ class PageElementEditableDetail(AccountMixin, PageElementMixin,
             request, *args, **kwargs)
 
     def perform_create(self, serializer):
-        serializer.save(account=self.account)
+        with transaction.atomic():
+            element = serializer.save(account=self.account)
+
+            # Attach the element in the content DAG
+            parent = self.element
+            rank = RelationShip.objects.filter(
+                orig_element=parent).aggregate(Max('rank')).get(
+                'rank__max', None)
+            rank = 0 if rank is None else rank + 1
+            RelationShip.objects.create(
+                orig_element=parent, dest_element=element, rank=rank)
+
+    def get_success_headers(self, data):
+        path = data.get('path').strip(self.URL_PATH_SEP) + self.URL_PATH_SEP
+        return {'Location': reverse('pages_edit_element',
+            args=(self.element.account, path))}
 
     def update(self, request, *args, **kwargs):
         with transaction.atomic():
