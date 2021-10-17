@@ -39,10 +39,8 @@ the prerequisites, create the database then run the testsite webapp.
 Release Notes
 =============
 
-0.4.1
+0.4.2
 
-  * adds comment_was_posted signal
-  * enables to customize html/css for pagination links
-  * fitlers list of page elements by search criteria
+  * clears cache for Jinja2>=2.9
 
 [previous release notes](changelog)

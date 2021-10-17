@@ -156,10 +156,13 @@ class SourceEditAPIView(ThemePackageMixin, UpdateEditableMixin,
         serializer.is_valid(raise_exception=True)
         element_id = self.kwargs.get('path')
         element_text = serializer.validated_data.get('text')
+        hints = serializer.validated_data.get('hints', [])
+        LOGGER.debug("update '%s' with \"%s\" (hints=%s)",
+            element_id, element_text, hints)
         found = False
         dest = None
         dest_hint = None
-        for hint in serializer.validated_data.get('hints', []):
+        for hint in hints:
             relative_path = hint.get('name')
             template_path = get_template_path(relative_path=relative_path)
             dest = six.StringIO()

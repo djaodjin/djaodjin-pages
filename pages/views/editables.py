@@ -37,7 +37,7 @@ LOGGER = logging.getLogger(__name__)
 
 
 class PageElementEditableView(AccessiblesMixin,
-                              AccountMixin, TrailMixin, TemplateView):
+                              TrailMixin, AccountMixin, TemplateView):
 
     template_name = 'pages/index.html'
 
@@ -65,6 +65,8 @@ class PageElementEditableView(AccessiblesMixin,
         if self.is_prefix:
             if url_kwargs:
                 if 'path' in url_kwargs:
+                    url_kwargs.update({
+                        'path': url_kwargs['path'].strip(self.URL_PATH_SEP)})
                     update_context_urls(context, {
                         'edit': {
                             # API end point to add content in the tree
