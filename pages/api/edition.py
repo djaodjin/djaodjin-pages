@@ -293,6 +293,38 @@ class PageElementEditableListAPIView(TrailMixin, AccountMixin,
             pass
         return queryset
 
+    def post(self, request, *args, **kwargs):
+        """
+        Creates a page element
+
+        **Tags: editors
+
+        **Example
+
+        .. code-block:: http
+
+            POST /api/content/editables/boxes-enclosures/ HTTP/1.1
+
+        .. code-block:: json
+
+            {
+                "title": "Boxes enclosures"
+            }
+
+        responds
+
+        .. code-block:: json
+
+            {
+                "slug": "boxes-enclosures",
+                "text": "Hello"
+            }
+
+        """
+        #pylint:disable=useless-super-delegation
+        return super(PageElementEditableListAPIView, self).create(
+            request, *args, **kwargs)
+
     def perform_create(self, serializer):
         serializer.save(account=self.account)
 
