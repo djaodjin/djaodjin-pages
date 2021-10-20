@@ -27,7 +27,7 @@ from django.http import Http404
 from django.views.generic import TemplateView
 from deployutils.apps.django.mixins import AccessiblesMixin
 
-from ..compat import reverse
+from ..compat import NoReverseMatch, reverse, six
 from ..models import RelationShip
 from ..mixins import AccountMixin, TrailMixin
 from ..utils import update_context_urls
@@ -64,13 +64,15 @@ class PageElementEditableView(AccessiblesMixin,
         url_kwargs = self.get_url_kwargs(**kwargs)
         if self.is_prefix:
             if url_kwargs:
-                if 'path' in url_kwargs:
-                    url_kwargs.update({
-                        'path': url_kwargs['path'].strip(self.URL_PATH_SEP)})
+                path = url_kwargs.get('path')
+                if isinstance(path, six.string_types):
+                    path = path.strip(self.URL_PATH_SEP)
+                if path:
+                    url_kwargs.update({'path': path})
                     update_context_urls(context, {
                         'edit': {
                             # API end point to add content in the tree
-                            'api_page_element_base': reverse(
+                            'api_content': reverse(
                                 'pages_api_edit_element', kwargs=url_kwargs),
                         },
                         'pages': {
@@ -79,10 +81,11 @@ class PageElementEditableView(AccessiblesMixin,
                         }
                     })
                 else:
+                    url_kwargs.pop('path')
                     update_context_urls(context, {
                         'edit': {
                             # API end point to add content in the tree
-                            'api_page_element_base': reverse(
+                            'api_content': reverse(
                                 'pages_api_edit', kwargs=url_kwargs),
                         },
                         'pages': {
@@ -93,12 +96,11 @@ class PageElementEditableView(AccessiblesMixin,
         else:
             context.update({'edit_perm': self.manages(self.element.account)})
             update_context_urls(context, {
+                'api_page_element_base': reverse(
+                    'pages_api_edit', args=(self.element.account,)),
                 'edit': {
-                    'api_page_element_base': reverse(
+                    'api_content': reverse(
                         'pages_api_edit_element',
-                        args=(self.element.account, self.element)),
-                    'api_medias': reverse(
-                        'uploaded_media_elements',
                         args=(self.element.account, self.element)),
                 },
                 'pages': {
@@ -117,5 +119,15 @@ class PageElementEditableView(AccessiblesMixin,
                         args=(self.element,)),
                 }
             })
+            try:
+                update_context_urls(context, {
+                    'edit': {
+                    'api_medias': reverse(
+                        'uploaded_media_elements',
+                        args=(self.element.account, self.element)),
+                }})
+            except NoReverseMatch:
+                # There is no API end-point to upload POD assets (images, etc.)
+                pass
 
         return context
