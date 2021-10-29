@@ -9,6 +9,7 @@ django-storages==1.9.1
 djaodjin-deployutils==0.6.0
 Jinja2==2.11.3
 Markdown==2.6.11
+pip==21.2.3                 # because deployutils missing <21.3.1
 python-dateutil==2.8.1
 requests==2.23.0
 
