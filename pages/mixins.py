@@ -97,7 +97,7 @@ class TrailMixin(object):
             # This is still OK to pick the first candidate as the breadcrumbs
             # should take a user back to the top-level page.
             if len(candidates) > 1:
-                LOGGER.info("get_full_element_path has multiple candidates"\
+                LOGGER.debug("get_full_element_path has multiple candidates"\
                     " for '%s': %s", path, candidates)
             results = candidates[0]
         return results

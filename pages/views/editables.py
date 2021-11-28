@@ -69,6 +69,10 @@ class PageElementEditableView(TrailMixin, AccountMixin, AccessiblesMixin,
                     path = path.strip(self.URL_PATH_SEP)
                 if path:
                     url_kwargs.update({'path': path})
+                    if (self.account_url_kwarg and
+                        self.account_url_kwarg not in url_kwargs):
+                        url_kwargs.update({
+                            self.account_url_kwarg: self.element.account})
                     update_context_urls(context, {
                         'edit': {
                             # API end point to add content in the tree
