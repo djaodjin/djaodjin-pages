@@ -61,9 +61,12 @@ class AccountMixinBase(object):
 
     def get_url_kwargs(self, **kwargs):
         url_kwargs = {}
+        if not kwargs:
+            kwargs = self.kwargs
         for url_kwarg in self.get_reverse_kwargs():
-            if url_kwarg in kwargs:
-                url_kwargs.update({url_kwarg: kwargs[url_kwarg]})
+            url_kwarg_val = kwargs.get(url_kwarg, None)
+            if url_kwarg_val:
+                url_kwargs.update({url_kwarg: url_kwarg_val})
         return url_kwargs
 
     def get_context_data(self, **kwargs):

@@ -36,8 +36,8 @@ from ..utils import update_context_urls
 LOGGER = logging.getLogger(__name__)
 
 
-class PageElementEditableView(AccessiblesMixin,
-                              TrailMixin, AccountMixin, TemplateView):
+class PageElementEditableView(TrailMixin, AccountMixin, AccessiblesMixin,
+                              TemplateView):
 
     template_name = 'pages/index.html'
 
