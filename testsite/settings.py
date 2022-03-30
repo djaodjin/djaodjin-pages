@@ -9,7 +9,7 @@ https://docs.djangoproject.com/en/1.7/ref/settings/
 """
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
-import logging, os
+import logging, os, sys
 
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 RUN_DIR = os.getcwd()
@@ -51,6 +51,10 @@ load_config(os.path.join(
 load_config(os.path.join(
     os.getenv('TESTSITE_SETTINGS_LOCATION', RUN_DIR), 'site.conf'))
 
+if not hasattr(sys.modules[__name__], "SECRET_KEY"):
+    from random import choice
+    SECRET_KEY = "".join([choice(
+        "abcdefghijklmnopqrstuvwxyz0123456789!@#$%^*-_=+") for i in range(50)])
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True

@@ -1,4 +1,4 @@
-# Copyright (c) 2021, Djaodjin Inc.
+# Copyright (c) 2022, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -44,48 +44,25 @@ from ..utils import validate_title
 LOGGER = logging.getLogger(__name__)
 
 
-class PageElementSearchAPIView(AccountMixin, generics.ListAPIView):
+class ContentCut(object):
     """
-    Search through page elements
-
-    **Tags: content
-
-    **Example
-
-    .. code-block:: http
-
-        GET /api/content/search HTTP/1.1
-
-    responds
-
-    .. code-block:: json
-
-        {
-          "count": 1,
-          "next": null,
-          "previous": null,
-          "results": [{
-            "slug": "hello",
-            "path": "/hello",
-            "title": "Hello"
-          }]
-        }
+    Visitor that cuts down a content tree whenever TAG_PAGEBREAK is encountered.
     """
-    serializer_class = PageElementSerializer
+    TAG_PAGEBREAK = 'pagebreak'
 
-    def get_queryset(self):
-        try:
-            queryset = PageElement.objects.filter(account=self.account)
-            search_string = self.request.query_params.get('q', None)
-            if search_string is not None:
-                validate_title(search_string)
-                queryset = queryset.filter(
-                    Q(extra__icontains=search_string)
-                    | Q(title__icontains=search_string))
-                return queryset
-        except ValidationError:
-            pass
-        return []
+    def __init__(self, tag=TAG_PAGEBREAK, depth=1):
+        self.match = tag
+
+    def enter(self, tag):
+        if tag and self.match:
+            if isinstance(tag, dict):
+                return self.match not in tag.get('tags', [])
+            return self.match not in tag
+        return True
+
+    def leave(self, attrs, subtrees):
+        #pylint:disable=unused-argument
+        return True
 
 
 class PageElementAPIView(TrailMixin, generics.ListAPIView):
@@ -133,28 +110,99 @@ class PageElementAPIView(TrailMixin, generics.ListAPIView):
     serializer_class = PageElementSerializer
     queryset = PageElement.objects.all()
 
+    @property
+    def visibility(self):
+        return None
+
     def attach(self, elements):
         return elements
 
-    def list(self, request, *args, **kwargs):
-        #pylint:disable=unused-argument
-        content_tree = build_content_tree(
-            roots=[self.element] if self.element else None,
-            prefix=self.full_path)
-        results = flatten_content_tree(content_tree)
-        self.attach(results)
+    def get_cut(self):
+        cut_param = self.request.query_params.get('cut')
+        return ContentCut(cut_param) if cut_param else None
 
+    def get_results(self):
         if self.element:
-            element = self.element
+            content_tree = build_content_tree(
+                roots=[self.element], prefix=self.full_path,
+                cut=self.get_cut(),
+                visibility=self.visibility)
+            results = flatten_content_tree(content_tree, depth=-1)
             results.pop(0)
         else:
-            # We have multiple roots so we create an unifying top-level root.
-            element = PageElement()
+            content_tree = build_content_tree(
+                roots=None, prefix=self.full_path,
+                cut=self.get_cut(),
+                visibility=self.visibility)
+            results = flatten_content_tree(content_tree)
+        return results
+
+    def list(self, request, *args, **kwargs):
+        #pylint:disable=unused-argument
+        results = self.get_results()
+        self.attach(results)
+
+        # We have multiple roots so we create an unifying top-level root.
+        element = self.element if self.element else PageElement()
         element.path = self.full_path
         element.results = results
         element.count = len(results)
+
         serializer = self.get_serializer(element)
         return api_response.Response(serializer.data)
+
+
+class PageElementSearchAPIView(PageElementAPIView):
+    """
+    Search through page elements
+
+    **Tags: content
+
+    **Example
+
+    .. code-block:: http
+
+        GET /api/content/search HTTP/1.1
+
+    responds
+
+    .. code-block:: json
+
+        {
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [{
+            "slug": "hello",
+            "path": "/hello",
+            "title": "Hello"
+          }]
+        }
+    """
+
+    def get_results(self):
+        results  = []
+        for item in super(PageElementSearchAPIView, self).get_results():
+            extra = item.get('extra', {})
+            if extra:
+                searchable = extra.get('searchable', False)
+                if searchable:
+                    results += [item]
+        return results
+
+    def get_queryset(self):
+        try:
+            queryset = PageElement.objects.filter(account=self.account)
+            search_string = self.request.query_params.get('q', None)
+            if search_string is not None:
+                validate_title(search_string)
+                queryset = queryset.filter(
+                    Q(extra__icontains=search_string)
+                    | Q(title__icontains=search_string))
+                return queryset
+        except ValidationError:
+            pass
+        return []
 
 
 class PageElementDetailAPIView(AccountMixin, PageElementMixin,

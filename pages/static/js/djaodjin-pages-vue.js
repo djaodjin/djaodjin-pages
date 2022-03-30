@@ -11,6 +11,7 @@ Vue.component('editables-list', {
                 o: '-created_at'
             },
             newItem: {title: ""},
+            nbItemsPerRow: 2,
         }
     },
     methods: {
@@ -26,8 +27,17 @@ Vue.component('editables-list', {
             return false;
         },
     },
+    computed: {
+        nbRows: function() {
+            var vm = this;
+            const nbFullRows = Math.floor(
+                vm.items.results.length / vm.nbItemsPerRow);
+            return vm.items.results.length % vm.nbItemsPerRow == 0 ?
+                nbFullRows : nbFullRows + 1;
+        },
+    },
     mounted: function(){
-        this.get()
+        this.get();
     }
 });
 

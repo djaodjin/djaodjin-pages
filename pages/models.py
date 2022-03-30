@@ -1,4 +1,4 @@
-# Copyright (c) 2021, Djaodjin Inc.
+# Copyright (c) 2022, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -29,7 +29,7 @@ from collections import OrderedDict
 
 from django.contrib.auth import get_user_model
 from django.db import IntegrityError, models, transaction
-from django.db.models import Max
+from django.db.models import Max, Q
 from django.template.defaultfilters import slugify
 from django.utils.translation import ugettext_lazy as _
 from rest_framework.exceptions import ValidationError
@@ -42,7 +42,7 @@ LOGGER = logging.getLogger(__name__)
 
 
 def get_extra_field_class():
-    extra_class = settings._SETTINGS.get('EXTRA_FIELD')
+    extra_class = settings.EXTRA_FIELD
     if extra_class is None:
         extra_class = models.TextField
     elif isinstance(extra_class, str):
@@ -122,9 +122,9 @@ class RelationShip(models.Model):
 
 class PageElementQuerySet(models.QuerySet):
 
-
-    def build_content_tree(self, prefix="", cut=None):
-        return build_content_tree(roots=self, prefix=prefix, cut=cut)
+    def build_content_tree(self, prefix="", cut=None, visibility=None):
+        return build_content_tree(roots=self, prefix=prefix,
+            cut=cut, visibility=visibility)
 
 
 class PageElementManager(models.Manager):
@@ -132,8 +132,16 @@ class PageElementManager(models.Manager):
     def get_queryset(self):
         return PageElementQuerySet(self.model, using=self._db)
 
-    def get_roots(self):
-        return self.all().extra(where=[
+    def get_roots(self, visibility=None):
+        filtered_in = None
+        if visibility:
+            for visible in visibility:
+                if filtered_in:
+                    filtered_in |= Q(extra__contains=visible)
+                else:
+                    filtered_in = Q(extra__contains=visible)
+        queryset = self.filter(filtered_in) if filtered_in else self.all()
+        return queryset.extra(where=[
             '(SELECT COUNT(*) FROM pages_relationship'\
             ' WHERE pages_relationship.dest_element_id = pages_pageelement.id)'\
             ' = 0'])
@@ -348,7 +356,7 @@ class Follow(models.Model):
         unique_together = (('user', 'element'),)
 
     def __str__(self):
-        return u'%s follows %s' % (self.user, self.element)
+        return '%s follows %s' % (self.user, self.element)
 
 
 class VoteManager(models.Manager):
@@ -384,8 +392,8 @@ class Vote(models.Model):
     UP_VOTE = 1
     DOWN_VOTE = -1
     SCORES = (
-        (UP_VOTE, u'+1'),
-        (DOWN_VOTE, u'-1'),
+        (UP_VOTE, '+1'),
+        (DOWN_VOTE, '-1'),
     )
 
     created_at = models.DateTimeField(editable=False, auto_now_add=True)
@@ -399,7 +407,7 @@ class Vote(models.Model):
         unique_together = (('user', 'element'),)
 
     def __str__(self):
-        return u'%s: %s on %s' % (self.user, self.vote, self.element)
+        return "%s: %s on %s" % (self.user, self.vote, self.element)
 
     def is_upvote(self):
         return self.vote == self.UP_VOTE
@@ -459,7 +467,7 @@ class ThemePackage(models.Model):
         return self.name
 
 
-def build_content_tree(roots=None, prefix=None, cut=None):
+def build_content_tree(roots=None, prefix=None, cut=None, visibility=None):
     """
     Returns a content tree from a list of roots.
 
@@ -485,7 +493,8 @@ def build_content_tree(roots=None, prefix=None, cut=None):
     # We use a breadth-first search algorithm here such as to minimize
     # the number of queries to the database.
     if roots is None:
-        roots = PageElement.objects.get_roots()
+        roots = PageElement.objects.get_roots(
+            visibility=visibility).order_by('-account_id', 'title')
         if prefix and prefix != '/':
             LOGGER.warning("[build_content_tree] prefix=%s but no roots"\
                 " were defined", prefix)
@@ -501,6 +510,17 @@ def build_content_tree(roots=None, prefix=None, cut=None):
         prefix = '/%s' % prefix
     if prefix.endswith("/"):
         prefix = prefix[:-1]
+
+    if visibility:
+        filtered_in = None
+        for visible in visibility:
+            if filtered_in:
+                filtered_in |= Q(dest_element__extra__contains=visible)
+            else:
+                filtered_in = Q(dest_element__extra__contains=visible)
+        edges_qs = RelationShip.objects.filter(filtered_in)
+    else:
+        edges_qs = RelationShip.objects.all()
 
     results = OrderedDict()
     pks_to_leafs = {}
@@ -541,7 +561,7 @@ def build_content_tree(roots=None, prefix=None, cut=None):
             roots_after_cut += [root]
 
     args = tuple([])
-    edges = RelationShip.objects.filter(
+    edges = edges_qs.filter(
         orig_element__in=roots_after_cut).values(
         'orig_element_id', 'dest_element_id', 'rank', 'dest_element__slug',
         'dest_element__extra', 'dest_element__picture', 'dest_element__title',
@@ -560,7 +580,7 @@ def build_content_tree(roots=None, prefix=None, cut=None):
                 extra = json.loads(extra)
             except (TypeError, ValueError):
                 pass
-            result_node = {'title': title}
+            result_node = {'slug': slug, 'title': title}
             if picture:
                 result_node.update({'picture': picture})
             if extra:
@@ -577,7 +597,7 @@ def build_content_tree(roots=None, prefix=None, cut=None):
                 }
         pks_to_leafs = next_pks_to_leafs
         next_pks_to_leafs = {}
-        edges = RelationShip.objects.filter(
+        edges = edges_qs.filter(
             orig_element_id__in=pks_to_leafs.keys()).values(
             'orig_element_id', 'dest_element_id', 'rank', 'dest_element__slug',
             'dest_element__extra', 'dest_element__picture',

@@ -1,4 +1,4 @@
-# Copyright (c) 2021 DjaoDjin inc.
+# Copyright (c) 2022 DjaoDjin inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -264,8 +264,7 @@ class UpdateEditableMixin(object):
         editable.string = ''
         children_done = []
         for element in new_text.find_all():
-            if element.name != 'html' and\
-                element.name != 'body':
+            if element.name not in ('html', 'body'):
                 if element.findChildren():
                     for sub_el in element.findChildren():
                         element.append(sub_el)

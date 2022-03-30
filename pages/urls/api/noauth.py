@@ -38,6 +38,7 @@ urlpatterns = [
         PageElementDetailAPIView.as_view(),
         name='pages_api_pageelement'),
     url(r'(?P<path>%s)$' % settings.PATH_RE,
-        PageElementAPIView.as_view(),
-        name="api_content"),
+        PageElementAPIView.as_view(), name="api_content"),
+    url(r'',
+        PageElementAPIView.as_view(), name="api_content_index"),
 ]
