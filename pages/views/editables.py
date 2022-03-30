@@ -61,40 +61,48 @@ class PageElementEditableView(TrailMixin, AccountMixin, AccessiblesMixin,
     def get_context_data(self, **kwargs):
         context = super(
             PageElementEditableView, self).get_context_data(**kwargs)
-        url_kwargs = self.get_url_kwargs(**kwargs)
         if self.is_prefix:
-            if url_kwargs:
-                path = url_kwargs.get('path')
-                if isinstance(path, six.string_types):
-                    path = path.strip(self.URL_PATH_SEP)
-                if path:
-                    url_kwargs.update({'path': path})
-                    if (self.account_url_kwarg and
-                        self.account_url_kwarg not in url_kwargs):
-                        url_kwargs.update({
-                            self.account_url_kwarg: self.element.account})
+            url_kwargs = self.get_url_kwargs(**kwargs)
+            path = url_kwargs.get('path')
+            if isinstance(path, six.string_types):
+                path = path.strip(self.URL_PATH_SEP)
+            if path:
+                url_kwargs.update({'path': path})
+                if (self.account_url_kwarg and
+                    self.account_url_kwarg not in url_kwargs):
+                    url_kwargs.update({
+                        self.account_url_kwarg: self.element.account})
+                update_context_urls(context, {
+                    'edit': {
+                        # API end point to add content in the tree
+                        'api_content': reverse(
+                            'pages_api_edit_element', kwargs=url_kwargs),
+                    },
+                    'pages': {
+                        'api_content': reverse(
+                            'pages_api_edit_element', kwargs=url_kwargs),
+                    }
+                })
+            else:
+                if (self.account_url_kwarg and
+                    self.account_url_kwarg in url_kwargs):
+                    url_kwargs.pop('path', None)
                     update_context_urls(context, {
                         'edit': {
                             # API end point to add content in the tree
                             'api_content': reverse(
-                                'pages_api_edit_element', kwargs=url_kwargs),
+                                'pages_api_edit', kwargs=url_kwargs),
                         },
                         'pages': {
                             'api_content': reverse(
-                                'pages_api_edit_element', kwargs=url_kwargs),
+                                'pages_api_edit', kwargs=url_kwargs),
                         }
                     })
                 else:
-                    url_kwargs.pop('path')
                     update_context_urls(context, {
-                        'edit': {
-                            # API end point to add content in the tree
-                            'api_content': reverse(
-                                'pages_api_edit', kwargs=url_kwargs),
-                        },
                         'pages': {
-                            'api_content': reverse(
-                                'pages_api_edit', kwargs=url_kwargs),
+                            'api_content': reverse('api_page_element_search',
+                                kwargs=url_kwargs) + "?cut=pagebreak",
                         }
                     })
         else:

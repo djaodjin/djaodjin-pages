@@ -1,4 +1,4 @@
-# Copyright (c) 2021, Djaodjin Inc.
+# Copyright (c) 2022, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -124,7 +124,8 @@ class NodeElementSerializer(serializers.ModelSerializer):
                   'title', 'picture', 'extra')
         read_only_fields = ('slug', 'path', 'indent', 'account')
 
-    def get_extra(self, obj):
+    @staticmethod
+    def get_extra(obj):
         try:
             return obj.get('extra', {})
         except AttributeError:
@@ -135,7 +136,8 @@ class NodeElementSerializer(serializers.ModelSerializer):
             pass
         return {}
 
-    def get_indent(self, obj):
+    @staticmethod
+    def get_indent(obj):
         try:
             return obj.get('indent', 0)
         except AttributeError:
@@ -146,7 +148,8 @@ class NodeElementSerializer(serializers.ModelSerializer):
             pass
         return 0
 
-    def get_path(self, obj):
+    @staticmethod
+    def get_path(obj):
         try:
             return obj.get('path', None)
         except AttributeError:
@@ -194,7 +197,8 @@ class PageElementSerializer(serializers.ModelSerializer):
             'nb_upvotes', 'nb_followers', 'upvote', 'follow',
             'count', 'results')
 
-    def get_extra(self, obj):
+    @staticmethod
+    def get_extra(obj):
         if not isinstance(obj.extra, dict):
             try:
                 return json.loads(obj.extra)
@@ -227,7 +231,8 @@ class PageElementSerializer(serializers.ModelSerializer):
                     [parent.slug for parent in parents[0][:-1]])
                 if prefix:
                     prefix = "/" + prefix
-        return "%s/%s" % (prefix, obj.slug)
+                prefix = prefix + "/"
+        return prefix + obj.slug
 
 
 class PageElementTagSerializer(serializers.ModelSerializer):

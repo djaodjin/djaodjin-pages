@@ -146,6 +146,7 @@ def check_template(template_source, using=None):
             errs.update({engine: err})
     if errs:
         raise TemplateSyntaxError(errs)
+    return None
 
 
 def get_template_path(template=None, relative_path=None):
