@@ -199,27 +199,32 @@ class PageElementSerializer(serializers.ModelSerializer):
 
     @staticmethod
     def get_extra(obj):
-        if not isinstance(obj.extra, dict):
+        try:
+            extra = obj.extra
+        except AttributeError:
+            extra = obj.get('extra', {})
+        if not isinstance(extra, dict):
             try:
-                return json.loads(obj.extra)
+                return json.loads(extra)
             except (TypeError, ValueError):
                 pass
-        return obj.extra
+        return extra
 
     def get_upvote(self, data):
         request = self.context.get('request')
         if request and is_authenticated(request):
-            vote = Vote.objects.filter(
-                user=request.user, element=data).first()
-            return vote and vote.vote == Vote.UP_VOTE
+            if isinstance(data, PageElement):
+                vote = Vote.objects.filter(
+                    user=request.user, element=data).first()
+                return vote and vote.vote == Vote.UP_VOTE
         return None
 
     def get_follow(self, data):
         request = self.context.get('request')
         if request and is_authenticated(request):
-            follow = Follow.objects.filter(
-                user=request.user, element=data).first()
-            return follow is not None
+            if isinstance(data, PageElement):
+                return Follow.objects.filter(
+                    user=request.user, element=data).exist()
         return None
 
     def get_path(self, obj):
@@ -232,7 +237,11 @@ class PageElementSerializer(serializers.ModelSerializer):
                 if prefix:
                     prefix = "/" + prefix
                 prefix = prefix + "/"
-        return prefix + obj.slug
+        try:
+            slug = obj.slug
+        except AttributeError:
+            slug = obj.get('slug', "")
+        return prefix + slug
 
 
 class PageElementTagSerializer(serializers.ModelSerializer):
