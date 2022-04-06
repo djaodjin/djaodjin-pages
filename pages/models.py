@@ -532,12 +532,14 @@ def build_content_tree(roots=None, prefix=None, cut=None, visibility=None):
             title = root.title
             picture = root.picture
             extra = root.extra
+            text = root.text
         else:
             slug = root.get('slug', root.get('dest_element__slug'))
             orig_element_id = root.get('dest_element__pk')
             title = root.get('dest_element__title')
             picture = root.get('dest_element__picture')
             extra = root.get('dest_element__extra')
+            text = root.get('dest_element__text', None)
         leaf_slug = '/%s' % slug
         if prefix.endswith(leaf_slug):
             # Workaround because we sometimes pass a prefix and sometimes
@@ -549,9 +551,13 @@ def build_content_tree(roots=None, prefix=None, cut=None, visibility=None):
             extra = json.loads(extra)
         except (TypeError, ValueError):
             pass
-        result_node = {'title': title}
+        result_node = {'slug': slug, 'title': title}
+        if picture:
+            result_node.update({'picture': picture})
         if extra:
             result_node.update({'extra': extra})
+        if text:
+            result_node.update({'text': text})
         pks_to_leafs[orig_element_id] = {
             'path': base,
             'node': (result_node, OrderedDict())
@@ -605,20 +611,28 @@ def build_content_tree(roots=None, prefix=None, cut=None, visibility=None):
     return results
 
 
-def flatten_content_tree(roots, depth=0):
+def flatten_content_tree(roots, sort_by_key=True, depth=0):
     """
     Transforms a tree into a list with ``indent`` as the depth of a node
     in the original tree.
     """
     results = []
-    for key, values in six.iteritems(roots):
+    children = six.iteritems(roots)
+    if sort_by_key:
+        children = sorted(children,
+            key=lambda node: (
+                node[1][0].get('rank', 0)
+                if node[1][0].get('rank') is not None else 0,
+                node[1][0].get('title', "")))
+    for key, values in children:
         elem, nodes = values
         elem.update({
             'path': key,
             'indent': depth
         })
         results += [elem]
-        results += flatten_content_tree(nodes, depth=depth + 1)
+        results += flatten_content_tree(nodes,
+            sort_by_key=sort_by_key, depth=depth + 1)
     return results
 
 
