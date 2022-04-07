@@ -224,7 +224,7 @@ class PageElementSerializer(serializers.ModelSerializer):
         if request and is_authenticated(request):
             if isinstance(data, PageElement):
                 return Follow.objects.filter(
-                    user=request.user, element=data).exist()
+                    user=request.user, element=data).exists()
         return None
 
     def get_path(self, obj):
