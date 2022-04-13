@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block content %}
-<div style="margin-left: 5px;">
+<div id="app" style="margin-left: 5px;">
     <h1 class="editable" id="leaderboard-title">Edit tools</h1>
     <div>
 <p class="editable edit-formatted" id="injected-tools-formatted">
@@ -41,10 +41,13 @@ Features
 <li>There is effectively two HTTP requests (one for the EditView and one
 for the edited page).<sup>3</sup></li>
 </ul>
-<p class="lead editable edit-markdown" data-intro="Paragraph editable in markdown" data-position="bottom" id="leaderboard-message">
+<div class="lead editable edit-markdown" data-intro="Paragraph editable in markdown" data-position="bottom" id="leaderboard-message">
+This is a template for a marketing or informational website. Use it as a starting point to create something unique!
+</div>
+<div class="lead">
 <sup>1</sup> The server URL could be configured so that all editable pages
 are servered under a /content/ prefix. Example:
-</p>
+</div>
 <pre class="code">testsite/urls/content.py:
     url(r'^$', TemplateView.as_view(template_name='index.html')),
 
@@ -58,11 +61,11 @@ available if we use a minimal server-side decorator that adds the list into
 the edited page.
 </p>
 <p class="editable edit-markdown" id="injected-tools-markdown">
-<sup>3</sup> When we tried to <a href="http://stackoverflow.com/questions/6102636/html-code-as-iframe-source-rather-than-a-url">set iframe content through <code>src=&quot;data:text/html...&quot;</code></a>,
+<sup>3</sup> When we tried to <a href="http://stackoverflow.com/questions/6102636/html-code-as-iframe-source-rather-than-a-url">set iframe content through <code>src="data:text/html..."</code></a>,
 the stylesheet links defined in the iframe content are not loaded.
 When we tried to <a href="http://stackoverflow.com/questions/18044073/iframe-without-src-but-still-has-content">insert content in the iframe through Javascript</a>,
 the page loads forever (this might be a side effect of how we inject the tools
-into the iframe). I haven't tried to use <code>&lt;iframe srcdoc=&quot;...&quot;</code> yet.
+into the iframe). I haven't tried to use <code>&lt;iframe srcdoc="..."</code> yet.
 </p>
             </div>
         </div>
@@ -71,7 +74,7 @@ into the iframe). I haven't tried to use <code>&lt;iframe srcdoc=&quot;...&quot;
         <h2 class="editable" id="more-properties">More PageElement editors</h2>
         <h3>Currencies</h3>
         <div class="editable edit-currency" id="main-currency">$10.00</div>
-        <div class="editable edit-currency" data-currency-position="after" data-currency-unit="&euro;" id="main-currency2">23.99&euro;</div>
+        <div class="editable edit-currency" data-currency-position="after" data-currency-unit="€" id="main-currency2">23.99€</div>
         <h3>Ranges</h3>
         <div class="editable edit-range" data-range-max="3" data-range-min="1" data-range-step="1" id="main-range">1</div>
         <h3>Images</h3>

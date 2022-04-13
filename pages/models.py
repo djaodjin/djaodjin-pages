@@ -149,11 +149,12 @@ class PageElementManager(models.Manager):
             else:
                 filtered_in = accounts_q
 
-        queryset = self.filter(filtered_in) if filtered_in else self.all()
-        return queryset.extra(where=[
+        queryset = (self.filter(filtered_in)
+            if filtered_in else self.all()).extra(where=[
             '(SELECT COUNT(*) FROM pages_relationship'\
             ' WHERE pages_relationship.dest_element_id = pages_pageelement.id)'\
             ' = 0'])
+        return queryset
 
     def get_leafs(self):
         return self.all().extra(where=[

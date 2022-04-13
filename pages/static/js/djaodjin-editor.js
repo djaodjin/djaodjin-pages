@@ -417,6 +417,12 @@
             }
         },
 
+        getOriginText: function(){
+            var self = this;
+            self.originText = $.trim(self.$el.text());
+            return self.originText;
+        },
+
         getProperties: function(){
             var self = this;
             self.classElement = self.$el.attr("class");
@@ -470,34 +476,6 @@
             self.$mardownToolHtml.hide();
             self.init(); // adds the handlers back to self.$el.
         },
-
-        getOriginText: function(){
-            var self = this;
-            self.originText = "";
-            if (self.options.baseUrl){
-                $.ajax({
-                    method: "GET",
-                    url: self.elementUrl(),
-                    contentType: "application/json; charset=utf-8",
-                    beforeSend: function(xhr) {
-                        xhr.setRequestHeader("X-CSRFToken", self._getCSRFToken());
-                    },
-                    async: false,
-                    success: function(data){
-                        if (self.$el.attr("data-key")){
-                            self.originText = data[self.$el.attr("data-key")];
-                        }else{
-                            self.originText = data.text;
-                        }
-                    },
-                    error: function(){
-                        self.originText = $.trim(self.$el.text());
-                    }
-                });
-            }
-            return self.originText;
-        }
-
     });
 
     function RangeEditor(element, options){
