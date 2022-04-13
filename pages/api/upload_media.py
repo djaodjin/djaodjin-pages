@@ -82,14 +82,15 @@ class MediaListAPIView(UploadedImageMixin, AccountMixin, ListCreateAPIView):
             return MediaItemListSerializer
         return super(MediaListAPIView, self).get_serializer_class()
 
-    def get(self, request, *args, **kwargs): #pylint:disable=unused-argument
+    def get(self, request, *args, **kwargs):
+        #pylint:disable=unused-argument,unused-variable
         tags = None
         search = request.GET.get('q')
         if search:
             validate_title(search)
             tags = MediaTag.objects.filter(tag__startswith=search)\
                 .values_list('location', flat=True)
-        results, total_count = self.list_media(
+        results, unused_total_count = self.list_media(
             get_default_storage(self.request, self.account), tags,
             prefix=kwargs.get('path', '.'))
         return self.get_paginated_response(results)
@@ -176,9 +177,9 @@ class MediaListAPIView(UploadedImageMixin, AccountMixin, ListCreateAPIView):
             DELETE /api/themes/assets/?location=/media/item/url1.jpg HTTP/1.1
 
         """
-        #pylint: disable=unused-argument,too-many-locals
+        #pylint: disable=unused-variable,unused-argument,too-many-locals
         storage = get_default_storage(self.request, self.account)
-        assets, total_count = self.list_media(
+        assets, unused_total_count = self.list_media(
             storage,
             self.build_filter_list({'items': [
                 {'location': request.query_params.get('location')}]}))
@@ -243,11 +244,11 @@ class MediaListAPIView(UploadedImageMixin, AccountMixin, ListCreateAPIView):
               }]
             }
         """
-        #pylint: disable=unused-argument
+        #pylint: disable=unused-argument,unused-variable
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        assets, total_count = self.list_media(
+        assets, unused_total_count = self.list_media(
             get_default_storage(self.request, self.account),
             self.build_filter_list(serializer.validated_data))
         if not assets:

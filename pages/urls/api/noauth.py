@@ -1,4 +1,4 @@
-# Copyright (c) 2020, DjaoDjin inc.
+# Copyright (c) 2022, DjaoDjin inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -28,7 +28,7 @@ API URLs for readers who could be unauthenticated
 from django.conf.urls import url
 
 from ... import settings
-from ...api.edition import (PageElementSearchAPIView, PageElementAPIView,
+from ...api.elements import (PageElementSearchAPIView, PageElementAPIView,
   PageElementDetailAPIView)
 
 urlpatterns = [

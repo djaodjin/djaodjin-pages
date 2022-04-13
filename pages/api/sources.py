@@ -150,6 +150,7 @@ class SourceEditAPIView(ThemePackageMixin, UpdateEditableMixin,
             dest.write(block_text)
 
     def update(self, request, *args, **kwargs):
+        #pylint:disable=unused-argument,unused-variable
         #pylint:disable=too-many-locals,too-many-nested-blocks
         #pylint:disable=too-many-statements
         serializer = self.get_serializer(data=request.data)
@@ -318,7 +319,7 @@ class SourceEditAPIView(ThemePackageMixin, UpdateEditableMixin,
                             template_path=template_path)
                         buffered_tokens = []
 
-            except UnicodeDecodeError as err:
+            except UnicodeDecodeError:
                 LOGGER.warning("%s: Templates can only be constructed "
                     "from unicode or UTF-8 strings.", template_path)
             dest = dest.getvalue()

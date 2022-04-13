@@ -6,7 +6,7 @@ Vue.component('editables-list', {
     ],
     data: function() {
         return {
-            url: this.$urls.pages.api_content,
+            url: this.$urls.api_content,
             params: {
                 o: '-created_at'
             },
@@ -48,7 +48,7 @@ Vue.component('editables-detail', {
     ],
     data: function() {
         return {
-            url: this.$urls.pages.api_content,
+            url: this.$urls.api_content,
             tags: [],
             isFollowing: false,
             nbFollowers: 0,
@@ -75,8 +75,8 @@ Vue.component('editables-detail', {
         // functions available to readers
         submitFollow: function() {
             var vm = this;
-            vm.reqPost(vm.isFollowing ? this.$urls.pages.api_unfollow
-                       : this.$urls.pages.api_follow,
+            vm.reqPost(vm.isFollowing ? this.$urls.api_unfollow
+                       : this.$urls.api_follow,
                 function success(resp) {
                     vm.isFollowing = !vm.isFollowing;
                     vm.nbFollowers += vm.isFollowing ? 1 : -1;
@@ -85,8 +85,8 @@ Vue.component('editables-detail', {
         },
         submitVote: function() {
             var vm = this;
-            vm.reqPost(vm.isUpVote ? this.$urls.pages.api_downvote
-                       : this.$urls.pages.api_upvote,
+            vm.reqPost(vm.isUpVote ? this.$urls.api_downvote
+                       : this.$urls.api_upvote,
                 function success(resp) {
                     vm.isUpVote = !vm.isUpVote;
                     vm.nbUpVotes += vm.isUpVote ? 1 : -1;
@@ -95,7 +95,7 @@ Vue.component('editables-detail', {
         },
         submitComment: function() {
             var vm = this;
-            vm.reqPost(this.$urls.pages.api_comments, {
+            vm.reqPost(this.$urls.api_comments, {
                 text: vm.message},
             function success(resp) {
                 vm.message = "";
@@ -116,7 +116,7 @@ Vue.component('editables-detail', {
                 vm.tags = resp.data.extra.tags;
             }
         });
-        vm.reqGet(this.$urls.pages.api_comments,
+        vm.reqGet(this.$urls.api_comments,
         function success(resp) {
             vm.comments = resp;
         });

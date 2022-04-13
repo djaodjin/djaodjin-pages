@@ -48,6 +48,7 @@ setup(
         'pages.templatetags',
         'pages.urls',
         'pages.urls.api',
+        'pages.urls.views',
         'pages.views'],
     package_data={'pages': [
         'static/css/*', 'static/js/*',

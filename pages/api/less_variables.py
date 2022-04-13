@@ -24,10 +24,8 @@
 #pylint: disable=no-member
 
 
-from django.db import transaction
-from rest_framework import generics, status
+from rest_framework import generics
 from rest_framework.mixins import CreateModelMixin
-from rest_framework.response import Response
 
 from ..mixins import AccountMixin
 from ..models import LessVariable

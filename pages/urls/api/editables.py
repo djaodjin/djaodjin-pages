@@ -1,4 +1,4 @@
-# Copyright (c) 2021, DjaoDjin inc.
+# Copyright (c) 2022, DjaoDjin inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,7 @@
 from django.conf.urls import url
 
 from ...import settings
-from ...api.edition import (PageElementEditableListAPIView,
+from ...api.elements import (PageElementEditableListAPIView,
     PageElementEditableDetail)
 from ...api.relationship import (PageElementAliasAPIView,
     PageElementMirrorAPIView, PageElementMoveAPIView, RelationShipListAPIView)
@@ -44,6 +44,6 @@ urlpatterns = [
         PageElementMirrorAPIView.as_view(), name='pages_api_mirror_node'),
     url(r'^(?P<path>%s)$' % settings.NON_EMPTY_PATH_RE,
         PageElementEditableDetail.as_view(), name='pages_api_edit_element'),
-    url(r'^$',
-        PageElementEditableListAPIView.as_view(), name='pages_api_edit'),
+    url(r'^$', PageElementEditableListAPIView.as_view(),
+        name='pages_api_editables_index'),
 ]

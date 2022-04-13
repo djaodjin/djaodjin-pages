@@ -1,4 +1,4 @@
-# Copyright (c) 2018, Djaodjin Inc.
+# Copyright (c) 2022, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -22,13 +22,10 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from django.conf.urls import url
-
-from ..views.themes import ThemePackagesView, ThemePackageDownloadView
+from django.conf.urls import url, include
 
 urlpatterns = [
-    url(r'^themes/download/',
-        ThemePackageDownloadView.as_view(), name='theme_download'),
-    url(r'^themes/',
-        ThemePackagesView.as_view(), name='theme_update'),
+    url(r'^themes/', include('pages.urls.views.themes')),
+    url(r'^editables/', include('pages.urls.views.editables')),
+    url(r'^', include('pages.urls.views.elements')),
 ]

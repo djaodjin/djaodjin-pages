@@ -1,4 +1,4 @@
-# Copyright (c) 2020, DjaoDjin inc.
+# Copyright (c) 2022, DjaoDjin inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -22,11 +22,11 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#pylint: disable=no-name-in-module,unused-import
+#pylint:disable=unused-import,import-outside-toplevel
+#pylint:disable=no-name-in-module,import-error
 from functools import WRAPPER_ASSIGNMENTS
 import six
 
-#pylint:disable=no-name-in-module,import-error
 from six.moves.urllib.parse import urljoin, urlparse, urlsplit, urlunparse
 
 
@@ -78,7 +78,6 @@ except ImportError: # django < 1.7
 def get_loaders():
     loaders = []
     try:
-        #pylint:disable=import-outside-toplevel
         from django.template.loader import _engine_list
         engines = _engine_list()
         for engine in engines:
@@ -92,7 +91,6 @@ def get_loaders():
                 pass
 
     except ImportError:# django < 1.8
-        #pylint:disable=import-outside-toplevel
         from django.template.loader import find_template_loader
         for loader_name in django_settings.TEMPLATE_LOADERS:
             template_loader = find_template_loader(loader_name)
@@ -116,7 +114,6 @@ def render_template(template, context, request):
 try:
     from django.template.base import DebugLexer
 except ImportError: # django < 1.8
-    #pylint:disable=import-error
     from django.template.debug import DebugLexer as BaseDebugLexer
 
     class DebugLexer(BaseDebugLexer):
@@ -141,7 +138,6 @@ class DjangoTemplate(object):
 
     @property
     def template_builtins(self):
-        #pylint:disable=import-outside-toplevel
         from django.template.base import builtins
         return builtins
 
@@ -153,7 +149,6 @@ class DjangoTemplate(object):
 
 def get_html_engine():
     try:
-        #pylint:disable=import-outside-toplevel
         from django.template import engines
         from django.template.utils import InvalidTemplateEngineError
         try:

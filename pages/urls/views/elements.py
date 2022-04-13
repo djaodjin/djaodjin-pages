@@ -22,10 +22,14 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from django.conf.urls import url, include
-from pages.views.pages import EditView
+from django.conf.urls import url
+
+from ... import settings
+from ...views.elements import PageElementView
 
 urlpatterns = [
-    url(r'^api/', include('pages.urls.api')),
-    url(r'^', include('pages.urls.views')),
+    url(r'^(?P<path>%s)$' % settings.PATH_RE,
+        PageElementView.as_view(), name='pages_element'),
+    url(r'^$',
+        PageElementView.as_view(), name='pages_index'),
 ]

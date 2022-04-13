@@ -122,9 +122,10 @@ class RelationShip(models.Model):
 
 class PageElementQuerySet(models.QuerySet):
 
-    def build_content_tree(self, prefix="", cut=None, visibility=None):
+    def build_content_tree(self, prefix="", cut=None,
+                           visibility=None, accounts=None):
         return build_content_tree(roots=self, prefix=prefix,
-            cut=cut, visibility=visibility)
+            cut=cut, visibility=visibility, accounts=accounts)
 
 
 class PageElementManager(models.Manager):
@@ -132,14 +133,22 @@ class PageElementManager(models.Manager):
     def get_queryset(self):
         return PageElementQuerySet(self.model, using=self._db)
 
-    def get_roots(self, visibility=None):
+    def get_roots(self, visibility=None, accounts=None):
         filtered_in = None
         if visibility:
             for visible in visibility:
+                visibility_q = Q(extra__contains=visible)
                 if filtered_in:
-                    filtered_in |= Q(extra__contains=visible)
+                    filtered_in |= visibility_q
                 else:
-                    filtered_in = Q(extra__contains=visible)
+                    filtered_in = visibility_q
+        if accounts:
+            accounts_q = Q(account__slug__in=accounts)
+            if filtered_in:
+                filtered_in |= accounts_q
+            else:
+                filtered_in = accounts_q
+
         queryset = self.filter(filtered_in) if filtered_in else self.all()
         return queryset.extra(where=[
             '(SELECT COUNT(*) FROM pages_relationship'\
@@ -467,7 +476,8 @@ class ThemePackage(models.Model):
         return self.name
 
 
-def build_content_tree(roots=None, prefix=None, cut=None, visibility=None):
+def build_content_tree(roots=None, prefix=None, cut=None,
+                       visibility=None, accounts=None):
     """
     Returns a content tree from a list of roots.
 
@@ -494,7 +504,8 @@ def build_content_tree(roots=None, prefix=None, cut=None, visibility=None):
     # the number of queries to the database.
     if roots is None:
         roots = PageElement.objects.get_roots(
-            visibility=visibility).order_by('-account_id', 'title')
+            visibility=visibility, accounts=accounts).order_by(
+            '-account_id', 'title')
         if prefix and prefix != '/':
             LOGGER.warning("[build_content_tree] prefix=%s but no roots"\
                 " were defined", prefix)
@@ -510,17 +521,22 @@ def build_content_tree(roots=None, prefix=None, cut=None, visibility=None):
         prefix = '/%s' % prefix
     if prefix.endswith("/"):
         prefix = prefix[:-1]
-
+    filtered_in = None
     if visibility:
-        filtered_in = None
         for visible in visibility:
+            visibility_q = Q(dest_element__extra__contains=visible)
             if filtered_in:
-                filtered_in |= Q(dest_element__extra__contains=visible)
+                filtered_in |= visibility_q
             else:
-                filtered_in = Q(dest_element__extra__contains=visible)
-        edges_qs = RelationShip.objects.filter(filtered_in)
-    else:
-        edges_qs = RelationShip.objects.all()
+                filtered_in = visibility_q
+    if accounts:
+        accounts_q = Q(dest_element__account__slug__in=accounts)
+        if filtered_in:
+            filtered_in |= accounts_q
+        else:
+            filtered_in = accounts_q
+    edges_qs = (RelationShip.objects.filter(filtered_in)
+        if filtered_in else  RelationShip.objects.all())
 
     results = OrderedDict()
     pks_to_leafs = {}

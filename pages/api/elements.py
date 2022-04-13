@@ -23,46 +23,24 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import logging
 
-from django.http import Http404
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import Max, Q
+from django.http import Http404
 from rest_framework import generics, response as api_response
 from rest_framework.mixins import CreateModelMixin
 from rest_framework.filters import OrderingFilter, SearchFilter
 
-from .. import settings
 from ..compat import reverse
+from ..helpers import ContentCut
+from ..mixins import AccountMixin, PageElementMixin, TrailMixin
 from ..models import (PageElement, RelationShip, build_content_tree,
     flatten_content_tree)
 from ..serializers import (NodeElementSerializer, PageElementSerializer,
     PageElementTagSerializer)
-from ..mixins import AccountMixin, PageElementMixin, TrailMixin
 from ..utils import validate_title
 
-
 LOGGER = logging.getLogger(__name__)
-
-
-class ContentCut(object):
-    """
-    Visitor that cuts down a content tree whenever TAG_PAGEBREAK is encountered.
-    """
-    TAG_PAGEBREAK = 'pagebreak'
-
-    def __init__(self, tag=TAG_PAGEBREAK, depth=1):
-        self.match = tag
-
-    def enter(self, tag):
-        if tag and self.match:
-            if isinstance(tag, dict):
-                return self.match not in tag.get('tags', [])
-            return self.match not in tag
-        return True
-
-    def leave(self, attrs, subtrees):
-        #pylint:disable=unused-argument
-        return True
 
 
 class PageElementAPIView(TrailMixin, generics.ListAPIView):
@@ -114,7 +92,12 @@ class PageElementAPIView(TrailMixin, generics.ListAPIView):
     def visibility(self):
         return None
 
+    @property
+    def owners(self):
+        return None
+
     def attach(self, elements):
+        #pylint:disable=no-self-use
         return elements
 
     def get_cut(self):
@@ -126,15 +109,26 @@ class PageElementAPIView(TrailMixin, generics.ListAPIView):
             content_tree = build_content_tree(
                 roots=[self.element], prefix=self.full_path,
                 cut=self.get_cut(),
-                visibility=self.visibility)
-            results = flatten_content_tree(content_tree, depth=-1)
-            results.pop(0)
+                visibility=self.visibility,
+                accounts=self.owners)
+            items = flatten_content_tree(content_tree, depth=-1)
+            items.pop(0)
         else:
             content_tree = build_content_tree(
                 roots=None, prefix=self.full_path,
                 cut=self.get_cut(),
-                visibility=self.visibility)
-            results = flatten_content_tree(content_tree)
+                visibility=self.visibility,
+                accounts=self.owners)
+            items = flatten_content_tree(content_tree)
+
+        results = []
+        for item in items:
+            extra = item.get('extra', {})
+            if extra:
+                searchable = extra.get('searchable', False)
+                if searchable:
+                    results += [item]
+
         return results
 
     def list(self, request, *args, **kwargs):
@@ -181,7 +175,7 @@ class PageElementSearchAPIView(PageElementAPIView):
     """
 
     def get_results(self):
-        results  = []
+        results = []
         for item in super(PageElementSearchAPIView, self).get_results():
             extra = item.get('extra', {})
             if extra:
@@ -205,8 +199,7 @@ class PageElementSearchAPIView(PageElementAPIView):
         return []
 
 
-class PageElementDetailAPIView(AccountMixin, PageElementMixin,
-                               generics.RetrieveAPIView):
+class PageElementDetailAPIView(TrailMixin, generics.RetrieveAPIView):
     """
     Retrieves details on a page element
 
@@ -237,7 +230,7 @@ class PageElementDetailAPIView(AccountMixin, PageElementMixin,
         return self.element
 
 
-class PageElementEditableListAPIView(TrailMixin, AccountMixin,
+class PageElementEditableListAPIView(AccountMixin, TrailMixin,
                                      generics.ListCreateAPIView):
     """
     List editable page elements
@@ -322,13 +315,12 @@ class PageElementEditableListAPIView(TrailMixin, AccountMixin,
         """
         Returns a list of heading and best practices
         """
-        account_url_kwarg = settings.ACCOUNT_URL_KWARG
-        if account_url_kwarg in self.kwargs:
+        if self.account_url_kwarg in self.kwargs:
             queryset = PageElement.objects.filter(account=self.account)
         else:
             queryset = PageElement.objects.all()
         if self.path:
-            queryset = queryset.filter(consumption__path__startswith=self.path)
+            queryset = queryset.filter(question__path__startswith=self.path)
         try:
             search_string = self.request.query_params.get('q', None)
             if search_string is not None:
@@ -377,8 +369,7 @@ class PageElementEditableListAPIView(TrailMixin, AccountMixin,
         serializer.save(account=self.account)
 
 
-class PageElementEditableDetail(AccountMixin, PageElementMixin,
-                                CreateModelMixin,
+class PageElementEditableDetail(AccountMixin, TrailMixin, CreateModelMixin,
                                 generics.RetrieveUpdateDestroyAPIView):
     """
     Retrieves an editable page element
@@ -501,7 +492,7 @@ class PageElementEditableDetail(AccountMixin, PageElementMixin,
 
     def get_success_headers(self, data):
         path = data.get('path').strip(self.URL_PATH_SEP) + self.URL_PATH_SEP
-        return {'Location': reverse('pages_edit_element',
+        return {'Location': reverse('pages_editables_element',
             args=(self.element.account, path))}
 
     def update(self, request, *args, **kwargs):

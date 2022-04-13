@@ -1,4 +1,4 @@
-# Copyright (c) 2021, Djaodjin Inc.
+# Copyright (c) 2022, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -24,10 +24,11 @@
 
 from django.conf.urls import url
 
-from .. import settings
-from ..views.editables import PageElementEditableView
+from ...views.themes import ThemePackagesView, ThemePackageDownloadView
 
 urlpatterns = [
-    url(r'^editables/(?P<path>%s)$' % settings.PATH_RE,
-        PageElementEditableView.as_view(), name='pages_edit_element'),
+    url(r'^download/',
+        ThemePackageDownloadView.as_view(), name='theme_download'),
+    url(r'^',
+        ThemePackagesView.as_view(), name='theme_update'),
 ]

@@ -9,7 +9,7 @@ https://docs.djangoproject.com/en/1.7/ref/settings/
 """
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
-import logging, os, sys
+import logging, os, re, sys
 
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 RUN_DIR = os.getcwd()
@@ -24,7 +24,6 @@ def load_config(confpath):
     '''
     # todo: consider using something like ConfigObj for this:
     # http://www.voidspace.org.uk/python/configobj.html
-    import re, sys
     if os.path.isfile(confpath):
         sys.stderr.write('config loaded from %s\n' % confpath)
         with open(confpath) as conffile:
@@ -60,7 +59,7 @@ if not hasattr(sys.modules[__name__], "SECRET_KEY"):
 DEBUG = True
 if os.getenv('DEBUG'):
     # Enable override on command line.
-    DEBUG = True if int(os.getenv('DEBUG')) > 0 else False
+    DEBUG = bool(int(os.getenv('DEBUG')) > 0)
 
 INSTALLED_APPS = (
     'django_extensions',

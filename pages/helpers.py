@@ -22,10 +22,25 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from django.conf.urls import url, include
-from pages.views.pages import EditView
+class ContentCut(object):
+    """
+    Visitor that cuts down a content tree whenever TAG_PAGEBREAK is encountered.
+    """
+    TAG_PAGEBREAK = 'pagebreak'
 
-urlpatterns = [
-    url(r'^api/', include('pages.urls.api')),
-    url(r'^', include('pages.urls.views')),
-]
+    def __init__(self, tag=TAG_PAGEBREAK, depth=1):
+        #pylint:disable=unused-argument
+        self.match = tag
+
+    def enter(self, tag):
+        if tag and self.match:
+            if isinstance(tag, dict):
+                if tag.get(self.match, False):
+                    return False
+                return self.match not in tag.get('tags', [])
+            return self.match not in tag
+        return True
+
+    def leave(self, attrs, subtrees):
+        #pylint:disable=unused-argument,no-self-use
+        return True
