@@ -95,8 +95,7 @@ def get_default_storage(request, account=None, **kwargs):
 def get_default_storage_base(request, account=None, **kwargs):
     # default implementation
     storage_class = get_storage_class()
-    try:
-        _ = storage_class.bucket_name
+    if 's3boto' in storage_class.__name__.lower():
         storage_kwargs = {}
         storage_kwargs.update(**kwargs)
         for key in ['access_key', 'secret_key', 'security_token']:
@@ -107,7 +106,7 @@ def get_default_storage_base(request, account=None, **kwargs):
         LOGGER.debug("create %s(bucket='%s', location='%s', %s)",
             storage_class.__name__, bucket, location, storage_kwargs)
         return storage_class(bucket=bucket, location=location, **storage_kwargs)
-    except AttributeError:
+    else:
         LOGGER.debug("``%s`` does not contain a ``bucket_name``"\
             " field, default to FileSystemStorage.", storage_class)
     return _get_file_system_storage(account)
