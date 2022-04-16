@@ -101,11 +101,12 @@ def get_default_storage_base(request, account=None, **kwargs):
         for key in ['access_key', 'secret_key', 'security_token']:
             if key in request.session:
                 storage_kwargs[key] = request.session[key]
-        bucket = _get_bucket_name(account)
+        bucket_name = _get_bucket_name(account)
         location = _get_media_prefix(account)
-        LOGGER.debug("create %s(bucket='%s', location='%s', %s)",
-            storage_class.__name__, bucket, location, storage_kwargs)
-        return storage_class(bucket=bucket, location=location, **storage_kwargs)
+        LOGGER.debug("create %s(bucket_name='%s', location='%s', %s)",
+            storage_class.__name__, bucket_name, location, storage_kwargs)
+        return storage_class(bucket_name=bucket_name, location=location,
+            **storage_kwargs)
     else:
         LOGGER.debug("``%s`` does not contain a ``bucket_name``"\
             " field, default to FileSystemStorage.", storage_class)
