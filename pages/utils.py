@@ -92,12 +92,14 @@ def get_default_storage(request, account=None, **kwargs):
     return get_default_storage_base(request, account=account, **kwargs)
 
 
-def get_default_storage_base(request, account=None, **kwargs):
+def get_default_storage_base(request, account=None, public=False, **kwargs):
     # default implementation
     storage_class = get_storage_class()
     if 's3boto' in storage_class.__name__.lower():
         storage_kwargs = {}
         storage_kwargs.update(**kwargs)
+        if public:
+            storage_kwargs.update({'default_acl': 'public-read'})
         for key in ['access_key', 'secret_key', 'security_token']:
             if key in request.session:
                 storage_kwargs[key] = request.session[key]
