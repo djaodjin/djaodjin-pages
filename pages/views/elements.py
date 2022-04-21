@@ -165,6 +165,7 @@ class PageElementEditableView(AccountMixin, PageElementView):
     to the `account`.
     """
     template_name = 'pages/editables.html'
+    breadcrumb_url = 'pages_editables_element'
 
     def get_reverse_kwargs(self):
         """

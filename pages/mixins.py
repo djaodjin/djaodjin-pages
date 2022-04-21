@@ -31,7 +31,7 @@ from django.utils._os import safe_join
 from rest_framework.generics import get_object_or_404
 
 from . import settings
-from .compat import import_string, six, urlsplit
+from .compat import import_string, reverse, six, urlsplit
 from .models import MediaTag, PageElement, get_active_theme
 from .extras import AccountMixinBase
 
@@ -48,8 +48,8 @@ class TrailMixin(object):
     Generate a trail of PageElement based on a path.
     """
     URL_PATH_SEP = '/'
-    DB_PATH_SEP = '/'
     path_url_kwarg = 'path'
+    breadcrumb_url = 'pages_element'
 
     @property
     def element(self):
@@ -74,11 +74,11 @@ class TrailMixin(object):
     @property
     def full_path(self):
         if not hasattr(self, '_full_path'):
-            self._full_path = self.DB_PATH_SEP.join(
+            self._full_path = self.URL_PATH_SEP.join(
                 [str(elem) for elem in self.get_full_element_path(self.path)])
             if (self._full_path and
-                not self._full_path.startswith(self.DB_PATH_SEP)):
-                self._full_path = self.DB_PATH_SEP + self._full_path
+                not self._full_path.startswith(self.URL_PATH_SEP)):
+                self._full_path = self.URL_PATH_SEP + self._full_path
         return self._full_path
 
     def get_full_element_path(self, path):
@@ -110,6 +110,23 @@ class TrailMixin(object):
         reverse_url_kwargs = super(TrailMixin, self).get_reverse_kwargs()
         reverse_url_kwargs += [self.path_url_kwarg]
         return reverse_url_kwargs
+
+    def get_context_data(self, **kwargs):
+        context = super(TrailMixin, self).get_context_data(**kwargs)
+        breadcrumbs = []
+        parts = self.path.strip(self.URL_PATH_SEP).split(self.URL_PATH_SEP)
+        title_by_slug = dict(PageElement.objects.filter(
+            slug__in=parts).values_list('slug', 'title'))
+        for idx, part in enumerate(parts):
+            title = title_by_slug.get(part)
+            if title:
+                url_kwargs = self.get_url_kwargs()
+                url_kwargs.update({
+                    self.path_url_kwarg: self.URL_PATH_SEP.join(parts[:idx+1])})
+                breadcrumbs += [(part, title, reverse(self.breadcrumb_url,
+                    kwargs=url_kwargs))]
+        context.update({'breadcrumbs': breadcrumbs})
+        return context
 
 
 class PageElementMixin(object):
