@@ -9,8 +9,8 @@ Major Features:
 
 Tested with
 
-- **Python:** 3.6, **Django:** 2.2 ([LTS](https://www.djangoproject.com/download/)), **Django Rest Framework:** 3.12
-- **Python:** 3.6, **Django:** 3.2 (latest), **Django Rest Framework:** 3.12
+- **Python:** 3.7, **Django:** 2.2 ([LTS](https://www.djangoproject.com/download/)), **Django Rest Framework:** 3.12
+- **Python:** 3.7, **Django:** 3.2 (latest), **Django Rest Framework:** 3.12
 - **Python:** 2.7, **Django:** 1.11 (legacy), **Django Rest Framework:** 3.9.4
 
 
@@ -39,8 +39,10 @@ the prerequisites, create the database then run the testsite webapp.
 Release Notes
 =============
 
-0.4.2
+0.4.3
 
-  * clears cache for Jinja2>=2.9
+  * adds public parameter for profile pictures
+  * sorts while flattening content tree
+  * adds breadcrumbs in context
 
 [previous release notes](changelog)

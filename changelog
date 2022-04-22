@@ -1,3 +1,11 @@
+0.4.3
+
+  * adds public parameter for profile pictures
+  * sorts while flattening content tree
+  * adds breadcrumbs in context
+
+ -- Sebastien Mirolo <smirolo@djaodjin.com>  Thu,  21 Oct 2022 22:39:00 -0700
+
 0.4.2
 
   * clears cache for Jinja2>=2.9
