@@ -52,6 +52,24 @@ class TrailMixin(object):
     breadcrumb_url = 'pages_element'
 
     @property
+    def breadcrumbs(self):
+        if not hasattr(self, '_breadcrumbs'):
+            self._breadcrumbs = []
+            parts = self.path.strip(self.URL_PATH_SEP).split(self.URL_PATH_SEP)
+            title_by_slug = dict(PageElement.objects.filter(
+                slug__in=parts).values_list('slug', 'title'))
+            for idx, part in enumerate(parts):
+                title = title_by_slug.get(part)
+                if title:
+                    url_kwargs = self.get_url_kwargs()
+                    url_kwargs.update({
+                        self.path_url_kwarg: self.URL_PATH_SEP.join(
+                            parts[:idx + 1])})
+                    self._breadcrumbs += [(part, title,
+                        reverse(self.breadcrumb_url, kwargs=url_kwargs))]
+        return self._breadcrumbs
+
+    @property
     def element(self):
         if not hasattr(self, '_element'):
             path = self.path.strip(self.URL_PATH_SEP)
@@ -113,19 +131,7 @@ class TrailMixin(object):
 
     def get_context_data(self, **kwargs):
         context = super(TrailMixin, self).get_context_data(**kwargs)
-        breadcrumbs = []
-        parts = self.path.strip(self.URL_PATH_SEP).split(self.URL_PATH_SEP)
-        title_by_slug = dict(PageElement.objects.filter(
-            slug__in=parts).values_list('slug', 'title'))
-        for idx, part in enumerate(parts):
-            title = title_by_slug.get(part)
-            if title:
-                url_kwargs = self.get_url_kwargs()
-                url_kwargs.update({
-                    self.path_url_kwarg: self.URL_PATH_SEP.join(parts[:idx+1])})
-                breadcrumbs += [(part, title, reverse(self.breadcrumb_url,
-                    kwargs=url_kwargs))]
-        context.update({'breadcrumbs': breadcrumbs})
+        context.update({'breadcrumbs': self.breadcrumbs})
         return context
 
 

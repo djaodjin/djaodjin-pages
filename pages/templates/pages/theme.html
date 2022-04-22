@@ -2,24 +2,29 @@
 {% load static %}
 
 {% block content %}
-<div>
-  <div class="col-sm-offset-3 col-sm-6">
-    <div id="theme-upload" class="pages-upload"
-         data-complete-url="{{urls.pages.api_themes}}"
-         djupload-success >
-      <div class="dropzone-previews previewsContainer">
-        <span class="dz-default dz-message"><i class="fa fa-cloud"></i> Upload theme package (.zip)</span>
+<div id="app">
+  <theme-update inline-template>
+    <div>
+      <div id="theme-upload" class="pages-upload"
+           data-complete-url="{{urls.pages.api_themes}}"
+           djupload-success >
+        <div class="dropzone-previews previewsContainer">
+          <span class="dz-default dz-message"><i class="fa fa-cloud"></i> Upload theme package (.zip)</span>
+        </div>
+      </div>
+      <div>
+        <a id="download-theme" href="{{urls.pages.theme_download}}" target="_blank">Download as .zip file</a>
+        <button id="reset-theme"
+                @click.prevent="reset">
+          Restore to default
+        </button>
       </div>
     </div>
-    <div class="text-center">
-      <a id="download-theme" href="{{urls.pages.theme_download}}" target="_blank">Download as .zip file</a>
-      <button id="reset-theme">Reset to default</button>
-    </div>
-  </div>
+  </theme-update>
 </div>
 {% endblock %}
 
-{% block bodyscripts %}
+{% block pages_scripts %}
 <script type="text/javascript">
 djaodjinSettings = {
   urls: {
@@ -29,8 +34,22 @@ djaodjinSettings = {
   }
 };
 </script>
-<script src='{% static "js/djaodjin-resources.js" %}'></script>
-<script src='{% static "vendor/dropzone.js" %}'></script>
-<script src='{% static "js/djaodjin-upload.js" %}'></script>
-<script src='{% static "js/djaodjin-pages.js" %}'></script>
+<script type="text/javascript" charset="utf-8" src='{% static "js/djaodjin-themes-vue.js" %}'></script>
+<script type="text/javascript" charset="utf-8" src='{% static "vendor/dropzone.js" %}'></script>
+<script type="text/javascript" charset="utf-8" src='{% static "js/djaodjin-resources.js" %}'></script>
+<script type="text/javascript" charset="utf-8" src='{% static "js/djaodjin-upload.js" %}'></script>
+<script type="text/javascript">
+jQuery(document).ready(function($) {
+
+{% if urls.pages and urls.pages.api_themes %}
+    $("#theme-upload").djupload({
+        uploadUrl: "{{urls.pages.api_themes}}",
+        uploadSuccess: function(file, resp) {
+            showMessages(['"${filename}" uploaded sucessfully'.replace('${filename}', file.name)], 'success');
+        }
+    });
+    {% endif %}
+
+});
+</script>
 {% endblock %}

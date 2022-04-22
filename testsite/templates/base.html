@@ -73,6 +73,7 @@ Vue.prototype.$urls = {% if urls %}{{urls|to_json}}{% else %}{}{% endif %};
 <script type="text/javascript" charset="utf-8" src="/static/js/djaodjin-resources.js"></script>
 <script type="text/javascript" charset="utf-8" src="/static/js/djaodjin-resources-vue.js"></script>
 <script type="text/javascript" charset="utf-8" src="/static/js/djaodjin-pages-vue.js"></script>
+{% block pages_scripts %}{% endblock %}
 <script type="text/javascript">
 if( document.getElementById('app') ) {
   var app = new Vue({
@@ -81,7 +82,6 @@ if( document.getElementById('app') ) {
   });
 }
 </script>
-  {% block pages_scripts %}{% endblock %}
   {% endblock %}
 </body>
 </html>

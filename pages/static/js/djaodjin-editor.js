@@ -5,7 +5,7 @@
  */
 
 /* global location setTimeout jQuery */
-/* global getMetaCSRFToken showMessages */
+/* global getMetaCSRFToken showErrorMessages */
 
 (function ($) {
     "use strict";
