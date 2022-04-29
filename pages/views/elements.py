@@ -28,6 +28,7 @@ from django.views.generic import TemplateView
 from deployutils.apps.django.mixins import AccessiblesMixin
 
 from ..compat import NoReverseMatch, reverse, six
+from ..helpers import get_extra
 from ..models import RelationShip
 from ..mixins import AccountMixin, TrailMixin
 from ..utils import update_context_urls
@@ -73,10 +74,16 @@ class PageElementView(TrailMixin, AccessiblesMixin, TemplateView):
         return self._is_prefix
 
     def get_template_names(self):
+        candidates = []
+        if self.element:
+            candidates += ["pages/%s.html" % layout
+                for layout in get_extra(self.element, 'layouts', [])]
         if self.is_prefix:
             # It is not a leaf, let's return the list view
-            return super(PageElementView, self).get_template_names()
-        return ['pages/element.html']
+            candidates += super(PageElementView, self).get_template_names()
+        else:
+            candidates += ['pages/element.html']
+        return candidates
 
     def get_context_data(self, **kwargs):
         context = super(PageElementView, self).get_context_data(**kwargs)

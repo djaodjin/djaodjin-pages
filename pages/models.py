@@ -503,6 +503,9 @@ def build_content_tree(roots=None, prefix=None, cut=None,
     # is stored in terms of `PageElement` (node) and `Relationship` (edge).
     # We use a breadth-first search algorithm here such as to minimize
     # the number of queries to the database.
+    LOGGER.debug("build_content_tree"\
+        "(roots=%s, prefix=%s, cut=%s, visibility=%s, accounts=%s)",
+        roots, prefix, cut, visibility, accounts)
     if roots is None:
         roots = PageElement.objects.get_roots(
             visibility=visibility, accounts=accounts).order_by(

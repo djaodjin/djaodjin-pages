@@ -22,6 +22,11 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import json
+
+from .compat import six
+
+
 class ContentCut(object):
     """
     Visitor that cuts down a content tree whenever TAG_PAGEBREAK is encountered.
@@ -44,3 +49,12 @@ class ContentCut(object):
     def leave(self, attrs, subtrees):
         #pylint:disable=unused-argument,no-self-use
         return True
+
+
+def get_extra(obj, attr_name, default=None):
+    if isinstance(obj.extra, six.string_types):
+        try:
+            obj.extra = json.loads(obj.extra)
+        except (TypeError, ValueError):
+            return default
+    return obj.extra.get(attr_name, default)
