@@ -42,7 +42,6 @@ Release Notes
 0.5.0
 
   * moves theme template editor to djaodjin-extended-templates
-        where it fits best.
   * adds dynamic layout for page elements
 
 [previous release notes](changelog)
