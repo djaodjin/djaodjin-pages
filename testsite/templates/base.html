@@ -70,7 +70,6 @@ Vue.prototype.$itemsPerPage =
     {% if items_per_page %}{{items_per_page}}{% else %}25{% endif %};
 Vue.prototype.$urls = {% if urls %}{{urls|to_json}}{% else %}{}{% endif %};
 </script>
-<script type="text/javascript" charset="utf-8" src="/static/js/djaodjin-resources.js"></script>
 <script type="text/javascript" charset="utf-8" src="/static/js/djaodjin-resources-vue.js"></script>
 <script type="text/javascript" charset="utf-8" src="/static/js/djaodjin-pages-vue.js"></script>
 {% block pages_scripts %}{% endblock %}

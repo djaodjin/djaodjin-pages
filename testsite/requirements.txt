@@ -1,15 +1,8 @@
 # djaodjin-pages
-beautifulsoup4==4.6.0
 bleach==2.0.0
-boto3==1.17.21
-Django==2.2.27
+Django==2.2.28
 djangorestframework==3.12.4
-django-assets==0.12
-django-storages==1.9.1
-djaodjin-deployutils==0.6.0
-Jinja2==2.11.3
-Markdown==2.6.11
-pip==21.2.3                 # because deployutils missing <21.3.1
+djaodjin-deployutils==0.8.2
 python-dateutil==2.8.1
 requests==2.23.0
 

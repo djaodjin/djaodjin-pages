@@ -29,10 +29,9 @@ import bleach
 from django.utils.translation import ugettext_lazy as _
 from rest_framework import serializers
 
+from . import settings
 from .compat import is_authenticated
-from .models import (Comment, Follow, LessVariable, PageElement, ThemePackage,
-    Vote)
-from .settings import ALLOWED_TAGS, ALLOWED_ATTRIBUTES, ALLOWED_STYLES
+from .models import Comment, Follow, PageElement, Vote
 
 #pylint: disable=no-init,abstract-method
 
@@ -93,8 +92,9 @@ class CommentSerializer(serializers.ModelSerializer):
     """
     Serializes a Comment.
     """
-    text = HTMLField(html_tags=ALLOWED_TAGS, html_attributes=ALLOWED_ATTRIBUTES,
-        html_styles=ALLOWED_STYLES, required=False,
+    text = HTMLField(html_tags=settings.ALLOWED_TAGS,
+        html_attributes=settings.ALLOWED_ATTRIBUTES,
+        html_styles=settings.ALLOWED_STYLES, required=False,
         help_text=_("Long description of the page element"))
     user = serializers.SlugRelatedField(read_only=True, slug_field='username')
 
@@ -110,8 +110,8 @@ class NodeElementSerializer(serializers.ModelSerializer):
     """
     path = serializers.SerializerMethodField(read_only=True, allow_null=True)
     indent = serializers.SerializerMethodField(required=False, allow_null=True)
-    account = serializers.SlugRelatedField(slug_field='slug',
-        read_only=True, required=False,
+    account = serializers.SlugRelatedField(read_only=True, required=False,
+        slug_field=settings.ACCOUNT_LOOKUP_FIELD,
         help_text=("Account that can edit the page element"))
     picture = serializers.CharField(required=False, allow_null=True,
         help_text=_("Picture icon that can be displayed alongside the title"))
@@ -169,13 +169,14 @@ class PageElementSerializer(serializers.ModelSerializer):
     path = serializers.SerializerMethodField()
     slug = serializers.SlugField(required=False,
         help_text=_("Unique identifier that can be used in URL paths"))
-    account = serializers.SlugRelatedField(slug_field='slug',
-        read_only=True, required=False,
+    account = serializers.SlugRelatedField(read_only=True, required=False,
+        slug_field=settings.ACCOUNT_LOOKUP_FIELD,
         help_text=("Account that can edit the page element"))
     picture = serializers.CharField(required=False, allow_null=True,
         help_text=_("Picture icon that can be displayed alongside the title"))
-    text = HTMLField(html_tags=ALLOWED_TAGS, html_attributes=ALLOWED_ATTRIBUTES,
-        html_styles=ALLOWED_STYLES, required=False,
+    text = HTMLField(html_tags=settings.ALLOWED_TAGS,
+        html_attributes=settings.ALLOWED_ATTRIBUTES,
+        html_styles=settings.ALLOWED_STYLES, required=False,
         help_text=_("Long description of the page element"))
     extra = serializers.SerializerMethodField(required=False, allow_null=True,
         help_text=_("Extra meta data (can be stringify JSON)"))
@@ -249,60 +250,3 @@ class PageElementTagSerializer(serializers.ModelSerializer):
     class Meta:
         model = PageElement
         fields = ('tag',)
-
-
-class LessVariableSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = LessVariable
-        fields = ('name', 'value', 'created_at', 'updated_at')
-        # Implementation Note: Without this ``extra_kwargs``, DRF will complain
-        # with a "<Model> with this <field> already exists" error
-        # when attempting to update a list of objects.
-        extra_kwargs = {
-            'name': {'validators': []},
-        }
-
-class ThemePackageSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = ThemePackage
-        fields = ('slug', 'name', 'created_at', 'updated_at', 'is_active')
-
-
-class AssetSerializer(NoModelSerializer):
-
-    location = serializers.CharField(
-        help_text=_("URL where the asset content is stored."))
-    updated_at = serializers.DateTimeField(required=False,
-        help_text=_("Last date/time the asset content was updated."))
-    tags = serializers.CharField(required=False, allow_blank=True,
-        help_text=_("Tags associated to the asset."))
-
-class MediaItemListSerializer(NoModelSerializer):
-
-    items = AssetSerializer(many=True)
-    tags = serializers.ListField(
-        child=serializers.CharField(allow_blank=True),
-        required=False)
-
-
-class EditionFileSerializer(serializers.Serializer):
-    text = serializers.CharField(allow_blank=True)
-
-
-class SourceCodeSerializer(NoModelSerializer):
-
-    path = serializers.CharField(required=False, max_length=255)
-    text = serializers.CharField(required=False, max_length=100000)
-
-
-class HintSerializer(NoModelSerializer):
-
-    index = serializers.IntegerField()
-    name = serializers.CharField()
-
-
-class SourceElementSerializer(SourceCodeSerializer):
-
-    hints = serializers.ListField(
-        child=HintSerializer(), required=False)

@@ -28,10 +28,9 @@ from django.views.generic import TemplateView
 from deployutils.apps.django.mixins import AccessiblesMixin
 
 from ..compat import NoReverseMatch, reverse, six
-from ..helpers import get_extra
+from ..helpers import get_extra, update_context_urls
 from ..models import RelationShip
 from ..mixins import AccountMixin, TrailMixin
-from ..utils import update_context_urls
 
 
 LOGGER = logging.getLogger(__name__)

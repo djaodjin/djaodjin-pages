@@ -1,12 +1,6 @@
-beautifulsoup4>=4.3.2
 bleach>=2.0.0
-boto3>=1.17.21
 Django>=1.11
 djangorestframework>=3.3.1
-django-assets>=0.12
-django-storages>=1.7
 djaodjin-deployutils>=0.5.23
-Jinja2>=2.8
-Markdown>=2.4.1
 python-dateutil>=2.8
 requests>=2.21

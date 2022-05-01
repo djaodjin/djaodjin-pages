@@ -11,12 +11,77 @@
       "password": "pbkdf2_sha256$10000$z0MBiWn0Rlem$iZdC6uHomlE07qGK/TqfcfxNzKJtFp03c0JILF1frRc=", 
       "username": "alice"
     },
-    "model": "auth.User", "pk": 1
+    "model": "auth.User", "pk": 2
 },
 {
   "fields": {
-    "title": "Construction",
-    "slug": "construction"
+    "title": "Metal structures & equipment",
+    "slug": "metal",
+    "extra": "{\"visibility\":[\"public\"]}",
+    "account": 2
   },
-  "model": "pages.PageElement", "pk": 1
+  "model": "pages.PageElement", "pk": 100
+},
+{
+  "fields": {
+    "title": "Boxes & enclosures",
+    "slug": "boxes-and-enclosures",
+    "extra": "{\"searchable\":true,\"visibility\":[\"public\"],\"pagebreak\":true,\"layouts\":[\"sustainability\"]}",
+    "account": 2
+  },
+  "model": "pages.PageElement", "pk": 101
+},
+{
+  "fields": {
+    "orig_element": 100, "dest_element": 101
+  },
+  "model": "pages.RelationShip", "pk": 100
+},
+{
+  "fields": {
+    "title": "Production",
+    "slug": "production",
+    "picture": "/static/img/production.png",
+    "extra": "{\"searchable\":true,\"visibility\":[\"public\"]}",
+    "account": 2
+  },
+  "model": "pages.PageElement", "pk": 102
+},
+{
+  "fields": {
+    "orig_element": 101, "dest_element": 102,
+    "rank": 4
+  },
+  "model": "pages.RelationShip", "pk": 101
+},
+{
+  "fields": {
+    "title": "Process heating",
+    "slug": "process-heating",
+    "extra": "{\"searchable\":true,\"visibility\":[\"public\"]}",
+    "account": 2
+  },
+  "model": "pages.PageElement", "pk": 104
+},
+{
+  "fields": {
+    "orig_element": 102, "dest_element": 104
+  },
+  "model": "pages.RelationShip", "pk": 103
+},
+{
+  "fields": {
+    "title": "Adjust air/fuel ratio",
+    "slug": "adjust-air-fuel-ratio",
+    "extra": "{\"searchable\":true,\"visibility\":[\"public\"],\"tags\":[\"Energy & Emissions\"]}",
+    "account": 2,
+    "text": "<h2>Background</h2><p>Some manufacturing processes may involve heating operations.</p>"
+  },
+  "model": "pages.PageElement", "pk": 106
+},
+{
+  "fields": {
+    "orig_element": 104, "dest_element": 106
+  },
+  "model": "pages.RelationShip", "pk": 105
 }]

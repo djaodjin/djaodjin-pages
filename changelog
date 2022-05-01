@@ -1,10 +1,18 @@
+0.5.0
+
+  * moves theme template editor to djaodjin-extended-templates
+        where it fits best.
+  * adds dynamic layout for page elements
+
+ -- Sebastien Mirolo <smirolo@djaodjin.com>  Sat,  30 Apr 2022 22:39:00 -0700
+
 0.4.3
 
   * adds public parameter for profile pictures
   * sorts while flattening content tree
   * adds breadcrumbs in context
 
- -- Sebastien Mirolo <smirolo@djaodjin.com>  Thu,  21 Oct 2022 22:39:00 -0700
+ -- Sebastien Mirolo <smirolo@djaodjin.com>  Thu,  21 Apr 2022 22:39:00 -0700
 
 0.4.2
 

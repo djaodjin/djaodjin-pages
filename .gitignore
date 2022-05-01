@@ -6,5 +6,6 @@
 .timestamp
 credentials
 site.conf
+gunicorn.conf
 themes/
 htdocs/

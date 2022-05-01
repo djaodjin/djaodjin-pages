@@ -25,7 +25,6 @@
 from django.conf.urls import url, include
 
 urlpatterns = [
-    url(r'^themes/', include('pages.urls.views.themes')),
     url(r'^editables/', include('pages.urls.views.editables')),
     url(r'^', include('pages.urls.views.elements')),
 ]

@@ -12,9 +12,13 @@ https://docs.djangoproject.com/en/1.7/ref/settings/
 import logging, os, re, sys
 
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
-RUN_DIR = os.getcwd()
+RUN_DIR = os.getenv('RUN_DIR', os.getcwd())
+DB_NAME = os.path.join(RUN_DIR, 'db.sqlite')
+LOG_FILE = os.path.join(RUN_DIR, 'testsite-app.log')
 
+DEBUG = True
 ALLOWED_HOSTS = ('*',)
+APP_NAME = os.path.basename(BASE_DIR)
 
 
 def load_config(confpath):
@@ -59,11 +63,12 @@ JWT_SECRET_KEY = SECRET_KEY
 JWT_ALGORITHM = 'HS256'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
 if os.getenv('DEBUG'):
     # Enable override on command line.
     DEBUG = bool(int(os.getenv('DEBUG')) > 0)
 
+# Applications
+# ------------
 INSTALLED_APPS = (
     'django_extensions',
     'django.contrib.admin',
@@ -77,152 +82,6 @@ INSTALLED_APPS = (
     'storages',
     'testsite',
 )
-
-#
-# Templates
-# ---------
-TEMPLATE_DEBUG = True
-
-TEMPLATE_CONTEXT_PROCESSORS = (
-    'django.contrib.auth.context_processors.auth',
-    'django.contrib.messages.context_processors.messages',
-    'django.core.context_processors.media',
-    'django.core.context_processors.static',
-    'django.core.context_processors.request'
-)
-
-TEMPLATE_DIRS = (
-    BASE_DIR + '/themes/djaodjin-pages/templates',
-    BASE_DIR + '/testsite/templates',
-)
-
-# Django 1.8+
-TEMPLATES = [
-    {
-        'NAME': 'html',
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': TEMPLATE_DIRS,
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'debug': TEMPLATE_DEBUG,
-            'context_processors': [proc.replace(
-                'django.core.context_processors',
-                'django.template.context_processors')
-                for proc in TEMPLATE_CONTEXT_PROCESSORS]},
-    },
-]
-
-
-REST_FRAMEWORK = {
-    'PAGE_SIZE': 25,
-    'DEFAULT_PAGINATION_CLASS':
-        'rest_framework.pagination.PageNumberPagination',
-    'ORDERING_PARAM': 'o',
-    'SEARCH_PARAM': 'q'
-}
-
-
-# Applications
-# ------------
-
-# debug panel
-# -----------
-DEBUG_TOOLBAR_PATCH_SETTINGS = False
-DEBUG_TOOLBAR_CONFIG = {
-    'JQUERY_URL': '/static/vendor/jquery.js',
-    'SHOW_COLLAPSED': True,
-    'SHOW_TEMPLATE_CONTEXT': True,
-}
-
-INTERNAL_IPS = ('127.0.0.1', '::1')
-
-
-FILE_UPLOAD_HANDLERS = (
-    "pages.uploadhandler.ProgressBarUploadHandler",
-    "django.core.files.uploadhandler.MemoryFileUploadHandler",
-    "django.core.files.uploadhandler.TemporaryFileUploadHandler",
-)
-
-MIDDLEWARE = (
-    'whitenoise.middleware.WhiteNoiseMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware'
-)
-
-MIDDLEWARE_CLASSES = MIDDLEWARE
-
-ROOT_URLCONF = 'testsite.urls'
-
-WSGI_APPLICATION = 'testsite.wsgi.application'
-
-# Database
-# https://docs.djangoproject.com/en/1.7/ref/settings/#databases
-
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(RUN_DIR, 'db.sqlite3')
-    }
-}
-
-DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
-
-# Internationalization
-# https://docs.djangoproject.com/en/1.7/topics/i18n/
-
-LANGUAGE_CODE = 'en-us'
-
-TIME_ZONE = 'UTC'
-
-USE_I18N = True
-
-USE_L10N = True
-
-USE_TZ = True
-
-# static assets
-# -------------
-HTDOCS = os.path.join(BASE_DIR, 'htdocs')
-
-# Absolute filesystem path to the directory that will hold user-uploaded files.
-# Example: "/var/www/example.com/media/"
-MEDIA_ROOT = HTDOCS + '/media'
-
-# URL that handles the media served from MEDIA_ROOT. Make sure to use a
-# trailing slash.
-# Examples: "http://example.com/media/", "http://media.example.com/"
-MEDIA_URL = '/media/'
-
-# Absolute path to the directory static files should be collected to.
-# Don't put anything in this directory yourself; store your static files
-# in apps' "static/" subdirectories and in STATICFILES_DIRS.
-# Example: "/var/www/example.com/static/"
-STATIC_URL = '/static/'
-APP_STATIC_ROOT = HTDOCS + '/static'
-if DEBUG:
-    STATIC_ROOT = ''
-    # Additional locations of static files
-    STATICFILES_DIRS = (APP_STATIC_ROOT, HTDOCS,)
-else:
-    STATIC_ROOT = APP_STATIC_ROOT
-
-# Pages App
-# ---------
-PAGES = {
-    'UPLOADED_TEMPLATE_DIR' : BASE_DIR + '/testsite/templates',
-    'UPLOADED_STATIC_DIR' : STATIC_ROOT
-}
-
-if 'AWS_STORAGE_BUCKET_NAME' in locals():
-    DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
-
-
-# XXX - to define
-FILE_UPLOAD_MAX_MEMORY_SIZE = 41943040
 
 LOGGING = {
     'version': 1,
@@ -277,8 +136,121 @@ LOGGING = {
 if logging.getLogger('gunicorn.error').handlers:
     LOGGING['handlers']['logfile'].update({
         'class':'logging.handlers.WatchedFileHandler',
-        'filename': os.path.join(RUN_DIR, 'testsite-app.log')
+        'filename': LOG_FILE
     })
 
+
+MIDDLEWARE = (
+    'whitenoise.middleware.WhiteNoiseMiddleware',
+    'django.middleware.common.CommonMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',
+    'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.contrib.messages.middleware.MessageMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware'
+)
+
+MIDDLEWARE_CLASSES = MIDDLEWARE
+
+ROOT_URLCONF = 'testsite.urls'
+WSGI_APPLICATION = 'testsite.wsgi.application'
+
+
+REST_FRAMEWORK = {
+    'PAGE_SIZE': 25,
+    'DEFAULT_PAGINATION_CLASS':
+        'rest_framework.pagination.PageNumberPagination',
+    'ORDERING_PARAM': 'o',
+    'SEARCH_PARAM': 'q'
+}
+
+# Static assets (CSS, JavaScript, Images)
+# --------------------------------------
+HTDOCS = os.path.join(BASE_DIR, 'htdocs')
+
+STATIC_URL = '/static/'
+APP_STATIC_ROOT = HTDOCS + '/static'
+if DEBUG:
+    STATIC_ROOT = ''
+    # Additional locations of static files
+    STATICFILES_DIRS = (APP_STATIC_ROOT, HTDOCS,)
+else:
+    STATIC_ROOT = APP_STATIC_ROOT
+
+# Absolute filesystem path to the directory that will hold user-uploaded files.
+# Example: "/var/www/example.com/media/"
+MEDIA_ROOT = HTDOCS + '/media'
+
+# URL that handles the media served from MEDIA_ROOT. Make sure to use a
+# trailing slash.
+# Examples: "http://example.com/media/", "http://media.example.com/"
+MEDIA_URL = '/media/'
+
+#
+# Templates
+# ---------
+TEMPLATE_DEBUG = True
+
+TEMPLATE_CONTEXT_PROCESSORS = (
+    'django.contrib.auth.context_processors.auth',
+    'django.contrib.messages.context_processors.messages',
+    'django.core.context_processors.media',
+    'django.core.context_processors.static',
+    'django.core.context_processors.request'
+)
+
+TEMPLATE_DIRS = (
+    BASE_DIR + '/testsite/templates',
+)
+
+# Django 1.8+
+TEMPLATES = [
+    {
+        'NAME': 'html',
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': TEMPLATE_DIRS,
+        'APP_DIRS': True,
+        'OPTIONS': {
+            'debug': TEMPLATE_DEBUG,
+            'context_processors': [proc.replace(
+                'django.core.context_processors',
+                'django.template.context_processors')
+                for proc in TEMPLATE_CONTEXT_PROCESSORS]},
+    },
+]
+
+
+# Database
+# --------
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': DB_NAME,
+    }
+}
+
+DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
+
+# Internationalization
+# --------------------
+LANGUAGE_CODE = 'en-us'
+TIME_ZONE = 'UTC'
+USE_I18N = True
+USE_L10N = True
+USE_TZ = True
+
+# debug panel
+# -----------
+DEBUG_TOOLBAR_PATCH_SETTINGS = False
+DEBUG_TOOLBAR_CONFIG = {
+    'JQUERY_URL': '/static/vendor/jquery.js',
+    'SHOW_COLLAPSED': True,
+    'SHOW_TEMPLATE_CONTEXT': True,
+}
+
+INTERNAL_IPS = ('127.0.0.1', '::1')
+
+# Authentication
+# --------------
 LOGIN_URL = 'login'
-LOGIN_REDIRECT_URL = '/app/'
+LOGIN_REDIRECT_URL = '/app/energy-utility/'

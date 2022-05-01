@@ -39,10 +39,14 @@ the prerequisites, create the database then run the testsite webapp.
 Release Notes
 =============
 
-0.4.3
+0.5.0
 
-  * adds public parameter for profile pictures
-  * sorts while flattening content tree
-  * adds breadcrumbs in context
+  * moves theme template editor to djaodjin-extended-templates
+        where it fits best.
+  * adds dynamic layout for page elements
 
 [previous release notes](changelog)
+
+Version 0.4.3 is the last version that contains the HTML templates
+online editor. This functionality was moved to [djaodjin-extended-templates](https://github.com/djaodjin/djaodjin-extended-templates/)
+as of version 0.5.0.

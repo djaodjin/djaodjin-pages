@@ -58,3 +58,20 @@ def get_extra(obj, attr_name, default=None):
         except (TypeError, ValueError):
             return default
     return obj.extra.get(attr_name, default)
+
+
+def update_context_urls(context, urls):
+    if 'urls' in context:
+        for key, val in six.iteritems(urls):
+            if key in context['urls']:
+                if isinstance(val, dict):
+                    context['urls'][key].update(val)
+                else:
+                    # Because organization_create url is added in this mixin
+                    # and in ``OrganizationRedirectView``.
+                    context['urls'][key] = val
+            else:
+                context['urls'].update({key: val})
+    else:
+        context.update({'urls': urls})
+    return context

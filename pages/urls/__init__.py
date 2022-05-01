@@ -23,7 +23,6 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from django.conf.urls import url, include
-from pages.views.pages import EditView
 
 urlpatterns = [
     url(r'^api/', include('pages.urls.api')),

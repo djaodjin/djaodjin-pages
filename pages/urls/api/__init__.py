@@ -27,9 +27,6 @@
 from django.conf.urls import include, url
 
 urlpatterns = [
-    url(r'^themes/', include('pages.urls.api.assets')),
-    url(r'^themes/', include('pages.urls.api.templates')),
-    url(r'^themes/', include('pages.urls.api.themes')),
     url(r'^content/editables/', include('pages.urls.api.editables')),
     url(r'^content/', include('pages.urls.api.readers')),
     url(r'^content/', include('pages.urls.api.noauth')),

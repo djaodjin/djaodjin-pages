@@ -22,25 +22,96 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+from __future__ import unicode_literals
+
 import logging
 
-import markdown
-from bs4 import BeautifulSoup
+from django.contrib.auth import get_user_model
+from django.core.exceptions import ImproperlyConfigured
 from django.http import Http404
-from django.utils._os import safe_join
+from django.utils.translation import ugettext as _
 from rest_framework.generics import get_object_or_404
 
 from . import settings
-from .compat import import_string, reverse, six, urlsplit
-from .models import MediaTag, PageElement, get_active_theme
-from .extras import AccountMixinBase
-
+from .compat import reverse, is_authenticated
+from .models import PageElement
+from .utils import get_account_model
 
 LOGGER = logging.getLogger(__name__)
 
 
-class AccountMixin(AccountMixinBase, settings.EXTRA_MIXIN):
-    pass
+class AccountMixin(object):
+    """
+    Mixin to use in views that will retrieve an account object (out of
+    ``account_queryset``) associated to a slug parameter (``account_url_kwarg``)
+    in the URL.
+    If either ``account_url_kwarg`` is ``None`` or absent from the URL pattern,
+    ``account`` will default to the ``request.user`` when the account model is
+    compatible with the `User` model, else ``account`` will be ``None``.
+    """
+    account_queryset = get_account_model().objects.all()
+    account_lookup_field = settings.ACCOUNT_LOOKUP_FIELD
+    account_url_kwarg = settings.ACCOUNT_URL_KWARG
+
+    @property
+    def account(self):
+        if not hasattr(self, '_account'):
+            if (self.account_url_kwarg is not None
+                and self.account_url_kwarg in self.kwargs):
+                if self.account_queryset is None:
+                    raise ImproperlyConfigured(
+                        "%(cls)s.account_queryset is None. Define "
+                        "%(cls)s.account_queryset." % {
+                            'cls': self.__class__.__name__
+                        }
+                    )
+                if self.account_lookup_field is None:
+                    raise ImproperlyConfigured(
+                        "%(cls)s.account_lookup_field is None. Define "
+                        "%(cls)s.account_lookup_field as the field used "
+                        "to retrieve accounts in the database." % {
+                            'cls': self.__class__.__name__
+                        }
+                    )
+                kwargs = {'%s__exact' % self.account_lookup_field:
+                    self.kwargs.get(self.account_url_kwarg)}
+                try:
+                    self._account = self.account_queryset.filter(**kwargs).get()
+                except self.account_queryset.model.DoesNotExist:
+                    #pylint: disable=protected-access
+                    raise Http404(_("No %(verbose_name)s found matching"\
+                        "the query") % {'verbose_name':
+                        self.account_queryset.model._meta.verbose_name})
+            else:
+                if (isinstance(get_account_model(), get_user_model()) and
+                    is_authenticated(self.request)):
+                    self._account = self.request.user
+                self._account = None
+        return self._account
+
+    def get_context_data(self, **kwargs):
+        context = super(AccountMixin, self).get_context_data(**kwargs)
+        context.update({'account': self.account})
+        return context
+
+    def get_reverse_kwargs(self):
+        """
+        List of kwargs taken from the url that needs to be passed through
+        to ``get_success_url``.
+        """
+        if self.account_url_kwarg:
+            return [self.account_url_kwarg]
+        return []
+
+    def get_url_kwargs(self, **kwargs):
+        url_kwargs = {}
+        if not kwargs:
+            kwargs = self.kwargs
+        for url_kwarg in self.get_reverse_kwargs():
+            url_kwarg_val = kwargs.get(url_kwarg, None)
+            if url_kwarg_val:
+                url_kwargs.update({url_kwarg: url_kwarg_val})
+        return url_kwargs
 
 
 class TrailMixin(object):
@@ -160,137 +231,3 @@ class PageElementMixin(object):
             self._element = get_object_or_404(
                 PageElement.objects.all(), **filter_kwargs)
         return self._element
-
-
-class UploadedImageMixin(object):
-
-    def build_filter_list(self, validated_data):
-        items = validated_data.get('items')
-        filter_list = []
-        if items:
-            for item in items:
-                location = item['location']
-                parts = urlsplit(location)
-                if parts.netloc == self.request.get_host():
-                    location = parts.path
-                filter_list += [location]
-        return filter_list
-
-    def list_media(self, storage, filter_list, prefix='.'):
-        """
-        Return a list of media from default storage
-        """
-        #pylint:disable=too-many-locals
-        results = []
-        total_count = 0
-        if prefix.startswith('/'):
-            prefix = prefix[1:]
-        try:
-            dirs, files = storage.listdir(prefix)
-            for media in files:
-                if prefix and prefix != '.':
-                    media = prefix + '/' + media
-                if not media.endswith('/') and media != "":
-                    total_count += 1
-                    location = storage.url(media)
-                    try:
-                        updated_at = storage.get_modified_time(media)
-                    except AttributeError: # Django<2.0
-                        updated_at = storage.modified_time(media)
-                    normalized_location = location.split('?')[0]
-                    if (filter_list is None
-                        or normalized_location in filter_list):
-                        tags = ",".join(list(MediaTag.objects.filter(
-                            location=normalized_location).values_list(
-                            'tag', flat=True)))
-                        results += [
-                            {'location': location,
-                            'tags': tags,
-                            'updated_at': updated_at
-                            }]
-            for asset_dir in dirs:
-                dir_results, dir_total_count = self.list_media(
-                    storage, filter_list, prefix=prefix + '/' + asset_dir)
-                results += dir_results
-                total_count += dir_total_count
-        except OSError:
-            if storage.exists('.'):
-                LOGGER.exception(
-                    "Unable to list objects in %s.", storage.__class__.__name__)
-        except storage.connection_response_error:
-            LOGGER.exception(
-                "Unable to list objects in 's3://%s/%s/%s'.",
-                storage.bucket_name, storage.location, prefix)
-
-        # sort results by updated_at to sort by created_at.
-        # Media are not updated, so updated_at = created_at
-        return results, total_count
-
-
-class ThemePackageMixin(AccountMixin):
-
-    theme_url_kwarg = 'theme'
-
-    @property
-    def theme(self):
-        if not hasattr(self, '_theme'):
-            self._theme = self.kwargs.get(self.theme_url_kwarg)
-            if not self._theme:
-                self._theme = get_active_theme()
-        return self._theme
-
-    @staticmethod
-    def get_templates_dir(theme):
-        if isinstance(settings.THEME_DIR_CALLABLE, six.string_types):
-            settings.THEME_DIR_CALLABLE = import_string(
-                settings.THEME_DIR_CALLABLE)
-        theme_dir = settings.THEME_DIR_CALLABLE(theme)
-        return safe_join(theme_dir, 'templates')
-
-    @staticmethod
-    def get_statics_dir(theme):
-        return safe_join(settings.PUBLIC_ROOT, theme, 'static')
-
-
-class UpdateEditableMixin(object):
-    """
-    Edit an element in a page.
-    """
-    @staticmethod
-    def insert_formatted(editable, new_text):
-        new_text = BeautifulSoup(new_text, 'html5lib')
-        for image in new_text.find_all('img'):
-            image['style'] = "max-width:100%"
-        if editable.name == 'div':
-            editable.clear()
-            editable.append(new_text)
-        else:
-            editable.string = "ERROR : Impossible to insert HTML into \
-                \"<%s></%s>\" element. It should be \"<div></div>\"." %\
-                (editable.name, editable.name)
-            editable['style'] = "color:red;"
-            # Prevent edition of error notification
-            editable['class'] = editable['class'].remove("editable")
-
-    @staticmethod
-    def insert_currency(editable, new_text):
-        amount = float(new_text)
-        editable.string = "$%.2f" % (amount/100)
-
-    @staticmethod
-    def insert_markdown(editable, new_text):
-        new_text = markdown.markdown(new_text,)
-        new_text = BeautifulSoup(new_text, 'html.parser')
-        for image in new_text.find_all('img'):
-            image['style'] = "max-width:100%"
-        editable.name = 'div'
-        editable.string = ''
-        children_done = []
-        for element in new_text.find_all():
-            if element.name not in ('html', 'body'):
-                if element.findChildren():
-                    for sub_el in element.findChildren():
-                        element.append(sub_el)
-                        children_done += [sub_el]
-                if not element in children_done:
-                    editable.append(element)

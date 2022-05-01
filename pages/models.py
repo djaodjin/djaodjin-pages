@@ -426,57 +426,6 @@ class Vote(models.Model):
         return self.vote == self.DOWN_VOTE
 
 
-@python_2_unicode_compatible
-class MediaTag(models.Model):
-
-    location = models.CharField(max_length=250)
-    tag = models.CharField(max_length=50)
-
-    def __str__(self):
-        return str(self.tag)
-
-
-@python_2_unicode_compatible
-class LessVariable(models.Model):
-    """
-    This model stores value of a variable used to generate a css file.
-    """
-    name = models.CharField(max_length=250)
-    value = models.CharField(max_length=250)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    account = models.ForeignKey(settings.ACCOUNT_MODEL,
-        null=True, on_delete=models.SET_NULL,
-        related_name='account_less_variable')
-    cssfile = models.CharField(max_length=50)
-
-    class Meta:
-        unique_together = ('account', 'cssfile', 'name')
-
-    def __str__(self):
-        return '%s: %s' % (self.name, self.value)
-
-
-@python_2_unicode_compatible
-class ThemePackage(models.Model):
-    """
-    This model allow to record uploaded template.
-    """
-    slug = models.SlugField(unique=True)
-    account = models.ForeignKey(
-        settings.ACCOUNT_MODEL, null=True, on_delete=models.CASCADE,
-        related_name='account_template', blank=True)
-    name = models.CharField(max_length=150)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    is_active = models.BooleanField(default=False)
-
-    def __str__(self):
-        if self.account:
-            return '%s-%s' % (self.account, self.name)
-        return self.name
-
-
 def build_content_tree(roots=None, prefix=None, cut=None,
                        visibility=None, accounts=None):
     """
