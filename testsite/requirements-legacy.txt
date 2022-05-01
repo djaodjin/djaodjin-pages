@@ -5,7 +5,6 @@ boto==2.48.0
 Django==1.11.29
 djangorestframework==3.9.4
 django-assets==0.12
-django-storages==1.7
 djaodjin-deployutils==0.5.9
 Jinja2==2.10.1
 Markdown==2.6.11
