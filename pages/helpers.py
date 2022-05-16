@@ -57,7 +57,7 @@ def get_extra(obj, attr_name, default=None):
             obj.extra = json.loads(obj.extra)
         except (TypeError, ValueError):
             return default
-    return obj.extra.get(attr_name, default)
+    return obj.extra.get(attr_name, default) if obj.extra else default
 
 
 def update_context_urls(context, urls):
