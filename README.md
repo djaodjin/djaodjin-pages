@@ -39,10 +39,10 @@ the prerequisites, create the database then run the testsite webapp.
 Release Notes
 =============
 
-0.5.0
+0.6.0
 
-  * moves theme template editor to djaodjin-extended-templates
-  * adds dynamic layout for page elements
+  * adds feature to upload documents
+  * fixes accounts for obj.extra being None
 
 [previous release notes](changelog)
 
