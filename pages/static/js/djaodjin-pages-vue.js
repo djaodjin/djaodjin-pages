@@ -122,3 +122,375 @@ Vue.component('editables-detail', {
         });
     }
 });
+
+
+/** used to add uploaded assets
+ */
+Vue.component('explainer', {
+    mixins: [
+        httpRequestMixin
+    ],
+    data: function() {
+        return {
+            upload_start_url: this.$urls.api_asset_upload_start,
+            upload_complete_url: this.$urls.api_asset_upload_complete,
+            editMode: true,
+            uploadInProgress: false,
+            text: "",
+            awsConfig: {
+                mediaPrefix: "",
+                acl: null,
+            }
+        }
+    },
+    props: [
+        'callbackArg',
+        'collectedByPicture',
+        'collectedByPrintableName',
+        'collectedAtTime',
+        'initText'
+    ],
+    methods: {
+        // upload files
+        startUpload: function(file, formData, xhr) {
+            var vm = this;
+            if( !vm.upload_start_url ) {
+                console.warning("[explainer] uploading assets will not work because 'url' is undefined.");
+                return;
+            }
+            var uploadUrl = vm.upload_start_url;
+            if( vm.upload_start_url.indexOf("/api/auth/") >= 0 ) {
+                this.reqGet(vm.upload_start_url +
+                    (vm.awsConfig.acl === "public-read" ? "?public=1" : ""),
+                    function(data) {
+                        var parser = document.createElement('a');
+                        parser.href = data.location;
+                        uploadUrl = parser.host + "/";
+                        if( parser.protocol ) {
+                            uploadUrl = parser.protocol + "//" + uploadUrl;
+                        }
+                        vm.awsConfig.mediaPrefix = parser.pathname;
+                        if( vm.awsConfig.mediaPrefix === 'undefined'
+                            || vm.awsConfig.mediaPrefix === null ) {
+                            vm.awsConfig.mediaPrefix = "";
+                        }
+                        if( vm.awsConfig.mediaPrefix !== ""
+                            && vm.awsConfig.mediaPrefix.match(/^\//)){
+                            vm.awsConfig.mediaPrefix = vm.awsConfig.mediaPrefix.substring(1);
+                        }
+                        if( vm.awsConfig.mediaPrefix !== ""
+                            && !vm.awsConfig.mediaPrefix.match(/\/$/)){
+                            vm.awsConfig.mediaPrefix += "/";
+                        }
+
+                        formData.append(
+                            "key", vm.awsConfig.mediaPrefix + file.name);
+                        formData.append("policy", data.policy);
+                        formData.append("x-amz-algorithm", "AWS4-HMAC-SHA256");
+                        formData.append(
+                            "x-amz-credential", data.x_amz_credential);
+                        formData.append("x-amz-date", data.x_amz_date);
+                        formData.append(
+                            "x-amz-security-token", data.security_token);
+                        formData.append(
+                            "x-amz-signature", data.signature);
+                        if( vm.awsConfig.acl ) {
+                            formData.append("acl", vm.awsConfig.acl);
+                        } else {
+                            formData.append("acl", "private");
+                        }
+                        if( data.x_amz_server_side_encryption ) {
+                            formData.append("x-amz-server-side-encryption",
+                                            data.x_amz_server_side_encryption);
+                        } else if( !vm.awsConfig.acl
+                                   || vm.awsConfig.acl !== "public-read" ) {
+                            formData.append("x-amz-server-side-encryption",
+                                            "AES256");
+                        }
+                        var ext = file.name.slice(
+                            file.name.lastIndexOf('.')).toLowerCase();
+                        if( ext === ".jpg" ) {
+                            formData.append("Content-Type", "image/jpeg");
+                        } else if( ext === ".png" ) {
+                            formData.append("Content-Type", "image/png");
+                        } else if( ext === ".gif" ) {
+                            formData.append("Content-Type", "image/gif");
+                        } else if( ext === ".mp4" ) {
+                            formData.append("Content-Type", "video/mp4");
+                        } else {
+                            formData.append(
+                                "Content-Type", "binary/octet-stream");
+                        }
+                    },
+                    function(resp) {
+                        vm.showErrorMessages(resp);
+                    });
+            } else {
+                formData.append(
+                    "csrfmiddlewaretoken", vm._getCSRFToken());
+            }
+            formData.append("file", file);
+            xhr.open("POST", uploadUrl, true);
+            xhr.withCredentials = false;
+
+            return xhr;
+        },
+        _uploaderror: function(files, status, xhr) {
+            this.showErrorMessages("error uploading file");
+        },
+        _uploadprogress: function(file, progress, bytesSent) {
+            var progressBar = this.$el.querySelector(
+                ".upload-progress .progress-bar");
+            progressBar.style.width = (
+                file.upload.bytesSent * 100 / file.upload.total);
+        },
+        _uploadfinished: function(files, resp, evt) {
+            var vm = this;
+            vm.uploadInProgress = false;
+            var dataCompleteUrl = vm.upload_complete_url;
+            if( dataCompleteUrl && dataCompleteUrl != vm.upload_start_url ) {
+                vm.reqPost(dataCompleteUrl, resp, function(resp) {
+                    vm.text += resp.location;
+                })
+            } else {
+                vm.text += resp.location;
+            }
+        },
+        uploadFiles: function(files) {
+            var vm = this;
+
+            var progressBar = vm.$el.querySelector(
+                ".upload-progress .progress-bar");
+            if( progressBar ) {
+                progressBar.style.width = 0;
+            }
+            vm.uploadInProgress = true;
+
+            var xhr = new XMLHttpRequest();
+            var formData = new FormData();
+            var xhr = vm.startUpload(files[0], formData, xhr);
+
+            for( var idx = 0; idx < files.length; ++idx ) {
+                files[idx].xhr = xhr;
+            }
+            handleError = (function(_this) {
+                return function() {
+                    for( var jdx = 0; jdx < files.length; ++jdx ) {
+                        var file = files[jdx];
+                        _this._uploaderror(files, xhr.status, xhr);
+                    }
+                };
+            })(this);
+            updateProgress = (function(_this) {
+                return function(evt) {
+                    var progress = 0;
+                    var allFilesFinished = false;
+                    if( evt != null ) {
+                        progress = 100 * evt.loaded / evt.total;
+                        for( var jdx = 0; jdx < files.length; ++jdx ) {
+                            var file = files[jdx];
+                            file.upload = {
+                                progress: progress,
+                                total: evt.total,
+                                bytesSent: evt.loaded
+                            };
+                        }
+                    } else {
+                        allFilesFinished = true;
+                        progress = 100;
+                        for( var jdx = 0; jdx < files.length; ++jdx ) {
+                            var file = files[jdx];
+                            if( !(file.upload.progress === 100 &&
+                               file.upload.bytesSent === file.upload.total) ) {
+                                allFilesFinished = false;
+                            }
+                            file.upload.progress = progress;
+                            file.upload.bytesSent = file.upload.total;
+                        }
+                        if( allFilesFinished ) {
+                            return;
+                        }
+                    }
+                    for( var jdx = 0; jdx < files.length; ++jdx ) {
+                        var file = files[jdx];
+                        _this._uploadprogress(
+                            file, progress, file.upload.bytesSent);
+                    }
+                };
+            })(this);
+
+            xhr.onload = (function(_this) {
+                return function(evt) {
+                   if( xhr.readyState !== 4 ) {
+                        return;
+                    }
+                    var resp = xhr.responseText;
+                    if( xhr.getResponseHeader("content-type") &&
+                        ~xhr.getResponseHeader("content-type").indexOf(
+                            "application/json") ) {
+                        try {
+                            resp = JSON.parse(resp);
+                        } catch (_error) {
+                            e = _error;
+                            resp = "Invalid JSON response from server.";
+                        }
+                    }
+                    updateProgress();
+                    if( !(200 <= xhr.status && xhr.status < 300) ) {
+                        return handleError();
+                    } else {
+                        return _this._uploadfinished(files, resp, evt);
+                    }
+                };
+            })(this);
+            xhr.onerror = (function(_this) {
+                return function() {
+                    return handleError();
+                };
+            })(this);
+            if( xhr.upload != null ) {
+                xhr.upload.onprogress = updateProgress;
+            } else {
+                xhr.onprogress = updateProgress;
+            }
+
+            var headers = {
+                "Accept": "application/json",
+                "Cache-Control": "no-cache",
+                "X-Requested-With": "XMLHttpRequest"
+            };
+            for (headerName in headers) {
+                headerValue = headers[headerName];
+                if (headerValue) {
+                    xhr.setRequestHeader(headerName, headerValue);
+                }
+            }
+            // submitRequest
+            return xhr.send(formData);
+        },
+        processFile: function(file) {
+            file.processing = true;
+            file.status = Dropzone.UPLOADING;
+            return this.uploadFiles([file]);
+        },
+        addFile: function(file) {
+            file.upload = {
+                progress: 0,
+                total: file.size,
+                bytesSent: 0
+            };
+            // assumes the file is accepted.
+            return setTimeout(((function(_this) {
+                return function() {
+                    return _this.processFile(file);
+                };
+            })(this)), 0);
+        },
+        _addFilesFromItems: function(items) {
+            for( var idx = 0; idx < items.length; ++idx ) {
+                var item = items[idx];
+                if( item.webkitGetAsEntry != null ) {
+                    var entry = item.webkitGetAsEntry();
+                    if( entry.isFile ) {
+                        this.addFile(item.getAsFile());
+                    }
+                } else if( item.getAsFile != null ) {
+                    if( (item.kind == null) || item.kind === "file" ) {
+                        this.addFile(item.getAsFile());
+                    }
+                }
+            }
+        },
+        _handleFiles: function(files) {
+            for( var idx = 0; idx < files.length; ++idx ) {
+                var file = files[idx];
+                this.addFile(file);
+            }
+        },
+        dropFile: function(evt) {
+            var files, items;
+            if( !evt.dataTransfer ) {
+                return;
+            }
+            files = evt.dataTransfer.files;
+            if( files.length ) {
+                items = evt.dataTransfer.items;
+                if( items && items.length && (
+                    items[0].webkitGetAsEntry != null) ) {
+                    this._addFilesFromItems(items);
+                } else {
+                    this._handleFiles(files);
+                }
+            }
+        },
+        // edit mode
+        humanizeDate: function (at_time) {
+            var dateTime = moment(at_time);
+            return dateTime.format('MMMM Do YYYY');
+        },
+        humanizeTimeDelta: function (at_time, ends_at) {
+            var cutOff = ends_at ? moment(ends_at) : moment();
+            var dateTime = moment(at_time);
+            var relative = "";
+            if( dateTime <= cutOff ) {
+                var timeAgoTemplate = "%(timedelta)s ago";
+                relative = timeAgoTemplate.replace("%(timedelta)s",
+                    moment.duration(cutOff.diff(dateTime)).humanize());
+            } else {
+                var timeLeftTemplate = "%(timedelta)s ago";
+                relative = timeLeftTemplate.replace("%(timedelta)s",
+                    moment.duration(dateTime.diff(cutOff)).humanize());
+            }
+            return relative;
+        },
+        toggleEditMode: function() {
+            this.editMode = true;
+        },
+        saveText: function() {
+            var vm = this;
+            if( vm.text ) {
+                vm.editMode = false;
+            }
+            vm.$emit('update-text', vm.text, vm.callbackArg);
+        },
+        fitToText: function() {
+            var textarea = this.$el.querySelector('textarea');
+            var updatedHeight = parseInt(textarea.style.height);
+            if( isNaN(updatedHeight) ) {
+                updatedHeight = textarea.scrollHeight;
+            } else {
+                updatedHeight = Math.max(updatedHeight, textarea.scrollHeight);
+            }
+            textarea.style.height = updatedHeight + 'px';
+        },
+        openLink: function(event) {
+            var vm = this;
+            var href = event.target.getAttribute('href');
+            var pathname = event.target.pathname;
+            if( href ) {
+                if( pathname.startsWith(vm.upload_complete_url) ) {
+                    vm.reqGet(pathname,
+                    function(resp) {
+                        window.open(resp.location, '_blank');
+                    });
+                } else {
+                    window.open(href, '_blank');
+                }
+            }
+        }
+    },
+    computed: {
+        // display with active links
+        textAsHtml: function() {
+            return this.text.replace(/(https?:\/\/\S+)/gi,
+                '<a href="$1">uploaded</a>');
+        }
+    },
+    mounted: function() {
+        var vm = this;
+        if( vm.collectedAtTime ) {
+            vm.editMode = false;
+        }
+        this.text = this.initText;
+    },
+});

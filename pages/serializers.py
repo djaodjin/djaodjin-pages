@@ -61,6 +61,14 @@ class NoModelSerializer(serializers.Serializer):
         raise RuntimeError('`update()` should not be called.')
 
 
+class AssetSerializer(NoModelSerializer):
+
+    location = serializers.CharField(
+        help_text=_("URL where the asset content is stored."))
+    updated_at = serializers.DateTimeField(required=False,
+        help_text=_("Last date/time the asset content was updated."))
+
+
 class EdgeCreateSerializer(serializers.Serializer):
     """
     Create a new edge between two ``PageElement``.

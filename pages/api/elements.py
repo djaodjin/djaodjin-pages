@@ -111,7 +111,8 @@ class PageElementAPIView(TrailMixin, generics.ListAPIView):
                 cut=self.get_cut(),
                 visibility=self.visibility,
                 accounts=self.owners)
-            items = flatten_content_tree(content_tree, depth=-1)
+            items = flatten_content_tree(
+                content_tree, sort_by_key=False, depth=-1)
             items.pop(0)
         else:
             content_tree = build_content_tree(
@@ -119,7 +120,9 @@ class PageElementAPIView(TrailMixin, generics.ListAPIView):
                 cut=self.get_cut(),
                 visibility=self.visibility,
                 accounts=self.owners)
-            items = flatten_content_tree(content_tree)
+            # We do not re-sort the roots such that member-only content
+            # appears at the top.
+            items = flatten_content_tree(content_tree, sort_by_key=False)
 
         results = []
         for item in items:
@@ -141,7 +144,6 @@ class PageElementAPIView(TrailMixin, generics.ListAPIView):
         element.path = self.full_path
         element.results = results
         element.count = len(results)
-
         serializer = self.get_serializer(element)
         return api_response.Response(serializer.data)
 

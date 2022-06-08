@@ -472,8 +472,7 @@ def build_content_tree(roots=None, prefix=None, cut=None,
     # does not end with one).
     if not prefix.startswith("/"):
         prefix = '/%s' % prefix
-    if prefix.endswith("/"):
-        prefix = prefix[:-1]
+    prefix = prefix.rstrip('/')
     filtered_in = None
     if visibility:
         for visible in visibility:
