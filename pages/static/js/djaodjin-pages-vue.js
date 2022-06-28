@@ -152,12 +152,151 @@ Vue.component('explainer', {
     ],
     methods: {
         // upload files
-        startUpload: function(file, formData, xhr) {
+        _uploaderror: function(files, status, xhr) {
+            this.showErrorMessages("error uploading file");
+        },
+        _uploadprogress: function(file, progress, bytesSent) {
+            var progressBar = this.$el.querySelector(
+                ".upload-progress .progress-bar");
+            progressBar.style.width = (
+                file.upload.bytesSent * 100 / file.upload.total);
+        },
+        _uploadfinished: function(files, resp, evt) {
             var vm = this;
+            vm.uploadInProgress = false;
+            var dataCompleteUrl = vm.upload_complete_url;
+            if( dataCompleteUrl && dataCompleteUrl != vm.upload_start_url ) {
+                vm.reqPost(dataCompleteUrl, resp, function(resp) {
+                    vm.text += resp.location;
+                })
+            } else {
+                vm.text += resp.location;
+            }
+        },
+        startUpload: function(xhr, uploadUrl, formData) {
+            xhr.open("POST", uploadUrl, true);
+            var headers = {
+                "Accept": "application/json",
+                "Cache-Control": "no-cache",
+                "X-Requested-With": "XMLHttpRequest"
+            };
+            for (headerName in headers) {
+                headerValue = headers[headerName];
+                if (headerValue) {
+                    xhr.setRequestHeader(headerName, headerValue);
+                }
+            }
+            return xhr.send(formData);
+        },
+        uploadFiles: function(files) {
+            var vm = this;
+
+            var progressBar = vm.$el.querySelector(
+                ".upload-progress .progress-bar");
+            if( progressBar ) {
+                progressBar.style.width = 0;
+            }
+            vm.uploadInProgress = true;
+
+            var xhr = new XMLHttpRequest();
+            var formData = new FormData();
+
             if( !vm.upload_start_url ) {
-                console.warning("[explainer] uploading assets will not work because 'url' is undefined.");
+                console.warn("[explainer] uploading assets will not work because 'url' is undefined.");
                 return;
             }
+            xhr.withCredentials = false;
+
+            for( var idx = 0; idx < files.length; ++idx ) {
+                files[idx].xhr = xhr;
+            }
+            var file = files[0];
+
+            handleError = (function(_this) {
+                return function() {
+                    for( var jdx = 0; jdx < files.length; ++jdx ) {
+                        var file = files[jdx];
+                        _this._uploaderror(files, xhr.status, xhr);
+                    }
+                };
+            })(this);
+            updateProgress = (function(_this) {
+                return function(evt) {
+                    var progress = 0;
+                    var allFilesFinished = false;
+                    if( evt != null ) {
+                        progress = 100 * evt.loaded / evt.total;
+                        for( var jdx = 0; jdx < files.length; ++jdx ) {
+                            var file = files[jdx];
+                            file.upload = {
+                                progress: progress,
+                                total: evt.total,
+                                bytesSent: evt.loaded
+                            };
+                        }
+                    } else {
+                        allFilesFinished = true;
+                        progress = 100;
+                        for( var jdx = 0; jdx < files.length; ++jdx ) {
+                            var file = files[jdx];
+                            if( !(file.upload.progress === 100 &&
+                               file.upload.bytesSent === file.upload.total) ) {
+                                allFilesFinished = false;
+                            }
+                            file.upload.progress = progress;
+                            file.upload.bytesSent = file.upload.total;
+                        }
+                        if( allFilesFinished ) {
+                            return;
+                        }
+                    }
+                    for( var jdx = 0; jdx < files.length; ++jdx ) {
+                        var file = files[jdx];
+                        _this._uploadprogress(
+                            file, progress, file.upload.bytesSent);
+                    }
+                };
+            })(this);
+
+            xhr.onload = (function(_this) {
+                return function(evt) {
+                   if( xhr.readyState !== 4 ) {
+                        return;
+                    }
+                    var resp = xhr.responseText;
+                    if( resp ) {
+                        if( xhr.getResponseHeader("content-type") &&
+                            ~xhr.getResponseHeader("content-type").indexOf(
+                                "application/json") ) {
+                            try {
+                                resp = JSON.parse(resp);
+                            } catch (_error) {
+                                e = _error;
+                                resp = "Invalid JSON response from server.";
+                            }
+                        }
+                    } else {
+                        resp = {location: xhr.responseURL + vm.awsConfig.mediaPrefix + file.name};
+                    }
+                    updateProgress();
+                    if( !(200 <= xhr.status && xhr.status < 300) ) {
+                        return handleError();
+                    } else {
+                        return _this._uploadfinished(files, resp, evt);
+                    }
+                };
+            })(this);
+            xhr.onerror = (function(_this) {
+                return function() {
+                    return handleError();
+                };
+            })(this);
+            if( xhr.upload != null ) {
+                xhr.upload.onprogress = updateProgress;
+            } else {
+                xhr.onprogress = updateProgress;
+            }
+
             var uploadUrl = vm.upload_start_url;
             if( vm.upload_start_url.indexOf("/api/auth/") >= 0 ) {
                 this.reqGet(vm.upload_start_url +
@@ -221,6 +360,9 @@ Vue.component('explainer', {
                             formData.append(
                                 "Content-Type", "binary/octet-stream");
                         }
+                        formData.append("file", file);
+                        // submitRequest
+                        return vm.startUpload(xhr, uploadUrl, formData);
                     },
                     function(resp) {
                         vm.showErrorMessages(resp);
@@ -228,145 +370,10 @@ Vue.component('explainer', {
             } else {
                 formData.append(
                     "csrfmiddlewaretoken", vm._getCSRFToken());
+                formData.append("file", file);
+                // submitRequest
+                return vm.startUpload(xhr, uploadUrl, formData);
             }
-            formData.append("file", file);
-            xhr.open("POST", uploadUrl, true);
-            xhr.withCredentials = false;
-
-            return xhr;
-        },
-        _uploaderror: function(files, status, xhr) {
-            this.showErrorMessages("error uploading file");
-        },
-        _uploadprogress: function(file, progress, bytesSent) {
-            var progressBar = this.$el.querySelector(
-                ".upload-progress .progress-bar");
-            progressBar.style.width = (
-                file.upload.bytesSent * 100 / file.upload.total);
-        },
-        _uploadfinished: function(files, resp, evt) {
-            var vm = this;
-            vm.uploadInProgress = false;
-            var dataCompleteUrl = vm.upload_complete_url;
-            if( dataCompleteUrl && dataCompleteUrl != vm.upload_start_url ) {
-                vm.reqPost(dataCompleteUrl, resp, function(resp) {
-                    vm.text += resp.location;
-                })
-            } else {
-                vm.text += resp.location;
-            }
-        },
-        uploadFiles: function(files) {
-            var vm = this;
-
-            var progressBar = vm.$el.querySelector(
-                ".upload-progress .progress-bar");
-            if( progressBar ) {
-                progressBar.style.width = 0;
-            }
-            vm.uploadInProgress = true;
-
-            var xhr = new XMLHttpRequest();
-            var formData = new FormData();
-            var xhr = vm.startUpload(files[0], formData, xhr);
-
-            for( var idx = 0; idx < files.length; ++idx ) {
-                files[idx].xhr = xhr;
-            }
-            handleError = (function(_this) {
-                return function() {
-                    for( var jdx = 0; jdx < files.length; ++jdx ) {
-                        var file = files[jdx];
-                        _this._uploaderror(files, xhr.status, xhr);
-                    }
-                };
-            })(this);
-            updateProgress = (function(_this) {
-                return function(evt) {
-                    var progress = 0;
-                    var allFilesFinished = false;
-                    if( evt != null ) {
-                        progress = 100 * evt.loaded / evt.total;
-                        for( var jdx = 0; jdx < files.length; ++jdx ) {
-                            var file = files[jdx];
-                            file.upload = {
-                                progress: progress,
-                                total: evt.total,
-                                bytesSent: evt.loaded
-                            };
-                        }
-                    } else {
-                        allFilesFinished = true;
-                        progress = 100;
-                        for( var jdx = 0; jdx < files.length; ++jdx ) {
-                            var file = files[jdx];
-                            if( !(file.upload.progress === 100 &&
-                               file.upload.bytesSent === file.upload.total) ) {
-                                allFilesFinished = false;
-                            }
-                            file.upload.progress = progress;
-                            file.upload.bytesSent = file.upload.total;
-                        }
-                        if( allFilesFinished ) {
-                            return;
-                        }
-                    }
-                    for( var jdx = 0; jdx < files.length; ++jdx ) {
-                        var file = files[jdx];
-                        _this._uploadprogress(
-                            file, progress, file.upload.bytesSent);
-                    }
-                };
-            })(this);
-
-            xhr.onload = (function(_this) {
-                return function(evt) {
-                   if( xhr.readyState !== 4 ) {
-                        return;
-                    }
-                    var resp = xhr.responseText;
-                    if( xhr.getResponseHeader("content-type") &&
-                        ~xhr.getResponseHeader("content-type").indexOf(
-                            "application/json") ) {
-                        try {
-                            resp = JSON.parse(resp);
-                        } catch (_error) {
-                            e = _error;
-                            resp = "Invalid JSON response from server.";
-                        }
-                    }
-                    updateProgress();
-                    if( !(200 <= xhr.status && xhr.status < 300) ) {
-                        return handleError();
-                    } else {
-                        return _this._uploadfinished(files, resp, evt);
-                    }
-                };
-            })(this);
-            xhr.onerror = (function(_this) {
-                return function() {
-                    return handleError();
-                };
-            })(this);
-            if( xhr.upload != null ) {
-                xhr.upload.onprogress = updateProgress;
-            } else {
-                xhr.onprogress = updateProgress;
-            }
-
-            var headers = {
-                "Accept": "application/json",
-                "Cache-Control": "no-cache",
-                "X-Requested-With": "XMLHttpRequest"
-            };
-            for (headerName in headers) {
-                headerValue = headers[headerName];
-                if (headerValue) {
-                    xhr.setRequestHeader(headerName, headerValue);
-                }
-            }
-            // submitRequest
-            return xhr.send(formData);
         },
         processFile: function(file) {
             file.processing = true;

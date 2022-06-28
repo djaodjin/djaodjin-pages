@@ -145,7 +145,10 @@ class UploadAssetAPIView(AccountMixin, GenericAPIView):
             if prefix:
                 prefix += '/'
             ext = os.path.splitext(src_key_name)[1]
-            with storage.open(src_key_name) as uploaded_file:
+            storage_key_name = src_key_name
+            if storage_key_name.startswith(_get_media_prefix()):
+                storage_key_name = storage_key_name[len(_get_media_prefix()) + 1:]
+            with storage.open(storage_key_name) as uploaded_file:
                 dst_key_name = "%s%s%s" % (prefix,
                     hashlib.sha256(uploaded_file.read()).hexdigest(), ext)
             LOGGER.debug("S3 bucket %s: copy %s to %s",
@@ -164,10 +167,14 @@ class UploadAssetAPIView(AccountMixin, GenericAPIView):
                 extra_args.update({'ContentType': 'image/png'})
             bucket.copy({'Bucket': storage.bucket_name, 'Key': src_key_name},
                 dst_key_name, ExtraArgs=extra_args)
-            storage.delete(src_key_name)
+# XXX still can't figure out why we get a permission denied on DeleteObject.
+#            storage.delete(storage_key_name)
 #            resp = bucket.delete_objects(
 #                Delete={'Objects': [{'Key': src_key_name}]})
-            location = storage.url(dst_key_name)
+            storage_key_name = dst_key_name
+            if storage_key_name.startswith(_get_media_prefix()):
+                storage_key_name = storage_key_name[len(_get_media_prefix()) + 1:]
+            location = storage.url(storage_key_name)
 
         elif 'file' in request.data:
             uploaded_file = request.data['file']
