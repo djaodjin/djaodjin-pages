@@ -115,9 +115,12 @@ class PageElementAPIView(TrailMixin, generics.ListAPIView):
                 content_tree, sort_by_key=False, depth=-1)
             items.pop(0)
         else:
+            cut = self.get_cut()
+            if not cut:
+                cut = ContentCut()
             content_tree = build_content_tree(
                 roots=None, prefix=self.full_path,
-                cut=self.get_cut(),
+                cut=cut,
                 visibility=self.visibility,
                 accounts=self.owners)
             # We do not re-sort the roots such that member-only content

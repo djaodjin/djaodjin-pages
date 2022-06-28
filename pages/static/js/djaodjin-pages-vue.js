@@ -482,8 +482,21 @@ Vue.component('explainer', {
     computed: {
         // display with active links
         textAsHtml: function() {
-            return this.text.replace(/(https?:\/\/\S+)/gi,
-                '<a href="$1">uploaded</a>');
+            var vm = this;
+            if( !vm.text ) {
+                return "";
+            }
+            var activeLinks = vm.text.replace(
+                /(https?:\/\/\S+)/gi,
+                '<a href="$1" target="_blank">external link</a>');
+            if( vm.upload_complete_url ) {
+                var reg = new RegExp(
+                    '<a href="(' + vm.upload_complete_url +
+                    '\/\\S+)" target="_blank">(external link)<\/a>', 'gi');
+                activeLinks = activeLinks.replace(reg,
+                    '<a href="$1">uploaded document</a>');
+            }
+            return activeLinks;
         }
     },
     mounted: function() {
