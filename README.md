@@ -39,10 +39,10 @@ the prerequisites, create the database then run the testsite webapp.
 Release Notes
 =============
 
-0.6.0
+0.6.3
 
-  * adds feature to upload documents
-  * fixes accounts for obj.extra being None
+  * uses content API for non-leafs elements in PageElementView
+  * fixes computation of number of pages in pagination
 
 [previous release notes](changelog)
 
