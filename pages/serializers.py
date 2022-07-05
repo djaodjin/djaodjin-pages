@@ -135,14 +135,15 @@ class NodeElementSerializer(serializers.ModelSerializer):
     @staticmethod
     def get_extra(obj):
         try:
-            return obj.get('extra', {})
+            extra = obj.extra
         except AttributeError:
-            pass
-        try:
-            return obj.extra
-        except AttributeError:
-            pass
-        return {}
+            extra = obj.get('extra', {})
+        if not isinstance(extra, dict):
+            try:
+                return json.loads(extra)
+            except (TypeError, ValueError):
+                pass
+        return extra
 
     @staticmethod
     def get_indent(obj):

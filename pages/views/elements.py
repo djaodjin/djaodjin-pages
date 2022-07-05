@@ -66,8 +66,10 @@ class PageElementView(TrailMixin, AccessiblesMixin, TemplateView):
         if not hasattr(self, '_is_prefix'):
             try:
                 self._is_prefix = (not self.element or
-                    RelationShip.objects.filter(
-                        orig_element=self.element).exists())
+                    (RelationShip.objects.filter(
+                        orig_element=self.element).exists() and
+                     not self.element.text
+                    ))
             except Http404:
                 self._is_prefix = True
         return self._is_prefix
@@ -98,21 +100,14 @@ class PageElementView(TrailMixin, AccessiblesMixin, TemplateView):
             if isinstance(path, six.string_types):
                 path = path.strip(self.URL_PATH_SEP)
             if path:
-                url_kwargs = {'path': path}
                 if self.manages(self.element.account):
                     context.update({
                         'edit_perm': self.manages(self.element.account)
                     })
-                    url_kwargs.update({
-                        self.account_url_kwarg: self.element.account})
-                    update_context_urls(context, {
-                        'api_content': reverse('pages_api_edit_element',
-                            kwargs=url_kwargs),
-                    })
-                else:
-                    update_context_urls(context, {
-                      'api_content': reverse('api_content', kwargs=url_kwargs),
-                    })
+                url_kwargs = {'path': path}
+                update_context_urls(context, {
+                    'api_content': reverse('api_content', kwargs=url_kwargs),
+                })
             else:
                 update_context_urls(context, {
                     # We cannot use `kwargs=url_kwargs` here otherwise
@@ -194,7 +189,19 @@ class PageElementEditableView(AccountMixin, PageElementView):
         if self.is_prefix:
             if isinstance(path, six.string_types):
                 path = path.strip(self.URL_PATH_SEP)
-            if not path:
+            if path:
+                context.update({
+                    'edit_perm': self.manages(self.element.account)
+                })
+                url_kwargs = {
+                    'path': path,
+                    self.account_url_kwarg: self.element.account,
+                }
+                update_context_urls(context, {
+                    'api_content': reverse('pages_api_edit_element',
+                        kwargs=url_kwargs),
+                })
+            else:
                 update_context_urls(context, {
                     'api_content': reverse('pages_api_editables_index',
                         kwargs=url_kwargs),

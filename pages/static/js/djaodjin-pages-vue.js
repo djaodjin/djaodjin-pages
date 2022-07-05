@@ -475,7 +475,10 @@ Vue.component('explainer', {
             var href = event.target.getAttribute('href');
             var pathname = event.target.pathname;
             if( href ) {
-                if( pathname.startsWith(vm.upload_complete_url) ) {
+                if( href.startsWith(vm.upload_complete_url) ||
+                    pathname.startsWith(vm.upload_complete_url) ) {
+                    // handles both cases, `upload_complete_url` is a fully
+                    // qualified URL or just a path.
                     vm.reqGet(pathname,
                     function(resp) {
                         window.open(resp.location, '_blank');
