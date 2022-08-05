@@ -41,15 +41,15 @@ class HTMLField(serializers.CharField):
     def __init__(self, **kwargs):
         self.html_tags = kwargs.pop('html_tags', [])
         self.html_attributes = kwargs.pop('html_attributes', {})
-        self.html_styles = kwargs.pop('html_styles', [])
         self.html_strip = kwargs.pop('html_strip', False)
         super(HTMLField, self).__init__(**kwargs)
 
     def to_internal_value(self, data):
         return super(HTMLField, self).to_internal_value(
-            bleach.clean(data, tags=self.html_tags,
-            attributes=self.html_attributes, styles=self.html_styles,
-            strip=self.html_strip))
+            bleach.clean(data,
+                tags=self.html_tags,
+                attributes=self.html_attributes,
+                strip=self.html_strip))
 
 
 class NoModelSerializer(serializers.Serializer):
@@ -100,9 +100,9 @@ class CommentSerializer(serializers.ModelSerializer):
     """
     Serializes a Comment.
     """
-    text = HTMLField(html_tags=settings.ALLOWED_TAGS,
+    text = HTMLField(required=False,
+        html_tags=settings.ALLOWED_TAGS,
         html_attributes=settings.ALLOWED_ATTRIBUTES,
-        html_styles=settings.ALLOWED_STYLES, required=False,
         help_text=_("Long description of the page element"))
     user = serializers.SlugRelatedField(read_only=True, slug_field='username')
 
@@ -183,9 +183,9 @@ class PageElementSerializer(serializers.ModelSerializer):
         help_text=("Account that can edit the page element"))
     picture = serializers.CharField(required=False, allow_null=True,
         help_text=_("Picture icon that can be displayed alongside the title"))
-    text = HTMLField(html_tags=settings.ALLOWED_TAGS,
+    text = HTMLField(required=False,
+        html_tags=settings.ALLOWED_TAGS,
         html_attributes=settings.ALLOWED_ATTRIBUTES,
-        html_styles=settings.ALLOWED_STYLES, required=False,
         help_text=_("Long description of the page element"))
     extra = serializers.SerializerMethodField(required=False, allow_null=True,
         help_text=_("Extra meta data (can be stringify JSON)"))

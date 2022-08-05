@@ -24,7 +24,9 @@
 
 import os
 
+import bleach
 from django.conf import settings
+
 
 _SETTINGS = {
     'ACCOUNT_LOOKUP_FIELD': 'username',
@@ -92,10 +94,4 @@ ALLOWED_TAGS = [
     'img'
 ]
 
-ALLOWED_ATTRIBUTES = {
-    '*': ['style'],
-    'a': ['href', 'title'],
-    'img': ['src', 'title', 'style']
-}
-
-ALLOWED_STYLES = ['text-align', 'max-width', 'line-height']
+ALLOWED_ATTRIBUTES = bleach.ALLOWED_ATTRIBUTES

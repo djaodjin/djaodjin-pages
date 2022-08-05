@@ -17,9 +17,6 @@
 }(typeof self !== 'undefined' ? self : this, function (exports, jQuery) {
 
 
-/** Formats a date shown to the user.
-*/
-const DATE_FORMAT = 'MMM DD, YYYY';
 const DESC_SORT_PRE = '-';
 
 
@@ -32,7 +29,7 @@ var messagesMixin = {
     data: function() {
         return {
             messagesElement: '#messages-content',
-            scrollToTopOnMessages: true
+            scrollToTopOnMessages: true,
         }
     },
     methods: {
@@ -1023,7 +1020,7 @@ var itemListMixin = {
                 params: {
                     // The following dates will be stored as `String` objects
                     // as oppossed to `moment` or `Date` objects because this
-                    // is how uiv-date-picker will update them.
+                    // is how form fields input="date" will update them.
                     start_at: null,
                     ends_at: null,
                     // The timezone for both start_at and ends_at.
@@ -1035,18 +1032,10 @@ var itemListMixin = {
             }
             if( this.$dateRange ) {
                 if( this.$dateRange.start_at ) {
-                    data.params['start_at'] = moment(
-                        this.$dateRange.start_at).format("YYYY-MM-DD");
+                    data.params['start_at'] = this.$dateRange.start_at;
                 }
                 if( this.$dateRange.ends_at ) {
-                    // uiv-date-picker will expect ends_at as a String
-                    // but DATE_FORMAT will literally cut the hour part,
-                    // regardless of timezone. We don't want an empty list
-                    // as a result.
-                    // If we use moment `endOfDay` we get 23:59:59 so we
-                    // add a full day instead.
-                    data.params['ends_at'] = moment(
-                        this.$dateRange.ends_at).add(1,'days').format("YYYY-MM-DD");
+                    data.params['ends_at'] = this.$dateRange.ends_at;
                 }
                 if( this.$dateRange.timezone ) {
                     data.params['timezone'] = this.$dateRange.timezone;
@@ -1102,11 +1091,7 @@ var itemListMixin = {
             for( var key in vm.params ) {
                 if( vm.params.hasOwnProperty(key) && vm.params[key] ) {
                     if( excludes && key in excludes ) continue;
-                    if( key === 'start_at' || key === 'ends_at' ) {
-                        params[key] = moment(vm.params[key], "YYYY-MM-DD").toISOString();
-                    } else {
-                        params[key] = vm.params[key];
-                    }
+                    params[key] = vm.params[key];
                 }
             }
             return params;
@@ -1127,7 +1112,42 @@ var itemListMixin = {
             }
             return result;
         },
+        asDateInputField: function(dateISOString) {
+            const dateValue = moment(dateISOString);
+            return dateValue.isValid() ? dateValue.format("YYYY-MM-DD") : null;
+        },
+        asDateISOString: function(dateInputField) {
+            const dateValue = moment(dateInputField, "YYYY-MM-DD");
+            return dateValue.isValid() ? dateValue.toISOString() : null;
+        }
     },
+    computed: {
+        _start_at: {
+            get: function() {
+                return this.asDateInputField(this.params.start_at);
+            },
+            set: function(newVal) {
+                this.$set(this.params, 'start_at',
+                    this.asDateISOString(newVal));
+                this.get();
+            }
+        },
+        _ends_at: {
+            get: function() {
+                // form field input="date" will expect ends_at as a String
+                // but will literally cut the hour part regardless of timezone.
+                // We don't want an empty list as a result.
+                // If we use moment `endOfDay` we get 23:59:59 so we
+                // add a full day instead.
+                const dateValue = moment(this.params.ends_at).add(1,'days');
+                return dateValue.isValid() ? dateValue.format("YYYY-MM-DD") : null;
+            },
+            set: function(newVal) {
+                this.$set(this.params, 'ends_at', this.asDateISOString(newVal));
+                this.get();
+            }
+        }
+    }
 };
 
 

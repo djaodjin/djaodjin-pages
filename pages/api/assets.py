@@ -67,7 +67,7 @@ class AssetAPIView(AccountMixin, GenericAPIView):
 
         .. code-block:: http
 
-            GET /api/assets/supporting-evidence.pdf HTTP/1.1
+            GET /api/supplier-1/assets/supporting-evidence.pdf HTTP/1.1
 
         responds
 
@@ -76,7 +76,7 @@ class AssetAPIView(AccountMixin, GenericAPIView):
             {
               "location": "https://example-bucket.s3.amazon.com\
 /supporting-evidence.pdf",
-              "updated_at": "2016-10-26T00:00:00.00000+00:00",
+              "updated_at": "2016-10-26T00:00:00.00000+00:00"
             }
         """
         #pylint:disable=unused-argument
@@ -91,7 +91,7 @@ class AssetAPIView(AccountMixin, GenericAPIView):
 
         .. code-block:: http
 
-            DELETE /api/assets/supporting-evidence.pdf HTTP/1.1
+            DELETE /api/supplier-1/assets/supporting-evidence.pdf HTTP/1.1
 
         """
         #pylint: disable=unused-variable,unused-argument,too-many-locals

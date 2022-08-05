@@ -29,7 +29,7 @@ from django.conf.urls import url
 
 from ... import settings
 from ...api.elements import (PageElementSearchAPIView, PageElementAPIView,
-  PageElementDetailAPIView)
+  PageElementIndexAPIView, PageElementDetailAPIView)
 
 urlpatterns = [
     url(r'^search',
@@ -40,5 +40,5 @@ urlpatterns = [
     url(r'(?P<path>%s)$' % settings.PATH_RE,
         PageElementAPIView.as_view(), name="api_content"),
     url(r'',
-        PageElementAPIView.as_view(), name="api_content_index"),
+        PageElementIndexAPIView.as_view(), name="api_content_index"),
 ]

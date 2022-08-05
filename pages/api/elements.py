@@ -45,7 +45,7 @@ LOGGER = logging.getLogger(__name__)
 
 class PageElementAPIView(TrailMixin, generics.ListAPIView):
     """
-    Lists a tree of page elements
+    Lists a tree of page elements under a path
 
     **Tags: content
 
@@ -149,6 +149,51 @@ class PageElementAPIView(TrailMixin, generics.ListAPIView):
         element.count = len(results)
         serializer = self.get_serializer(element)
         return api_response.Response(serializer.data)
+
+
+class PageElementIndexAPIView(PageElementAPIView):
+    """
+    Lists the tree of page elements under the root
+
+    **Tags: content
+
+    **Example
+
+    .. code-block:: http
+
+        GET /api/content/ HTTP/1.1
+
+    responds
+
+    .. code-block:: json
+
+        {
+          "count": 8,
+          "next": null,
+          "previous": null,
+          "results": [
+          {
+            "slug": "metal",
+            "path": null,
+            "title": "Metal structures & equipment",
+            "indent": 0
+          },
+          {
+            "slug": "boxes-and-enclosures",
+            "path": "/metal/boxes-and-enclosures",
+            "title": "Boxes & enclosures",
+            "indent": 1,
+            "tags": [
+              "industry",
+              "pagebreak",
+              "public",
+              "scorecard"
+            ]
+          }
+          ]
+        }
+    """
+    pass
 
 
 class PageElementSearchAPIView(PageElementAPIView):
