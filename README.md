@@ -9,8 +9,8 @@ Major Features:
 
 Tested with
 
-- **Python:** 3.7, **Django:** 2.2 ([LTS](https://www.djangoproject.com/download/)), **Django Rest Framework:** 3.12
-- **Python:** 3.7, **Django:** 3.2 (latest), **Django Rest Framework:** 3.12
+- **Python:** 3.7, **Django:** 3.2 ([LTS](https://www.djangoproject.com/download/)), **Django Rest Framework:** 3.12
+- **Python:** 3.10, **Django:** 4.0 (latest), **Django Rest Framework:** 3.12
 - **Python:** 2.7, **Django:** 1.11 (legacy), **Django Rest Framework:** 3.9.4
 
 
@@ -39,10 +39,10 @@ the prerequisites, create the database then run the testsite webapp.
 Release Notes
 =============
 
-0.6.3
+0.6.4
 
-  * uses content API for non-leafs elements in PageElementView
-  * fixes computation of number of pages in pagination
+  * whitelists HTML tags used by PageElement editor
+  * compatibles with bleach 5+
 
 [previous release notes](changelog)
 
