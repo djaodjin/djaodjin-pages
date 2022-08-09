@@ -103,7 +103,8 @@ ALLOWED_TAGS = bleach.ALLOWED_TAGS + [
     'tr',
 ]
 
-ALLOWED_ATTRIBUTES = bleach.ALLOWED_ATTRIBUTES | {
+ALLOWED_ATTRIBUTES = bleach.ALLOWED_ATTRIBUTES
+ALLOWED_ATTRIBUTES.update({
     'a': ['href', 'target'],
     'blockquote': ['class'],
     'div': ['class'],
@@ -113,4 +114,4 @@ ALLOWED_ATTRIBUTES = bleach.ALLOWED_ATTRIBUTES | {
     'table': ['class'],
     'td': ['colspan', 'class'],
     'th': ['colspan', 'class'],
-}
+})
