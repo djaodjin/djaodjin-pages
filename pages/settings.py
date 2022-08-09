@@ -74,24 +74,43 @@ PATH_RE = r'([a-zA-Z0-9\-]+/)*[a-zA-Z0-9\-]*'
 NON_EMPTY_PATH_RE = r'([a-zA-Z0-9\-]+/)*[a-zA-Z0-9\-]+'
 
 # Sanitizer settings
-ALLOWED_TAGS = [
-    'a',
-    'span',
+ALLOWED_TAGS = bleach.ALLOWED_TAGS + [
+    'blockquote',
+    'br',
+    'caption',
+    'div',
+    'dd',
+    'dl',
+    'dt',
+    'footer',
     'h1',
     'h2',
     'h3',
-    'b',
-    'pre',
-    'em',
-    'li',
-    'ol',
-    'strong',
-    'ul',
-    'i',
-    'div',
-    'br',
+    'h4',
+    'h5',
+    'hr',
+    'label',
+    'img',
+    'input',
     'p',
-    'img'
+    'pre',
+    'span',
+    'table',
+    'tbody',
+    'td',
+    'th',
+    'thead',
+    'tr',
 ]
 
-ALLOWED_ATTRIBUTES = bleach.ALLOWED_ATTRIBUTES
+ALLOWED_ATTRIBUTES = bleach.ALLOWED_ATTRIBUTES | {
+    'a': ['href', 'target'],
+    'blockquote': ['class'],
+    'div': ['class'],
+    'footer': ['class'],
+    'img': ['class', 'src'],
+    'input': ['class', 'type', 'name', 'value'],
+    'table': ['class'],
+    'td': ['colspan', 'class'],
+    'th': ['colspan', 'class'],
+}
