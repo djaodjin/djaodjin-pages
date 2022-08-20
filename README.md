@@ -39,10 +39,10 @@ the prerequisites, create the database then run the testsite webapp.
 Release Notes
 =============
 
-0.6.4
+0.6.5
 
-  * whitelists HTML tags used by PageElement editor
-  * compatibles with bleach 5+
+  * fixes uploaded document not found when going through S3 direct upload
+  * compatibles with Django4.0
 
 [previous release notes](changelog)
 
