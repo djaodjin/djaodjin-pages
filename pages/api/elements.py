@@ -235,6 +235,8 @@ class PageElementSearchAPIView(PageElementAPIView):
         return results
 
     def get_queryset(self):
+        # XXX This code is actually not triggered because of inheritance
+        # from `PageElementAPIView`.
         try:
             queryset = PageElement.objects.filter(account=self.account)
             search_string = self.request.query_params.get('q', None)

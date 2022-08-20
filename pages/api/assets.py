@@ -25,6 +25,7 @@
 
 import hashlib, logging, os
 
+import boto3
 from deployutils.helpers import datetime_or_now
 from django.core.files.storage import get_storage_class, FileSystemStorage
 from django.utils.module_loading import import_string
@@ -104,6 +105,7 @@ class AssetAPIView(AccountMixin, GenericAPIView):
 
 class UploadAssetAPIView(AccountMixin, GenericAPIView):
 
+    URL_PATH_SEP = '/'
     store_hash = True
     replace_stored = False
     content_type = None
@@ -135,45 +137,45 @@ class UploadAssetAPIView(AccountMixin, GenericAPIView):
         response_status = status.HTTP_200_OK
         is_public_asset = request.query_params.get('public', False)
         location = request.data.get('location', None)
+        media_prefix = _get_media_prefix()
         if location and 'aws.com/' in location:
-            storage = get_default_storage(self.request)
             parts = urlparse(location)
-            src_key_name = parts.path.lstrip('/')
+            bucket_name = parts.netloc.split('.')[0]
+            src_key_name = parts.path.lstrip(self.URL_PATH_SEP)
                 # we remove leading '/' otherwise S3 copy triggers a 404
                 # because it creates an URL with '//'.
             prefix = os.path.dirname(src_key_name)
             if prefix:
-                prefix += '/'
+                prefix += self.URL_PATH_SEP
             ext = os.path.splitext(src_key_name)[1]
-            storage_key_name = src_key_name
-            if storage_key_name.startswith(_get_media_prefix()):
-                storage_key_name = storage_key_name[len(_get_media_prefix()) + 1:]
-            with storage.open(storage_key_name) as uploaded_file:
-                dst_key_name = "%s%s%s" % (prefix,
-                    hashlib.sha256(uploaded_file.read()).hexdigest(), ext)
-            LOGGER.debug("S3 bucket %s: copy %s to %s",
-                storage.bucket_name, src_key_name, dst_key_name)
-            bucket = storage.bucket
+
+            s3_client = boto3.client('s3')
+            data = s3_client.get_object(Bucket=bucket_name, Key=src_key_name)
+            uploaded_file = data['Body']
+            if prefix.startswith(media_prefix):
+                prefix = prefix[len(media_prefix) + 1:]
+            storage_key_name = "%s%s%s" % (prefix,
+                hashlib.sha256(uploaded_file.read()).hexdigest(), ext)
+
+            dst_key_name = "%s/%s" % (media_prefix, storage_key_name)
+            LOGGER.info("S3 bucket %s: copy %s to %s",
+                bucket_name, src_key_name, dst_key_name)
+            storage = get_default_storage(self.request)
             if is_public_asset:
                 extra_args = {'ACL': "public-read"}
             else:
                 extra_args = {
-                    'ServerSideEncryption': settings.AWS_SERVER_SIDE_ENCRYPTION}
+                  'ServerSideEncryption': settings.AWS_SERVER_SIDE_ENCRYPTION}
             if ext in ['.pdf']:
                 extra_args.update({'ContentType': 'application/pdf'})
             elif ext in ['.jpg']:
                 extra_args.update({'ContentType': 'image/jpeg'})
             elif ext in ['.png']:
                 extra_args.update({'ContentType': 'image/png'})
-            bucket.copy({'Bucket': storage.bucket_name, 'Key': src_key_name},
-                dst_key_name, ExtraArgs=extra_args)
+            s3_client.copy({'Bucket': bucket_name, 'Key': src_key_name},
+                bucket_name, dst_key_name, ExtraArgs=extra_args)
 # XXX still can't figure out why we get a permission denied on DeleteObject.
-#            storage.delete(storage_key_name)
-#            resp = bucket.delete_objects(
-#                Delete={'Objects': [{'Key': src_key_name}]})
-            storage_key_name = dst_key_name
-            if storage_key_name.startswith(_get_media_prefix()):
-                storage_key_name = storage_key_name[len(_get_media_prefix()) + 1:]
+#            s3_client.delete_object(Bucket=bucket_name, Key=src_key_name)
             location = storage.url(storage_key_name)
 
         elif 'file' in request.data:
@@ -206,10 +208,9 @@ class UploadAssetAPIView(AccountMixin, GenericAPIView):
                 _("Either 'location' or 'file' must be specified.")})
 
         if not is_public_asset:
-            path = urlparse(location).path.lstrip('/')
-            media_prefix = _get_media_prefix()
+            path = urlparse(location).path.lstrip(self.URL_PATH_SEP)
             if path.startswith(media_prefix):
-                path = path[len(media_prefix):].lstrip('/')
+                path = path[len(media_prefix):].lstrip(self.URL_PATH_SEP)
             location = request.build_absolute_uri(
                 reverse('pages_api_asset', args=(self.account, path)))
 

@@ -40,6 +40,15 @@ install-conf:: $(DESTDIR)$(CONFIG_DIR)/credentials \
 build-assets: vendor-assets-prerequisites
 
 
+clean: clean-dbs
+	[ ! -f $(srcDir)/package-lock.json ] || rm $(srcDir)/package-lock.json
+	find $(srcDir) -name '__pycache__' -exec rm -rf {} +
+	find $(srcDir) -name '*~' -exec rm -rf {} +
+
+clean-dbs:
+	[ ! -f $(DB_NAME) ] || rm $(DB_NAME)
+
+
 vendor-assets-prerequisites: $(srcDir)/testsite/package.json
 
 
@@ -55,8 +64,7 @@ $(DESTDIR)$(CONFIG_DIR)/gunicorn.conf: $(srcDir)/testsite/etc/gunicorn.conf
 		-e 's,%(LOCALSTATEDIR)s,$(LOCALSTATEDIR),' $< > $@
 
 
-initdb: install-conf $(srcDir)/htdocs/static/vendor/bootstrap.css
-	rm -rf $(DB_NAME)
+initdb: clean-dbs install-conf $(srcDir)/htdocs/static/vendor/bootstrap.css
 	$(installDirs) $(dir $(DB_NAME))
 	cd $(srcDir) && $(MANAGE) migrate $(RUNSYNCDB) --noinput
 	cd $(srcDir) && $(MANAGE) loaddata \
