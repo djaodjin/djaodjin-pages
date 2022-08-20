@@ -1,4 +1,4 @@
-# Copyright (c) 2020, DjaoDjin inc.
+# Copyright (c) 2022, DjaoDjin inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -24,10 +24,10 @@
 
 '''API URLs for the pages application'''
 
-from django.conf.urls import include, url
+from ...compat import include, re_path
 
 urlpatterns = [
-    url(r'^content/editables/', include('pages.urls.api.editables')),
-    url(r'^content/', include('pages.urls.api.readers')),
-    url(r'^content/', include('pages.urls.api.noauth')),
+    re_path(r'^content/editables/', include('pages.urls.api.editables')),
+    re_path(r'^content/', include('pages.urls.api.readers')),
+    re_path(r'^content/', include('pages.urls.api.noauth')),
 ]

@@ -74,9 +74,6 @@ doc:
 	$(installDirs) build/docs
 	cd $(srcDir) && sphinx-build -b html ./docs $(PWD)/build/docs
 
-clean:
-	-rm -rf credentials gunicorn.conf db.sqlite3 testsite-app.log htdocs/media themes
-
 vendor-assets-prerequisites: $(srcDir)/htdocs/static/vendor/bootstrap.css
 
 $(srcDir)/htdocs/static/vendor/bootstrap.css: $(srcDir)/testsite/package.json

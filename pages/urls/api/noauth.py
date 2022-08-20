@@ -25,20 +25,19 @@
 """
 API URLs for readers who could be unauthenticated
 """
-from django.conf.urls import url
-
 from ... import settings
+from ...compat import re_path
 from ...api.elements import (PageElementSearchAPIView, PageElementAPIView,
   PageElementIndexAPIView, PageElementDetailAPIView)
 
 urlpatterns = [
-    url(r'^search',
+    re_path(r'^search',
         PageElementSearchAPIView.as_view(), name='api_page_element_search'),
-    url(r'detail/(?P<path>%s)$' % settings.PATH_RE,
+    re_path(r'detail/(?P<path>%s)$' % settings.PATH_RE,
         PageElementDetailAPIView.as_view(),
         name='pages_api_pageelement'),
-    url(r'(?P<path>%s)$' % settings.PATH_RE,
+    re_path(r'(?P<path>%s)$' % settings.PATH_RE,
         PageElementAPIView.as_view(), name="api_content"),
-    url(r'',
+    re_path(r'',
         PageElementIndexAPIView.as_view(), name="api_content_index"),
 ]

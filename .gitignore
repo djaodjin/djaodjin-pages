@@ -1,11 +1,9 @@
-*.sqlite3
 *.pyc
 *~
 *.xcodeproj
 .DS_Store
-.timestamp
+db.sqlite
 credentials
 site.conf
 gunicorn.conf
-themes/
 htdocs/

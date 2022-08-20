@@ -22,9 +22,9 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from django.conf.urls import url, include
+from ...compat import include, re_path
 
 urlpatterns = [
-    url(r'^editables/', include('pages.urls.views.editables')),
-    url(r'^', include('pages.urls.views.elements')),
+    re_path(r'^editables/', include('pages.urls.views.editables')),
+    re_path(r'^', include('pages.urls.views.elements')),
 ]

@@ -24,9 +24,8 @@
 
 '''API URLs for the pages application'''
 
-from django.conf.urls import url
-
 from ...import settings
+from ...compat import re_path
 from ...api.elements import (PageElementEditableListAPIView,
     PageElementEditableDetail)
 from ...api.relationship import (PageElementAliasAPIView,
@@ -34,16 +33,16 @@ from ...api.relationship import (PageElementAliasAPIView,
 
 
 urlpatterns = [
-    url(r'^relationship',
+    re_path(r'^relationship',
         RelationShipListAPIView.as_view(), name='relationships'),
-    url(r'^alias/(?P<path>%s)$' % settings.PATH_RE,
+    re_path(r'^alias/(?P<path>%s)$' % settings.PATH_RE,
         PageElementAliasAPIView.as_view(), name='pages_api_alias_node'),
-    url(r'^attach/(?P<path>%s)$' % settings.PATH_RE,
+    re_path(r'^attach/(?P<path>%s)$' % settings.PATH_RE,
         PageElementMoveAPIView.as_view(), name='pages_api_move_node'),
-    url(r'^mirror/(?P<path>%s)$' % settings.PATH_RE,
+    re_path(r'^mirror/(?P<path>%s)$' % settings.PATH_RE,
         PageElementMirrorAPIView.as_view(), name='pages_api_mirror_node'),
-    url(r'^(?P<path>%s)$' % settings.NON_EMPTY_PATH_RE,
+    re_path(r'^(?P<path>%s)$' % settings.NON_EMPTY_PATH_RE,
         PageElementEditableDetail.as_view(), name='pages_api_edit_element'),
-    url(r'^$', PageElementEditableListAPIView.as_view(),
+    re_path(r'^$', PageElementEditableListAPIView.as_view(),
         name='pages_api_editables_index'),
 ]

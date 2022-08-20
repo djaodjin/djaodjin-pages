@@ -25,5 +25,9 @@
 from django.dispatch import Signal
 
 #pylint: disable=invalid-name
-question_new = Signal(providing_args=['question', 'request'])
-comment_was_posted = Signal(providing_args=['comment', 'request'])
+question_new = Signal(
+#providing_args=['question', 'request']
+)
+comment_was_posted = Signal(
+#providing_args=['comment', 'request']
+)

@@ -29,11 +29,10 @@ import logging
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ImproperlyConfigured
 from django.http import Http404
-from django.utils.translation import ugettext as _
 from rest_framework.generics import get_object_or_404
 
 from . import settings
-from .compat import reverse, is_authenticated
+from .compat import gettext_lazy as _, is_authenticated, reverse
 from .models import PageElement
 from .utils import get_account_model
 

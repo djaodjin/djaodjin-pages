@@ -22,14 +22,13 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from django.conf.urls import url
-
 from ... import settings
+from ...compat import re_path
 from ...views.elements import PageElementEditableView
 
 urlpatterns = [
-    url(r'^(?P<path>%s)' % settings.PATH_RE,
+    re_path(r'^(?P<path>%s)' % settings.PATH_RE,
         PageElementEditableView.as_view(), name='pages_editables_element'),
-    url(r'^',
+    re_path(r'^',
         PageElementEditableView.as_view(), name='pages_editables_index'),
 ]

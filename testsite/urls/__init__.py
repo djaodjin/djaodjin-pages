@@ -23,17 +23,18 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from django.conf import settings
-from django.conf.urls import include, url
 from django.conf.urls.static import static
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 from django.views.generic import TemplateView
+
+from pages.compat import include, re_path
 
 urlpatterns = staticfiles_urlpatterns() \
     + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 urlpatterns += [
-    url(r'^', include('django.contrib.auth.urls')),
-    url(r'^', include('pages.urls')),
-    url(r'^app/energy-utility/',
+    re_path(r'^', include('django.contrib.auth.urls')),
+    re_path(r'^', include('pages.urls')),
+    re_path(r'^app/energy-utility/',
         TemplateView.as_view(template_name='index.html')),
 ]
