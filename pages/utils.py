@@ -28,9 +28,10 @@ from django.apps import apps as django_apps
 from django.core.exceptions import ImproperlyConfigured
 from django.core.validators import RegexValidator
 from django.utils.module_loading import import_string
-from django.utils.translation import ugettext_lazy as _
 
 from . import settings
+from .compat import gettext_lazy as _
+
 
 LOGGER = logging.getLogger(__name__)
 

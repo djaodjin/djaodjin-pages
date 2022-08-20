@@ -26,12 +26,12 @@ from __future__ import unicode_literals
 import json
 
 import bleach
-from django.utils.translation import ugettext_lazy as _
 from rest_framework import serializers
 
 from . import settings
-from .compat import is_authenticated
+from .compat import gettext_lazy as _, is_authenticated
 from .models import Comment, Follow, PageElement, Vote
+
 
 #pylint: disable=no-init,abstract-method
 

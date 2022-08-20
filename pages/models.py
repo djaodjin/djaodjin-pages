@@ -31,11 +31,11 @@ from django.contrib.auth import get_user_model
 from django.db import IntegrityError, models, transaction
 from django.db.models import Max, Q
 from django.template.defaultfilters import slugify
-from django.utils.translation import ugettext_lazy as _
 from rest_framework.exceptions import ValidationError
 
 from . import settings
-from .compat import import_string, python_2_unicode_compatible, six
+from .compat import (gettext_lazy as _, import_string,
+    python_2_unicode_compatible, six)
 
 
 LOGGER = logging.getLogger(__name__)
