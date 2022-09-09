@@ -39,10 +39,10 @@ the prerequisites, create the database then run the testsite webapp.
 Release Notes
 =============
 
-0.6.5
+0.6.6
 
-  * fixes uploaded document not found when going through S3 direct upload
-  * compatibles with Django4.0
+  * optionally loads content directly through View instead of API
+  * LOCALE keys can be up to 8 characters
 
 [previous release notes](changelog)
 
