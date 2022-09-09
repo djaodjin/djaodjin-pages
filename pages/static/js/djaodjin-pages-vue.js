@@ -48,6 +48,7 @@ Vue.component('editables-detail', {
     ],
     data: function() {
         return {
+            item: this.$element ? this.$element : {},
             url: this.$urls.api_content,
             tags: [],
             isFollowing: false,
@@ -107,18 +108,25 @@ Vue.component('editables-detail', {
     },
     mounted: function() {
         var vm = this;
-        vm.get(function success(resp) {
-            vm.isFollowing = resp.data.is_following;
-            vm.nbFollowers = resp.data.nb_followers;
-            vm.isUpVote = resp.data.is_upvote;
-            vm.nbUpVotes = resp.data.nb_upvotes;
-            if( resp.data.extra && resp.data.extra.tags ) {
-                vm.tags = resp.data.extra.tags;
-            }
-        });
+        if( vm.item && vm.item.text ) {
+            vm.itemLoaded = true;
+        } else {
+            vm.get(function success(resp) {
+                vm.isFollowing = resp.data.is_following;
+                vm.nbFollowers = resp.data.nb_followers;
+                vm.isUpVote = resp.data.is_upvote;
+                vm.nbUpVotes = resp.data.nb_upvotes;
+                if( resp.data.extra && resp.data.extra.tags ) {
+                    vm.tags = resp.data.extra.tags;
+                }
+            });
+        }
         vm.reqGet(this.$urls.api_comments,
         function success(resp) {
             vm.comments = resp;
+        }, function error() {
+            // We might be looking at the page anonymously and the comments
+            // will only load for authenticated users.
         });
     }
 });

@@ -43,6 +43,7 @@ class PageElementView(TrailMixin, AccessiblesMixin, TemplateView):
     of that node that are both visible and searchable.
     """
     template_name = 'pages/index.html'
+    direct_text_load = False
 
     def get_reverse_kwargs(self):
         """
@@ -143,6 +144,15 @@ class PageElementView(TrailMixin, AccessiblesMixin, TemplateView):
                 update_context_urls(context, {
                     'api_content': reverse('api_content',
                         kwargs=url_kwargs),
+                })
+            if self.direct_text_load:
+                context.update({
+                    'element': {
+                        'slug': self.element.slug,
+                        'title': self.element.title,
+                        'picture': self.element.picture,
+                        'text' : self.element.text
+                    }
                 })
             update_context_urls(context, {
                 'api_follow': reverse('pages_api_follow',

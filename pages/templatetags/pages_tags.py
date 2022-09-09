@@ -71,3 +71,10 @@ def print_dict(dictionary, html="", parent=None, excludes=None):
                     href=\"\" data-filepath=\"%s\">%s</a></li>" %\
                     (key, key)
     return html
+
+
+@register.filter
+def to_json(value):
+    if isinstance(value, six.string_types):
+        return value
+    return mark_safe(json.dumps(value))
