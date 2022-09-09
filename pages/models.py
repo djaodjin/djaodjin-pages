@@ -185,7 +185,7 @@ class PageElement(models.Model):
         default=datetime.timedelta,  # stored in microseconds
         help_text=_("Reading time of the material (in hh:mm:ss)"))
     lang = models.CharField(_("Language the material is written in"),
-         default=settings.LANGUAGE_CODE, max_length=5)
+         default=settings.LANGUAGE_CODE, max_length=8)
     extra = get_extra_field_class()(null=True, blank=True)
     relationships = models.ManyToManyField("self",
         related_name='related_to', through='RelationShip', symmetrical=False)
