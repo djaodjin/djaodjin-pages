@@ -1,5 +1,5 @@
 # djaodjin-pages
-bleach==5.0.1
+bleach==3.3.0
 Django==3.2.15
 djangorestframework==3.12.4
 djaodjin-deployutils==0.10.2
