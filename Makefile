@@ -9,10 +9,10 @@ CONFIG_DIR    ?= $(srcDir)
 # XXX CONFIG_DIR should really be $(installTop)/etc/testsite
 LOCALSTATEDIR ?= $(installTop)/var
 
-NPM           ?= npm
-PYTHON        := $(binDir)/python
 installDirs   ?= install -d
 installFiles  := install -m 644
+NPM           ?= npm
+PYTHON        := $(binDir)/python
 
 ASSETS_DIR    := $(srcDir)/htdocs/static
 RUN_DIR       ?= $(srcDir)
@@ -32,9 +32,9 @@ install::
 
 install-conf:: $(DESTDIR)$(CONFIG_DIR)/credentials \
                 $(DESTDIR)$(CONFIG_DIR)/gunicorn.conf
-	install -d $(DESTDIR)$(LOCALSTATEDIR)/db
-	install -d $(DESTDIR)$(LOCALSTATEDIR)/run
-	install -d $(DESTDIR)$(LOCALSTATEDIR)/log/gunicorn
+	$(installDirs) $(DESTDIR)$(LOCALSTATEDIR)/db
+	$(installDirs) $(DESTDIR)$(LOCALSTATEDIR)/run
+	$(installDirs) $(DESTDIR)$(LOCALSTATEDIR)/log/gunicorn
 
 
 build-assets: vendor-assets-prerequisites
@@ -53,18 +53,18 @@ vendor-assets-prerequisites: $(srcDir)/testsite/package.json
 
 
 $(DESTDIR)$(CONFIG_DIR)/credentials: $(srcDir)/testsite/etc/credentials
-	install -d $(dir $@)
+	$(installDirs) $(dir $@)
 	[ -f $@ ] || \
 		sed -e "s,\%(SECRET_KEY)s,`$(PYTHON) -c 'import sys ; from random import choice ; sys.stdout.write("".join([choice("abcdefghijklmnopqrstuvwxyz0123456789!@#$%^*-_=+") for i in range(50)]))'`," $< > $@
 
 
 $(DESTDIR)$(CONFIG_DIR)/gunicorn.conf: $(srcDir)/testsite/etc/gunicorn.conf
-	install -d $(dir $@)
+	$(installDirs) $(dir $@)
 	[ -f $@ ] || sed \
 		-e 's,%(LOCALSTATEDIR)s,$(LOCALSTATEDIR),' $< > $@
 
 
-initdb: clean-dbs install-conf $(srcDir)/htdocs/static/vendor/bootstrap.css
+initdb: clean-dbs install-conf $(ASSETS_DIR)/vendor/bootstrap.css
 	$(installDirs) $(dir $(DB_NAME))
 	cd $(srcDir) && $(MANAGE) migrate $(RUNSYNCDB) --noinput
 	cd $(srcDir) && $(MANAGE) loaddata \
@@ -74,9 +74,9 @@ doc:
 	$(installDirs) build/docs
 	cd $(srcDir) && sphinx-build -b html ./docs $(PWD)/build/docs
 
-vendor-assets-prerequisites: $(srcDir)/htdocs/static/vendor/bootstrap.css
+vendor-assets-prerequisites: $(ASSETS_DIR)/vendor/bootstrap.css
 
-$(srcDir)/htdocs/static/vendor/bootstrap.css: $(srcDir)/testsite/package.json
+$(ASSETS_DIR)/vendor/bootstrap.css: $(srcDir)/testsite/package.json
 	$(installFiles) $^ $(installTop)
 	$(NPM) install --loglevel verbose --cache $(installTop)/.npm --tmp $(installTop)/tmp --prefix $(installTop)
 	$(installDirs) -d $(ASSETS_DIR)/fonts $(ASSETS_DIR)/../media/fonts $(ASSETS_DIR)/vendor/bootstrap/mixins $(ASSETS_DIR)/img/bootstrap-colorpicker
