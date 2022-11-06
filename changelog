@@ -1,3 +1,9 @@
+0.6.7
+
+  * redirects to uploaded document when assets APIis copy/pasted in URL bar
+
+ -- Sebastien Mirolo <smirolo@djaodjin.com>  Sun,  6 Nov 2022 14:33:00 -0700
+
 0.6.6
 
   * optionally loads content directly through View instead of API

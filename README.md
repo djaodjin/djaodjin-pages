@@ -39,8 +39,9 @@ the prerequisites, create the database then run the testsite webapp.
 Release Notes
 =============
 
-0.6.6
+0.6.7
 
+  * redirects to uploaded document when assets APIis copy/pasted in URL bar
   * optionally loads content directly through View instead of API
   * LOCALE keys can be up to 8 characters
 
