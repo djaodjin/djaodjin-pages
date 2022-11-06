@@ -166,8 +166,10 @@ Vue.component('explainer', {
         _uploadprogress: function(file, progress, bytesSent) {
             var progressBar = this.$el.querySelector(
                 ".upload-progress .progress-bar");
-            progressBar.style.width = (
+            var progressWidth = (
                 file.upload.bytesSent * 100 / file.upload.total);
+            if( progressWidth < 10 ) progressWidth = 10;
+            progressBar.style.width = progressWidth.toString() + '%';
         },
         _uploadfinished: function(files, resp, evt) {
             var vm = this;
@@ -202,7 +204,7 @@ Vue.component('explainer', {
             var progressBar = vm.$el.querySelector(
                 ".upload-progress .progress-bar");
             if( progressBar ) {
-                progressBar.style.width = 0;
+                progressBar.style.width = "10%";
             }
             vm.uploadInProgress = true;
 
@@ -436,6 +438,12 @@ Vue.component('explainer', {
                 } else {
                     this._handleFiles(files);
                 }
+            }
+        },
+        uploadFile: function(evt) {
+            var files = evt.target.files;
+            if( files.length ) {
+                this._handleFiles(files);
             }
         },
         // edit mode

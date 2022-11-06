@@ -28,6 +28,7 @@ import hashlib, logging, os
 import boto3
 from deployutils.helpers import datetime_or_now
 from django.core.files.storage import get_storage_class, FileSystemStorage
+from django.http import HttpResponseRedirect
 from django.utils.module_loading import import_string
 from rest_framework import parsers, status
 from rest_framework.exceptions import ValidationError
@@ -81,8 +82,13 @@ class AssetAPIView(AccountMixin, GenericAPIView):
             }
         """
         #pylint:disable=unused-argument
-        result = {'location': self.as_signed_url(kwargs.get('path'), request)}
-        return HttpResponse(self.get_serializer().to_representation(result))
+        location = self.as_signed_url(kwargs.get('path'), request)
+        http_accepts = [item.strip()
+            for item in request.META.get('HTTP_ACCEPT', '*/*').split(',')]
+        if 'text/html' in http_accepts:
+            return HttpResponseRedirect(location)
+        return HttpResponse(self.get_serializer().to_representation({
+            'location': location}))
 
     def delete(self, request, *args, **kwargs):
         """
@@ -129,8 +135,7 @@ class UploadAssetAPIView(AccountMixin, GenericAPIView):
 
             {
               "location": "/media/image-001.jpg",
-              "updated_at": "2016-10-26T00:00:00.00000+00:00",
-              "tags": ""
+              "updated_at": "2016-10-26T00:00:00.00000+00:00"
             }
         """
         #pylint: disable=unused-argument,too-many-locals
@@ -138,7 +143,7 @@ class UploadAssetAPIView(AccountMixin, GenericAPIView):
         is_public_asset = request.query_params.get('public', False)
         location = request.data.get('location', None)
         media_prefix = _get_media_prefix()
-        if location and 'aws.com/' in location:
+        if location:
             parts = urlparse(location)
             bucket_name = parts.netloc.split('.')[0]
             src_key_name = parts.path.lstrip(self.URL_PATH_SEP)
