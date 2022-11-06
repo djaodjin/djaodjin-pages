@@ -395,7 +395,7 @@ class PageElementEditableListAPIView(AccountMixin, TrailMixin,
 
         .. code-block:: http
 
-            POST /api/content/editables/boxes-enclosures/ HTTP/1.1
+            POST /api/content/editables HTTP/1.1
 
         .. code-block:: json
 
@@ -409,7 +409,7 @@ class PageElementEditableListAPIView(AccountMixin, TrailMixin,
 
             {
                 "slug": "boxes-enclosures",
-                "text": "Hello"
+                "title": "Boxes enclosures"
             }
 
         """

@@ -24,10 +24,14 @@
 
 '''API URLs for the pages application'''
 
-from ...compat import include, re_path
+from ...api.elements import PageElementEditableListAPIView
+from ...compat import include, path
+
 
 urlpatterns = [
-    re_path(r'^content/editables/', include('pages.urls.api.editables')),
-    re_path(r'^content/', include('pages.urls.api.readers')),
-    re_path(r'^content/', include('pages.urls.api.noauth')),
+    path('content/editables/', include('pages.urls.api.editables')),
+    path('content/editables', PageElementEditableListAPIView.as_view(),
+        name='pages_api_editables_index'),
+    path('content/', include('pages.urls.api.readers')),
+    path('content/', include('pages.urls.api.noauth')),
 ]

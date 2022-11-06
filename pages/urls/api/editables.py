@@ -25,15 +25,14 @@
 '''API URLs for the pages application'''
 
 from ...import settings
-from ...compat import re_path
-from ...api.elements import (PageElementEditableListAPIView,
-    PageElementEditableDetail)
+from ...compat import path, re_path
+from ...api.elements import PageElementEditableDetail
 from ...api.relationship import (PageElementAliasAPIView,
     PageElementMirrorAPIView, PageElementMoveAPIView, RelationShipListAPIView)
 
 
 urlpatterns = [
-    re_path(r'^relationship',
+    path('relationship',
         RelationShipListAPIView.as_view(), name='relationships'),
     re_path(r'^alias/(?P<path>%s)$' % settings.PATH_RE,
         PageElementAliasAPIView.as_view(), name='pages_api_alias_node'),
@@ -43,6 +42,4 @@ urlpatterns = [
         PageElementMirrorAPIView.as_view(), name='pages_api_mirror_node'),
     re_path(r'^(?P<path>%s)$' % settings.NON_EMPTY_PATH_RE,
         PageElementEditableDetail.as_view(), name='pages_api_edit_element'),
-    re_path(r'^$', PageElementEditableListAPIView.as_view(),
-        name='pages_api_editables_index'),
 ]
