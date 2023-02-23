@@ -74,7 +74,7 @@ PATH_RE = r'([a-zA-Z0-9\-]+/)*[a-zA-Z0-9\-]*'
 NON_EMPTY_PATH_RE = r'([a-zA-Z0-9\-]+/)*[a-zA-Z0-9\-]+'
 
 # Sanitizer settings
-ALLOWED_TAGS = bleach.ALLOWED_TAGS + [
+ALLOWED_TAGS = bleach.ALLOWED_TAGS + frozenset({
     'blockquote',
     'br',
     'caption',
@@ -101,7 +101,7 @@ ALLOWED_TAGS = bleach.ALLOWED_TAGS + [
     'th',
     'thead',
     'tr',
-]
+})
 
 ALLOWED_ATTRIBUTES = bleach.ALLOWED_ATTRIBUTES
 ALLOWED_ATTRIBUTES.update({
