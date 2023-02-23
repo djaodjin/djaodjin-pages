@@ -102,7 +102,7 @@ _CUSTOM_ALLOWED_TAGS = [
     'thead',
     'tr',
 ]
-if bleach.__version__.split('.')[0] >= 6:
+if int(bleach.__version__.split('.')[0]) >= 6:
     ALLOWED_TAGS = bleach.ALLOWED_TAGS + frozenset(_CUSTOM_ALLOWED_TAGS)
 else:
     ALLOWED_TAGS = bleach.ALLOWED_TAGS + _CUSTOM_ALLOWED_TAGS
