@@ -1,3 +1,9 @@
+0.6.8
+
+  * supports for bleach 6.0 released Jan 2023 introducing breaking changes
+
+ -- Sebastien Mirolo <smirolo@djaodjin.com>  Thu, 23 Feb 2023 17:25:00 -0700
+
 0.6.7
 
   * redirects to uploaded document when assets APIis copy/pasted in URL bar
