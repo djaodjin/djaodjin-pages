@@ -1,4 +1,4 @@
-# Copyright (c) 2022, Djaodjin Inc.
+# Copyright (c) 2023, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -26,4 +26,4 @@
 PEP 386-compliant version number for the pages django app.
 """
 
-__version__ = '0.6.8'
+__version__ = '0.6.9-dev'

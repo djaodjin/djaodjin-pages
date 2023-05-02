@@ -1,4 +1,4 @@
-# Copyright (c) 2022, Djaodjin Inc.
+# Copyright (c) 2023, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -32,7 +32,7 @@ from rest_framework.mixins import CreateModelMixin
 from rest_framework.filters import OrderingFilter, SearchFilter
 
 from ..compat import reverse
-from ..helpers import ContentCut
+from ..helpers import ContentCut, get_extra
 from ..mixins import AccountMixin, PageElementMixin, TrailMixin
 from ..models import (PageElement, RelationShip, build_content_tree,
     flatten_content_tree)
@@ -129,11 +129,9 @@ class PageElementAPIView(TrailMixin, generics.ListAPIView):
 
         results = []
         for item in items:
-            extra = item.get('extra', {})
-            if extra:
-                searchable = extra.get('searchable', False)
-                if searchable:
-                    results += [item]
+            searchable = get_extra(item, 'searchable', False)
+            if searchable:
+                results += [item]
 
         return results
 

@@ -52,13 +52,16 @@ class ContentCut(object):
 
 
 def get_extra(obj, attr_name, default=None):
-    if isinstance(obj.extra, six.string_types):
-        try:
-            obj.extra = json.loads(obj.extra)
-        except (TypeError, ValueError):
-            return default
-    return obj.extra.get(attr_name, default) if obj.extra else default
-
+    try:
+        if isinstance(obj.extra, six.string_types):
+            try:
+                obj.extra = json.loads(obj.extra)
+            except (TypeError, ValueError):
+                return default
+        extra = obj.extra
+    except AttributeError:
+        extra = obj.get('extra')
+    return extra.get(attr_name, default) if extra else default
 
 def update_context_urls(context, urls):
     if 'urls' in context:

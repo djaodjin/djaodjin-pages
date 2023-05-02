@@ -1,4 +1,4 @@
-# Copyright (c) 2022, Djaodjin Inc.
+# Copyright (c) 2023, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -116,11 +116,13 @@ class NodeElementSerializer(serializers.ModelSerializer):
     """
     Serializes a PageElement as a node in a content tree
     """
-    path = serializers.SerializerMethodField(read_only=True, allow_null=True)
-    indent = serializers.SerializerMethodField(required=False, allow_null=True)
+    path = serializers.SerializerMethodField(read_only=True, allow_null=True,
+        help_text=_("path from the root of content tree"))
+    indent = serializers.SerializerMethodField(required=False, allow_null=True,
+        help_text=_("level in the content tree"))
     account = serializers.SlugRelatedField(read_only=True, required=False,
         slug_field=settings.ACCOUNT_LOOKUP_FIELD,
-        help_text=("Account that can edit the page element"))
+        help_text=_("Account that can edit the page element"))
     picture = serializers.CharField(required=False, allow_null=True,
         help_text=_("Picture icon that can be displayed alongside the title"))
     extra = serializers.SerializerMethodField(required=False, allow_null=True,
@@ -180,7 +182,7 @@ class PageElementSerializer(serializers.ModelSerializer):
         help_text=_("Unique identifier that can be used in URL paths"))
     account = serializers.SlugRelatedField(read_only=True, required=False,
         slug_field=settings.ACCOUNT_LOOKUP_FIELD,
-        help_text=("Account that can edit the page element"))
+        help_text=_("Account that can edit the page element"))
     picture = serializers.CharField(required=False, allow_null=True,
         help_text=_("Picture icon that can be displayed alongside the title"))
     text = HTMLField(required=False,
