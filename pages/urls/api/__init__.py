@@ -1,4 +1,4 @@
-# Copyright (c) 2022, DjaoDjin inc.
+# Copyright (c) 2023, DjaoDjin inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -24,7 +24,8 @@
 
 '''API URLs for the pages application'''
 
-from ...api.elements import PageElementEditableListAPIView
+from ...api.elements import (PageElementEditableListAPIView,
+    PageElementIndexAPIView)
 from ...compat import include, path
 
 
@@ -34,4 +35,6 @@ urlpatterns = [
         name='pages_api_editables_index'),
     path('content/', include('pages.urls.api.readers')),
     path('content/', include('pages.urls.api.noauth')),
+    path('content', PageElementIndexAPIView.as_view(),
+        name="api_content_index"),
 ]

@@ -1,8 +1,8 @@
 # djaodjin-pages
 bleach==6.0.0
-Django==3.2.15
+Django==3.2.20
 djangorestframework==3.12.4
-djaodjin-deployutils==0.10.2
+djaodjin-deployutils==0.10.6
 python-dateutil==2.8.1
 requests==2.26.0
 

@@ -1,4 +1,4 @@
-# Copyright (c) 2021, Djaodjin Inc.
+# Copyright (c) 2023, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -151,7 +151,8 @@ class PageElementView(TrailMixin, AccessiblesMixin, TemplateView):
                         'slug': self.element.slug,
                         'title': self.element.title,
                         'picture': self.element.picture,
-                        'text' : self.element.text
+                        'text' : self.element.text,
+                        'tags': get_extra(self.element, 'tags', [])
                     }
                 })
             update_context_urls(context, {

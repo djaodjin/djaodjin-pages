@@ -26,18 +26,16 @@
 API URLs for readers who could be unauthenticated
 """
 from ... import settings
-from ...compat import re_path
+from ...compat import path, re_path
 from ...api.elements import (PageElementSearchAPIView, PageElementAPIView,
   PageElementIndexAPIView, PageElementDetailAPIView)
 
 urlpatterns = [
-    re_path(r'^search',
+    path('search',
         PageElementSearchAPIView.as_view(), name='api_page_element_search'),
     re_path(r'detail/(?P<path>%s)$' % settings.PATH_RE,
         PageElementDetailAPIView.as_view(),
         name='pages_api_pageelement'),
     re_path(r'(?P<path>%s)$' % settings.PATH_RE,
         PageElementAPIView.as_view(), name="api_content"),
-    re_path(r'',
-        PageElementIndexAPIView.as_view(), name="api_content_index"),
 ]
