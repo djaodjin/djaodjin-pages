@@ -7,13 +7,6 @@ Major Features:
 - Media gallery (drag'n'drop in markdown or media placeholder)
 - Upload template packages
 
-Tested with
-
-- **Python:** 3.7, **Django:** 3.2 ([LTS](https://www.djangoproject.com/download/)), **Django Rest Framework:** 3.12
-- **Python:** 3.10, **Django:** 4.1 (latest), **Django Rest Framework:** 3.12
-- **Python:** 2.7, **Django:** 1.11 (legacy), **Django Rest Framework:** 3.9.4
-
-
 Development
 ===========
 
@@ -38,6 +31,12 @@ the prerequisites, create the database then run the testsite webapp.
 
 Release Notes
 =============
+
+Tested with
+
+- **Python:** 3.7, **Django:** 3.2 ([LTS](https://www.djangoproject.com/download/))
+- **Python:** 3.10, **Django:** 4.2 (latest)
+- **Python:** 2.7, **Django:** 1.11 (legacy) - use testsite/requirements-legacy.txt
 
 0.6.8
 

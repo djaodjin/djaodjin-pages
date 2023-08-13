@@ -1,4 +1,4 @@
-# Copyright (c) 2017, DjaoDjin inc.
+# Copyright (c) 2023, DjaoDjin inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -21,40 +21,6 @@
 # WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+from setuptools import setup
 
-from distutils.core import setup
-
-import pages
-
-requirements = []
-with open('./requirements.txt') as requirements_txt:
-    for line in requirements_txt:
-        prerequisite = line.split('#')[0].strip()
-        if prerequisite:
-            requirements += [prerequisite]
-
-setup(
-    name='djaodjin-pages',
-    version=pages.__version__,
-    author='DjaoDjin inc.',
-    author_email='support@djaodjin.com',
-    install_requires=requirements,
-    packages=[
-        'pages',
-        'pages.api',
-        'pages.templatetags',
-        'pages.urls',
-        'pages.urls.api',
-        'pages.urls.views',
-        'pages.views'],
-    package_data={'pages': [
-        'static/css/*', 'static/js/*',
-        'static/vendor/css/*', 'static/vendor/js/*',
-        'templates/pages/*.html']},
-    url='https://github.com/djaodjin/djaodjin-pages/',
-    download_url='https://github.com/djaodjin/djaodjin-pages/tarball/%s' \
-        % pages.__version__,
-    license='BSD',
-    description='Pages Django App',
-    long_description=open('README.md').read(),
-)
+setup()

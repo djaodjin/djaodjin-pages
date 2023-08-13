@@ -1,0 +1,54 @@
+# This pyproject.toml seems to work to build a new package
+# when `setuptools==67.6.1` is installed.
+[project]
+name = "djaodjin-pages"
+dynamic = ["version"]
+description = "Django application for practices-based content"
+readme = "README.md"
+requires-python = ">=3.7"
+license =  {text = "BSD-2-Clause"}
+keywords = ["django", "cms"]
+authors = [
+  {name = "The DjaoDjin Team", email = "help@djaodjin.com"}
+]
+maintainers = [
+  {name = "The DjaoDjin Team", email = "help@djaodjin.com"}
+]
+classifiers = [
+  "Framework :: Django",
+  "Environment :: Web Environment",
+  "Programming Language :: Python",
+  "License :: OSI Approved :: BSD License"
+]
+dependencies = [
+  "bleach>=6.0.0",
+  "Django>=1.11",
+  "djangorestframework>=3.3.1",
+  "djaodjin-deployutils>=0.10.6",
+  "python-dateutil>=2.8",
+  "requests>=2.22"
+]
+
+[project.urls]
+repository = "https://github.com/djaodjin/djaodjin-pages"
+documentation = "https://djaodjin-pages.readthedocs.io/"
+changelog = "https://github.com/djaodjin/djaodjin-pages/changelog"
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["pages*"]
+
+[tool.setuptools.package-data]
+pages = [
+  'static/css/*',
+  'static/js/*',
+  'static/vendor/css/*',
+  'static/vendor/js/*',
+  'templates/pages/*.html'
+]
+
+[tool.setuptools.dynamic]
+version = {attr = "pages.__version__"}

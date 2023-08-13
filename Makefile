@@ -12,7 +12,10 @@ LOCALSTATEDIR ?= $(installTop)/var
 installDirs   ?= install -d
 installFiles  := install -m 644
 NPM           ?= npm
+PIP           := $(binDir)/pip
 PYTHON        := $(binDir)/python
+TWINE         := $(binDir)/twine
+
 
 ASSETS_DIR    := $(srcDir)/htdocs/static
 RUN_DIR       ?= $(srcDir)
@@ -27,14 +30,20 @@ MANAGE        := TESTSITE_SETTINGS_LOCATION=$(CONFIG_DIR) RUN_DIR=$(RUN_DIR) $(P
 RUNSYNCDB     = $(if $(findstring --run-syncdb,$(shell cd $(srcDir) && $(MANAGE) migrate --help 2>/dev/null)),--run-syncdb,)
 
 install::
-	cd $(srcDir) && $(PYTHON) ./setup.py --quiet \
-		build -b $(CURDIR)/build install
+	cd $(srcDir) && $(PIP) install .
+
 
 install-conf:: $(DESTDIR)$(CONFIG_DIR)/credentials \
                 $(DESTDIR)$(CONFIG_DIR)/gunicorn.conf
 	$(installDirs) $(DESTDIR)$(LOCALSTATEDIR)/db
 	$(installDirs) $(DESTDIR)$(LOCALSTATEDIR)/run
 	$(installDirs) $(DESTDIR)$(LOCALSTATEDIR)/log/gunicorn
+
+
+dist::
+	$(PYTHON) -m build
+	$(TWINE) check dist/*
+	$(TWINE) upload dist/*
 
 
 build-assets: vendor-assets-prerequisites
