@@ -1,3 +1,11 @@
+0.6.9
+
+  * adds tags into practice description
+  * compatibles with Bootstrap5
+  * publishes distribution using pyproject.toml
+
+ -- Sebastien Mirolo <smirolo@djaodjin.com>  Sat, 12 Aug 2023 19:30:00 -0700
+
 0.6.8
 
   * supports for bleach 6.0 released Jan 2023 introducing breaking changes

@@ -38,9 +38,11 @@ Tested with
 - **Python:** 3.10, **Django:** 4.2 (latest)
 - **Python:** 2.7, **Django:** 1.11 (legacy) - use testsite/requirements-legacy.txt
 
-0.6.8
+0.6.9
 
-  * supports for bleach 6.0 released Jan 2023 introducing breaking changes
+  * adds tags into practice description
+  * compatibles with Bootstrap5
+  * publishes distribution using pyproject.toml
 
 [previous release notes](changelog)
 
