@@ -365,10 +365,9 @@ class PageElementEditableListAPIView(AccountMixin, TrailMixin,
         """
         Returns a list of heading and best practices
         """
+        queryset = PageElement.objects.all()
         if self.account_url_kwarg in self.kwargs:
             queryset = PageElement.objects.filter(account=self.account)
-        else:
-            queryset = PageElement.objects.all()
         if self.path:
             queryset = queryset.filter(question__path__startswith=self.path)
         try:
@@ -378,7 +377,6 @@ class PageElementEditableListAPIView(AccountMixin, TrailMixin,
                 queryset = queryset.filter(
                     Q(extra__icontains=search_string)
                     | Q(title__icontains=search_string))
-                return queryset
         except ValidationError:
             pass
         return queryset

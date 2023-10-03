@@ -152,6 +152,7 @@ Vue.component('explainer', {
         }
     },
     props: [
+        'disabled',
         'callbackArg',
         'collectedByPicture',
         'collectedByPrintableName',
@@ -182,6 +183,12 @@ Vue.component('explainer', {
             } else {
                 vm.text += resp.location;
             }
+        },
+        isTagged: function(tag) {
+            var vm = this;
+            return vm.callbackArg.extra &&
+                vm.callbackArg.extra.tags &&
+                vm.callbackArg.extra.tags.includes(tag);
         },
         startUpload: function(xhr, uploadUrl, formData) {
             xhr.open("POST", uploadUrl, true);
@@ -527,7 +534,7 @@ Vue.component('explainer', {
     },
     mounted: function() {
         var vm = this;
-        if( vm.collectedAtTime ) {
+        if( vm.collectedAtTime || vm.disabled ) {
             vm.editMode = false;
         }
         this.text = this.initText;
