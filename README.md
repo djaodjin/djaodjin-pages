@@ -1,11 +1,11 @@
-djaodjin-pages is a Django application that allow live templates edition
-and upload templates packages.
+djaodjin-pages is a Django application that implements a Content Management
+System (CMS) for practices sharing.
 
 Major Features:
 
+- Hierachical structure of content elements
 - Text edition (optional: markdown syntax)
 - Media gallery (drag'n'drop in markdown or media placeholder)
-- Upload template packages
 
 Development
 ===========
@@ -14,17 +14,20 @@ After cloning the repository, create a virtualenv environment, install
 the prerequisites, create the database then run the testsite webapp.
 
 <pre><code>
-    $ virtualenv <em>installTop</em>
-    $ source <em>installTop</em>/bin/activate
+    $ python -m venv .venv
+    $ source .venv/bin/activate
     $ pip install -r testsite/requirements.txt
+
+    # Installs Javascript prerequisites to run in the browser
     $ make vendor-assets-prerequisites
 
+    # Create the testsite database
     $ make initdb
 
+    # Run the testsite server
     $ python manage.py runserver
 
     # Browse http://localhost:8000/
-    # Start edit live templates
 
 </code></pre>
 

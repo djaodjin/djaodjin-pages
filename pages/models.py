@@ -1,4 +1,4 @@
-# Copyright (c) 2022, Djaodjin Inc.
+# Copyright (c) 2023, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -367,6 +367,81 @@ class Follow(models.Model):
 
     def __str__(self):
         return '%s follows %s' % (self.user, self.element)
+
+
+@python_2_unicode_compatible
+class Sequence(models.Model):
+    """
+    Sequence of `PageElement` typically used to implement courses
+    """
+    created_at = models.DateTimeField(editable=False, auto_now_add=True)
+    slug = models.SlugField(unique=True,
+        help_text=_("Unique identifier that can be used in URL paths"))
+    title = models.CharField(max_length=1024, blank=True,
+        help_text=_("Title of the sequence"))
+    account = models.ForeignKey(
+        settings.ACCOUNT_MODEL, related_name='account_sequences',
+        null=True, on_delete=models.SET_NULL)
+    extra = get_extra_field_class()(null=True, blank=True,
+        help_text=_("Extra meta data (can be stringify JSON)"))
+
+    def __str__(self):
+        return "%s" % str(self.slug)
+
+
+@python_2_unicode_compatible
+class EnumeratedElements(models.Model):
+    """
+    One element in a sequence
+    """
+    sequence = models.ForeignKey(Sequence, on_delete=models.CASCADE)
+    page_element = models.ForeignKey(PageElement, on_delete=models.CASCADE)
+    rank = models.IntegerField(
+        help_text=_("used to order elements when presenting a sequence."))
+    min_viewing_duration = models.DurationField(
+        default=datetime.timedelta,  # stored in microseconds
+        help_text=_("Minimum viewing time of the material (in hh:mm:ss)."))
+
+    class Meta:
+        unique_together = ('sequence', 'rank')
+
+    def __str__(self):
+        return "%s-%d" % (self.sequence, self.rank)
+
+
+@python_2_unicode_compatible
+class SequenceProgress(models.Model):
+    """
+    Progress of a `User` going through a sequence.
+    """
+    created_at = models.DateTimeField(editable=False, auto_now_add=True)
+    sequence = models.ForeignKey(Sequence, on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    extra = get_extra_field_class()(null=True, blank=True,
+        help_text=_("Extra meta data (can be stringify JSON)"))
+
+    def __str__(self):
+        return "%s-%s" % (self.sequence, self.user)
+
+
+@python_2_unicode_compatible
+class EnumeratedProgress(models.Model):
+    """
+    Progress of a `User` on each element of a sequence.
+    """
+    created_at = models.DateTimeField(editable=False, auto_now_add=True)
+    progress = models.ForeignKey(SequenceProgress, on_delete=models.CASCADE)
+    rank = models.IntegerField(
+        help_text=_("used to order elements when presenting a sequence."))
+    viewing_duration = models.DurationField(
+        default=datetime.timedelta,  # stored in microseconds
+        help_text=_("Total recorded viewing time for the material"))
+
+    class Meta:
+        unique_together = ('progress', 'rank')
+
+    def __str__(self):
+        return "%s-%d" % (self.progress, self.rank)
 
 
 class VoteManager(models.Manager):
