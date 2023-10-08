@@ -37,7 +37,7 @@ from ..serializers import CommentSerializer, PageElementSerializer
 
 class FollowAPIView(PageElementMixin, generics.CreateAPIView):
     """
-    Follow a page element
+    Follows a page element
 
     The authenticated user making the request will receive notification
     whenever someone comments on the practice.
@@ -74,7 +74,7 @@ class FollowAPIView(PageElementMixin, generics.CreateAPIView):
 
 class UnfollowAPIView(PageElementMixin, generics.CreateAPIView):
     """
-    Unfollow a page element
+    Unfollows a page element
 
     The authenticated user making the request will stop receiving notification
     whenever someone comments on the practice.
@@ -111,7 +111,7 @@ class UnfollowAPIView(PageElementMixin, generics.CreateAPIView):
 
 class UpvoteAPIView(PageElementMixin, generics.CreateAPIView):
     """
-    Upvote a page element
+    Upvotes a page element
 
     The authenticated user making the request indicates the practice is
     considered worthwhile implementing.
@@ -148,7 +148,7 @@ class UpvoteAPIView(PageElementMixin, generics.CreateAPIView):
 
 class DownvoteAPIView(PageElementMixin, generics.CreateAPIView):
     """
-    Downvote a page element
+    Downvotes a page element
 
     The authenticated user making the request indicates the practice is
     not worth implementing.
@@ -193,7 +193,7 @@ class CommentListCreateAPIView(PageElementMixin, generics.ListCreateAPIView):
 
     def get(self, request, *args, **kwargs):
         """
-        List comments on a page element
+        Lists comments on a page element
 
         **Tags**: content
 
@@ -226,7 +226,7 @@ class CommentListCreateAPIView(PageElementMixin, generics.ListCreateAPIView):
 
     def post(self, request, *args, **kwargs):
         """
-        Comment on a page element
+        Comments on a page element
 
         **Tags**: content
 

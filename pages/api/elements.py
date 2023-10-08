@@ -45,7 +45,7 @@ LOGGER = logging.getLogger(__name__)
 
 class PageElementAPIView(TrailMixin, generics.ListAPIView):
     """
-    Lists a tree of page elements under a path
+    Lists tree of page elements matching prefix
 
     **Tags: content
 
@@ -151,7 +151,7 @@ class PageElementAPIView(TrailMixin, generics.ListAPIView):
 
 class PageElementIndexAPIView(PageElementAPIView):
     """
-    Lists the tree of page elements under the root
+    Lists tree of page elements
 
     **Tags: content
 
@@ -196,7 +196,7 @@ class PageElementIndexAPIView(PageElementAPIView):
 
 class PageElementSearchAPIView(PageElementAPIView):
     """
-    Search through page elements
+    Searches page elements
 
     **Tags: content
 
@@ -251,7 +251,7 @@ class PageElementSearchAPIView(PageElementAPIView):
 
 class PageElementDetailAPIView(TrailMixin, generics.RetrieveAPIView):
     """
-    Retrieves details on a page element
+    Retrieves a page element
 
     **Tags: content
 
@@ -283,7 +283,7 @@ class PageElementDetailAPIView(TrailMixin, generics.RetrieveAPIView):
 class PageElementEditableListAPIView(AccountMixin, TrailMixin,
                                      generics.ListCreateAPIView):
     """
-    List editable page elements
+    Lists editable page elements
 
     This API endpoint lists page elements that are owned and thus editable
     by an account.
@@ -464,7 +464,7 @@ class PageElementEditableDetail(AccountMixin, TrailMixin, CreateModelMixin,
 
     def post(self, request, *args, **kwargs):
         """
-        Creates a page element
+        Creates a page element under a prefix
 
         **Tags: editors
 
