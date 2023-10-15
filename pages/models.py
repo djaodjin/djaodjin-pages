@@ -394,7 +394,8 @@ class EnumeratedElements(models.Model):
     """
     One element in a sequence
     """
-    sequence = models.ForeignKey(Sequence, on_delete=models.CASCADE)
+    sequence = models.ForeignKey(Sequence, on_delete=models.CASCADE,
+                                 related_name='sequence_enumerated_elements')
     page_element = models.ForeignKey(PageElement, on_delete=models.CASCADE)
     rank = models.IntegerField(
         help_text=_("used to order elements when presenting a sequence."))

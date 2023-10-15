@@ -38,7 +38,8 @@ from ..mixins import AccountMixin, PageElementMixin, TrailMixin
 from ..models import (PageElement, RelationShip, build_content_tree,
     flatten_content_tree, Sequence, EnumeratedElements)
 from ..serializers import (NodeElementSerializer, PageElementSerializer,
-    PageElementTagSerializer, SequenceSerializer, UpdateEnumeratedElementSerializer)
+    PageElementTagSerializer, SequenceSerializer, UpdateEnumeratedElementSerializer,
+    UpdateSequenceSerializer)
 from ..utils import validate_title
 
 LOGGER = logging.getLogger(__name__)
@@ -712,13 +713,11 @@ class SequenceAPIView(viewsets.ModelViewSet): # pylint: disable=too-many-ancesto
     .. code-block:: json
 
         {
-            "id": 3,
             "created_at": "2023-10-14T05:23:42.452684Z",
-            "slug": "NewSequence",
+            "slug": "newsequence",
             "title": "NewSequence",
             "account": admin,
             "extra": null,
-            "elements": []
         }
 
     - **Retrieve a Sequence**
@@ -736,7 +735,7 @@ class SequenceAPIView(viewsets.ModelViewSet): # pylint: disable=too-many-ancesto
             "created_at": "2023-10-13T21:47:44.922545Z",
             "slug": "sequence1",
             "title": "Sequence 1",
-            "account": 3,
+            "account": "admin",
             "extra": "",
             "elements": [
                 {
@@ -755,11 +754,10 @@ class SequenceAPIView(viewsets.ModelViewSet): # pylint: disable=too-many-ancesto
         Content-Type: application/json
 
         {
-            "slug": "updatedsequence"
+            "slug": "updatedsequence",
             "title": "UpdatedSequence",
             "account": alice,
             "extra": "",
-
         }
 
     responds
@@ -767,13 +765,11 @@ class SequenceAPIView(viewsets.ModelViewSet): # pylint: disable=too-many-ancesto
     .. code-block:: json
 
         {
-            "id": 3,
-            "created_at": "2023-10-14T05:23:42.452684Z",
-            "slug": "updatedsequence",
+            "created_at": "2023-10-15T04:16:24.808028Z",
+            "slug": "updatedsequence"
             "title": "UpdatedSequence",
             "account": alice,
             "extra": "",
-            "elements": []
         }
 
     - **Add Element to Sequence**
@@ -821,8 +817,10 @@ class SequenceAPIView(viewsets.ModelViewSet): # pylint: disable=too-many-ancesto
     queryset = Sequence.objects.all().order_by('pk')
 
     def get_serializer_class(self):
-        if self.action in ['add_element', 'remove_element']:
+        if self.action.lower() in ['add_element', 'remove_element']:
             return UpdateEnumeratedElementSerializer
+        if self.action.lower() in ['create', 'update']:
+            return UpdateSequenceSerializer
         return super().get_serializer_class()
 
     def destroy(self, request, *args, **kwargs):
