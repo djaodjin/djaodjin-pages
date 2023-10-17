@@ -27,11 +27,11 @@ import json
 
 import bleach
 from rest_framework import serializers
+from django.contrib.auth import get_user_model
 
 from . import settings
 from .compat import gettext_lazy as _, is_authenticated
 from .models import Comment, Follow, PageElement, Vote, Sequence, EnumeratedElements
-
 
 #pylint: disable=no-init,abstract-method
 
@@ -268,35 +268,31 @@ class EnumeratedElementSerializer(serializers.ModelSerializer):
     Serializes an EnumeratedElement
     """
 
-    page_element = serializers.SerializerMethodField()
+    page_element = serializers.SlugRelatedField(
+        queryset=PageElement.objects.all(),
+        slug_field="slug",
+        help_text=_("Page element the enumerated element is for"),
+        required=False)
 
     class Meta:
         model = EnumeratedElements
         fields = ('page_element', 'rank', 'min_viewing_duration')
 
-    @staticmethod
-    def get_page_element(obj):
-        if hasattr(obj.page_element, 'slug'):
-            return obj.page_element.slug
-        return obj.page_element
-
-
-class UpdateEnumeratedElementSerializer(serializers.ModelSerializer):
-    """
-    Serializes an EnumeratedElement for update
-    """
-    class Meta:
-        model = EnumeratedElements
-        fields = ('page_element', 'rank', 'min_viewing_duration',)
-
 
 class SequenceSerializer(serializers.ModelSerializer):
+    """
+    Serializes a Sequence
+    """
     elements = serializers.SerializerMethodField()
-    account = serializers.SerializerMethodField()
+    account = serializers.SlugRelatedField(
+        queryset=get_user_model().objects.all(),
+        slug_field=settings.ACCOUNT_LOOKUP_FIELD,
+        help_text=_("Account the sequence belongs to"),
+        required=False)
 
     class Meta:
         model = Sequence
-        fields = (('id', 'created_at', 'slug', 'title', 'account', 'extra')
+        fields = (('created_at', 'slug', 'title', 'account', 'extra')
                   + ('elements',))
 
     @staticmethod
@@ -304,22 +300,3 @@ class SequenceSerializer(serializers.ModelSerializer):
         return EnumeratedElementSerializer(
             obj.sequence_enumerated_elements.all().order_by('rank'),
             many=True).data
-
-    @staticmethod
-    def get_account(obj):
-        account_lookup_field = getattr(settings, 'ACCOUNT_LOOKUP_FIELD',
-                                       'username')
-        if hasattr(obj.account, account_lookup_field):
-            return getattr(obj.account, account_lookup_field)
-        return obj.account
-
-# pylint: disable=too-few-public-methods
-class UpdateSequenceSerializer(serializers.ModelSerializer):
-    '''
-    Serializer to update/create a Sequence
-    '''
-
-    class Meta:
-        model = Sequence
-        fields = ('created_at', 'slug', 'title', 'account', 'extra')
-        read_only_fields = ('created_at',)
