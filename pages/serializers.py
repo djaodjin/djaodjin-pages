@@ -27,11 +27,11 @@ import json
 
 import bleach
 from rest_framework import serializers
+from django.contrib.auth import get_user_model
 
 from . import settings
 from .compat import gettext_lazy as _, is_authenticated
-from .models import Comment, Follow, PageElement, Vote
-
+from .models import Comment, Follow, PageElement, Vote, Sequence, EnumeratedElements
 
 #pylint: disable=no-init,abstract-method
 
@@ -261,3 +261,42 @@ class PageElementTagSerializer(serializers.ModelSerializer):
     class Meta:
         model = PageElement
         fields = ('tag',)
+
+
+class EnumeratedElementSerializer(serializers.ModelSerializer):
+    """
+    Serializes an EnumeratedElement
+    """
+
+    page_element = serializers.SlugRelatedField(
+        queryset=PageElement.objects.all(),
+        slug_field="slug",
+        help_text=_("Page element the enumerated element is for"),
+        required=False)
+
+    class Meta:
+        model = EnumeratedElements
+        fields = ('page_element', 'rank', 'min_viewing_duration')
+
+
+class SequenceSerializer(serializers.ModelSerializer):
+    """
+    Serializes a Sequence
+    """
+    elements = serializers.SerializerMethodField()
+    account = serializers.SlugRelatedField(
+        queryset=get_user_model().objects.all(),
+        slug_field=settings.ACCOUNT_LOOKUP_FIELD,
+        help_text=_("Account the sequence belongs to"),
+        required=False)
+
+    class Meta:
+        model = Sequence
+        fields = (('created_at', 'slug', 'title', 'account', 'extra')
+                  + ('elements',))
+
+    @staticmethod
+    def get_elements(obj):
+        return EnumeratedElementSerializer(
+            obj.sequence_enumerated_elements.all().order_by('rank'),
+            many=True).data

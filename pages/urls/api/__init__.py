@@ -25,9 +25,12 @@
 '''API URLs for the pages application'''
 
 from ...api.elements import (PageElementEditableListAPIView,
-    PageElementIndexAPIView)
+    PageElementIndexAPIView, SequenceAPIView)
 from ...compat import include, path
+from rest_framework.routers import DefaultRouter
 
+router = DefaultRouter(trailing_slash=False)
+router.register(r'sequences', SequenceAPIView, basename='pages_api_sequence')
 
 urlpatterns = [
     path('content/editables/', include('pages.urls.api.editables')),
@@ -38,3 +41,4 @@ urlpatterns = [
     path('content', PageElementIndexAPIView.as_view(),
         name="api_content_index"),
 ]
+urlpatterns += router.urls
