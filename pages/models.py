@@ -304,6 +304,21 @@ class PageElement(models.Model):
 
 
 @python_2_unicode_compatible
+class Certificate(models.Model):
+    """
+    A Certificate of completion
+
+    Used to download a certificate of completion for a sequence.
+    """
+    created_at = models.DateTimeField(editable=False, auto_now_add=True)
+    element = models.ForeignKey(PageElement, on_delete=models.CASCADE,
+        related_name='certificate')
+
+    def __str__(self):
+        return "%s-certificate" % str(self.element)
+
+
+@python_2_unicode_compatible
 class Comment(models.Model):
     """
     A user comments about a PageElement.
