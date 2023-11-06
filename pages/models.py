@@ -313,6 +313,8 @@ class Certificate(models.Model):
     created_at = models.DateTimeField(editable=False, auto_now_add=True)
     element = models.ForeignKey(PageElement, on_delete=models.CASCADE,
         related_name='certificate')
+    extra = get_extra_field_class()(null=True, blank=True,
+        help_text=_("Extra meta data (can be stringify JSON)"))
 
     def __str__(self):
         return "%s-certificate" % str(self.element)
@@ -382,6 +384,24 @@ class Follow(models.Model):
 
     def __str__(self):
         return '%s follows %s' % (self.user, self.element)
+
+
+@python_2_unicode_compatible
+class LiveEvent(models.Model):
+    """
+    A live webinar, onsite classroom, etc.
+    """
+    element = models.ForeignKey(PageElement, on_delete=models.CASCADE,
+        related_name='events')
+    created_at = models.DateTimeField(editable=False, auto_now_add=True)
+    scheduled_at = models.DateTimeField()
+    location = models.URLField(_("URL to the calendar event"), max_length=2083)
+    max_attendees = models.IntegerField(default=0)
+    extra = get_extra_field_class()(null=True, blank=True,
+        help_text=_("Extra meta data (can be stringify JSON)"))
+
+    def __str__(self):
+        return "%s-live" % str(self.element)
 
 
 @python_2_unicode_compatible
