@@ -1,0 +1,7 @@
+<div v-show="itemsLoaded && totalItems > itemsPerPage" v-cloak>
+    <div>
+        <span v-for="count in pageCount">
+            <a href="#" role="button" @click.prevent="params.page = count; get();">[[count]]</a>
+        </span>
+    </div>
+</div>

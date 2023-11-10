@@ -540,3 +540,115 @@ Vue.component('explainer', {
         this.text = this.initText;
     },
 });
+
+Vue.component('viewing-timer', {
+    mixins: [httpRequestMixin],
+    props: {
+        initialDuration: Number,
+        rank: Number,
+        sequence: String,
+        user: String,
+        pingInterval: {
+            type: Number,
+            default: 10
+        }
+    },
+    data() {
+        return {
+            duration: this.initialDuration,
+            timerInterval: null,
+            updateInterval: null,
+            pingUrl: this.$urls.enumerated_progress_ping,
+        };
+    },
+    methods: {
+        toggleTimers() {
+            if (document.hidden) {
+                clearInterval(this.timerInterval);
+                clearInterval(this.updateInterval);
+                this.timerInterval = this.updateInterval = null;
+            } else {
+                this.startTimers();
+            }
+        },
+        startTimers() {
+            this.timerInterval = this.timerInterval || setInterval(this.sendPing, this.pingInterval * 1000);
+            this.updateInterval = this.updateInterval || setInterval(() => this.duration++, 1000);
+        },
+        sendPing() {
+            this.reqPost(this.pingUrl, {}, resp => {},
+                error => console.error(`Error sending ping: ${error.statusText}`));
+        },
+        clearTimers() {
+            clearInterval(this.timerInterval);
+            clearInterval(this.updateInterval);
+        }
+    },
+    mounted() {
+        this.toggleTimers();
+        document.addEventListener('visibilitychange', this.toggleTimers);
+        window.addEventListener('beforeunload', this.clearTimers);
+    },
+    beforeDestroy() {
+        this.clearTimers();
+        document.removeEventListener('visibilitychange', this.toggleTimers);
+        window.removeEventListener('beforeunload', this.clearTimers);
+    },
+});
+
+
+
+Vue.component('sequence-items', {
+        mixins: [
+        itemListMixin],
+    data() {
+        return {
+            url: this.$urls.api_enumerated_progress_user_list,
+        };
+    },
+    mounted() {
+        this.get();
+    }
+});
+
+
+Vue.component('start-progress', {
+    mixins: [httpRequestMixin],
+    props: ['sequenceSlug', 'userUsername', 'elementRank'],
+    data() {
+        return {
+            progressExists: false,
+            progressUrl: this.$urls.api_enumerated_progress_list_create
+        };
+    },
+    methods: {
+        startProgress() {
+            const postData = {
+                sequence_slug: this.sequenceSlug,
+                username: this.userUsername,
+                rank: this.elementRank
+            };
+            this.reqPost(this.progressUrl, postData);
+        }
+    },
+    mounted() {
+         this.get();
+        }
+});
+
+Vue.filter('formatDuration', function (value) {
+    if (typeof value === 'string' && value.match(/^\d{2}:\d{2}:\d{2}(\.\d+)?$/)) {
+        return value.split('.')[0];
+    }
+
+    let numericValue = (typeof value === 'string' && !isNaN(value)) ? parseFloat(value) : value;
+
+    if (numericValue > 0 && !isNaN(numericValue)) {
+        let hours = Math.floor(numericValue / 3600).toString().padStart(2, '0');
+        let minutes = Math.floor((numericValue % 3600) / 60).toString().padStart(2, '0');
+        let seconds = Math.floor(numericValue % 60).toString().padStart(2, '0');
+        return `${hours}:${minutes}:${seconds}`;
+    }
+
+    return value || '00:00:00';
+});

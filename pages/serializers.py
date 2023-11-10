@@ -28,10 +28,14 @@ import json
 import bleach
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
+from django.db import transaction
+
 
 from . import settings
 from .compat import gettext_lazy as _, is_authenticated
-from .models import Comment, Follow, PageElement, Vote, Sequence, EnumeratedElements
+from .models import (Comment, Follow, PageElement, Vote,
+                     Sequence, EnumeratedElements, EnumeratedProgress,
+                     SequenceProgress)
 
 #pylint: disable=no-init,abstract-method
 
@@ -281,7 +285,7 @@ class EnumeratedElementSerializer(serializers.ModelSerializer):
 
 class SequenceSerializer(serializers.ModelSerializer):
     """
-    Serializes a Sequence
+    Serializes a Sequence object
     """
     elements = serializers.SerializerMethodField()
     account = serializers.SlugRelatedField(
@@ -300,3 +304,40 @@ class SequenceSerializer(serializers.ModelSerializer):
         return EnumeratedElementSerializer(
             obj.sequence_enumerated_elements.all().order_by('rank'),
             many=True).data
+
+class EnumeratedProgressSerializer(serializers.ModelSerializer):
+    """
+    Serializes a EnumeratedProgress object
+    """
+    class Meta:
+        model = EnumeratedProgress
+        fields = ('created_at', 'rank', 'viewing_duration')
+
+class EnumeratedProgressCreateSerializer(serializers.ModelSerializer):
+    sequence_slug = serializers.SlugRelatedField(
+        slug_field='slug',
+        queryset=Sequence.objects.all(),
+        source='progress.sequence')
+    username = serializers.SlugRelatedField(
+        slug_field='username',
+        queryset=get_user_model().objects.all(),
+        source='progress.user')
+
+    class Meta:
+        model = EnumeratedProgress
+        fields = ['sequence_slug', 'username', 'rank', 'viewing_duration', 'last_ping_time']
+
+    def create(self, validated_data):
+        progress_data = validated_data.pop('progress')
+        sequence = Sequence.objects.get(
+            slug=progress_data['sequence'])
+        user = get_user_model().objects.get(
+            username=progress_data['user'])
+        with transaction.atomic():
+            progress, created = SequenceProgress.objects.get_or_create(
+                sequence=sequence,
+                user=user)
+            enumerated_progress = EnumeratedProgress.objects.create(
+                progress=progress,
+                **validated_data)
+        return enumerated_progress

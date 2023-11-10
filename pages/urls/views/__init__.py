@@ -22,9 +22,10 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from ...compat import include, re_path
+from ...compat import include, re_path, path
 
 urlpatterns = [
+    path(r'app/sequence/', include('pages.urls.views.progress')),
     re_path(r'^editables/', include('pages.urls.views.editables')),
     re_path(r'^', include('pages.urls.views.elements')),
 ]
