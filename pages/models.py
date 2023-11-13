@@ -437,7 +437,10 @@ class EnumeratedProgress(models.Model):
     viewing_duration = models.DurationField(
         default=datetime.timedelta,  # stored in microseconds
         help_text=_("Total recorded viewing time for the material"))
-    last_ping_time = models.DateTimeField(null=True, blank=True)
+    last_ping_time = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text=_("Timestamp of the last activity ping"))
 
     class Meta:
         unique_together = ('progress', 'rank')

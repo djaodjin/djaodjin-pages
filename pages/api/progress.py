@@ -39,10 +39,10 @@ class EnumeratedProgressAPIView(viewsets.ModelViewSet):
     """
     Manages instances of EnumeratedProgress
 
-    This API endpoint facilitates operations on EnumeratedProgress instances,
-    which represent specific progressions within sequences. Each instance holds
+    This API endpoint allow operations on EnumeratedProgress instances,
+    which represent a user's progression within sequences. Each instance holds
     information about the user's progress in a sequence, identified by sequence slug,
-    username, and rank of each Page Element within the sequence.
+    username, and the rank of the specific PageElement within the sequence.
 
     This endpoint supports listing all progress instances, creating new ones, retrieving
     specific instances, updating, and deleting them.
@@ -163,6 +163,32 @@ class EnumeratedProgressAPIView(viewsets.ModelViewSet):
         """
         return super().destroy(request, *args, **kwargs)
 
+    def update(self, request, *args, **kwargs):
+        """
+        Update an EnumeratedProgress instance.
+
+        Accessed via URL: /progress/<slug:sequence_slug>/<username>/<int:rank>/
+
+        .. code-block:: http
+
+            PATCH /api/progress/sequence1/user1/3 HTTP/1.1
+
+            {
+                "viewing_duration": "00:01:00"
+            }
+
+        responds
+
+        .. code-block:: json
+
+            {
+                "sequence_slug": "sequence1",
+                "rank": 3,
+                "viewing_duration": "00:01:00"
+            }
+        """
+        return super().update(request, *args, **kwargs)
+
     @action(detail=True, methods=['post'])
     def ping(self, request, *args, **kwargs):
         """
@@ -181,10 +207,11 @@ class EnumeratedProgressAPIView(viewsets.ModelViewSet):
         .. code-block:: json
 
             {
-                "username": "user1",
                 "sequence_slug": "sequence1",
+                "username": "user1",
                 "rank": 3,
-                "viewing_duration": "00:00:40"
+                "viewing_duration": "00:00:40",
+                "last_ping_time": "2023-11-13T04:56:04.075172Z"
             }
 
         """
