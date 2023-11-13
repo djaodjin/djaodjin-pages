@@ -23,11 +23,11 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from ... import settings
-from ...compat import re_path, path
+from ...compat import re_path
 from ...views.elements import PageElementView, CertificateDownloadView
 
 urlpatterns = [
-    re_path(r'^(?P<sequence_slug>%s)/certificate/' % settings.SLUG_RE,
+    re_path(r'^(?P<sequence_slug>%s)/certificate' % settings.SLUG_RE,
          CertificateDownloadView.as_view(),
          name='certificate_download'),
     re_path(r'^(?P<path>%s)$' % settings.PATH_RE,
