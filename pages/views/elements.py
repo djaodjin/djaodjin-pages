@@ -23,13 +23,21 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import logging
 
+from datetime import date
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.http import HttpResponseForbidden
+from django.shortcuts import get_object_or_404
+from django.views.generic.detail import DetailView
 from django.http import Http404
 from django.views.generic import TemplateView
 from deployutils.apps.django.mixins import AccessiblesMixin
+from extended_templates.backends.pdf import PdfTemplateResponse
+
 
 from ..compat import NoReverseMatch, reverse, six
 from ..helpers import get_extra, update_context_urls
-from ..models import RelationShip
+from ..models import (RelationShip, EnumeratedElements,
+                      EnumeratedProgress, Sequence, SequenceProgress)
 from ..mixins import AccountMixin, TrailMixin
 
 
@@ -217,4 +225,45 @@ class PageElementEditableView(AccountMixin, PageElementView):
                     'api_content': reverse('pages_api_editables_index',
                         kwargs=url_kwargs),
                 })
+        return context
+
+
+class CertificateDownloadView(LoginRequiredMixin, DetailView):
+    model = Sequence
+    slug_url_kwarg = 'sequence_slug'
+    template_name = 'pages/certificate.html'
+    response_class = PdfTemplateResponse
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        sequence = self.object
+        sequence_progress = get_object_or_404(
+            SequenceProgress,
+            sequence=sequence,
+            user=self.request.user)
+        enumerated_elements = EnumeratedElements.objects.filter(
+            sequence=sequence)
+        user_enumerated_progress = EnumeratedProgress.objects.filter(
+            progress=sequence_progress)
+
+        has_completed_sequence = True
+        for element in enumerated_elements:
+            user_element_progress = user_enumerated_progress.filter(rank=element.rank).first()
+            if not user_element_progress or user_element_progress.viewing_duration < element.min_viewing_duration:
+                has_completed_sequence = False
+                break
+
+        if has_completed_sequence:
+            last_element = enumerated_elements.last().page_element
+            context.update({
+                'user': self.request.user,
+                'sequence': sequence,
+                'current_date': date.today(),
+                'certificate': last_element.certificate
+            })
+        else:
+            self.template_name = None
+            self.response_class = lambda request, **kwargs: HttpResponseForbidden(
+                'You have not completed all elements in the sequence yet.')
+
         return context
