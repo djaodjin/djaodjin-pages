@@ -224,7 +224,7 @@ class EnumeratedProgressAPIView(viewsets.ModelViewSet):
         """
         instance = self.get_object()
         now = timezone.now()
-        time_increment = timedelta(seconds=10)
+        time_increment = timedelta(seconds=15)
 
         if instance.last_ping_time:
             time_since_last_ping = now - instance.last_ping_time

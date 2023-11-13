@@ -37,5 +37,5 @@ urlpatterns = [
     path('content', PageElementIndexAPIView.as_view(),
         name="api_content_index"),
     path('', include('pages.urls.api.sequences')),
-    path('', include('pages.urls.api.progress'))
+    path('progress/', include('pages.urls.api.progress'))
 ]

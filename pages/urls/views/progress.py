@@ -22,16 +22,17 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from ...compat import path
+from ...compat import re_path
 from ...views.progress import SequenceProgressView, SequencePageElementView
+from ... import settings
 
 app_name = 'progress'
 
 urlpatterns = [
-    path('<slug:sequence_slug>',
-         SequenceProgressView.as_view(),
-         name='progress_view'),
-    path('<slug:sequence_slug>/<int:rank>',
-         SequencePageElementView.as_view(),
-         name='page_element_view'),
+    re_path(r'^(?P<sequence_slug>%s)$' % settings.SLUG_RE,
+            SequenceProgressView.as_view(),
+            name='progress_view'),
+    re_path(r'^(?P<sequence_slug>%s)/(?P<rank>\d+)$' % settings.SLUG_RE,
+            SequencePageElementView.as_view(),
+            name='page_element_view'),
 ]

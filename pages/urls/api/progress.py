@@ -26,24 +26,25 @@
 API URLs for EnumeratedProgress objects
 """
 
-from ...api.progress import (EnumeratedProgressAPIView)
-from django.urls import path
+from ...api.progress import EnumeratedProgressAPIView
+from django.urls import re_path
+from ... import settings
 
 urlpatterns = [
-    path('progress/<slug:sequence_slug>',
+    re_path(r'^(?P<sequence_slug>%s)$' % settings.SLUG_RE,
          EnumeratedProgressAPIView.as_view(
              {'get': 'list', 'post': 'create'}),
          name='api_enumerated_progress_list_create'),
-    path('progress/<slug:sequence_slug>/<username>',
+    re_path(r'^(?P<sequence_slug>%s)/(?P<username>%s)$' % (settings.SLUG_RE, settings.SLUG_RE),
          EnumeratedProgressAPIView.as_view(
              {'get': 'list'}),
          name='api_enumerated_progress_user_list'),
-    path('progress/<slug:sequence_slug>/<username>/<int:rank>',
+    re_path(r'^(?P<sequence_slug>%s)/(?P<username>%s)/(?P<rank>\d+)$' % (settings.SLUG_RE, settings.SLUG_RE),
          EnumeratedProgressAPIView.as_view(
              {'get': 'retrieve', 'delete': 'destroy'}),
          name='api_enumerated_progress_user_detail'),
-    path('progress/<slug:sequence_slug>/<username>/<int:rank>/ping',
-       EnumeratedProgressAPIView.as_view(
-           {'post': 'ping'}),
+    re_path(r'^(?P<sequence_slug>%s)/(?P<username>%s)/(?P<rank>\d+)/ping$' % (settings.SLUG_RE, settings.SLUG_RE),
+         EnumeratedProgressAPIView.as_view(
+             {'post': 'ping'}),
          name='enumerated_progress_ping'),
 ]
