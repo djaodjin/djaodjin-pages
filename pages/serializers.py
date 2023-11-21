@@ -23,7 +23,7 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 from __future__ import unicode_literals
 
-import json
+import json, markdown
 
 import bleach
 from rest_framework import serializers
@@ -185,10 +185,10 @@ class PageElementSerializer(serializers.ModelSerializer):
         help_text=_("Account that can edit the page element"))
     picture = serializers.CharField(required=False, allow_null=True,
         help_text=_("Picture icon that can be displayed alongside the title"))
-    text = HTMLField(required=False,
-        html_tags=settings.ALLOWED_TAGS,
-        html_attributes=settings.ALLOWED_ATTRIBUTES,
-        help_text=_("Long description of the page element"))
+    content_format = serializers.ChoiceField(
+        choices=PageElement.FORMAT_CHOICES,
+        required=False)
+    text = serializers.SerializerMethodField()
     extra = serializers.SerializerMethodField(required=False, allow_null=True,
         help_text=_("Extra meta data (can be stringify JSON)"))
     nb_upvotes = serializers.IntegerField(required=False)
@@ -201,8 +201,8 @@ class PageElementSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = PageElement
-        fields = ('path', 'slug', 'picture', 'title', 'text', 'reading_time',
-            'lang', 'account', 'extra',
+        fields = ('path', 'slug', 'picture', 'title', 'content_format',
+            'text', 'reading_time', 'lang', 'account', 'extra',
             'nb_upvotes', 'nb_followers', 'upvote', 'follow',
             'count', 'results')
         read_only_fields = ('path', 'slug', 'account',
@@ -254,6 +254,17 @@ class PageElementSerializer(serializers.ModelSerializer):
         except AttributeError:
             slug = obj.get('slug', "")
         return prefix + slug
+
+    @staticmethod
+    def get_text(obj):
+        html_field = HTMLField(html_tags=settings.ALLOWED_TAGS,
+                               html_attributes=settings.ALLOWED_ATTRIBUTES)
+
+        if obj.content_format == 'MD':
+            html_content = markdown.markdown(obj.text)
+        else:
+            html_content = obj.text
+        return html_field.to_internal_value(html_content)
 
 
 class PageElementTagSerializer(serializers.ModelSerializer):
