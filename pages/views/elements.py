@@ -23,13 +23,21 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import logging
 
-from django.http import Http404
+from datetime import datetime
+from django.db.models import Exists, OuterRef
+from django.http import HttpResponseForbidden, Http404
+from django.shortcuts import get_object_or_404
+from django.views.generic.detail import DetailView
 from django.views.generic import TemplateView
+
 from deployutils.apps.django.mixins import AccessiblesMixin
+from extended_templates.backends.pdf import PdfTemplateResponse
+
 
 from ..compat import NoReverseMatch, reverse, six
 from ..helpers import get_extra, update_context_urls
-from ..models import RelationShip
+from ..models import (RelationShip, EnumeratedElements,
+                      EnumeratedProgress, Sequence, SequenceProgress)
 from ..mixins import AccountMixin, TrailMixin
 
 
@@ -217,4 +225,62 @@ class PageElementEditableView(AccountMixin, PageElementView):
                     'api_content': reverse('pages_api_editables_index',
                         kwargs=url_kwargs),
                 })
+        return context
+
+
+class CertificateDownloadView(DetailView):
+    model = Sequence
+    slug_url_kwarg = 'sequence'
+    template_name = 'pages/certificate.html'
+    response_class = PdfTemplateResponse
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        sequence = self.object
+        sequence_progress = get_object_or_404(
+            SequenceProgress,
+            sequence=sequence,
+            user=self.request.user)
+        enumerated_elements = EnumeratedElements.objects.filter(
+            sequence=sequence)
+        user_enumerated_progress = EnumeratedProgress.objects.filter(
+            progress=sequence_progress)
+
+        last_element = enumerated_elements.last().page_element
+        is_last_element_certificate = hasattr(last_element, 'certificate')
+
+        if is_last_element_certificate:
+            # Exclude last element from the check, if it is a certificate
+            enumerated_elements = enumerated_elements.exclude(pk=enumerated_elements.last().pk)
+
+        completed_elements_subquery = user_enumerated_progress.filter(
+            rank=OuterRef('rank'),
+            viewing_duration__gte=OuterRef('min_viewing_duration')
+        )
+
+        incomplete_element_exists = enumerated_elements.filter(
+            ~Exists(completed_elements_subquery)).exists()
+
+        has_completed_sequence = not incomplete_element_exists
+
+        if has_completed_sequence:
+            if not sequence_progress.completion_date:
+                completion_date = datetime.now()
+                sequence_progress.completion_date = completion_date
+                sequence_progress.save()
+            else:
+                completion_date = sequence_progress.completion_date
+
+            last_element = enumerated_elements.last().page_element
+            context.update({
+                'user': self.request.user,
+                'sequence': sequence,
+                'completion_date': completion_date,
+                'certificate': last_element.certificate
+            })
+        else:
+            self.template_name = None
+            self.response_class = lambda request, **kwargs: HttpResponseForbidden(
+                'You have not completed all elements in the sequence yet.')
+
         return context

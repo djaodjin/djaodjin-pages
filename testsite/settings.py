@@ -91,6 +91,10 @@ LOGGING = {
         }
     },
     'handlers': {
+        'console': {
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',
+        },
         'logfile':{
             'level':'DEBUG',
             'class':'logging.StreamHandler',
@@ -129,6 +133,10 @@ LOGGING = {
         '': {
             'handlers': ['logfile', 'mail_admins'],
             'level': 'INFO'
+        },
+        'fontTools.subset': {
+            'handlers': ['console'],
+            'level': 'WARNING',
         }
     }
 }
