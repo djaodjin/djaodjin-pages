@@ -1,4 +1,4 @@
-# Copyright (c) 2023, DjaoDjin inc.
+# Copyright (c) 2022, DjaoDjin inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -22,20 +22,25 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-'''API URLs for the pages application'''
+"""
+API URLs for EnumeratedProgress objects
+"""
 
-from ...api.elements import (PageElementEditableListAPIView,
-    PageElementIndexAPIView)
-from ...compat import include, path
+from ...api.progress import EnumeratedProgressAPIView
+from django.urls import path
 
 urlpatterns = [
-    path('content/editables/', include('pages.urls.api.editables')),
-    path('content/editables', PageElementEditableListAPIView.as_view(),
-        name='pages_api_editables_index'),
-    path('content/', include('pages.urls.api.readers')),
-    path('content/', include('pages.urls.api.noauth')),
-    path('content', PageElementIndexAPIView.as_view(),
-        name="api_content_index"),
-    path('', include('pages.urls.api.sequences')),
-    path('progress/', include('pages.urls.api.progress'))
+    path('<slug:sequence>',
+         EnumeratedProgressAPIView.as_view(
+             {'get': 'list', 'post': 'create'}),
+         name='api_enumerated_progress_list_create'),
+    path('<slug:sequence>/<username>',
+         EnumeratedProgressAPIView.as_view(
+             {'get': 'list'}),
+         name='api_enumerated_progress_user_list'),
+    path('<slug:sequence>/<username>/<int:rank>',
+         EnumeratedProgressAPIView.as_view(
+             {'get': 'retrieve', 'delete': 'destroy',
+              'post': 'ping'}),
+         name='api_enumerated_progress_user_detail'),
 ]

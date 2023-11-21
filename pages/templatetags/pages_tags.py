@@ -71,3 +71,7 @@ def print_dict(dictionary, html="", parent=None, excludes=None):
                     href=\"\" data-filepath=\"%s\">%s</a></li>" %\
                     (key, key)
     return html
+
+@register.filter
+def get_item(dictionary, key):
+    return dictionary.get(key)

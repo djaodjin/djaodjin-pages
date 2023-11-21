@@ -1,4 +1,4 @@
-# Copyright (c) 2022, Djaodjin Inc.
+# Copyright (c) 2023, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -22,19 +22,16 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from django.conf import settings
-from django.conf.urls.static import static
-from django.contrib.staticfiles.urls import staticfiles_urlpatterns
-from django.views.generic import TemplateView
+from ...compat import path
+from ...views.sequences import SequenceProgressView, SequencePageElementView
 
-from pages.compat import include, re_path
+app_name = 'sequences'
 
-urlpatterns = staticfiles_urlpatterns() \
-    + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
-
-urlpatterns += [
-    re_path(r'^', include('django.contrib.auth.urls')),
-    re_path(r'^app/energy-utility/',
-        TemplateView.as_view(template_name='index.html')),
-    re_path(r'^', include('pages.urls')),
+urlpatterns = [
+    path('<slug:sequence>/',
+            SequenceProgressView.as_view(),
+            name='sequence_progress_view'),
+    path('<slug:sequence>/<int:rank>/',
+            SequencePageElementView.as_view(),
+            name='sequence_page_element_view'),
 ]

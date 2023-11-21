@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <br>
+    <a href="{% url 'sequences:sequence_progress_view' sequence=sequence.slug %}">
+        Back to {{ sequence.slug }}
+    </a>
+
+    <h1>{{ element.page_element.title }}</h1>
+    {% if element.page_element.text %}
+        <hr>
+        <p>{{ element.page_element.text|safe }}</p>
+        <hr>
+    {% endif %}
+
+    {% if previous_element %}
+        <a href="{% url 'sequences:sequence_page_element_view' sequence=sequence.slug rank=previous_element.rank %}">
+            Previous
+        </a>
+    {% endif %}
+
+    {% if next_element %}
+        <a href="{% url 'sequences:sequence_page_element_view' sequence=sequence.slug rank=next_element.rank %}">
+            Next
+        </a>
+    {% endif %}
+    <br>
+
+    {% if not progress %}
+        <p>No progress yet!</p>
+        <section id="app">
+            <start-progress inline-template
+                :sequence-slug="'{{ sequence.slug }}'"
+                :user-username="'{{ request.user.username }}'"
+                :element-rank="{{ element.rank }}">
+                <div>
+                    <button id="startProgress" @click="startProgress">Start Progress</button>
+                    <p>Click the button to start tracking your progress.</p>
+                </div>
+            </start-progress>
+        </section>
+    {% else %}
+        <section id="app">
+            <viewing-timer inline-template
+                :initial-duration="{{ viewing_duration_seconds }}"
+                :rank="{{ element.rank }}"
+                :sequence="'{{ sequence.slug }}'"
+                :user="'{{ request.user.username }}'"
+                :ping-interval="{{ ping_interval }}">
+                <div>
+                    <label>Viewing Duration:</label> <span>[[ duration | formatDuration ]]</span>
+                </div>
+            </viewing-timer>
+        </section>
+    {% endif %}
+
+{% endblock %}

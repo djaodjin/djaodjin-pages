@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% load pages_tags %}
+
+{% block content %}
+<h2>{{ sequence.title }}</h2>
+<section id="app">
+    <sequence-items inline-template>
+        <div>
+            <div v-if="itemsLoaded">
+                <ul>
+                    {% for element in elements %}
+                    <li>
+                        <a href="{% url 'sequences:sequence_page_element_view' sequence=element.sequence.slug rank=element.rank %}">
+                            {{ element_titles|get_item:element.rank }}</a>({{ element.rank }}) -
+                        <template v-for="item in items.results">
+                            <span v-if="item.rank === {{ element.rank }}">
+                                [[ item.viewing_duration | formatDuration ]]
+                            </span>
+                        </template>
+                        <span v-if="!items.results.some(item => item.rank === {{ element.rank }})">
+                            No progress yet
+                        </span>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        {% include '_paginator.html' %}
+        </div>
+    </sequence-items>
+</section>
+{% endblock %}
