@@ -558,7 +558,7 @@ Vue.component('viewing-timer', {
             duration: this.initialDuration,
             timerInterval: null,
             updateInterval: null,
-            pingUrl: this.$urls.enumerated_progress_ping,
+            pingUrl: this.$urls.api_enumerated_progress_user_detail,
         };
     },
     methods: {
@@ -623,7 +623,7 @@ Vue.component('start-progress', {
     },
     methods: {
         startProgress() {
-            const postData = {
+            var postData = {
                 sequence_slug: this.sequenceSlug,
                 username: this.userUsername,
                 rank: this.elementRank
@@ -631,9 +631,6 @@ Vue.component('start-progress', {
             this.reqPost(this.progressUrl, postData);
         }
     },
-    mounted() {
-         this.get();
-        }
 });
 
 Vue.filter('formatDuration', function (value) {

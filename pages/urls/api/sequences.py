@@ -30,6 +30,8 @@ from ...api.sequences import (SequenceAPIView)
 from rest_framework.routers import DefaultRouter
 
 router = DefaultRouter(trailing_slash=False)
-router.register(r'sequences', SequenceAPIView, basename='sequences')
+router.register(r'sequences',
+                SequenceAPIView,
+                basename='api_sequences')
 urlpatterns = [
 ] + router.urls

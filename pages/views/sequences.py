@@ -32,19 +32,22 @@ from django.views.generic.detail import DetailView
 
 from ..compat import reverse
 from ..helpers import update_context_urls
+from .. import settings
 
 LOGGER = logging.getLogger(__name__)
 
 class SequenceProgressView(TemplateView):
-    template_name = 'pages/sequence_progress.html'
+    template_name = 'pages/app/sequences/index.html'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        sequence_slug = self.kwargs.get('sequence_slug')
+        sequence_slug = self.kwargs.get('sequence')
         user = self.request.user
         sequence = get_object_or_404(Sequence, slug=sequence_slug)
         elements = sequence.sequence_enumerated_elements.all().order_by('rank')
-
+        # We retrieve the element titles twice, because the API endpoint
+        # does not return all elements, only the ones which
+        # the user has some progress on
         context.update({
             'user': user,
             'sequence': sequence,
@@ -54,18 +57,19 @@ class SequenceProgressView(TemplateView):
 
         update_context_urls(context, {
             'api_enumerated_progress_user_list': reverse(
-                'api_enumerated_progress_user_list', args=(sequence.slug, user.username))
+                'api_enumerated_progress_user_list', args=(
+                    sequence.slug, user.username))
         })
 
         return context
 
 
 class SequencePageElementView(DetailView):
-    template_name = 'pages/reading_template.html'
+    template_name = 'pages/app/sequences/pageelement.html'
     context_object_name = 'element'
 
     def get_object(self, queryset=None):
-        sequence_slug = self.kwargs.get('sequence_slug')
+        sequence_slug = self.kwargs.get('sequence')
         rank = self.kwargs.get('rank')
         sequence = get_object_or_404(Sequence, slug=sequence_slug)
         return get_object_or_404(EnumeratedElements, sequence=sequence, rank=rank)
@@ -88,11 +92,12 @@ class SequencePageElementView(DetailView):
             viewing_duration_seconds = progress.viewing_duration.total_seconds() if progress.viewing_duration else 0
         except (SequenceProgress.DoesNotExist, EnumeratedProgress.DoesNotExist):
             pass
-
+        ping_interval = settings.PING_INTERVAL
         context.update({
             'sequence': sequence,
             'previous_element': previous_element,
             'next_element': next_element,
+            'ping_interval': ping_interval,
             'progress': progress,
             'viewing_duration_seconds': viewing_duration_seconds
         })
@@ -101,8 +106,8 @@ class SequencePageElementView(DetailView):
             'api_enumerated_progress_list_create': reverse(
                 'api_enumerated_progress_list_create', args=(
                     sequence.slug,)),
-            'enumerated_progress_ping': reverse(
-                'enumerated_progress_ping', args=(
+            'api_enumerated_progress_user_detail': reverse(
+                'api_enumerated_progress_user_detail', args=(
                     sequence.slug, user.username,
                     self.object.rank))
         })

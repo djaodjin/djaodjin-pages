@@ -25,7 +25,7 @@
 from ...compat import include, re_path, path
 
 urlpatterns = [
-    path(r'app/sequence/', include('pages.urls.views.progress')),
+    path('app/sequences/', include('pages.urls.views.sequences')),
     re_path(r'^editables/', include('pages.urls.views.editables')),
     re_path(r'^', include('pages.urls.views.elements')),
 ]

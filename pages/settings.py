@@ -47,7 +47,8 @@ _SETTINGS = {
     'EXTRA_FIELD': None,
     'MEDIA_PREFIX': "",
     'MEDIA_ROOT': getattr(settings, 'MEDIA_ROOT'),
-    'MEDIA_URL': getattr(settings, 'MEDIA_URL')
+    'MEDIA_URL': getattr(settings, 'MEDIA_URL'),
+    'PING_INTERVAL': getattr(settings, 'PING_INTERVAL', 10)
 }
 
 _SETTINGS.update(getattr(settings, 'PAGES', {}))
@@ -67,6 +68,7 @@ EXTRA_FIELD = _SETTINGS.get('EXTRA_FIELD')
 MEDIA_PREFIX = _SETTINGS.get('MEDIA_PREFIX')
 MEDIA_ROOT = _SETTINGS.get('MEDIA_ROOT')
 MEDIA_URL = _SETTINGS.get('MEDIA_URL')
+PING_INTERVAL = _SETTINGS.get('PING_INTERVAL')
 
 LANGUAGE_CODE = getattr(settings, 'LANGUAGE_CODE')
 SLUG_RE = r'[a-zA-Z0-9_\-\+\.]+'

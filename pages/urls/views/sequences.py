@@ -1,4 +1,4 @@
-# Copyright (c) 2022, Djaodjin Inc.
+# Copyright (c) 2023, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -22,17 +22,16 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from ...compat import re_path
-from ...views.progress import SequenceProgressView, SequencePageElementView
-from ... import settings
+from ...compat import path
+from ...views.sequences import SequenceProgressView, SequencePageElementView
 
-app_name = 'progress'
+app_name = 'sequences'
 
 urlpatterns = [
-    re_path(r'^(?P<sequence_slug>%s)$' % settings.SLUG_RE,
+    path('<slug:sequence>/',
             SequenceProgressView.as_view(),
-            name='progress_view'),
-    re_path(r'^(?P<sequence_slug>%s)/(?P<rank>\d+)$' % settings.SLUG_RE,
+            name='sequence_progress_view'),
+    path('<slug:sequence>/<int:rank>/',
             SequencePageElementView.as_view(),
-            name='page_element_view'),
+            name='sequence_page_element_view'),
 ]

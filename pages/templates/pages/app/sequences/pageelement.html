@@ -2,7 +2,7 @@
 
 {% block content %}
     <br>
-    <a href="{% url 'progress:progress_view' sequence_slug=sequence.slug %}">
+    <a href="{% url 'sequences:sequence_progress_view' sequence=sequence.slug %}">
         Back to {{ sequence.slug }}
     </a>
 
@@ -14,13 +14,13 @@
     {% endif %}
 
     {% if previous_element %}
-        <a href="{% url 'progress:page_element_view' sequence_slug=sequence.slug rank=previous_element.rank %}">
+        <a href="{% url 'sequences:sequence_page_element_view' sequence=sequence.slug rank=previous_element.rank %}">
             Previous
         </a>
     {% endif %}
 
     {% if next_element %}
-        <a href="{% url 'progress:page_element_view' sequence_slug=sequence.slug rank=next_element.rank %}">
+        <a href="{% url 'sequences:sequence_page_element_view' sequence=sequence.slug rank=next_element.rank %}">
             Next
         </a>
     {% endif %}
@@ -46,7 +46,7 @@
                 :rank="{{ element.rank }}"
                 :sequence="'{{ sequence.slug }}'"
                 :user="'{{ request.user.username }}'"
-                :ping-interval="15">
+                :ping-interval="{{ ping_interval }}">
                 <div>
                     <label>Viewing Duration:</label> <span>[[ duration | formatDuration ]]</span>
                 </div>

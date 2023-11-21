@@ -341,3 +341,11 @@ class EnumeratedProgressCreateSerializer(serializers.ModelSerializer):
                 progress=progress,
                 **validated_data)
         return enumerated_progress
+
+class EnumeratedProgressPingSerializer(serializers.ModelSerializer):
+    """
+    Serializes a EnumeratedProgress object to update its last_ping_time
+    """
+    class Meta:
+        model = EnumeratedProgress
+        fields = ('created_at', 'viewing_duration', 'last_ping_time')

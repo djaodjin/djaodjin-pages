@@ -211,20 +211,19 @@ class SequenceAPIView(viewsets.ModelViewSet): # pylint: disable=too-many-ancesto
         return api_response.Response({'detail': 'sequence deleted'},
                                      status=status.HTTP_204_NO_CONTENT)
 
-    @action(detail=True, methods=['post'])
+    @action(detail=True, methods=['post'], url_path='elements')
     def add_element(self, request, slug=None):
         """
         - **Add Element to Sequence**
 
         Adds an element to a sequence. Creates a new `EnumeratedElements` instance.
-
         .. code-block:: http
 
-            POST /api/sequences/1/add_element HTTP/1.1
+            POST /api/sequences/sequence1/elements HTTP/1.1
             Content-Type: application/json
 
             {
-                "page_element": production,
+                "page_element": "production",
                 "rank": 1
             }
 
@@ -235,39 +234,33 @@ class SequenceAPIView(viewsets.ModelViewSet): # pylint: disable=too-many-ancesto
             {
                 "detail": "element added"
             }
-        """
-        #pylint:disable=unused-argument
+            """
         sequence = self.get_object()
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
             try:
                 serializer.save(sequence=sequence)
-                return api_response.Response({'detail': 'element added'},
-                                             status=status.HTTP_200_OK)
+                return api_response.Response(
+                    {'detail': 'element added'}, status=status.HTTP_201_CREATED)
             except IntegrityError:
-                return api_response.Response({'detail':
-                  'An element already exists on this rank for this sequence.'},
-                  status=status.HTTP_400_BAD_REQUEST)
-        return api_response.Response({'detail': 'invalid parameters'},
-                                     status=status.HTTP_400_BAD_REQUEST)
+                return api_response.Response(
+                    {'detail':
+                         'An element already exists at this rank for this sequence.'},
+                          status=status.HTTP_400_BAD_REQUEST)
+        return api_response.Response(
+            {'detail': 'invalid parameters'}, status=status.HTTP_400_BAD_REQUEST)
 
-    @action(detail=True, methods=['post'])
-    def remove_element(self, request, ):
+    @action(detail=True, methods=['delete'], url_path='elements/(?P<element_rank>\\d+)')
+    def remove_element(self, request, slug=None, element_rank=None):
         """
         - **Remove Element from Sequence**
 
-        Removes an element from a sequence. Requires a specified rank and page_element
-        to delete the EnumeratedElements instance.
+        Removes an element from a sequence by its rank.
 
         .. code-block:: http
 
-            POST /api/sequences/1/remove_element HTTP/1.1
+            DELETE /api/sequences/sequence1/elements/1 HTTP/1.1
             Content-Type: application/json
-
-            {
-                "page_element": production,
-                "rank": 1
-            }
 
         responds
 
@@ -276,23 +269,14 @@ class SequenceAPIView(viewsets.ModelViewSet): # pylint: disable=too-many-ancesto
             {
                 "detail": "element removed"
             }
-
         """
-        #pylint:disable=unused-argument
         sequence = self.get_object()
-        serializer = self.get_serializer(data=request.data)
-        if serializer.is_valid():
-            deleted, _ = EnumeratedElements.objects.filter(
-                sequence=sequence,
-                page_element=serializer.validated_data['page_element'],
-                rank=serializer.validated_data['rank']
-            ).first().delete()
-
-            if deleted:
-                return api_response.Response({'detail': 'element removed'},
-                                             status=status.HTTP_200_OK)
-            return api_response.Response({'detail': 'element at the specified rank '
-                                                    'not found in sequence'},
-                                         status=status.HTTP_404_NOT_FOUND)
-        return api_response.Response({'detail': 'invalid parameters'},
-                                     status=status.HTTP_400_BAD_REQUEST)
+        if element_rank is not None:
+            try:
+                element = EnumeratedElements.objects.get(sequence=sequence, rank=element_rank)
+                element.delete()
+                return api_response.Response({'detail': 'element removed'}, status=status.HTTP_200_OK)
+            except EnumeratedElements.DoesNotExist:
+                return api_response.Response({'detail': 'element not found in sequence'},
+                                             status=status.HTTP_404_NOT_FOUND)
+        return api_response.Response({'detail': 'Invalid rank'}, status=status.HTTP_400_BAD_REQUEST)

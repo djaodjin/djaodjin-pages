@@ -21,7 +21,7 @@
 # WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-import logging
+
 from datetime import timedelta
 
 from django.utils import timezone
@@ -33,7 +33,10 @@ from rest_framework.decorators import action
 
 from ..models import (EnumeratedProgress)
 from ..serializers import (EnumeratedProgressSerializer,
-                           EnumeratedProgressCreateSerializer)
+                           EnumeratedProgressCreateSerializer,
+                           EnumeratedProgressPingSerializer)
+from .. import settings
+
 
 class EnumeratedProgressAPIView(viewsets.ModelViewSet):
     """
@@ -48,12 +51,11 @@ class EnumeratedProgressAPIView(viewsets.ModelViewSet):
     specific instances, updating, and deleting them.
 
     Also allows updating the viewing duration of progress instances using
-    the /ping/ endpoint.
+    POST requests on individual instances.
 
      **Tags**: progress
     """
     queryset = EnumeratedProgress.objects.all().order_by('rank')
-    http_method_names = ['get', 'post', 'delete', 'head', 'patch', 'options']
 
     def get_serializer_class(self):
         if self.request.method == 'POST':
@@ -65,9 +67,9 @@ class EnumeratedProgressAPIView(viewsets.ModelViewSet):
         Retrieve a queryset of EnumeratedProgress instances.
         Can be filtered by sequence_slug and username.
         """
-        sequence_slug = self.kwargs.get('sequence_slug')
+        sequence_slug = self.kwargs.get('sequence')
         username = self.kwargs.get('username')
-        queryset = EnumeratedProgress.objects.all()
+        queryset = self.queryset
 
         if sequence_slug:
             queryset = queryset.filter(
@@ -84,15 +86,10 @@ class EnumeratedProgressAPIView(viewsets.ModelViewSet):
         sequence_slug, username, and rank.
         """
         queryset = self.get_queryset()
-        sequence_slug = self.kwargs.get('sequence_slug')
-        username = self.kwargs.get('username')
         rank = self.kwargs.get('rank')
 
         obj = get_object_or_404(queryset,
-                                rank=rank,
-                                progress__sequence__slug=sequence_slug,
-                                progress__user__username=username)
-
+                                rank=rank)
         self.check_object_permissions(self.request, obj)
         return obj
 
@@ -101,8 +98,8 @@ class EnumeratedProgressAPIView(viewsets.ModelViewSet):
         List all EnumeratedProgress instances.
 
         Accessed via URL:
-        - /progress/<slug:sequence_slug>/ for a specific sequence.
-        - /progress/<slug:sequence_slug>/<username>/ for a specific
+        - /progress/{sequence} for a specific sequence.
+        - /progress/{sequence}/{username} for a specific
         user within a sequence.
 
         .. code-block:: http
@@ -131,7 +128,7 @@ class EnumeratedProgressAPIView(viewsets.ModelViewSet):
         """
         Retrieve a specific EnumeratedProgress instance.
 
-        Accessed via URL: /progress/<slug:sequence_slug>/<username>/<int:rank>/
+        Accessed via URL: /progress/{sequence}/{username}/{rank}
 
         .. code-block:: http
 
@@ -153,7 +150,7 @@ class EnumeratedProgressAPIView(viewsets.ModelViewSet):
         """
         Delete an EnumeratedProgress instance.
 
-        Accessed via URL: /progress/<slug:sequence_slug>/<username>/<int:rank>/
+        Accessed via URL: /progress/{sequence}/{username}/{rank}
 
         .. code-block:: http
 
@@ -167,7 +164,7 @@ class EnumeratedProgressAPIView(viewsets.ModelViewSet):
         """
         Update an EnumeratedProgress instance.
 
-        Accessed via URL: /progress/<slug:sequence_slug>/<username>/<int:rank>/
+        Accessed via URL: /progress/{sequence}/{username}/{rank}
 
         .. code-block:: http
 
@@ -200,7 +197,7 @@ class EnumeratedProgressAPIView(viewsets.ModelViewSet):
 
         .. code-block:: http
 
-            POST /api/progress/sequence1/user1/3/ping HTTP/1.1
+            POST /api/progress/sequence1/user1/3 HTTP/1.1
 
         responds
 
@@ -218,28 +215,21 @@ class EnumeratedProgressAPIView(viewsets.ModelViewSet):
         return self._handle_ping_viewing(request, *args, **kwargs)
 
     def _handle_ping_viewing(self, request, *args, **kwargs):
-        """
-        Handle the logic for the ping action.
-        time_increment sets the minimum amount of pings received
-        """
         instance = self.get_object()
         now = timezone.now()
-        time_increment = timedelta(seconds=15)
 
         if instance.last_ping_time:
-            time_since_last_ping = now - instance.last_ping_time
-            if time_since_last_ping >= time_increment:
-                instance.viewing_duration += time_increment
-                instance.last_ping_time = now
-                instance.save()
-                status_code = status.HTTP_200_OK
-            else:
-                status_code = status.HTTP_429_TOO_MANY_REQUESTS
+            time_elapsed = now - instance.last_ping_time
+            # Add only the actual time elapsed, with a cap for inactivity
+            time_increment = min(time_elapsed, timedelta(seconds=settings.PING_INTERVAL+1))
         else:
-            instance.viewing_duration += time_increment
-            instance.last_ping_time = now
-            instance.save()
-            status_code = status.HTTP_200_OK
+            # Set the initial increment to the expected ping interval (i.e., 10 seconds)
+            time_increment = timedelta(seconds=settings.PING_INTERVAL)
 
-        serializer = self.get_serializer(instance)
+        instance.viewing_duration += time_increment
+        instance.last_ping_time = now
+        instance.save()
+
+        status_code = status.HTTP_200_OK
+        serializer = EnumeratedProgressPingSerializer(instance)
         return api_response.Response(serializer.data, status=status_code)
