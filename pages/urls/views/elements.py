@@ -27,7 +27,7 @@ from ...compat import re_path, path
 from ...views.elements import PageElementView, CertificateDownloadView
 
 urlpatterns = [
-    path('<sequence>/certificate/',
+    path('<slug:sequence>/certificate/',
          CertificateDownloadView.as_view(),
          name='certificate_download'),
     re_path(r'^(?P<path>%s)$' % settings.PATH_RE,
