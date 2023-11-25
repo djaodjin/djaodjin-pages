@@ -24,12 +24,16 @@
 import logging
 
 from django.db import IntegrityError
+from django.shortcuts import get_object_or_404
 from rest_framework import (response as api_response,
                             viewsets, status)
 from rest_framework.decorators import action
+from rest_framework.views import APIView
 
-from ..models import (Sequence, EnumeratedElements)
-from ..serializers import (SequenceSerializer, EnumeratedElementSerializer)
+from ..models import (Sequence, EnumeratedElements,
+   SequenceProgress, EnumeratedProgress, LiveEvent)
+from ..serializers import (SequenceSerializer,
+   EnumeratedElementSerializer, AttendanceInputSerializer)
 
 LOGGER = logging.getLogger(__name__)
 
@@ -275,8 +279,85 @@ class SequenceAPIView(viewsets.ModelViewSet): # pylint: disable=too-many-ancesto
             try:
                 element = EnumeratedElements.objects.get(sequence=sequence, rank=element_rank)
                 element.delete()
-                return api_response.Response({'detail': 'element removed'}, status=status.HTTP_200_OK)
+                return api_response.Response(
+                    {'detail': 'element removed'}, status=status.HTTP_200_OK)
             except EnumeratedElements.DoesNotExist:
                 return api_response.Response({'detail': 'element not found in sequence'},
                                              status=status.HTTP_404_NOT_FOUND)
         return api_response.Response({'detail': 'Invalid rank'}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class LiveEventAttendanceAPIView(APIView):
+    '''
+    Manages attendance tracking for live events
+
+    This API endpoint allows for marking attendance at live events,
+    represented by the LiveEvent model. It accepts URL parameters to identify
+    the specific live event and the user attending, and updates the EnumeratedProgress
+    instance associated with the event and user to reflect their attendance.
+
+    The relevant user's EnumeratedProgress viewing duration for the event is updated to
+    meet the minimum viewing duration requirement of the associated EnumeratedElement.
+
+    **Tags**: attendance, live events
+    '''
+    def post(self, request, *args, **kwargs):
+        """
+        - **Mark a User's attendance at a Live Event**
+
+        .. code-block:: http
+
+            POST /api/sequences/{sequence_slug}/{rank}/events/{username}/mark-attendance HTTP/1.1
+
+        URL Parameters:
+            - sequence_slug (str): The slug of the sequence associated with the live event.
+            - username (str): The username of the user attending the live event.
+            - rank (int): The rank of the enumerated element in the sequence.
+
+        Responds with a status indicating whether the attendance was successfully marked or not.
+
+        On successful attendance marking:
+
+        .. code-block:: json
+
+            {
+                "detail": "Attendance marked successfully"
+            }
+
+        On failure to mark attendance (e.g., invalid parameters, event not found):
+
+        .. code-block:: json
+
+            {
+                "detail": "Attendance not marked"
+            }
+
+        """
+
+        input_serializer = AttendanceInputSerializer(data=self.kwargs)
+        if not input_serializer.is_valid():
+            return api_response.Response(
+                input_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        sequence = input_serializer.validated_data['sequence']
+        user = input_serializer.validated_data['username']
+        rank = input_serializer.validated_data['rank']
+
+        sequence_progress = get_object_or_404(
+            SequenceProgress, user=user, sequence=sequence)
+        enumerated_progress = get_object_or_404(
+            EnumeratedProgress, progress=sequence_progress, rank=rank)
+        enumerated_element = get_object_or_404(
+            EnumeratedElements, rank=rank, sequence=sequence)
+        page_element = enumerated_element.page_element
+        live_event = get_object_or_404(
+            LiveEvent, sequence=sequence, element=page_element)
+
+        if page_element.events.first() == live_event and \
+           enumerated_progress.viewing_duration < enumerated_element.min_viewing_duration:
+            enumerated_progress.viewing_duration = enumerated_element.min_viewing_duration
+            enumerated_progress.save()
+            return api_response.Response(
+                {'detail': 'Attendance marked successfully'}, status=status.HTTP_200_OK)
+        return api_response.Response(
+            {'detail': 'Attendance not marked'}, status=status.HTTP_400_BAD_REQUEST)

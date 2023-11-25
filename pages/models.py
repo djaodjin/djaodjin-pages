@@ -397,6 +397,8 @@ class LiveEvent(models.Model):
     scheduled_at = models.DateTimeField()
     location = models.URLField(_("URL to the calendar event"), max_length=2083)
     max_attendees = models.IntegerField(default=0)
+    sequence = models.ForeignKey('Sequence', on_delete=models.CASCADE,
+         related_name='sequence_events')
     extra = get_extra_field_class()(null=True, blank=True,
         help_text=_("Extra meta data (can be stringify JSON)"))
 

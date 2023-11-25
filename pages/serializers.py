@@ -29,6 +29,7 @@ import bleach
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from django.db import transaction
+from django.shortcuts import get_object_or_404
 
 
 from . import settings
@@ -349,3 +350,14 @@ class EnumeratedProgressPingSerializer(serializers.ModelSerializer):
     class Meta:
         model = EnumeratedProgress
         fields = ('created_at', 'viewing_duration', 'last_ping_time')
+
+class AttendanceInputSerializer(serializers.Serializer):
+    sequence = serializers.SlugField()
+    username = serializers.CharField()
+    rank = serializers.IntegerField()
+
+    def validate_sequence(self, value):
+        return get_object_or_404(Sequence, slug=value)
+
+    def validate_username(self, value):
+        return get_object_or_404(get_user_model(), username=value)
