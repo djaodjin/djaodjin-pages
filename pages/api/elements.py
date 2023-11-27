@@ -21,24 +21,36 @@
 # WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+import base64
 import logging
+import re
+from io import BytesIO
 
+from bs4 import BeautifulSoup
 from django.core.exceptions import ValidationError
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db import transaction
 from django.db.models import Max, Q
 from django.http import Http404
-from rest_framework import (generics, response as api_response)
-from rest_framework.mixins import CreateModelMixin
+from markdownify import markdownify as md
+from rest_framework import (generics, response as api_response,
+    status)
+from rest_framework.exceptions import ValidationError
 from rest_framework.filters import OrderingFilter, SearchFilter
+from rest_framework.mixins import CreateModelMixin
+from rest_framework.views import APIView
 
+import mammoth
+import requests
 from ..compat import reverse
 from ..helpers import ContentCut, get_extra
 from ..mixins import AccountMixin, PageElementMixin, TrailMixin
 from ..models import (PageElement, RelationShip, build_content_tree,
     flatten_content_tree)
-from ..serializers import (NodeElementSerializer, PageElementSerializer,
-    PageElementTagSerializer)
+from ..serializers import (AssetSerializer, NodeElementSerializer,
+    PageElementSerializer, PageElementTagSerializer)
 from ..utils import validate_title
+from .assets import process_upload
 
 LOGGER = logging.getLogger(__name__)
 
@@ -645,3 +657,120 @@ class PageElementRemoveTags(AccountMixin, PageElementMixin,
                 curr_tags.remove(tag)
         serializer.instance.extra = ','.join(curr_tags)
         serializer.instance.save()
+
+
+class ImportDocxView(AccountMixin, APIView):
+    """
+    Handles importing content from a .docx file and
+    update a page element's text.
+    """
+
+    def upload_image(self, request):
+        """
+        Upload an image and return its URL.
+        """
+        store_hash = True
+        replace_stored = False
+        content_type = None
+
+        location = request.data.get("location", None)
+        is_public_asset = request.query_params.get('public', False)
+        response_data, response_status = process_upload(
+            request, self.account, location, is_public_asset,
+            store_hash, replace_stored, content_type)
+
+        return AssetSerializer().to_representation(response_data)['location']
+
+    def process_image(self, img_tag, original_request):
+        """
+        Handle processing and uploading of an image in an HTML string.
+        """
+        image_data = img_tag["src"]
+        if not image_data.startswith("data:image"):
+            return
+
+        img_info, encoded = image_data.split(",", 1)
+        image_bytes = base64.b64decode(encoded)
+
+        # Potential code for limiting file size:
+
+        # if image_bytes > some_max_size:
+        #     pass
+        content_type = img_info.split(";")[0].split(":")[1]
+
+        image_stream = SimpleUploadedFile("image.jpg", image_bytes, content_type)
+
+        # Modify the existing request with the new image files
+        # The original request is immutable, therefore we change
+        # its mutability manually.
+        _mutable = original_request.data._mutable
+        original_request.data._mutable = True
+        original_request.data["file"] = image_stream
+        original_request.data._mutable = _mutable
+
+        return self.upload_image(original_request)
+
+    def extract_and_upload_images(self, html, original_request):
+        """
+        Extract and upload images in the given HTML string.
+        """
+        soup = BeautifulSoup(html, "html.parser")
+        for img in soup.find_all("img"):
+            new_image_url = self.process_image(img, original_request)
+            if new_image_url:
+                img["src"] = new_image_url
+
+        return str(soup)
+
+    def post(self, request):
+        """
+        Handles POST requests to import a .docx file's content into a PageElement's
+        text field.
+        """
+        docx_location = request.data.get("docx_location")
+        page_element_slug = request.data.get("page_element_slug")
+        content_format = request.data.get("content_format", "MD")
+
+        page_element = PageElement.objects.filter(slug=page_element_slug).first()
+        if not page_element:
+            return api_response.Response({'detail': 'Page Element not found'})
+        if docx_location.startswith(("http://", "https://", "www.")):
+            response = requests.get(self.format_drive_url(docx_location), stream=True)
+            docx_content = BytesIO(response.content)
+        else:
+            docx_content = BytesIO(open(docx_location, "rb").read())
+
+        # Convert .docx content to HTML
+        result = mammoth.convert_to_html(docx_content)
+        docx_content.close()
+        html = result.value
+
+        html = self.extract_and_upload_images(html, request)
+
+        # If required, convert HTML to markdown format
+        if content_format == "MD":
+            html = md(html, extras="tables")
+            # page_element.content_format = 'MD'
+
+        page_element.text = html
+        # page_element.content_format = 'HTML'
+        page_element.save()
+
+        return api_response.Response(
+            {"detail": "Page element updated successfully"},
+            status=status.HTTP_200_OK)
+
+    @staticmethod
+    def format_drive_url(url):
+        """
+        Formats a Google Docs' URL.
+        """
+        if "docs.google.com/document" not in url:
+            raise ValueError(f'Invalid Google Docs URL: "{url}"')
+
+        match = re.search(r"/d/([0-9A-Za-z_-]+)/", url)
+        if not match:
+            raise ValueError(f'Could not extract document ID from URL: "{url}"')
+
+        doc_id = match.group(1)
+        return f"https://docs.google.com/document/d/{doc_id}/export?format=docx"
