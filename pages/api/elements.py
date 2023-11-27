@@ -28,7 +28,8 @@ from io import BytesIO
 
 from bs4 import BeautifulSoup
 from django.core.exceptions import ValidationError
-from django.core.files.uploadedfile import SimpleUploadedFile
+from django.core.files.uploadedfile import (SimpleUploadedFile,
+    TemporaryUploadedFile)
 from django.db import transaction
 from django.db.models import Max, Q
 from django.http import Http404
@@ -734,7 +735,9 @@ class ImportDocxView(AccountMixin, APIView):
         page_element = PageElement.objects.filter(slug=page_element_slug).first()
         if not page_element:
             return api_response.Response({'detail': 'Page Element not found'})
-        if docx_location.startswith(("http://", "https://", "www.")):
+        if isinstance(docx_location, TemporaryUploadedFile):
+            docx_content = docx_location
+        elif docx_location.startswith(("http://", "https://", "www.")):
             response = requests.get(self.format_drive_url(docx_location), stream=True)
             docx_content = BytesIO(response.content)
         else:
