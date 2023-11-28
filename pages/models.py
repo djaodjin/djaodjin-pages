@@ -169,11 +169,18 @@ class PageElement(models.Model):
     Elements of an editable HTML page.
     """
     objects = PageElementManager()
+    FORMAT_CHOICES = (
+        ('HTML', 'HTML'),
+        ('MD', 'Markdown'),
+    )
 
     slug = models.SlugField(unique=True,
         help_text=_("Unique identifier that can be used in URL paths"))
     title = models.CharField(max_length=1024, blank=True,
         help_text=_("Title of the page element"))
+    content_format = models.CharField(
+        max_length=4, choices=FORMAT_CHOICES, default='HTML',
+        help_text=_("Designate whether the text field is HTML or Markdown"))
     text = models.TextField(blank=True,
         help_text=_("Long description of the page element"))
     account = models.ForeignKey(
