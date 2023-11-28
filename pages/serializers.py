@@ -188,7 +188,10 @@ class PageElementSerializer(serializers.ModelSerializer):
     content_format = serializers.ChoiceField(
         choices=PageElement.FORMAT_CHOICES,
         required=False)
-    text = serializers.SerializerMethodField()
+    text = serializers.CharField(
+        required=False,
+        help_text=_("Long description of the page element"))
+    html_formatted = serializers.SerializerMethodField()
     extra = serializers.SerializerMethodField(required=False, allow_null=True,
         help_text=_("Extra meta data (can be stringify JSON)"))
     nb_upvotes = serializers.IntegerField(required=False)
@@ -204,10 +207,10 @@ class PageElementSerializer(serializers.ModelSerializer):
         fields = ('path', 'slug', 'picture', 'title', 'content_format',
             'text', 'reading_time', 'lang', 'account', 'extra',
             'nb_upvotes', 'nb_followers', 'upvote', 'follow',
-            'count', 'results')
+            'count', 'results', 'html_formatted')
         read_only_fields = ('path', 'slug', 'account',
             'nb_upvotes', 'nb_followers', 'upvote', 'follow',
-            'count', 'results')
+            'count', 'results', 'html_formatted')
 
     @staticmethod
     def get_extra(obj):
@@ -256,15 +259,20 @@ class PageElementSerializer(serializers.ModelSerializer):
         return prefix + slug
 
     @staticmethod
-    def get_text(obj):
-        html_field = HTMLField(html_tags=settings.ALLOWED_TAGS,
-                               html_attributes=settings.ALLOWED_ATTRIBUTES)
+    def get_html_formatted(obj):
+        return markdown.markdown(obj.text, extensions=['tables']) \
+            if obj.content_format == 'MD' else obj.text
 
-        if obj.content_format == 'MD':
-            html_content = markdown.markdown(obj.text)
-        else:
-            html_content = obj.text
-        return html_field.to_internal_value(html_content)
+    def to_internal_value(self, data):
+        data = data.copy()
+        content_format = data.get('content_format')
+        if content_format == 'HTML':
+            # If content_format is HTML, we sanitize the text using
+            # HTMLField
+            html_field = HTMLField(html_tags=settings.ALLOWED_TAGS,
+                                   html_attributes=settings.ALLOWED_ATTRIBUTES)
+            data['text'] = html_field.to_internal_value(data['text'])
+        return super().to_internal_value(data)
 
 
 class PageElementTagSerializer(serializers.ModelSerializer):
