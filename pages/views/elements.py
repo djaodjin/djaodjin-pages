@@ -27,8 +27,7 @@ from datetime import datetime
 from django.db.models import Exists, OuterRef
 from django.http import HttpResponseForbidden, Http404
 from django.shortcuts import get_object_or_404
-from django.views.generic.detail import DetailView
-from django.views.generic import TemplateView
+from django.views.generic import TemplateView, DetailView
 
 from deployutils.apps.django.mixins import AccessiblesMixin
 from extended_templates.backends.pdf import PdfTemplateResponse
@@ -280,9 +279,5 @@ class CertificateDownloadView(DetailView):
             return HttpResponseForbidden(
                 'A certificate is not available for download.')
 
-        return self.response_class(
-            request=request,
-            template=self.get_template_names(),
-            context=context,
-        )
+        return self.render_to_response(context)
 
