@@ -246,13 +246,6 @@ class CertificateDownloadView(DetailView):
         user_enumerated_progress = EnumeratedProgress.objects.filter(
             progress=sequence_progress)
 
-        last_element = enumerated_elements.last().page_element
-        is_last_element_certificate = hasattr(last_element, 'certificate')
-
-        if is_last_element_certificate:
-            # Exclude last element from the check, if it is a certificate
-            enumerated_elements = enumerated_elements.exclude(pk=enumerated_elements.last().pk)
-
         completed_elements_subquery = user_enumerated_progress.filter(
             rank=OuterRef('rank'),
             viewing_duration__gte=OuterRef('min_viewing_duration')
@@ -263,24 +256,33 @@ class CertificateDownloadView(DetailView):
 
         has_completed_sequence = not incomplete_element_exists
 
+        context.update({
+            'user': self.request.user,
+            'sequence': sequence,
+            'has_certificate': sequence.has_certificate,
+            'has_completed_sequence': has_completed_sequence
+        })
+
         if has_completed_sequence:
+            completion_date = sequence_progress.completion_date or datetime.now()
             if not sequence_progress.completion_date:
-                completion_date = datetime.now()
                 sequence_progress.completion_date = completion_date
                 sequence_progress.save()
-            else:
-                completion_date = sequence_progress.completion_date
-
-            last_element = enumerated_elements.last().page_element
-            context.update({
-                'user': self.request.user,
-                'sequence': sequence,
-                'completion_date': completion_date,
-                'certificate': last_element.certificate
-            })
-        else:
-            self.template_name = None
-            self.response_class = lambda request, **kwargs: HttpResponseForbidden(
-                'You have not completed all elements in the sequence yet.')
+            context['completion_date'] = completion_date
 
         return context
+
+    def get(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        context = self.get_context_data(**kwargs)
+
+        if not context.get('has_certificate', False) or not context.get('has_completed_sequence', False):
+            return HttpResponseForbidden(
+                'A certificate is not available for download.')
+
+        return self.response_class(
+            request=request,
+            template=self.get_template_names(),
+            context=context,
+        )
+

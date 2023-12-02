@@ -48,17 +48,19 @@ class SequenceAPIView(viewsets.ModelViewSet): # pylint: disable=too-many-ancesto
      **Tags**: sequences
     """
     serializer_class = SequenceSerializer
-    http_method_names = ['get', 'post', 'head', 'patch', 'delete', 'options']
     queryset = Sequence.objects.all().order_by('slug')
     lookup_field = 'slug'
 
+    serializer_action_classes = {
+        'add_element': EnumeratedElementSerializer,
+        'remove_element': EnumeratedElementSerializer,
+        'create': SequenceSerializer,
+        'update': SequenceSerializer
+    }
+
     def get_serializer_class(self):
-        if self.action:
-            if self.action.lower() in ['add_element', 'remove_element']:
-                return EnumeratedElementSerializer
-            if self.action.lower() in ['create', 'update']:
-                return SequenceSerializer
-        return super().get_serializer_class()
+        return self.serializer_action_classes.get(
+            self.action, super().get_serializer_class())
 
     def list(self, request, *args, **kwargs):
         """
@@ -280,3 +282,36 @@ class SequenceAPIView(viewsets.ModelViewSet): # pylint: disable=too-many-ancesto
                 return api_response.Response({'detail': 'element not found in sequence'},
                                              status=status.HTTP_404_NOT_FOUND)
         return api_response.Response({'detail': 'Invalid rank'}, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=True, methods=['patch'], url_path='certificate')
+    def add_certificate(self, request, slug=None):
+        """
+        - **Add a Certificate to Sequence**
+
+        Sets the Sequence's has_certificate field to True, enabling Certificates
+        for users that complete the Sequence.
+
+        .. code-block:: http
+
+            PATCH /api/sequences/sequence1/certificate HTTP/1.1
+            Content-Type: application/json
+
+        responds
+
+        .. code-block:: json
+
+            {
+                "detail": "certificate added"
+            }
+            """
+        sequence = self.get_object()
+        if not sequence.has_certificate:
+            sequence.has_certificate = True
+            sequence.save()
+            return api_response.Response(
+           {'detail': 'certificate added'},
+                status=status.HTTP_200_OK)
+        return api_response.Response(
+            {'detail': 'a certificate already exists'},
+            status=status.HTTP_400_BAD_REQUEST)
+

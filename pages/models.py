@@ -304,23 +304,6 @@ class PageElement(models.Model):
 
 
 @python_2_unicode_compatible
-class Certificate(models.Model):
-    """
-    A Certificate of completion
-
-    Used to download a certificate of completion for a sequence.
-    """
-    created_at = models.DateTimeField(editable=False, auto_now_add=True)
-    element = models.ForeignKey(PageElement, on_delete=models.CASCADE,
-        related_name='certificate')
-    extra = get_extra_field_class()(null=True, blank=True,
-        help_text=_("Extra meta data (can be stringify JSON)"))
-
-    def __str__(self):
-        return "%s-certificate" % str(self.element)
-
-
-@python_2_unicode_compatible
 class Comment(models.Model):
     """
     A user comments about a PageElement.
@@ -417,9 +400,9 @@ class Sequence(models.Model):
     account = models.ForeignKey(
         settings.ACCOUNT_MODEL, related_name='account_sequences',
         null=True, on_delete=models.SET_NULL)
+    has_certificate = models.BooleanField(default=False)
     extra = get_extra_field_class()(null=True, blank=True,
         help_text=_("Extra meta data (can be stringify JSON)"))
-
     def __str__(self):
         return "%s" % str(self.slug)
 
@@ -453,10 +436,11 @@ class SequenceProgress(models.Model):
     created_at = models.DateTimeField(editable=False, auto_now_add=True)
     sequence = models.ForeignKey(Sequence, on_delete=models.CASCADE)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    completion_date = models.DateTimeField(
+        help_text=_("Time when the user completed the Sequence"),
+        blank=True, null=True)
     extra = get_extra_field_class()(null=True, blank=True,
         help_text=_("Extra meta data (can be stringify JSON)"))
-    completion_date = models.DateTimeField(
-        help_text=_("Time when the user completed the Sequence"))
 
     def __str__(self):
         return "%s-%s" % (self.sequence, self.user)
