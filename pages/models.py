@@ -462,7 +462,7 @@ class SequenceProgress(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     extra = get_extra_field_class()(null=True, blank=True,
         help_text=_("Extra meta data (can be stringify JSON)"))
-    completion_date = models.DateTimeField(
+    completion_date = models.DateTimeField(blank=True, null=True,
         help_text=_("Time when the user completed the Sequence"))
 
     def __str__(self):

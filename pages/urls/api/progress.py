@@ -27,7 +27,7 @@ API URLs for EnumeratedProgress objects
 """
 
 from ...api.progress import EnumeratedProgressAPIView
-from django.urls import path
+from ...compat import path
 
 urlpatterns = [
     path('<slug:sequence>',
