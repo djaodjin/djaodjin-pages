@@ -228,7 +228,7 @@ def process_upload(request, account=None, location=None, is_public_asset=None,
         if path.startswith(media_prefix):
             path = path[len(media_prefix):].lstrip(URL_PATH_SEP)
         location = request.build_absolute_uri(
-            reverse('pages_api_asset', args=(account, path)))
+            reverse('pages_api_asset', args=(path,)))
 
     return ({
         'location': location,

@@ -24,7 +24,6 @@
 
 """API URLs for uploading assets"""
 
-from ... import settings
 from ...compat import path
 from ...api.assets import AssetAPIView, UploadAssetAPIView
 

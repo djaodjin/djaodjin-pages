@@ -25,11 +25,10 @@
 '''API URLs for the pages application'''
 
 from ...api.elements import (PageElementEditableListAPIView,
-    PageElementIndexAPIView, ImportDocxView)
+    PageElementIndexAPIView)
 from ...compat import include, path
 
 urlpatterns = [
-    path('import-docx', ImportDocxView.as_view(), name='import_docx'),
     path('content/editables/', include('pages.urls.api.editables')),
     path('content/editables', PageElementEditableListAPIView.as_view(),
         name='pages_api_editables_index'),
@@ -38,5 +37,6 @@ urlpatterns = [
     path('content', PageElementIndexAPIView.as_view(),
         name="api_content_index"),
     path('', include('pages.urls.api.sequences')),
-    path('progress/', include('pages.urls.api.progress'))
+    path('progress/', include('pages.urls.api.progress')),
+    # path('', include('pages.urls.api.assets'))
 ]
