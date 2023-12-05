@@ -352,6 +352,10 @@ class EnumeratedProgressPingSerializer(serializers.ModelSerializer):
         fields = ('created_at', 'viewing_duration', 'last_ping_time')
 
 class AttendanceInputSerializer(serializers.Serializer):
+    """
+    Serializer to validate input to mark users' attendance
+    to a LiveEvent(LiveEventAttendanceAPIView)
+    """
     sequence = serializers.SlugField()
     username = serializers.CharField()
     rank = serializers.IntegerField()

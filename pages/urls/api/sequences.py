@@ -36,7 +36,7 @@ router.register(r'sequences',
                 SequenceAPIView,
                 basename='api_sequences')
 urlpatterns = [
-    path('sequences/<slug:sequence>/<int:rank>/events/<username>/mark-attendance',
+    path('sequences/<slug:sequence>/<int:rank>/<username>/mark-attendance',
          LiveEventAttendanceAPIView.as_view(),
          name='api_mark_attendance')
 ] + router.urls

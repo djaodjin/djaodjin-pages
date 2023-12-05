@@ -289,14 +289,9 @@ class SequenceAPIView(viewsets.ModelViewSet): # pylint: disable=too-many-ancesto
 
 class LiveEventAttendanceAPIView(APIView):
     '''
-    Manages attendance tracking for live events
+    Allows marking a user's attendance to a Live Event.
 
-    This API endpoint allows for marking attendance at live events,
-    represented by the LiveEvent model. It accepts URL parameters to identify
-    the specific live event and the user attending, and updates the EnumeratedProgress
-    instance associated with the event and user to reflect their attendance.
-
-    The relevant user's EnumeratedProgress viewing duration for the event is updated to
+    The user's EnumeratedProgress viewing duration for the event is updated to
     meet the minimum viewing duration requirement of the associated EnumeratedElement.
 
     **Tags**: attendance, live events
@@ -307,16 +302,9 @@ class LiveEventAttendanceAPIView(APIView):
 
         .. code-block:: http
 
-            POST /api/sequences/{sequence_slug}/{rank}/events/{username}/mark-attendance HTTP/1.1
+            POST /api/sequences/{sequence}/{rank}/{username}/mark-attendance HTTP/1.1
 
-        URL Parameters:
-            - sequence_slug (str): The slug of the sequence associated with the live event.
-            - username (str): The username of the user attending the live event.
-            - rank (int): The rank of the enumerated element in the sequence.
-
-        Responds with a status indicating whether the attendance was successfully marked or not.
-
-        On successful attendance marking:
+        Responds
 
         .. code-block:: json
 
@@ -324,37 +312,26 @@ class LiveEventAttendanceAPIView(APIView):
                 "detail": "Attendance marked successfully"
             }
 
-        On failure to mark attendance (e.g., invalid parameters, event not found):
-
-        .. code-block:: json
-
-            {
-                "detail": "Attendance not marked"
-            }
-
         """
 
         input_serializer = AttendanceInputSerializer(data=self.kwargs)
-        if not input_serializer.is_valid():
-            return api_response.Response(
-                input_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        input_serializer.is_valid(raise_exception=True)
 
         sequence = input_serializer.validated_data['sequence']
         user = input_serializer.validated_data['username']
         rank = input_serializer.validated_data['rank']
 
-        sequence_progress = get_object_or_404(
-            SequenceProgress, user=user, sequence=sequence)
-        enumerated_progress = get_object_or_404(
-            EnumeratedProgress, progress=sequence_progress, rank=rank)
+        sequence_progress, _ = SequenceProgress.objects.get_or_create(
+            user=user, sequence=sequence)
+        enumerated_progress, _ = EnumeratedProgress.objects.get_or_create(
+            progress=sequence_progress, rank=rank)
         enumerated_element = get_object_or_404(
             EnumeratedElements, rank=rank, sequence=sequence)
         page_element = enumerated_element.page_element
-        live_event = get_object_or_404(
-            LiveEvent, sequence=sequence, element=page_element)
+        live_event = LiveEvent.objects.filter(element=page_element).first()
 
-        if page_element.events.first() == live_event and \
-           enumerated_progress.viewing_duration < enumerated_element.min_viewing_duration:
+        # We use if live_event to confirm the existence of the LiveEvent object
+        if live_event and enumerated_progress.viewing_duration <= enumerated_element.min_viewing_duration:
             enumerated_progress.viewing_duration = enumerated_element.min_viewing_duration
             enumerated_progress.save()
             return api_response.Response(
