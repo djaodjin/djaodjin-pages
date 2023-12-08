@@ -678,7 +678,7 @@ class ImportDocxView(AccountMixin, APIView):
         is_public_asset = request.query_params.get('public', False)
 
         response_data, response_status = process_upload(
-            request, self.request.user, location, is_public_asset,
+            request, self.account, location, is_public_asset,
             store_hash, replace_stored, content_type)
 
         return AssetSerializer().to_representation(response_data)['location']
@@ -735,6 +735,8 @@ class ImportDocxView(AccountMixin, APIView):
         """
         Imports a .docx file's content into a PageElement's
         text field.
+
+        **Example
 
         .. code-block:: http
 
