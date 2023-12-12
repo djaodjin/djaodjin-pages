@@ -84,4 +84,146 @@
     "orig_element": 104, "dest_element": 106
   },
   "model": "pages.RelationShip", "pk": 105
-}]
+},
+{
+  "fields": {
+    "title": "Webinar on Sustainability",
+    "slug": "sustainability-webinar",
+    "extra": "{\"searchable\":true,\"visibility\":[\"public\"]}",
+    "account": 2,
+    "text": "<h2>Join our Webinar!</h2><p>Learn about sustainability practices.</p>"
+  },
+      "model": "pages.PageElement", "pk": 107
+},
+{
+  "fields": {
+    "title": "Sequence without Certificate",
+    "slug": "seq",
+    "account": 2,
+    "has_certificate": false,
+    "created_at": "2023-01-01T00:00:00Z"
+  },
+  "model": "pages.Sequence", "pk": 101
+},
+{
+    "fields": {
+      "sequence": 101,
+      "page_element": 100,
+      "rank": 1,
+      "min_viewing_duration": "00:00:10"
+    },
+  "model": "pages.EnumeratedElements", "pk": 101
+},
+{
+    "fields": {
+      "sequence": 101,
+      "page_element": 101,
+      "rank": 2,
+      "min_viewing_duration": "00:00:20"
+    },
+  "model": "pages.EnumeratedElements", "pk": 102
+},
+{
+    "fields": {
+      "sequence": 101,
+      "page_element": 102,
+      "rank": 3,
+      "min_viewing_duration": "00:00:30"
+    },
+  "model": "pages.EnumeratedElements", "pk": 103
+},
+{
+  "fields": {
+    "title": "Sequence with Certificate",
+    "slug": "seq-cert",
+    "account": 2,
+    "has_certificate": true,
+    "created_at": "2023-01-02T00:00:00Z"
+  },
+    "model": "pages.Sequence", "pk": 102
+},
+{
+  "fields": {
+    "sequence": 102,
+    "page_element": 100,
+    "rank": 1,
+    "min_viewing_duration": "00:00:10"
+  },
+    "model": "pages.EnumeratedElements", "pk": 104
+},
+{
+  "fields": {
+    "sequence": 102,
+    "page_element": 101,
+    "rank": 2,
+    "min_viewing_duration": "00:00:20"
+  },
+    "model": "pages.EnumeratedElements", "pk": 105
+},
+{
+  "fields": {
+    "sequence": 102,
+    "page_element": 102,
+    "rank": 3,
+    "min_viewing_duration": "00:00:30"
+  },
+    "model": "pages.EnumeratedElements",   "pk": 106
+},
+{
+    "fields": {
+      "element": 107,
+      "created_at": "2023-03-15T10:00:00Z",
+      "scheduled_at": "2023-04-10T15:00:00Z",
+      "location": "http://127.0.0.1:8000/webinar/sustainability",
+      "max_attendees": 100,
+      "extra": "{}"
+    },
+    "model": "pages.LiveEvent", "pk": 200
+},
+{
+  "fields": {
+    "title": "Sequence with Certificate And Live Event",
+    "slug": "seq-cert-live_event",
+    "account": 2,
+    "has_certificate": true,
+    "created_at": "2023-01-03T00:00:00Z"
+  },
+    "model": "pages.Sequence", "pk": 103
+},
+{
+  "fields": {
+    "sequence": 103,
+    "page_element": 100,
+    "rank": 1,
+    "min_viewing_duration": "00:00:10"
+  },
+    "model": "pages.EnumeratedElements", "pk": 107
+},
+{
+  "fields": {
+    "sequence": 103,
+    "page_element": 101,
+    "rank": 2,
+    "min_viewing_duration": "00:00:20"
+  },
+    "model": "pages.EnumeratedElements", "pk": 108
+},
+{
+  "fields": {
+    "sequence": 103,
+    "page_element": 107,
+    "rank": 3,
+    "min_viewing_duration": "00:00:30"
+  },
+    "model": "pages.EnumeratedElements",   "pk": 109
+},
+{
+  "fields": {
+    "sequence": 103,
+    "page_element": 102,
+    "rank": 4,
+    "min_viewing_duration": "00:00:00"
+  },
+    "model": "pages.EnumeratedElements",   "pk": 110
+}
+]
