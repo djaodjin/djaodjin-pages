@@ -25,10 +25,11 @@
 '''API URLs for the pages application'''
 
 from ...api.elements import (PageElementEditableListAPIView,
-    PageElementIndexAPIView)
+    PageElementIndexAPIView, ImportDocxView)
 from ...compat import include, path
 
 urlpatterns = [
+    path('import-docx', ImportDocxView.as_view(), name='import_docx'),
     path('content/editables/', include('pages.urls.api.editables')),
     path('content/editables', PageElementEditableListAPIView.as_view(),
         name='pages_api_editables_index'),

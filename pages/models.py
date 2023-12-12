@@ -169,11 +169,18 @@ class PageElement(models.Model):
     Elements of an editable HTML page.
     """
     objects = PageElementManager()
+    FORMAT_CHOICES = (
+        ('HTML', 'HTML'),
+        ('MD', 'Markdown'),
+    )
 
     slug = models.SlugField(unique=True,
         help_text=_("Unique identifier that can be used in URL paths"))
     title = models.CharField(max_length=1024, blank=True,
         help_text=_("Title of the page element"))
+    content_format = models.CharField(
+        max_length=4, choices=FORMAT_CHOICES, default='HTML',
+        help_text=_("Designate whether the text field is HTML or Markdown"))
     text = models.TextField(blank=True,
         help_text=_("Long description of the page element"))
     account = models.ForeignKey(
@@ -436,9 +443,8 @@ class SequenceProgress(models.Model):
     created_at = models.DateTimeField(editable=False, auto_now_add=True)
     sequence = models.ForeignKey(Sequence, on_delete=models.CASCADE)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    completion_date = models.DateTimeField(
-        help_text=_("Time when the user completed the Sequence"),
-        blank=True, null=True)
+    completion_date = models.DateTimeField(blank=True, null=True,
+        help_text=_("Time when the user completed the Sequence"))
     extra = get_extra_field_class()(null=True, blank=True,
         help_text=_("Extra meta data (can be stringify JSON)"))
 

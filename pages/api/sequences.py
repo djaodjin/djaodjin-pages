@@ -24,12 +24,16 @@
 import logging
 
 from django.db import IntegrityError
+from django.shortcuts import get_object_or_404
 from rest_framework import (response as api_response,
                             viewsets, status)
 from rest_framework.decorators import action
+from rest_framework.views import APIView
 
-from ..models import (Sequence, EnumeratedElements)
-from ..serializers import (SequenceSerializer, EnumeratedElementSerializer)
+from ..models import (Sequence, EnumeratedElements,
+   SequenceProgress, EnumeratedProgress, LiveEvent)
+from ..serializers import (SequenceSerializer,
+   EnumeratedElementSerializer, AttendanceInputSerializer)
 
 LOGGER = logging.getLogger(__name__)
 
@@ -277,7 +281,8 @@ class SequenceAPIView(viewsets.ModelViewSet): # pylint: disable=too-many-ancesto
             try:
                 element = EnumeratedElements.objects.get(sequence=sequence, rank=element_rank)
                 element.delete()
-                return api_response.Response({'detail': 'element removed'}, status=status.HTTP_200_OK)
+                return api_response.Response(
+                    {'detail': 'element removed'}, status=status.HTTP_200_OK)
             except EnumeratedElements.DoesNotExist:
                 return api_response.Response({'detail': 'element not found in sequence'},
                                              status=status.HTTP_404_NOT_FOUND)
@@ -297,11 +302,8 @@ class SequenceAPIView(viewsets.ModelViewSet): # pylint: disable=too-many-ancesto
             Content-Type: application/json
 
         responds
-
-        .. code-block:: json
-
             {
-                "detail": "certificate added"
+                    "detail": "certificate added"
             }
             """
         sequence = self.get_object()
@@ -315,3 +317,55 @@ class SequenceAPIView(viewsets.ModelViewSet): # pylint: disable=too-many-ancesto
             {'detail': 'a certificate already exists'},
             status=status.HTTP_400_BAD_REQUEST)
 
+
+class LiveEventAttendanceAPIView(APIView):
+    '''
+    Allows marking a user's attendance to a Live Event.
+
+    The user's EnumeratedProgress viewing duration for the event is updated to
+    meet the minimum viewing duration requirement of the associated EnumeratedElement.
+
+    **Tags**: attendance, live events
+    '''
+    def post(self, request, *args, **kwargs):
+        """
+        - **Mark a User's attendance at a Live Event**
+
+        .. code-block:: http
+
+            POST /api/sequences/{sequence}/{rank}/{username}/mark-attendance HTTP/1.1
+
+        Responds
+
+        .. code-block:: json
+
+            {
+                "detail": "Attendance marked successfully"
+            }
+
+        """
+
+        input_serializer = AttendanceInputSerializer(data=self.kwargs)
+        input_serializer.is_valid(raise_exception=True)
+
+        sequence = input_serializer.validated_data['sequence']
+        user = input_serializer.validated_data['username']
+        rank = input_serializer.validated_data['rank']
+
+        sequence_progress, _ = SequenceProgress.objects.get_or_create(
+            user=user, sequence=sequence)
+        enumerated_progress, _ = EnumeratedProgress.objects.get_or_create(
+            progress=sequence_progress, rank=rank)
+        enumerated_element = get_object_or_404(
+            EnumeratedElements, rank=rank, sequence=sequence)
+        page_element = enumerated_element.page_element
+        live_event = LiveEvent.objects.filter(element=page_element).first()
+
+        # We use if live_event to confirm the existence of the LiveEvent object
+        if live_event and enumerated_progress.viewing_duration <= enumerated_element.min_viewing_duration:
+            enumerated_progress.viewing_duration = enumerated_element.min_viewing_duration
+            enumerated_progress.save()
+            return api_response.Response(
+                {'detail': 'Attendance marked successfully'}, status=status.HTTP_200_OK)
+        return api_response.Response(
+            {'detail': 'Attendance not marked'}, status=status.HTTP_400_BAD_REQUEST)

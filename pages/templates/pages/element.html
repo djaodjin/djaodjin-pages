@@ -5,7 +5,7 @@
   <editables-detail inline-template>
     <div :id="item.slug">
         <h1 class="editable" data-key="title">[[item.title]]</h1>
-        <div class="editable edit-formatted" data-key="text" v-html="item.text" v-if="item.text">
+        <div class="editable edit-formatted" data-key="text" v-html="item.html_formatted" v-if="item.text">
         </div>
         <div class="editable edit-formatted" data-key="text" v-if="!item.text">
             enter text here...

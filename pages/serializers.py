@@ -23,12 +23,13 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 from __future__ import unicode_literals
 
-import json
+import json, markdown
 
 import bleach
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from django.db import transaction
+from django.shortcuts import get_object_or_404
 
 
 from . import settings
@@ -189,10 +190,13 @@ class PageElementSerializer(serializers.ModelSerializer):
         help_text=_("Account that can edit the page element"))
     picture = serializers.CharField(required=False, allow_null=True,
         help_text=_("Picture icon that can be displayed alongside the title"))
-    text = HTMLField(required=False,
-        html_tags=settings.ALLOWED_TAGS,
-        html_attributes=settings.ALLOWED_ATTRIBUTES,
+    content_format = serializers.ChoiceField(
+        choices=PageElement.FORMAT_CHOICES,
+        required=False)
+    text = serializers.CharField(
+        required=False,
         help_text=_("Long description of the page element"))
+    html_formatted = serializers.SerializerMethodField()
     extra = serializers.SerializerMethodField(required=False, allow_null=True,
         help_text=_("Extra meta data (can be stringify JSON)"))
     nb_upvotes = serializers.IntegerField(required=False)
@@ -205,13 +209,13 @@ class PageElementSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = PageElement
-        fields = ('path', 'slug', 'picture', 'title', 'text', 'reading_time',
-            'lang', 'account', 'extra',
+        fields = ('path', 'slug', 'picture', 'title', 'content_format',
+            'text', 'reading_time', 'lang', 'account', 'extra',
             'nb_upvotes', 'nb_followers', 'upvote', 'follow',
-            'count', 'results')
+            'count', 'results', 'html_formatted')
         read_only_fields = ('path', 'slug', 'account',
             'nb_upvotes', 'nb_followers', 'upvote', 'follow',
-            'count', 'results')
+            'count', 'results', 'html_formatted')
 
     @staticmethod
     def get_extra(obj):
@@ -258,6 +262,22 @@ class PageElementSerializer(serializers.ModelSerializer):
         except AttributeError:
             slug = obj.get('slug', "")
         return prefix + slug
+
+    @staticmethod
+    def get_html_formatted(obj):
+        return markdown.markdown(obj.text, extensions=['tables']) \
+            if obj.content_format == 'MD' else obj.text
+
+    def to_internal_value(self, data):
+        data = data.copy()
+        content_format = data.get('content_format')
+        if content_format == 'HTML':
+            # If content_format is HTML, we sanitize the text using
+            # HTMLField
+            html_field = HTMLField(html_tags=settings.ALLOWED_TAGS,
+                                   html_attributes=settings.ALLOWED_ATTRIBUTES)
+            data['text'] = html_field.to_internal_value(data['text'])
+        return super().to_internal_value(data)
 
 
 class PageElementTagSerializer(serializers.ModelSerializer):
@@ -349,3 +369,18 @@ class EnumeratedProgressPingSerializer(serializers.ModelSerializer):
     class Meta:
         model = EnumeratedProgress
         fields = ('created_at', 'viewing_duration', 'last_ping_time')
+
+class AttendanceInputSerializer(serializers.Serializer):
+    """
+    Serializer to validate input to mark users' attendance
+    to a LiveEvent(LiveEventAttendanceAPIView)
+    """
+    sequence = serializers.SlugField()
+    username = serializers.CharField()
+    rank = serializers.IntegerField()
+
+    def validate_sequence(self, value):
+        return get_object_or_404(Sequence, slug=value)
+
+    def validate_username(self, value):
+        return get_object_or_404(get_user_model(), username=value)

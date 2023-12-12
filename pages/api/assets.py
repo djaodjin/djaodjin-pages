@@ -111,7 +111,6 @@ class AssetAPIView(AccountMixin, GenericAPIView):
 
 class UploadAssetAPIView(AccountMixin, GenericAPIView):
 
-    URL_PATH_SEP = '/'
     store_hash = True
     replace_stored = False
     content_type = None
@@ -138,91 +137,103 @@ class UploadAssetAPIView(AccountMixin, GenericAPIView):
               "updated_at": "2016-10-26T00:00:00.00000+00:00"
             }
         """
-        #pylint: disable=unused-argument,too-many-locals
-        response_status = status.HTTP_200_OK
         is_public_asset = request.query_params.get('public', False)
         location = request.data.get('location', None)
-        media_prefix = _get_media_prefix()
-        if location:
-            parts = urlparse(location)
-            bucket_name = parts.netloc.split('.')[0]
-            src_key_name = parts.path.lstrip(self.URL_PATH_SEP)
-                # we remove leading '/' otherwise S3 copy triggers a 404
-                # because it creates an URL with '//'.
-            prefix = os.path.dirname(src_key_name)
-            if prefix:
-                prefix += self.URL_PATH_SEP
-            ext = os.path.splitext(src_key_name)[1]
+        response_data, response_status = process_upload(
+            request, self.account, location, is_public_asset,
+            self.store_hash, self.replace_stored, self.content_type)
+        return HttpResponse(
+            AssetSerializer().to_representation(response_data),
+            status=response_status)
 
-            s3_client = boto3.client('s3')
-            data = s3_client.get_object(Bucket=bucket_name, Key=src_key_name)
-            uploaded_file = data['Body']
-            if prefix.startswith(media_prefix):
-                prefix = prefix[len(media_prefix) + 1:]
-            storage_key_name = "%s%s%s" % (prefix,
-                hashlib.sha256(uploaded_file.read()).hexdigest(), ext)
 
-            dst_key_name = "%s/%s" % (media_prefix, storage_key_name)
-            LOGGER.info("S3 bucket %s: copy %s to %s",
-                bucket_name, src_key_name, dst_key_name)
-            storage = get_default_storage(self.request)
-            if is_public_asset:
-                extra_args = {'ACL': "public-read"}
-            else:
-                extra_args = {
-                  'ServerSideEncryption': settings.AWS_SERVER_SIDE_ENCRYPTION}
-            if ext in ['.pdf']:
-                extra_args.update({'ContentType': 'application/pdf'})
-            elif ext in ['.jpg']:
-                extra_args.update({'ContentType': 'image/jpeg'})
-            elif ext in ['.png']:
-                extra_args.update({'ContentType': 'image/png'})
-            s3_client.copy({'Bucket': bucket_name, 'Key': src_key_name},
-                bucket_name, dst_key_name, ExtraArgs=extra_args)
-# XXX still can't figure out why we get a permission denied on DeleteObject.
-#            s3_client.delete_object(Bucket=bucket_name, Key=src_key_name)
-            location = storage.url(storage_key_name)
+def process_upload(request, account=None, location=None, is_public_asset=None,
+                   store_hash=None, replace_stored=None, content_type=None):
 
-        elif 'file' in request.data:
-            uploaded_file = request.data['file']
-            if self.content_type:
-                # We optionally force the content_type because S3Store uses
-                # mimetypes.guess and surprisingly it doesn't get it correct
-                # for 'text/css'.
-                uploaded_file.content_type = self.content_type
-            sha1 = hashlib.sha1(uploaded_file.read()).hexdigest()
+    URL_PATH_SEP = '/'
+    media_prefix = _get_media_prefix()
+    response_status = status.HTTP_200_OK
 
-            # Store filenames with forward slashes, even on Windows
-            filename = force_str(uploaded_file.name.replace('\\', '/'))
-            sha1_filename = sha1 + os.path.splitext(filename)[1]
-            storage = get_default_storage(self.request)
-            stored_filename = sha1_filename if self.store_hash else filename
-            if not is_public_asset:
-                stored_filename = '/'.join(
-                    [str(self.account), stored_filename])
+    if location:
+        parts = urlparse(location)
+        bucket_name = parts.netloc.split('.')[0]
+        src_key_name = parts.path.lstrip(URL_PATH_SEP)
+        # we remove leading '/' otherwise S3 copy triggers a 404
+        # because it creates an URL with '//'.
+        prefix = os.path.dirname(src_key_name)
+        if prefix:
+            prefix += URL_PATH_SEP
+        ext = os.path.splitext(src_key_name)[1]
 
-            LOGGER.debug("upload %s to %s", filename, stored_filename)
-            if storage.exists(stored_filename) and self.replace_stored:
-                storage.delete(stored_filename)
-            storage.save(stored_filename, uploaded_file)
-            response_status = status.HTTP_201_CREATED
-            location = storage.url(stored_filename)
+        s3_client = boto3.client('s3')
+        data = s3_client.get_object(Bucket=bucket_name, Key=src_key_name)
+        uploaded_file = data['Body']
+        if prefix.startswith(media_prefix):
+            prefix = prefix[len(media_prefix) + 1:]
+        storage_key_name = "%s%s%s" % (prefix,
+                                       hashlib.sha256(uploaded_file.read()).hexdigest(), ext)
 
+        dst_key_name = "%s/%s" % (media_prefix, storage_key_name)
+        LOGGER.info("S3 bucket %s: copy %s to %s",
+                    bucket_name, src_key_name, dst_key_name)
+        storage = get_default_storage(request)
+        if is_public_asset:
+            extra_args = {'ACL': "public-read"}
         else:
-            raise ValidationError({'detail':
-                _("Either 'location' or 'file' must be specified.")})
+            extra_args = {
+                'ServerSideEncryption': settings.AWS_SERVER_SIDE_ENCRYPTION}
+        if ext in ['.pdf']:
+            extra_args.update({'ContentType': 'application/pdf'})
+        elif ext in ['.jpg']:
+            extra_args.update({'ContentType': 'image/jpeg'})
+        elif ext in ['.png']:
+            extra_args.update({'ContentType': 'image/png'})
+        s3_client.copy({'Bucket': bucket_name, 'Key': src_key_name},
+                       bucket_name, dst_key_name, ExtraArgs=extra_args)
+        # XXX still can't figure out why we get a permission denied on DeleteObject.
+        #            s3_client.delete_object(Bucket=bucket_name, Key=src_key_name)
+        location = storage.url(storage_key_name)
 
+    elif 'file' in request.data:
+        uploaded_file = request.data['file']
+        if content_type:
+            # We optionally force the content_type because S3Store uses
+            # mimetypes.guess and surprisingly it doesn't get it correct
+            # for 'text/css'.
+            uploaded_file.content_type = content_type
+        sha1 = hashlib.sha1(uploaded_file.read()).hexdigest()
+
+        # Store filenames with forward slashes, even on Windows
+        filename = force_str(uploaded_file.name.replace('\\', '/'))
+        sha1_filename = sha1 + os.path.splitext(filename)[1]
+        storage = get_default_storage(request)
+        stored_filename = sha1_filename if store_hash else filename
         if not is_public_asset:
-            path = urlparse(location).path.lstrip(self.URL_PATH_SEP)
-            if path.startswith(media_prefix):
-                path = path[len(media_prefix):].lstrip(self.URL_PATH_SEP)
-            location = request.build_absolute_uri(
-                reverse('pages_api_asset', args=(self.account, path)))
+            stored_filename = '/'.join(
+                [str(account), stored_filename])
 
-        return HttpResponse(self.get_serializer().to_representation({
-            'location': location,
-            'updated_at': datetime_or_now(),
-            }), status=response_status)
+        LOGGER.debug("upload %s to %s", filename, stored_filename)
+        if storage.exists(stored_filename) and replace_stored:
+            storage.delete(stored_filename)
+        storage.save(stored_filename, uploaded_file)
+        response_status = status.HTTP_201_CREATED
+        location = storage.url(stored_filename)
+
+    else:
+        raise ValidationError({'detail':
+           _("Either 'location' or 'file' must be specified.")})
+
+    if not is_public_asset:
+        path = urlparse(location).path.lstrip(URL_PATH_SEP)
+        if path.startswith(media_prefix):
+            path = path[len(media_prefix):].lstrip(URL_PATH_SEP)
+        location = request.build_absolute_uri(
+            reverse('pages_api_asset', args=(account, path)))
+
+    return ({
+        'location': location,
+        'updated_at': datetime_or_now()},
+        response_status)
 
 
 def get_default_storage(request, **kwargs):

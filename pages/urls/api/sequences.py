@@ -26,12 +26,17 @@
 API URLs for sequence objects
 """
 
-from ...api.sequences import (SequenceAPIView)
+from ...api.sequences import (SequenceAPIView, LiveEventAttendanceAPIView)
 from rest_framework.routers import DefaultRouter
+
+from ...compat import path
 
 router = DefaultRouter(trailing_slash=False)
 router.register(r'sequences',
                 SequenceAPIView,
                 basename='api_sequences')
 urlpatterns = [
+    path('sequences/<slug:sequence>/<int:rank>/<username>/mark-attendance',
+         LiveEventAttendanceAPIView.as_view(),
+         name='api_mark_attendance')
 ] + router.urls
