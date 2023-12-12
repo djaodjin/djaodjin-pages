@@ -26,7 +26,6 @@ import logging
 from datetime import datetime
 from django.db.models import Exists, OuterRef
 from django.http import HttpResponseForbidden, Http404
-from django.shortcuts import get_object_or_404
 from django.views.generic import TemplateView, DetailView
 
 from deployutils.apps.django.mixins import AccessiblesMixin
@@ -236,25 +235,12 @@ class CertificateDownloadView(DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         sequence = self.object
-        sequence_progress = get_object_or_404(
-            SequenceProgress,
+
+        sequence_progress, created = SequenceProgress.objects.get_or_create(
             sequence=sequence,
             user=self.request.user)
-        enumerated_elements = EnumeratedElements.objects.filter(
-            sequence=sequence)
-        user_enumerated_progress = EnumeratedProgress.objects.filter(
-            progress=sequence_progress)
 
-        completed_elements_subquery = user_enumerated_progress.filter(
-            rank=OuterRef('rank'),
-            viewing_duration__gte=OuterRef('min_viewing_duration')
-        )
-
-        incomplete_element_exists = enumerated_elements.filter(
-            ~Exists(completed_elements_subquery)).exists()
-
-        has_completed_sequence = not incomplete_element_exists
-
+        has_completed_sequence = sequence_progress.is_completed
         context.update({
             'user': self.request.user,
             'sequence': sequence,

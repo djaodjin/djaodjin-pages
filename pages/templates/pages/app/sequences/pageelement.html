@@ -13,6 +13,42 @@
         <hr>
     {% endif %}
 
+
+    {% if element.is_live_event %}
+        <p>Live Event URL: <a href="{{ element.page_element.events.first.location }}">{{ element.page_element.events.first.location }}</a></p>
+
+    {% elif element.is_certificate %}
+        <p>This is a certificate. <a href="{% url 'certificate_download' sequence=sequence.slug %}">Download Certificate</a></p>
+    {% else %}
+        {% if not progress %}
+            <p>No progress yet!</p>
+            <section id="app">
+                <start-progress inline-template
+                    :sequence-slug="'{{ sequence.slug }}'"
+                    :user-username="'{{ request.user.username }}'"
+                    :element-rank="{{ element.rank }}">
+                    <div>
+                        <button id="startProgress" @click="startProgress">Start Progress</button>
+                        <p>Click the button to start tracking your progress.</p>
+                    </div>
+                </start-progress>
+            </section>
+        {% else %}
+            <section id="app">
+                <viewing-timer inline-template
+                    :initial-duration="{{ viewing_duration_seconds }}"
+                    :rank="{{ element.rank }}"
+                    :sequence="'{{ sequence.slug }}'"
+                    :user="'{{ request.user.username }}'"
+                    :ping-interval="{{ ping_interval }}">
+                    <div>
+                        <label>Viewing Duration:</label> <span>[[ duration | formatDuration ]]</span>
+                    </div>
+                </viewing-timer>
+            </section>
+        {% endif %}
+    {% endif %}
+
     {% if previous_element %}
         <a href="{% url 'sequences:sequence_page_element_view' sequence=sequence.slug rank=previous_element.rank %}">
             Previous
@@ -25,33 +61,4 @@
         </a>
     {% endif %}
     <br>
-
-    {% if not progress %}
-        <p>No progress yet!</p>
-        <section id="app">
-            <start-progress inline-template
-                :sequence-slug="'{{ sequence.slug }}'"
-                :user-username="'{{ request.user.username }}'"
-                :element-rank="{{ element.rank }}">
-                <div>
-                    <button id="startProgress" @click="startProgress">Start Progress</button>
-                    <p>Click the button to start tracking your progress.</p>
-                </div>
-            </start-progress>
-        </section>
-    {% else %}
-        <section id="app">
-            <viewing-timer inline-template
-                :initial-duration="{{ viewing_duration_seconds }}"
-                :rank="{{ element.rank }}"
-                :sequence="'{{ sequence.slug }}'"
-                :user="'{{ request.user.username }}'"
-                :ping-interval="{{ ping_interval }}">
-                <div>
-                    <label>Viewing Duration:</label> <span>[[ duration | formatDuration ]]</span>
-                </div>
-            </viewing-timer>
-        </section>
-    {% endif %}
-
 {% endblock %}

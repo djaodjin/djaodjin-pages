@@ -413,6 +413,12 @@ class Sequence(models.Model):
     def __str__(self):
         return "%s" % str(self.slug)
 
+    @property
+    def get_certificate(self):
+        if self.has_certificate:
+            return self.sequence_enumerated_elements.order_by('rank').last()
+        return None
+
 
 @python_2_unicode_compatible
 class EnumeratedElements(models.Model):
@@ -434,6 +440,16 @@ class EnumeratedElements(models.Model):
     def __str__(self):
         return "%s-%d" % (self.sequence, self.rank)
 
+    @property
+    def is_certificate(self):
+        if self.sequence.has_certificate:
+            last_element_rank = self.sequence.sequence_enumerated_elements.order_by('rank').last().rank
+            return self.rank == last_element_rank
+        return False
+
+    @property
+    def is_live_event(self):
+        return LiveEvent.objects.filter(element=self.page_element).exists()
 
 @python_2_unicode_compatible
 class SequenceProgress(models.Model):
@@ -450,6 +466,29 @@ class SequenceProgress(models.Model):
 
     def __str__(self):
         return "%s-%s" % (self.sequence, self.user)
+
+    @property
+    def is_completed(self):
+        if self.sequence.has_certificate:
+            # We exclude the element with the highest rank
+            certificate_element = self.sequence.get_certificate.page_element
+            enumerated_elements = EnumeratedElements.objects.filter(
+                sequence=self.sequence).exclude(
+                page_element__slug=certificate_element.slug)
+        else:
+            enumerated_elements = EnumeratedElements.objects.filter(
+                sequence=self.sequence).order_by('rank')
+        user_enumerated_progress = EnumeratedProgress.objects.filter(
+            progress=self,
+            rank__in=enumerated_elements.values_list(
+            'rank', flat=True))
+        for element in enumerated_elements:
+            if not user_enumerated_progress.filter(
+                    rank=element.rank,
+                    viewing_duration__gte=element.min_viewing_duration
+            ).exists():
+                return False
+        return True
 
 
 @python_2_unicode_compatible

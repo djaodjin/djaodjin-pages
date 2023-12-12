@@ -296,6 +296,9 @@ class SequenceAPIView(viewsets.ModelViewSet): # pylint: disable=too-many-ancesto
         Sets the Sequence's has_certificate field to True, enabling Certificates
         for users that complete the Sequence.
 
+        The EnumeratedElement with the highest rank in the sequence is
+        then considered the certificate.
+
         .. code-block:: http
 
             PATCH /api/sequences/sequence1/certificate HTTP/1.1
@@ -307,6 +310,7 @@ class SequenceAPIView(viewsets.ModelViewSet): # pylint: disable=too-many-ancesto
             }
             """
         sequence = self.get_object()
+
         if not sequence.has_certificate:
             sequence.has_certificate = True
             sequence.save()

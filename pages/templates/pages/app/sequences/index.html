@@ -10,21 +10,37 @@
                 <ul>
                     {% for element in elements %}
                     <li>
+                        {% if element.is_live_event %}
+                            <span class="live-event-label">
+                                <a href="{% url 'sequences:sequence_page_element_view' sequence=element.sequence.slug rank=element.rank %}">
+                            {{ element_titles|get_item:element.rank }}</a>({{ element.rank }}) -
+                                Live Event:</span>
+                        {% elif element.is_certificate %}
+                            <span class="certificate-label">
+                            <a href="{% url 'certificate_download' sequence=element.sequence.slug %}">
+                                {{ element_titles|get_item:element.rank }}</a>({{ element.rank }}) - Certificate
+                            </span>
+                        {% else %}
                         <a href="{% url 'sequences:sequence_page_element_view' sequence=element.sequence.slug rank=element.rank %}">
                             {{ element_titles|get_item:element.rank }}</a>({{ element.rank }}) -
-                        <template v-for="item in items.results">
-                            <span v-if="item.rank === {{ element.rank }}">
-                                [[ item.viewing_duration | formatDuration ]]
-                            </span>
-                        </template>
-                        <span v-if="!items.results.some(item => item.rank === {{ element.rank }})">
+
+                        <span v-if="items.results.some(item => item.rank === {{ element.rank }})">
+                            <template v-for="item in items.results">
+                                <span v-if="item.rank === {{ element.rank }}">
+                                    <span v-if="{{ element.is_live_event }}"></span>
+                                    [[ item.viewing_duration | formatDuration ]]
+                                </span>
+                            </template>
+                        </span>
+                        <span v-else>
                             No progress yet
                         </span>
+                    {% endif %}
                     </li>
                     {% endfor %}
                 </ul>
             </div>
-        {% include '_paginator.html' %}
+            {% include '_paginator.html' %}
         </div>
     </sequence-items>
 </section>
