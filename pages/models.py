@@ -416,7 +416,7 @@ class Sequence(models.Model):
     @property
     def get_certificate(self):
         if self.has_certificate:
-            return self.sequence_enumerated_elements.order_by('rank').last()
+            return self.sequence_enumerated_elements.order_by('rank').last().page_element
         return None
 
 
@@ -471,7 +471,7 @@ class SequenceProgress(models.Model):
     def is_completed(self):
         if self.sequence.has_certificate:
             # We exclude the element with the highest rank
-            certificate_element = self.sequence.get_certificate.page_element
+            certificate_element = self.sequence.get_certificate
             enumerated_elements = EnumeratedElements.objects.filter(
                 sequence=self.sequence).exclude(
                 page_element__slug=certificate_element.slug)

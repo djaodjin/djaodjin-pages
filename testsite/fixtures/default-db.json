@@ -97,6 +97,17 @@
 },
 {
   "fields": {
+    "title": "Certificate of Completion",
+    "slug": "certificate-of-completion",
+    "extra": "{\"searchable\":true,\"visibility\":[\"public\"]}",
+    "account": 2,
+    "text": "<h2>Congratulations!</h2><p>You have completed the course.</p>"
+  },
+      "model": "pages.PageElement", "pk": 108
+},
+
+{
+  "fields": {
     "title": "Sequence without Certificate",
     "slug": "seq",
     "account": 2,
@@ -163,7 +174,7 @@
 {
   "fields": {
     "sequence": 102,
-    "page_element": 102,
+    "page_element": 108,
     "rank": 3,
     "min_viewing_duration": "00:00:30"
   },
@@ -220,7 +231,7 @@
 {
   "fields": {
     "sequence": 103,
-    "page_element": 102,
+    "page_element": 108,
     "rank": 4,
     "min_viewing_duration": "00:00:00"
   },

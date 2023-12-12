@@ -245,6 +245,7 @@ class CertificateDownloadView(DetailView):
             'user': self.request.user,
             'sequence': sequence,
             'has_certificate': sequence.has_certificate,
+            'certificate': sequence.get_certificate,
             'has_completed_sequence': has_completed_sequence
         })
 
