@@ -785,9 +785,9 @@ class ImportDocxView(AccountMixin, APIView):
         if content_format == "MD":
             html = md(html, extras="tables")
             page_element.content_format = 'MD'
-
+        else:
+            page_element.content_format = 'HTML'
         page_element.text = html
-        page_element.content_format = 'HTML'
         page_element.save()
 
         return api_response.Response(
