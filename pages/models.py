@@ -443,7 +443,8 @@ class EnumeratedElements(models.Model):
     @property
     def is_certificate(self):
         if self.sequence.has_certificate:
-            last_element_rank = self.sequence.sequence_enumerated_elements.order_by('rank').last().rank
+            last_element_rank = (self.sequence.sequence_enumerated_elements.
+                                 order_by('rank').last().rank)
             return self.rank == last_element_rank
         return False
 

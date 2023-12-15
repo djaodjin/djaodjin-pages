@@ -297,10 +297,19 @@ class EnumeratedElementSerializer(serializers.ModelSerializer):
         slug_field="slug",
         help_text=_("Page element the enumerated element is for"),
         required=False)
+    certificate = serializers.BooleanField(
+        write_only=True, default=False,
+        help_text=_("Field to indicate if the PageElement being added "
+                    "to the Sequence is a Certificate"))
 
     class Meta:
         model = EnumeratedElements
-        fields = ('page_element', 'rank', 'min_viewing_duration')
+        fields = ('page_element', 'rank', 'min_viewing_duration', 'certificate')
+
+    def create(self, validated_data):
+        validated_data.pop('certificate', None)
+
+        return EnumeratedElements.objects.create(**validated_data)
 
 
 class SequenceSerializer(serializers.ModelSerializer):
@@ -316,8 +325,8 @@ class SequenceSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Sequence
-        fields = (('created_at', 'slug', 'title', 'account', 'extra')
-                  + ('elements',))
+        fields = (('created_at', 'slug', 'title', 'account', 'has_certificate',
+                   'extra') + ('elements',))
 
     @staticmethod
     def get_elements(obj):

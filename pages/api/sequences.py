@@ -244,17 +244,35 @@ class SequenceAPIView(viewsets.ModelViewSet): # pylint: disable=too-many-ancesto
         sequence = self.get_object()
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
+            is_certificate = serializer.validated_data.pop('certificate', False)
+            rank = serializer.validated_data.get('rank')
+            if sequence.has_certificate:
+                last_rank = sequence.sequence_enumerated_elements.order_by('-rank').first().rank
+
+                if is_certificate:
+                    return api_response.Response(
+                        {'detail': 'The sequence already has a certificate.'},
+                        status=status.HTTP_400_BAD_REQUEST)
+                if rank > last_rank:
+                    return api_response.Response(
+                        {'detail': 'Cannot add an element with a rank higher than the certificate.'},
+                        status=status.HTTP_400_BAD_REQUEST)
+
+
             try:
                 serializer.save(sequence=sequence)
+                if is_certificate and not sequence.has_certificate:
+                    sequence.has_certificate = True
+                    sequence.save()
                 return api_response.Response(
                     {'detail': 'element added'}, status=status.HTTP_201_CREATED)
             except IntegrityError:
                 return api_response.Response(
-                    {'detail':
-                         'An element already exists at this rank for this sequence.'},
-                          status=status.HTTP_400_BAD_REQUEST)
-        return api_response.Response(
-            {'detail': 'invalid parameters'}, status=status.HTTP_400_BAD_REQUEST)
+                    {'detail': 'An element already exists at this rank for this sequence.'},
+                    status=status.HTTP_400_BAD_REQUEST)
+        else:
+            return api_response.Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
     @action(detail=True, methods=['delete'], url_path='elements/(?P<element_rank>\\d+)')
     def remove_element(self, request, slug=None, element_rank=None):
@@ -279,7 +297,11 @@ class SequenceAPIView(viewsets.ModelViewSet): # pylint: disable=too-many-ancesto
         sequence = self.get_object()
         if element_rank is not None:
             try:
-                element = EnumeratedElements.objects.get(sequence=sequence, rank=element_rank)
+                element = EnumeratedElements.objects.get(
+                    sequence=sequence, rank=element_rank)
+                if element.is_certificate:
+                    sequence.has_certificate = False
+                    sequence.save()
                 element.delete()
                 return api_response.Response(
                     {'detail': 'element removed'}, status=status.HTTP_200_OK)
@@ -287,39 +309,6 @@ class SequenceAPIView(viewsets.ModelViewSet): # pylint: disable=too-many-ancesto
                 return api_response.Response({'detail': 'element not found in sequence'},
                                              status=status.HTTP_404_NOT_FOUND)
         return api_response.Response({'detail': 'Invalid rank'}, status=status.HTTP_400_BAD_REQUEST)
-
-    @action(detail=True, methods=['patch'], url_path='certificate')
-    def add_certificate(self, request, slug=None):
-        """
-        - **Add a Certificate to Sequence**
-
-        Sets the Sequence's has_certificate field to True, enabling Certificates
-        for users that complete the Sequence.
-
-        The EnumeratedElement with the highest rank in the sequence is
-        then considered the certificate.
-
-        .. code-block:: http
-
-            PATCH /api/sequences/sequence1/certificate HTTP/1.1
-            Content-Type: application/json
-
-        responds
-            {
-                    "detail": "certificate added"
-            }
-            """
-        sequence = self.get_object()
-
-        if not sequence.has_certificate:
-            sequence.has_certificate = True
-            sequence.save()
-            return api_response.Response(
-           {'detail': 'certificate added'},
-                status=status.HTTP_200_OK)
-        return api_response.Response(
-            {'detail': 'a certificate already exists'},
-            status=status.HTTP_400_BAD_REQUEST)
 
 
 class LiveEventAttendanceAPIView(APIView):
