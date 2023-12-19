@@ -26,9 +26,7 @@ import logging
 from datetime import datetime
 from django.db.models import Exists, OuterRef
 from django.http import HttpResponseForbidden, Http404
-from django.shortcuts import get_object_or_404
-from django.views.generic.detail import DetailView
-from django.views.generic import TemplateView
+from django.views.generic import TemplateView, DetailView
 
 from deployutils.apps.django.mixins import AccessiblesMixin
 from extended_templates.backends.pdf import PdfTemplateResponse
@@ -237,50 +235,36 @@ class CertificateDownloadView(DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         sequence = self.object
-        sequence_progress = get_object_or_404(
-            SequenceProgress,
+
+        sequence_progress, created = SequenceProgress.objects.get_or_create(
             sequence=sequence,
             user=self.request.user)
-        enumerated_elements = EnumeratedElements.objects.filter(
-            sequence=sequence)
-        user_enumerated_progress = EnumeratedProgress.objects.filter(
-            progress=sequence_progress)
 
-        last_element = enumerated_elements.last().page_element
-        is_last_element_certificate = hasattr(last_element, 'certificate')
-
-        if is_last_element_certificate:
-            # Exclude last element from the check, if it is a certificate
-            enumerated_elements = enumerated_elements.exclude(pk=enumerated_elements.last().pk)
-
-        completed_elements_subquery = user_enumerated_progress.filter(
-            rank=OuterRef('rank'),
-            viewing_duration__gte=OuterRef('min_viewing_duration')
-        )
-
-        incomplete_element_exists = enumerated_elements.filter(
-            ~Exists(completed_elements_subquery)).exists()
-
-        has_completed_sequence = not incomplete_element_exists
+        has_completed_sequence = sequence_progress.is_completed
+        context.update({
+            'user': self.request.user,
+            'sequence': sequence,
+            'has_certificate': sequence.has_certificate,
+            'certificate': sequence.get_certificate,
+            'has_completed_sequence': has_completed_sequence
+        })
 
         if has_completed_sequence:
+            completion_date = sequence_progress.completion_date or datetime.now()
             if not sequence_progress.completion_date:
-                completion_date = datetime.now()
                 sequence_progress.completion_date = completion_date
                 sequence_progress.save()
-            else:
-                completion_date = sequence_progress.completion_date
-
-            last_element = enumerated_elements.last().page_element
-            context.update({
-                'user': self.request.user,
-                'sequence': sequence,
-                'completion_date': completion_date,
-                'certificate': last_element.certificate
-            })
-        else:
-            self.template_name = None
-            self.response_class = lambda request, **kwargs: HttpResponseForbidden(
-                'You have not completed all elements in the sequence yet.')
+            context['completion_date'] = completion_date
 
         return context
+
+    def get(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        context = self.get_context_data(**kwargs)
+
+        if not context.get('has_certificate', False) or not context.get('has_completed_sequence', False):
+            return HttpResponseForbidden(
+                'A certificate is not available for download.')
+
+        return self.render_to_response(context)
+

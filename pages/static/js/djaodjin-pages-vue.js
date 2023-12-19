@@ -603,7 +603,7 @@ Vue.component('sequence-items', {
         itemListMixin],
     data() {
         return {
-            url: this.$urls.api_enumerated_progress_user_list,
+            url: this.$urls.api_enumerated_progress_user_list
         };
     },
     mounted() {

@@ -311,23 +311,6 @@ class PageElement(models.Model):
 
 
 @python_2_unicode_compatible
-class Certificate(models.Model):
-    """
-    A Certificate of completion
-
-    Used to download a certificate of completion for a sequence.
-    """
-    created_at = models.DateTimeField(editable=False, auto_now_add=True)
-    element = models.ForeignKey(PageElement, on_delete=models.CASCADE,
-        related_name='certificate')
-    extra = get_extra_field_class()(null=True, blank=True,
-        help_text=_("Extra meta data (can be stringify JSON)"))
-
-    def __str__(self):
-        return "%s-certificate" % str(self.element)
-
-
-@python_2_unicode_compatible
 class Comment(models.Model):
     """
     A user comments about a PageElement.
@@ -424,11 +407,17 @@ class Sequence(models.Model):
     account = models.ForeignKey(
         settings.ACCOUNT_MODEL, related_name='account_sequences',
         null=True, on_delete=models.SET_NULL)
+    has_certificate = models.BooleanField(default=False)
     extra = get_extra_field_class()(null=True, blank=True,
         help_text=_("Extra meta data (can be stringify JSON)"))
-
     def __str__(self):
         return "%s" % str(self.slug)
+
+    @property
+    def get_certificate(self):
+        if self.has_certificate:
+            return self.sequence_enumerated_elements.order_by('rank').last().page_element
+        return None
 
 
 @python_2_unicode_compatible
@@ -451,6 +440,17 @@ class EnumeratedElements(models.Model):
     def __str__(self):
         return "%s-%d" % (self.sequence, self.rank)
 
+    @property
+    def is_certificate(self):
+        if self.sequence.has_certificate:
+            last_element_rank = (self.sequence.sequence_enumerated_elements.
+                                 order_by('rank').last().rank)
+            return self.rank == last_element_rank
+        return False
+
+    @property
+    def is_live_event(self):
+        return LiveEvent.objects.filter(element=self.page_element).exists()
 
 @python_2_unicode_compatible
 class SequenceProgress(models.Model):
@@ -460,13 +460,36 @@ class SequenceProgress(models.Model):
     created_at = models.DateTimeField(editable=False, auto_now_add=True)
     sequence = models.ForeignKey(Sequence, on_delete=models.CASCADE)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    extra = get_extra_field_class()(null=True, blank=True,
-        help_text=_("Extra meta data (can be stringify JSON)"))
     completion_date = models.DateTimeField(blank=True, null=True,
         help_text=_("Time when the user completed the Sequence"))
+    extra = get_extra_field_class()(null=True, blank=True,
+        help_text=_("Extra meta data (can be stringify JSON)"))
 
     def __str__(self):
         return "%s-%s" % (self.sequence, self.user)
+
+    @property
+    def is_completed(self):
+        if self.sequence.has_certificate:
+            # We exclude the element with the highest rank
+            certificate_element = self.sequence.get_certificate
+            enumerated_elements = EnumeratedElements.objects.filter(
+                sequence=self.sequence).exclude(
+                page_element__slug=certificate_element.slug)
+        else:
+            enumerated_elements = EnumeratedElements.objects.filter(
+                sequence=self.sequence).order_by('rank')
+        user_enumerated_progress = EnumeratedProgress.objects.filter(
+            progress=self,
+            rank__in=enumerated_elements.values_list(
+            'rank', flat=True))
+        for element in enumerated_elements:
+            if not user_enumerated_progress.filter(
+                    rank=element.rank,
+                    viewing_duration__gte=element.min_viewing_duration
+            ).exists():
+                return False
+        return True
 
 
 @python_2_unicode_compatible

@@ -52,17 +52,19 @@ class SequenceAPIView(viewsets.ModelViewSet): # pylint: disable=too-many-ancesto
      **Tags**: sequences
     """
     serializer_class = SequenceSerializer
-    http_method_names = ['get', 'post', 'head', 'patch', 'delete', 'options']
     queryset = Sequence.objects.all().order_by('slug')
     lookup_field = 'slug'
 
+    serializer_action_classes = {
+        'add_element': EnumeratedElementSerializer,
+        'remove_element': EnumeratedElementSerializer,
+        'create': SequenceSerializer,
+        'update': SequenceSerializer
+    }
+
     def get_serializer_class(self):
-        if self.action:
-            if self.action.lower() in ['add_element', 'remove_element']:
-                return EnumeratedElementSerializer
-            if self.action.lower() in ['create', 'update']:
-                return SequenceSerializer
-        return super().get_serializer_class()
+        return self.serializer_action_classes.get(
+            self.action, super().get_serializer_class())
 
     def list(self, request, *args, **kwargs):
         """
@@ -242,17 +244,35 @@ class SequenceAPIView(viewsets.ModelViewSet): # pylint: disable=too-many-ancesto
         sequence = self.get_object()
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
+            is_certificate = serializer.validated_data.pop('certificate', False)
+            rank = serializer.validated_data.get('rank')
+            if sequence.has_certificate:
+                last_rank = sequence.sequence_enumerated_elements.order_by('-rank').first().rank
+
+                if is_certificate:
+                    return api_response.Response(
+                        {'detail': 'The sequence already has a certificate.'},
+                        status=status.HTTP_400_BAD_REQUEST)
+                if rank > last_rank:
+                    return api_response.Response(
+                        {'detail': 'Cannot add an element with a rank higher than the certificate.'},
+                        status=status.HTTP_400_BAD_REQUEST)
+
+
             try:
                 serializer.save(sequence=sequence)
+                if is_certificate and not sequence.has_certificate:
+                    sequence.has_certificate = True
+                    sequence.save()
                 return api_response.Response(
                     {'detail': 'element added'}, status=status.HTTP_201_CREATED)
             except IntegrityError:
                 return api_response.Response(
-                    {'detail':
-                         'An element already exists at this rank for this sequence.'},
-                          status=status.HTTP_400_BAD_REQUEST)
-        return api_response.Response(
-            {'detail': 'invalid parameters'}, status=status.HTTP_400_BAD_REQUEST)
+                    {'detail': 'An element already exists at this rank for this sequence.'},
+                    status=status.HTTP_400_BAD_REQUEST)
+        else:
+            return api_response.Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
     @action(detail=True, methods=['delete'], url_path='elements/(?P<element_rank>\\d+)')
     def remove_element(self, request, slug=None, element_rank=None):
@@ -277,7 +297,11 @@ class SequenceAPIView(viewsets.ModelViewSet): # pylint: disable=too-many-ancesto
         sequence = self.get_object()
         if element_rank is not None:
             try:
-                element = EnumeratedElements.objects.get(sequence=sequence, rank=element_rank)
+                element = EnumeratedElements.objects.get(
+                    sequence=sequence, rank=element_rank)
+                if element.is_certificate:
+                    sequence.has_certificate = False
+                    sequence.save()
                 element.delete()
                 return api_response.Response(
                     {'detail': 'element removed'}, status=status.HTTP_200_OK)
