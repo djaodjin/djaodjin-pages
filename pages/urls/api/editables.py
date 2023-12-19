@@ -26,12 +26,13 @@
 
 from ...import settings
 from ...compat import path, re_path
-from ...api.elements import PageElementEditableDetail
+from ...api.elements import PageElementEditableDetail, ImportDocxView
 from ...api.relationship import (PageElementAliasAPIView,
     PageElementMirrorAPIView, PageElementMoveAPIView, RelationShipListAPIView)
 
 
 urlpatterns = [
+    path('import-docx', ImportDocxView.as_view(), name='import_docx'),
     path('relationship',
         RelationShipListAPIView.as_view(), name='relationships'),
     re_path(r'^alias/(?P<path>%s)$' % settings.PATH_RE,

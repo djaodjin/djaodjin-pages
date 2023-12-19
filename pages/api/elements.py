@@ -32,7 +32,7 @@ from django.core.files.uploadedfile import (SimpleUploadedFile,
     TemporaryUploadedFile)
 from django.db import transaction
 from django.db.models import Max, Q
-from django.http import Http404
+from django.http import Http404, QueryDict
 from markdownify import markdownify as md
 from rest_framework import (generics, response as api_response,
     status)
@@ -40,6 +40,7 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.filters import OrderingFilter, SearchFilter
 from rest_framework.mixins import CreateModelMixin
 from rest_framework.views import APIView
+from rest_framework.request import Request
 
 import mammoth
 import requests
@@ -659,11 +660,10 @@ class PageElementRemoveTags(AccountMixin, PageElementMixin,
         serializer.instance.extra = ','.join(curr_tags)
         serializer.instance.save()
 
-
 class ImportDocxView(AccountMixin, APIView):
     """
-    Handles importing content from a .docx file and
-    update a page element's text.
+    Imports content from a .docx file and update a page element's text
+    with the imported content.
     """
 
     def upload_image(self, request):
@@ -676,6 +676,7 @@ class ImportDocxView(AccountMixin, APIView):
 
         location = request.data.get("location", None)
         is_public_asset = request.query_params.get('public', False)
+
         response_data, response_status = process_upload(
             request, self.account, location, is_public_asset,
             store_hash, replace_stored, content_type)
@@ -692,24 +693,31 @@ class ImportDocxView(AccountMixin, APIView):
 
         img_info, encoded = image_data.split(",", 1)
         image_bytes = base64.b64decode(encoded)
-
-        # Potential code for limiting file size:
-
-        # if image_bytes > some_max_size:
-        #     pass
         content_type = img_info.split(";")[0].split(":")[1]
 
         image_stream = SimpleUploadedFile("image.jpg", image_bytes, content_type)
 
-        # Modify the existing request with the new image files
-        # The original request is immutable, therefore we change
-        # its mutability manually.
-        _mutable = original_request.data._mutable
-        original_request.data._mutable = True
-        original_request.data["file"] = image_stream
-        original_request.data._mutable = _mutable
+        # Make a mutable copy of the request data
+        if isinstance(original_request.data, QueryDict):
+            mutable_data = original_request.data.copy()
+        else:
+            mutable_data = original_request.data
 
-        return self.upload_image(original_request)
+        mutable_data['file'] = image_stream
+
+        # Create a new request object with the modified data
+        new_request = Request(original_request._request, parsers=original_request.parsers)
+        new_request._full_data = mutable_data
+        new_request._data = mutable_data
+        new_request._files = original_request._files
+        new_request._user = original_request.user
+        new_request._auth = original_request.auth
+
+        # Skipping attributes that may not exist
+        if hasattr(original_request, 'authenticator'):
+            new_request._authenticator = original_request.authenticator
+
+        return self.upload_image(new_request)
 
     def extract_and_upload_images(self, html, original_request):
         """
@@ -723,10 +731,33 @@ class ImportDocxView(AccountMixin, APIView):
 
         return str(soup)
 
-    def post(self, request):
+    def post(self, request, *args, **kwargs):
         """
-        Handles POST requests to import a .docx file's content into a PageElement's
+        Imports a .docx file's content into a PageElement's
         text field.
+
+        **Example
+
+        .. code-block:: http
+
+            POST /api/content/editables/import-docx HTTP/1.1
+
+        .. code-block:: json
+
+            {
+                "docx_location": "http://example.com/document.docx",
+                "page_element_slug": "example-element",
+                "content_format": "MD"
+            }
+
+        responds
+
+        .. code-block:: json
+
+            {
+                "detail": "Page element updated successfully"
+            }
+
         """
         docx_location = request.data.get("docx_location")
         page_element_slug = request.data.get("page_element_slug")
@@ -753,10 +784,10 @@ class ImportDocxView(AccountMixin, APIView):
         # If required, convert HTML to markdown format
         if content_format == "MD":
             html = md(html, extras="tables")
-            # page_element.content_format = 'MD'
-
+            page_element.content_format = 'MD'
+        else:
+            page_element.content_format = 'HTML'
         page_element.text = html
-        # page_element.content_format = 'HTML'
         page_element.save()
 
         return api_response.Response(

@@ -82,10 +82,10 @@ class AccountMixin(object):
                         "the query") % {'verbose_name':
                         self.account_queryset.model._meta.verbose_name})
             else:
+                self._account = None
                 if (isinstance(get_account_model(), get_user_model()) and
                     is_authenticated(self.request)):
                     self._account = self.request.user
-                self._account = None
         return self._account
 
     def get_context_data(self, **kwargs):
