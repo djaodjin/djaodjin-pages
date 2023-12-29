@@ -26,17 +26,28 @@
 API URLs for sequence objects
 """
 
-from ...api.sequences import (SequenceAPIView, LiveEventAttendanceAPIView)
-from rest_framework.routers import DefaultRouter
+from ...api.sequences import (SequenceListCreateAPIView,
+    SequenceRetrieveUpdateDestroyAPIView, LiveEventAttendanceAPIView,
+    RemoveElementFromSequenceAPIView, AddElementToSequenceAPIView)
 
 from ...compat import path
 
-router = DefaultRouter(trailing_slash=False)
-router.register(r'sequences',
-                SequenceAPIView,
-                basename='api_sequences')
 urlpatterns = [
+    path('sequences',
+         SequenceListCreateAPIView.as_view(),
+         name='api_sequence_list_create'),
+    path('sequences/<slug:sequence>',
+         SequenceRetrieveUpdateDestroyAPIView.as_view(),
+         name='api_sequence_retrieve_update_destroy'),
+
+    path('sequences/<slug:sequence>/elements',
+         AddElementToSequenceAPIView.as_view(),
+         name='api_add_element_to_sequence'),
+    path('sequences/<slug:sequence>/elements/<int:rank>',
+         RemoveElementFromSequenceAPIView.as_view(),
+         name='api_remove_element_from_sequence'),
+
     path('sequences/<slug:sequence>/<int:rank>/<username>/mark-attendance',
          LiveEventAttendanceAPIView.as_view(),
          name='api_mark_attendance')
-] + router.urls
+]

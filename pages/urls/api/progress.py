@@ -26,21 +26,19 @@
 API URLs for EnumeratedProgress objects
 """
 
-from ...api.progress import EnumeratedProgressAPIView
+from ...api.progress import (EnumeratedProgressListCreateAPIView,
+  EnumeratedProgressRetrieveDestroyAPIView)
+
 from ...compat import path
 
 urlpatterns = [
     path('<slug:sequence>',
-         EnumeratedProgressAPIView.as_view(
-             {'get': 'list', 'post': 'create'}),
+         EnumeratedProgressListCreateAPIView.as_view(),
          name='api_enumerated_progress_list_create'),
     path('<slug:sequence>/<username>',
-         EnumeratedProgressAPIView.as_view(
-             {'get': 'list'}),
+         EnumeratedProgressListCreateAPIView.as_view(),
          name='api_enumerated_progress_user_list'),
     path('<slug:sequence>/<username>/<int:rank>',
-         EnumeratedProgressAPIView.as_view(
-             {'get': 'retrieve', 'delete': 'destroy',
-              'post': 'ping'}),
-         name='api_enumerated_progress_user_detail'),
+         EnumeratedProgressRetrieveDestroyAPIView.as_view(),
+         name='api_enumerated_progress_user_detail')
 ]

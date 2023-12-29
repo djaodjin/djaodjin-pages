@@ -29,12 +29,12 @@ from pages.models import (Sequence, SequenceProgress, EnumeratedProgress,
 from django.shortcuts import get_object_or_404
 from django.views.generic.detail import DetailView
 
-
 from ..compat import reverse
 from ..helpers import update_context_urls
 from .. import settings
 
 LOGGER = logging.getLogger(__name__)
+
 
 class SequenceProgressView(TemplateView):
     template_name = 'pages/app/sequences/index.html'
@@ -49,7 +49,7 @@ class SequenceProgressView(TemplateView):
         for element in elements:
             element.title = element.page_element.title
             element.url = reverse(
-                'sequences:sequence_page_element_view',
+                'sequence_page_element_view',
                 args=(sequence.slug, element.rank))
 
         context.update({
@@ -93,10 +93,10 @@ class SequencePageElementView(DetailView):
             sequence=sequence, rank__gt=self.object.rank).order_by('rank').first()
 
         if previous_element:
-            previous_element.url = reverse('sequences:sequence_page_element_view',
+            previous_element.url = reverse('sequence_page_element_view',
                                            args=(sequence.slug, previous_element.rank))
         if next_element:
-            next_element.url = reverse('sequences:sequence_page_element_view',
+            next_element.url = reverse('sequence_page_element_view',
                                        args=(sequence.slug, next_element.rank))
 
         progress = None
@@ -128,7 +128,7 @@ class SequencePageElementView(DetailView):
                 'api_enumerated_progress_user_detail',
                 args=(sequence.slug, user.username, self.object.rank)),
             'sequence_progress_view': reverse(
-                'sequences:sequence_progress_view',
+                'sequence_progress_view',
                 args=(sequence.slug,)),
         }
 

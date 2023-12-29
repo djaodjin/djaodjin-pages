@@ -25,7 +25,6 @@
 from ...compat import path
 from ...views.sequences import SequenceProgressView, SequencePageElementView
 
-app_name = 'sequences'
 
 urlpatterns = [
     path('<slug:sequence>/',

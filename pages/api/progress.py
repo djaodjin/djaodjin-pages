@@ -25,37 +25,18 @@
 from datetime import timedelta
 
 from django.utils import timezone
-from django.shortcuts import get_object_or_404
 
-from rest_framework import (response as api_response,
-                            viewsets, status)
-from rest_framework.decorators import action
+from rest_framework import response as api_response, status
+from rest_framework.generics import (ListCreateAPIView,
+    RetrieveDestroyAPIView)
 
-from ..models import (EnumeratedProgress)
+from ..models import EnumeratedProgress
 from ..serializers import (EnumeratedProgressSerializer,
-                           EnumeratedProgressCreateSerializer,
-                           EnumeratedProgressPingSerializer)
+    EnumeratedProgressCreateSerializer, EnumeratedProgressPingSerializer)
 from .. import settings
 
 
-class EnumeratedProgressAPIView(viewsets.ModelViewSet):
-    """
-    Manages instances of EnumeratedProgress
-
-    This API endpoint allow operations on EnumeratedProgress instances,
-    which represent a user's progression within sequences. Each instance holds
-    information about the user's progress in a sequence, identified by sequence slug,
-    username, and the rank of the specific PageElement within the sequence.
-
-    This endpoint supports listing all progress instances, creating new ones, retrieving
-    specific instances, updating, and deleting them.
-
-    Also allows updating the viewing duration of progress instances using
-    POST requests on individual instances.
-
-     **Tags**: progress
-    """
-    queryset = EnumeratedProgress.objects.all().order_by('rank')
+class EnumeratedProgressListCreateAPIView(ListCreateAPIView):
 
     def get_serializer_class(self):
         if self.request.method == 'POST':
@@ -63,115 +44,63 @@ class EnumeratedProgressAPIView(viewsets.ModelViewSet):
         return EnumeratedProgressSerializer
 
     def get_queryset(self):
-        """
-        Retrieve a queryset of EnumeratedProgress instances.
-        Can be filtered by sequence_slug and username.
-        """
-        sequence_slug = self.kwargs.get('sequence')
+        sequence = self.kwargs.get('sequence')
         username = self.kwargs.get('username')
-        queryset = self.queryset
-
-        if sequence_slug:
-            queryset = queryset.filter(
-                progress__sequence__slug=sequence_slug)
+        queryset = EnumeratedProgress.objects.filter(
+            progress__sequence__slug=sequence).order_by('rank')
         if username:
-            queryset = queryset.filter(
-                progress__user__username=username)
+            queryset = queryset.filter(progress__user__username=username)
+        return queryset
 
-        return queryset.order_by('rank')
-
-    def get_object(self):
+    def get(self, request, *args, **kwargs):
         """
-        Retrieve a specific EnumeratedProgress instance using
-        sequence_slug, username, and rank.
-        """
-        queryset = self.get_queryset()
-        rank = self.kwargs.get('rank')
+        Lists EnumeratedProgress for a Sequence or a user within a Sequence
 
-        obj = get_object_or_404(queryset,
-                                rank=rank)
-        self.check_object_permissions(self.request, obj)
-        return obj
+        **Tags**: Progress
 
-    def list(self, request, *args, **kwargs):
-        """
-        List all EnumeratedProgress instances.
-
-        Accessed via URL:
-        - /progress/{sequence} for a specific sequence.
-        - /progress/{sequence}/{username} for a specific
-        user within a sequence.
+        **Example**
 
         .. code-block:: http
 
-            GET /api/progress/sequence1 HTTP/1.1
+             GET /api/progress/educational-sequence/alice HTTP/1.1
 
         responds
 
         .. code-block:: json
 
-            "count": 1,
-            "next": null,
-            "previous": null,
-            "results": [
+            {
+              "count": 1,
+              "next": null,
+              "previous": null,
+              "results": [
                 {
-                    "created_at": "2023-11-10T09:42:22.563891Z",
-                    "rank": 3,
-                    "viewing_duration": "00:00:30"
+                  "created_at": "2020-09-28T00:00:00.0000Z",
+                  "rank": 1,
+                  "viewing_duration": "00:00:00"
                 }
-            ]
-
+              ]
+            }
         """
-        return super().list(request, *args, **kwargs)
+        return super(EnumeratedProgressListCreateAPIView, self).list(
+            request, *args, **kwargs)
 
-    def retrieve(self, request, *args, **kwargs):
+    def post(self, request, *args, **kwargs):
         """
-        Retrieve a specific EnumeratedProgress instance.
+        Creates an EnumeratedProgress for a user on a Sequence
 
-        Accessed via URL: /progress/{sequence}/{username}/{rank}
+        **Examples**
 
         .. code-block:: http
 
-            GET /api/progress/sequence1/user1/3 HTTP/1.1
-
-        responds
+            POST /api/progress/educational-sequence HTTP/1.1
 
         .. code-block:: json
 
             {
-                "sequence_slug": "sequence1",
-                "rank": 3,
-                "viewing_duration": "00:00:30"
-            }
-        """
-        return super().retrieve(request, *args, **kwargs)
-
-    def destroy(self, request, *args, **kwargs):
-        """
-        Delete an EnumeratedProgress instance.
-
-        Accessed via URL: /progress/{sequence}/{username}/{rank}
-
-        .. code-block:: http
-
-            DELETE /api/progress/sequence1/user1/3 HTTP/1.1
-
-        responds with a `204 No Content` status, indicating successful deletion.
-        """
-        return super().destroy(request, *args, **kwargs)
-
-    def update(self, request, *args, **kwargs):
-        """
-        Update an EnumeratedProgress instance.
-
-        Accessed via URL: /progress/{sequence}/{username}/{rank}
-
-        .. code-block:: http
-
-            PATCH /api/progress/sequence1/user1/3 HTTP/1.1
-
-            {
-                "viewing_duration": "00:01:00"
+                "sequence_slug": "educational-sequence",
+                "username": "alice",
+                "rank": 2,
+                "viewing_duration": null,
             }
 
         responds
@@ -179,42 +108,94 @@ class EnumeratedProgressAPIView(viewsets.ModelViewSet):
         .. code-block:: json
 
             {
-                "sequence_slug": "sequence1",
-                "rank": 3,
-                "viewing_duration": "00:01:00"
+                "sequence_slug": "educational-sequence",
+                "username": "alice",
+                "rank": 2,
+                "viewing_duration": "00:00:00"
             }
         """
-        return super().update(request, *args, **kwargs)
+        return super(EnumeratedProgressListCreateAPIView, self).create(
+            request, *args, **kwargs)
 
-    @action(detail=True, methods=['post'])
-    def ping(self, request, *args, **kwargs):
+
+class EnumeratedProgressRetrieveDestroyAPIView(RetrieveDestroyAPIView):
+
+    serializer_class = EnumeratedProgressSerializer
+    lookup_url_kwarg = 'rank'
+    lookup_field = 'rank'
+
+    def get_queryset(self):
+        sequence = self.kwargs.get('sequence')
+        username = self.kwargs.get('username')
+        return EnumeratedProgress.objects.filter(
+            progress__user__username=username,
+            progress__sequence__slug=sequence)
+
+    def get(self, request, *args, **kwargs):
         """
-        Update the viewing duration of an EnumeratedProgress instance.
+        Retrieves an EnumeratedProgress instance.
 
-        This endpoint is used to send 'pings' via POST requests to update the
-        viewing duration of the progress instance. It prevents too frequent updates
-        by checking the time since the last ping.
+        **Tags**: Progress
+
+        **Examples**
 
         .. code-block:: http
 
-            POST /api/progress/sequence1/user1/3 HTTP/1.1
+            GET /api/progress/educational-sequence/alice/1 HTTP/1.1
 
         responds
 
         .. code-block:: json
 
             {
-                "sequence_slug": "sequence1",
-                "username": "user1",
-                "rank": 3,
-                "viewing_duration": "00:00:40",
-                "last_ping_time": "2023-11-13T04:56:04.075172Z"
+                "created_at": "2020-09-28T00:00:00.0000Z",
+                "rank": 1,
+                "viewing_duration": "00:00:00"
             }
+        """
+        return super(EnumeratedProgressRetrieveDestroyAPIView, self).retrieve(
+            request, *args, **kwargs)
+
+    def delete(self, request, *args, **kwargs):
+        """
+        Deletes a specific EnumeratedProgress instance.
+
+        **Tags**: Progress
+
+        **Examples**
+
+        .. code-block:: http
+
+            DELETE /api/progress/educational-sequence/alice/1 HTTP/1.1
 
         """
-        return self._handle_ping_viewing(request, *args, **kwargs)
+        return super(EnumeratedProgressRetrieveDestroyAPIView, self).destroy(
+            request, *args, **kwargs)
 
-    def _handle_ping_viewing(self, request, *args, **kwargs):
+    def post(self, request, *args, **kwargs):
+        """
+        Updates the viewing duration of a EnumeratedProgress instance.
+
+        **Tags**: Progress, Viewing Durattion
+
+        **Examples**
+
+        .. code-block:: http
+
+            POST /api/progress/educational-sequence/alice/1 HTTP/1.1
+
+        responds
+
+        .. code-block:: json
+
+            {
+                "created_at": "2020-09-28T00:00:00.0000Z",
+                "rank": 1,
+                "viewing_duration": "00:00:56.000000",
+                "last_ping_time": "2020-09-28T00:10:00.0000Z"
+            }
+        """
+
         instance = self.get_object()
         now = timezone.now()
 

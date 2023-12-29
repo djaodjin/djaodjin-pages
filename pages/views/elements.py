@@ -24,7 +24,6 @@
 import logging
 
 from datetime import datetime
-from django.db.models import Exists, OuterRef
 from django.http import HttpResponseForbidden, Http404
 from django.views.generic import TemplateView, DetailView
 
@@ -34,8 +33,7 @@ from extended_templates.backends.pdf import PdfTemplateResponse
 
 from ..compat import NoReverseMatch, reverse, six
 from ..helpers import get_extra, update_context_urls
-from ..models import (RelationShip, EnumeratedElements,
-                      EnumeratedProgress, Sequence, SequenceProgress)
+from ..models import RelationShip, Sequence, SequenceProgress
 from ..mixins import AccountMixin, TrailMixin
 
 

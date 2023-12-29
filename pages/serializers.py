@@ -37,6 +37,7 @@ from .compat import gettext_lazy as _, is_authenticated
 from .models import (Comment, Follow, PageElement, Vote,
                      Sequence, EnumeratedElements, EnumeratedProgress,
                      SequenceProgress)
+from .utils import get_account_model
 
 #pylint: disable=no-init,abstract-method
 
@@ -192,7 +193,8 @@ class PageElementSerializer(serializers.ModelSerializer):
         help_text=_("Picture icon that can be displayed alongside the title"))
     content_format = serializers.ChoiceField(
         choices=PageElement.FORMAT_CHOICES,
-        required=False)
+        required=False,
+        help_text=_("Format of the content, HTML or MD"))
     text = serializers.CharField(
         required=False,
         help_text=_("Long description of the page element"))
@@ -296,9 +298,10 @@ class EnumeratedElementSerializer(serializers.ModelSerializer):
         queryset=PageElement.objects.all(),
         slug_field="slug",
         help_text=_("Page element the enumerated element is for"),
-        required=False)
+        required=True)
     certificate = serializers.BooleanField(
-        write_only=True, default=False,
+        write_only=True,
+        default=False,
         help_text=_("Field to indicate if the PageElement being added "
                     "to the Sequence is a Certificate"))
 
@@ -318,7 +321,7 @@ class SequenceSerializer(serializers.ModelSerializer):
     """
     elements = serializers.SerializerMethodField()
     account = serializers.SlugRelatedField(
-        queryset=get_user_model().objects.all(),
+        queryset=get_account_model().objects.all(),
         slug_field=settings.ACCOUNT_LOOKUP_FIELD,
         help_text=_("Account the sequence belongs to"),
         required=False)
@@ -334,6 +337,7 @@ class SequenceSerializer(serializers.ModelSerializer):
             obj.sequence_enumerated_elements.all().order_by('rank'),
             many=True).data
 
+
 class EnumeratedProgressSerializer(serializers.ModelSerializer):
     """
     Serializes a EnumeratedProgress object
@@ -341,6 +345,7 @@ class EnumeratedProgressSerializer(serializers.ModelSerializer):
     class Meta:
         model = EnumeratedProgress
         fields = ('created_at', 'rank', 'viewing_duration')
+
 
 class EnumeratedProgressCreateSerializer(serializers.ModelSerializer):
     sequence_slug = serializers.SlugRelatedField(
@@ -351,10 +356,11 @@ class EnumeratedProgressCreateSerializer(serializers.ModelSerializer):
         slug_field='username',
         queryset=get_user_model().objects.all(),
         source='progress.user')
+    viewing_duration = serializers.DurationField(required=False)
 
     class Meta:
         model = EnumeratedProgress
-        fields = ['sequence_slug', 'username', 'rank', 'viewing_duration', 'last_ping_time']
+        fields = ['sequence_slug', 'username', 'rank', 'viewing_duration']
 
     def create(self, validated_data):
         progress_data = validated_data.pop('progress')
@@ -371,13 +377,16 @@ class EnumeratedProgressCreateSerializer(serializers.ModelSerializer):
                 **validated_data)
         return enumerated_progress
 
+
 class EnumeratedProgressPingSerializer(serializers.ModelSerializer):
     """
     Serializes a EnumeratedProgress object to update its last_ping_time
     """
     class Meta:
         model = EnumeratedProgress
-        fields = ('created_at', 'viewing_duration', 'last_ping_time')
+        fields = ('created_at', 'rank', 'viewing_duration', 'last_ping_time')
+        read_only_fields = ('rank',)
+
 
 class AttendanceInputSerializer(serializers.Serializer):
     """
