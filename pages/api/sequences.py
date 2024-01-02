@@ -24,161 +24,87 @@
 import logging
 
 from django.db import IntegrityError
-from django.shortcuts import get_object_or_404
-from rest_framework import (response as api_response,
-                            viewsets, status)
-from rest_framework.decorators import action
+from rest_framework import response as api_response, status
 from rest_framework.views import APIView
+from rest_framework.generics import (ListCreateAPIView,
+    RetrieveUpdateDestroyAPIView)
 
-from ..models import (Sequence, EnumeratedElements,
-   SequenceProgress, EnumeratedProgress, LiveEvent)
-from ..serializers import (SequenceSerializer,
-   EnumeratedElementSerializer, AttendanceInputSerializer)
+from ..models import (Sequence, EnumeratedElements, SequenceProgress,
+    EnumeratedProgress, LiveEvent)
+from ..serializers import (SequenceSerializer, EnumeratedElementSerializer,
+    AttendanceInputSerializer)
 
 LOGGER = logging.getLogger(__name__)
 
-class SequenceAPIView(viewsets.ModelViewSet): # pylint: disable=too-many-ancestors
-    """
-    Manages sequences of page elements
 
-    This API endpoint allows for the creation, modification, and deletion
-    of sequences. A sequence is a collection of page elements organized
-    in a specific order. Each page element in a sequence is represented
-    by an enumerated element which holds the position (rank) of the page
-    element in the sequence.
-
-    Also allows adding/removing page elements from sequences.
-
-     **Tags**: sequences
-    """
-    serializer_class = SequenceSerializer
+class SequenceListCreateAPIView(ListCreateAPIView):
     queryset = Sequence.objects.all().order_by('slug')
-    lookup_field = 'slug'
+    serializer_class = SequenceSerializer
 
-    serializer_action_classes = {
-        'add_element': EnumeratedElementSerializer,
-        'remove_element': EnumeratedElementSerializer,
-        'create': SequenceSerializer,
-        'update': SequenceSerializer
-    }
-
-    def get_serializer_class(self):
-        return self.serializer_action_classes.get(
-            self.action, super().get_serializer_class())
-
-    def list(self, request, *args, **kwargs):
+    def get(self, request, *args, **kwargs):
         """
-        - **List Sequences**
+        Lists Sequences
+
+        **Tags**: Sequence
+
+        **Example**
 
         .. code-block:: http
 
-            GET /api/sequences HTTP/1.1
+             GET /api/sequences HTTP/1.1
 
         responds
 
         .. code-block:: json
 
-        "count": 1,
-        "next": null,
-        "previous": null,
-        "results": [
             {
-                "created_at": "2023-10-13T21:47:44.922545Z",
-                "slug": "Sequence1",
-                "title": "Sequence 1",
-                "account": "admin",
-                "extra": "",
-                "elements": [
+              "count": 1,
+              "next": null,
+              "previous": null,
+              "results": [
+                {
+                  "created_at": "2020-09-28T00:00:00.0000Z",
+                  "slug": "educational-sequence",
+                  "title": "Educational Sequence",
+                  "account": "djaopsp",
+                  "has_certificate": true,
+                  "extra": null,
+                  "elements": [
                     {
-                        "page_element": "metal",
-                        "rank": 8,
-                        "min_viewing_duration": "00:00:00"
-                    }
-                ]
-            }
-        ]
-
-        """
-        return super(SequenceAPIView, self).list(
-            request, *args, **kwargs)
-
-    def retrieve(self, request, *args, **kwargs):
-        """
-            - **Retrieve a Sequence**
-
-        .. code-block:: http
-
-            GET /api/sequences/sequence1 HTTP/1.1
-
-        responds
-
-        .. code-block:: json
-
-            {
-                "created_at": "2023-10-13T21:47:44.922545Z",
-                "slug": "sequence1",
-                "title": "Sequence 1",
-                "account": "admin",
-                "extra": "",
-                "elements": [
+                      "page_element": "text-content",
+                      "rank": 1,
+                      "min_viewing_duration": "00:00:10"
+                    },
                     {
-                        "page_element": "metal",
-                        "rank": 8,
-                        "min_viewing_duration": "00:00:00"
+                      "page_element": "survey-event",
+                      "rank": 2,
+                      "min_viewing_duration": "00:00:20"
                     }
-                ]
+                  ]
+                }
+              ]
             }
-
         """
-        return super(SequenceAPIView, self).retrieve(
+        return super(SequenceListCreateAPIView, self).list(
             request, *args, **kwargs)
 
-    def partial_update(self, request, *args, **kwargs):
+    def post(self, request, *args, **kwargs):
         """
-        - **Update a Sequence**
+        Creates a Sequence
 
-        .. code-block:: http
-
-            PATCH /api/sequences/updatedsequence HTTP/1.1
-            Content-Type: application/json
-
-            {
-                "slug": "updatedsequence",
-                "title": "UpdatedSequence",
-                "account": alice,
-                "extra": "",
-            }
-
-        responds
-
-        .. code-block:: json
-
-            {
-                "created_at": "2023-10-15T04:16:24.808028Z",
-                "slug": "updatedsequence"
-                "title": "UpdatedSequence",
-                "account": alice,
-                "extra": "",
-            }
-        """
-        return super(SequenceAPIView, self).partial_update(
-            request, *args, **kwargs)
-
-    def create(self, request, *args, **kwargs):
-        """
-        - **Create a Sequence**
+        **Examples**
 
         .. code-block:: http
 
             POST /api/sequences HTTP/1.1
-            Content-Type: application/json
+
+        .. code-block:: json
 
             {
-                "slug": "newsequence"
-                "title": "NewSequence",
-                "account": admin,
-                "extra": null,
-
+                "slug": "educational-sequence2",
+                "title": "Educational Sequence 2",
+                "has_certificate": True,
+                "viewing_duration": null,
             }
 
         responds
@@ -186,78 +112,156 @@ class SequenceAPIView(viewsets.ModelViewSet): # pylint: disable=too-many-ancesto
         .. code-block:: json
 
             {
-                "created_at": "2023-10-14T05:23:42.452684Z",
-                "slug": "newsequence",
-                "title": "NewSequence",
-                "account": admin,
-                "extra": null,
+              "created_at": "2023-01-01T04:00:00.000000Z",
+              "slug": "educational-sequence2",
+              "title": "Educational Sequence 2",
+              "account": null,
+              "has_certificate": true,
+              "extra": null,
+              "elements": []
             }
         """
-        return super(SequenceAPIView, self).create(
+        return super(SequenceListCreateAPIView, self).create(
             request, *args, **kwargs)
 
-    def destroy(self, request, *args, **kwargs):
+
+class SequenceRetrieveUpdateDestroyAPIView(RetrieveUpdateDestroyAPIView):
+    queryset = Sequence.objects.all().order_by('slug')
+    serializer_class = SequenceSerializer
+    lookup_field = 'slug'
+    lookup_url_kwarg = 'sequence'
+
+    def get(self, request, *args, **kwargs):
         """
-        - **Delete a Sequence**
+        Retrieves a Sequence.
+
+        **Tags**: Sequence
+
+        **Examples**
 
         .. code-block:: http
 
-            POST /api/sequences/1 HTTP/1.1
-            Content-Type: application/json
+            GET /api/sequences/educational-sequence2 HTTP/1.1
 
         responds
 
         .. code-block:: json
 
             {
+                "created_at": "2023-12-29T04:33:33.078661Z",
+                "slug": "educational-sequence2",
+                "title": "Educational Sequence 2",
+                "account": null,
+                "has_certificate": true,
+                "extra": null,
+                "elements": []
             }
         """
-        instance = self.get_object()
-        self.perform_destroy(instance)
-        return api_response.Response({'detail': 'sequence deleted'},
-                                     status=status.HTTP_204_NO_CONTENT)
+        return super(SequenceRetrieveUpdateDestroyAPIView, self).retrieve(
+            request, *args, **kwargs)
 
-    @action(detail=True, methods=['post'], url_path='elements')
-    def add_element(self, request, slug=None):
+    def delete(self, request, *args, **kwargs):
         """
-        - **Add Element to Sequence**
+        Deletes a Sequence.
 
-        Adds an element to a sequence. Creates a new `EnumeratedElements` instance.
+        **Tags**: Sequence
+
+        **Examples**
+
         .. code-block:: http
 
-            POST /api/sequences/sequence1/elements HTTP/1.1
-            Content-Type: application/json
+            DELETE /api/progress/educational-sequence HTTP/1.1
+
+        """
+        print('deleting')
+        return super(SequenceRetrieveUpdateDestroyAPIView, self).destroy(
+            request, *args, **kwargs)
+
+    def patch(self, request, *args, **kwargs):
+        """
+        Updates a Sequence.
+
+        **Tags**: Sequence
+
+        **Examples**
+
+        .. code-block:: http
+
+            PATCH /api/progress/educational-sequence HTTP/1.1
+
+        .. code-block:: json
+
+            {
+                "title": "Updated Educational Sequence Title",
+                "has_certificate": false,
+                "extra": "Additional info"
+            }
+
+        responds
+
+        .. code-block:: json
+
+            {
+                "created_at": "2023-12-29T04:33:33.078661Z",
+                "slug": "educational-sequence",
+                "title": "Updated Educational Sequence Title",
+                "account": null,
+                "has_certificate": false,
+                "extra": "Additional info",
+                "elements": []
+            }
+        """
+        return super(SequenceRetrieveUpdateDestroyAPIView, self).partial_update(
+            request, *args, **kwargs)
+
+
+class AddElementToSequenceAPIView(APIView):
+    """
+    Adds an element to a sequence.
+
+    **Tags**: Sequence
+
+    **Example**
+
+    .. code-block:: http
+
+        POST /api/sequences/educational-sequence/elements HTTP/1.1
+
+    .. code-block:: json
 
             {
                 "page_element": "production",
-                "rank": 1
+                "rank": 10
             }
 
-        responds
+    responds
 
-        .. code-block:: json
+    .. code-block:: json
 
-            {
-                "detail": "element added"
-            }
-            """
-        sequence = self.get_object()
-        serializer = self.get_serializer(data=request.data)
-        if serializer.is_valid():
+        {
+            "detail": "element added"
+        }
+    """
+
+    def post(self, request, *args, **kwargs):
+        sequence_slug = self.kwargs.get('sequence')
+        sequence = Sequence.objects.get(slug=sequence_slug)
+        serializer = EnumeratedElementSerializer(data=request.data)
+
+        if serializer.is_valid(raise_exception=True):
             is_certificate = serializer.validated_data.pop('certificate', False)
             rank = serializer.validated_data.get('rank')
+
             if sequence.has_certificate:
                 last_rank = sequence.sequence_enumerated_elements.order_by('-rank').first().rank
-
                 if is_certificate:
-                    return api_response.Response(
-                        {'detail': 'The sequence already has a certificate.'},
+                    return api_response.Response({
+                        'detail': 'The sequence already has a certificate.'},
                         status=status.HTTP_400_BAD_REQUEST)
-                if rank > last_rank:
-                    return api_response.Response(
-                        {'detail': 'Cannot add an element with a rank higher than the certificate.'},
+                if rank is not None and rank > last_rank:
+                    return api_response.Response({
+                        'detail': 'Cannot add an element with a rank higher than the certificate.'},
                         status=status.HTTP_400_BAD_REQUEST)
-
 
             try:
                 serializer.save(sequence=sequence)
@@ -265,40 +269,40 @@ class SequenceAPIView(viewsets.ModelViewSet): # pylint: disable=too-many-ancesto
                     sequence.has_certificate = True
                     sequence.save()
                 return api_response.Response(
-                    {'detail': 'element added'}, status=status.HTTP_201_CREATED)
-            except IntegrityError:
+                    {'detail': 'Element added'},
+                    status=status.HTTP_201_CREATED)
+            except IntegrityError as e:
                 return api_response.Response(
-                    {'detail': 'An element already exists at this rank for this sequence.'},
+                    {'detail': str(e)},
                     status=status.HTTP_400_BAD_REQUEST)
-        else:
-            return api_response.Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        return api_response.Response(
+            serializer.errors,
+            status=status.HTTP_400_BAD_REQUEST)
 
 
-    @action(detail=True, methods=['delete'], url_path='elements/(?P<element_rank>\\d+)')
-    def remove_element(self, request, slug=None, element_rank=None):
-        """
-        - **Remove Element from Sequence**
+class RemoveElementFromSequenceAPIView(APIView):
+    """
+    Removes an element from a sequence by its rank.
 
-        Removes an element from a sequence by its rank.
+    **Example**
 
-        .. code-block:: http
+        DELETE /api/sequences/educational-sequence/elements/1 HTTP/1.1
 
-            DELETE /api/sequences/sequence1/elements/1 HTTP/1.1
-            Content-Type: application/json
+    responds
 
-        responds
+        {
+            "detail": "element removed"
+        }
+    """
 
-        .. code-block:: json
-
-            {
-                "detail": "element removed"
-            }
-        """
-        sequence = self.get_object()
-        if element_rank is not None:
+    def delete(self, request, *args, **kwargs):
+        sequence_slug = self.kwargs.get('sequence')
+        rank = self.kwargs.get('rank')
+        sequence = Sequence.objects.get(slug=sequence_slug)
+        if rank is not None:
             try:
-                element = EnumeratedElements.objects.get(
-                    sequence=sequence, rank=element_rank)
+                element = EnumeratedElements.objects.get(sequence=sequence, rank=rank)
                 if element.is_certificate:
                     sequence.has_certificate = False
                     sequence.save()
@@ -306,8 +310,9 @@ class SequenceAPIView(viewsets.ModelViewSet): # pylint: disable=too-many-ancesto
                 return api_response.Response(
                     {'detail': 'element removed'}, status=status.HTTP_200_OK)
             except EnumeratedElements.DoesNotExist:
-                return api_response.Response({'detail': 'element not found in sequence'},
-                                             status=status.HTTP_404_NOT_FOUND)
+                return api_response.Response(
+                    {'detail': 'element not found in sequence'}, status=status.HTTP_404_NOT_FOUND)
+
         return api_response.Response({'detail': 'Invalid rank'}, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -315,14 +320,14 @@ class LiveEventAttendanceAPIView(APIView):
     '''
     Allows marking a user's attendance to a Live Event.
 
-    The user's EnumeratedProgress viewing duration for the event is updated to
-    meet the minimum viewing duration requirement of the associated EnumeratedElement.
 
     **Tags**: attendance, live events
     '''
     def post(self, request, *args, **kwargs):
         """
-        - **Mark a User's attendance at a Live Event**
+        Mark a User's attendance at a Live Event
+
+        **Example**
 
         .. code-block:: http
 
@@ -335,7 +340,6 @@ class LiveEventAttendanceAPIView(APIView):
             {
                 "detail": "Attendance marked successfully"
             }
-
         """
 
         input_serializer = AttendanceInputSerializer(data=self.kwargs)
@@ -349,8 +353,8 @@ class LiveEventAttendanceAPIView(APIView):
             user=user, sequence=sequence)
         enumerated_progress, _ = EnumeratedProgress.objects.get_or_create(
             progress=sequence_progress, rank=rank)
-        enumerated_element = get_object_or_404(
-            EnumeratedElements, rank=rank, sequence=sequence)
+        enumerated_element = EnumeratedElements.objects.get(
+            rank=rank, sequence=sequence)
         page_element = enumerated_element.page_element
         live_event = LiveEvent.objects.filter(element=page_element).first()
 

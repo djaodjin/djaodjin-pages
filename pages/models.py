@@ -410,6 +410,7 @@ class Sequence(models.Model):
     has_certificate = models.BooleanField(default=False)
     extra = get_extra_field_class()(null=True, blank=True,
         help_text=_("Extra meta data (can be stringify JSON)"))
+
     def __str__(self):
         return "%s" % str(self.slug)
 
