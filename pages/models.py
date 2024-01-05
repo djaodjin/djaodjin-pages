@@ -441,17 +441,6 @@ class EnumeratedElements(models.Model):
     def __str__(self):
         return "%s-%d" % (self.sequence, self.rank)
 
-    @property
-    def is_certificate(self):
-        if self.sequence.has_certificate:
-            last_element_rank = (self.sequence.sequence_enumerated_elements.
-                                 order_by('rank').last().rank)
-            return self.rank == last_element_rank
-        return False
-
-    @property
-    def is_live_event(self):
-        return LiveEvent.objects.filter(element=self.page_element).exists()
 
 @python_2_unicode_compatible
 class SequenceProgress(models.Model):

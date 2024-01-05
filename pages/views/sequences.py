@@ -25,7 +25,7 @@ import logging
 
 from django.views.generic import TemplateView
 from pages.models import (Sequence, SequenceProgress, EnumeratedProgress,
-                          EnumeratedElements)
+                          EnumeratedElements, LiveEvent)
 from django.shortcuts import get_object_or_404
 from django.views.generic.detail import DetailView
 
@@ -46,11 +46,17 @@ class SequenceProgressView(TemplateView):
         sequence = get_object_or_404(Sequence, slug=sequence_slug)
 
         elements = sequence.sequence_enumerated_elements.all().order_by('rank')
+        last_element_rank = elements.last().rank if elements else None
+
         for element in elements:
             element.title = element.page_element.title
             element.url = reverse(
                 'sequence_page_element_view',
                 args=(sequence.slug, element.rank))
+            
+            element.is_live_event = LiveEvent.objects.filter(element=element.page_element).exists()
+            if sequence.has_certificate:
+                element.is_certificate = (element.rank == last_element_rank)
 
         context.update({
             'user': user,
@@ -80,7 +86,14 @@ class SequencePageElementView(DetailView):
         sequence_slug = self.kwargs.get('sequence')
         rank = self.kwargs.get('rank')
         sequence = get_object_or_404(Sequence, slug=sequence_slug)
-        return get_object_or_404(EnumeratedElements, sequence=sequence, rank=rank)
+        element = get_object_or_404(EnumeratedElements, sequence=sequence, rank=rank)
+
+        element.is_live_event = LiveEvent.objects.filter(element=element.page_element).exists()
+        if sequence.has_certificate:
+            last_element_rank = sequence.sequence_enumerated_elements.order_by('rank').last().rank
+            element.is_certificate = element.rank == last_element_rank
+
+        return element
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -117,7 +130,7 @@ class SequencePageElementView(DetailView):
             'next_element': next_element,
             'ping_interval': settings.PING_INTERVAL,
             'progress': progress,
-            'viewing_duration_seconds': viewing_duration_seconds
+            'viewing_duration_seconds': viewing_duration_seconds,
         })
 
         context_urls = {
