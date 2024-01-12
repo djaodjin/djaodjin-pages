@@ -234,6 +234,13 @@ class PageElementMixin(object):
 
 class SequenceProgressMixin(object):
 
+    def update_element(self, obj):
+        obj.title = obj.page_element.title
+        obj.url = reverse('sequence_page_element_view', args=(self.sequence.slug, obj.rank))
+        obj.is_live_event = obj.page_element.slug in self.live_events
+        obj.is_certificate = (obj.rank == self.last_rank_element.rank) if \
+            self.last_rank_element else False
+
     def get_queryset(self):
         queryset = EnumeratedElements.objects.filter(
             sequence=self.sequence)
@@ -242,22 +249,14 @@ class SequenceProgressMixin(object):
         return queryset
 
     def decorate_queryset(self, queryset):
-        live_events = LiveEvent.objects.filter(
+        self.live_events = LiveEvent.objects.filter(
             element__in=[obj.page_element for obj in queryset]
         ).values_list('element__slug', flat=True)
 
-        last_rank_element = None
+        self.last_rank_element = None
         if self.sequence.has_certificate:
-            last_rank_element = self.sequence.sequence_enumerated_elements.order_by('rank').last()
+            self.last_rank_element = self.sequence.sequence_enumerated_elements.order_by('rank').last()
 
         for obj in queryset:
-            obj.title = obj.page_element.title
-            obj.url = reverse('sequence_page_element_view', args=(self.sequence.slug, obj.rank))
-            obj.is_live_event = obj.page_element.slug in live_events
-
-            if last_rank_element:
-                obj.is_certificate = (obj.rank == last_rank_element.rank)
-            else:
-                obj.is_certificate = False
-
+            self.update_element(obj)
         return queryset
