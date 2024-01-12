@@ -33,7 +33,7 @@ from rest_framework.generics import get_object_or_404
 
 from . import settings
 from .compat import gettext_lazy as _, is_authenticated, reverse
-from .models import PageElement
+from .models import PageElement, LiveEvent, EnumeratedElements
 from .utils import get_account_model
 
 LOGGER = logging.getLogger(__name__)
@@ -230,3 +230,34 @@ class PageElementMixin(object):
             self._element = get_object_or_404(
                 PageElement.objects.all(), **filter_kwargs)
         return self._element
+
+
+class SequenceProgressMixin(object):
+
+    def get_queryset(self):
+        queryset = EnumeratedElements.objects.filter(
+            sequence=self.sequence)
+        if hasattr(self, 'rank') and self.rank:
+            queryset = queryset.filter(rank=self.rank)
+        return queryset
+
+    def decorate_queryset(self, queryset):
+        live_events = LiveEvent.objects.filter(
+            element__in=[obj.page_element for obj in queryset]
+        ).values_list('element__slug', flat=True)
+
+        last_rank_element = None
+        if self.sequence.has_certificate:
+            last_rank_element = self.sequence.sequence_enumerated_elements.order_by('rank').last()
+
+        for obj in queryset:
+            obj.title = obj.page_element.title
+            obj.url = reverse('sequence_page_element_view', args=(self.sequence.slug, obj.rank))
+            obj.is_live_event = obj.page_element.slug in live_events
+
+            if last_rank_element:
+                obj.is_certificate = (obj.rank == last_rank_element.rank)
+            else:
+                obj.is_certificate = False
+
+        return queryset
