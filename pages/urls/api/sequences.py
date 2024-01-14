@@ -30,7 +30,7 @@ from ...api.sequences import (SequenceListCreateAPIView,
     SequenceRetrieveUpdateDestroyAPIView, LiveEventAttendanceAPIView,
     RemoveElementFromSequenceAPIView, AddElementToSequenceAPIView)
 
-from ...compat import path
+from ...compat import path, re_path
 
 urlpatterns = [
     path('sequences',
@@ -43,11 +43,11 @@ urlpatterns = [
     path('sequences/<slug:sequence>/elements',
          AddElementToSequenceAPIView.as_view(),
          name='api_add_element_to_sequence'),
-    path('sequences/<slug:sequence>/elements/<int:rank>',
+    re_path(r'sequences/(?P<sequence>[^/]+)/elements/(?P<rank>-?\d+)',
          RemoveElementFromSequenceAPIView.as_view(),
          name='api_remove_element_from_sequence'),
 
-    path('sequences/<slug:sequence>/<int:rank>/<username>/mark-attendance',
+    re_path(r'sequences/(?P<sequence>[^/]+)/(?P<rank>-?\d+)/(?P<username>[^/]+)/mark-attendance',
          LiveEventAttendanceAPIView.as_view(),
          name='api_mark_attendance')
 ]

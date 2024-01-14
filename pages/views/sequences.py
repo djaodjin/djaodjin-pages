@@ -27,122 +27,122 @@ from django.views.generic import TemplateView
 from pages.models import (Sequence, SequenceProgress, EnumeratedProgress,
                           EnumeratedElements)
 from django.shortcuts import get_object_or_404
-from django.views.generic.detail import DetailView
 
 from ..compat import reverse
 from ..helpers import update_context_urls
+from ..mixins import SequenceProgressMixin
 from .. import settings
 
 LOGGER = logging.getLogger(__name__)
 
 
-class SequenceProgressView(TemplateView):
+class SequenceProgressView(SequenceProgressMixin, TemplateView):
     template_name = 'pages/app/sequences/index.html'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         sequence_slug = self.kwargs.get('sequence')
         user = self.request.user
-        sequence = get_object_or_404(Sequence, slug=sequence_slug)
-
-        elements = sequence.sequence_enumerated_elements.all().order_by('rank')
-        for element in elements:
-            element.title = element.page_element.title
-            element.url = reverse(
-                'sequence_page_element_view',
-                args=(sequence.slug, element.rank))
+        self.sequence = get_object_or_404(Sequence, slug=sequence_slug)
+        
+        queryset = self.get_queryset()
+        decorated_queryset = self.decorate_queryset(queryset)
 
         context.update({
             'user': user,
-            'sequence': sequence,
-            'elements': elements,
+            'sequence': self.sequence,
+            'elements': decorated_queryset,
         })
 
         context_urls = {
             'api_enumerated_progress_user_list': reverse(
-                'api_enumerated_progress_user_list', args=(sequence.slug, user.username)),
+                'api_enumerated_progress_user_list', 
+                args=(self.sequence.slug, user.username)),
         }
 
-        if sequence.has_certificate:
+        if self.sequence.has_certificate:
             context_urls['certificate_download'] = reverse(
-                'certificate_download', args=(sequence.slug,))
+                'certificate_download', 
+                args=(self.sequence.slug,))
 
         update_context_urls(context, context_urls)
 
         return context
 
 
-class SequencePageElementView(DetailView):
+class SequencePageElementView(SequenceProgressMixin, TemplateView):
     template_name = 'pages/app/sequences/pageelement.html'
-    context_object_name = 'element'
-
-    def get_object(self, queryset=None):
-        sequence_slug = self.kwargs.get('sequence')
-        rank = self.kwargs.get('rank')
-        sequence = get_object_or_404(Sequence, slug=sequence_slug)
-        return get_object_or_404(EnumeratedElements, sequence=sequence, rank=rank)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        sequence = self.object.sequence
-        user = self.request.user
+        sequence_slug = self.kwargs.get('sequence')
+        self.rank = self.kwargs.get('rank')
+        self.sequence = get_object_or_404(Sequence, slug=sequence_slug)
+
+        queryset = self.get_queryset()
+        decorated_queryset = self.decorate_queryset(queryset)
+        decorated_elements = list(decorated_queryset)
+        element = decorated_elements[0] if decorated_elements else None
 
         previous_element = EnumeratedElements.objects.filter(
-            sequence=sequence, rank__lt=self.object.rank).order_by('-rank').first()
+            sequence=self.sequence, rank__lt=element.rank).order_by('-rank').first()
         next_element = EnumeratedElements.objects.filter(
-            sequence=sequence, rank__gt=self.object.rank).order_by('rank').first()
+            sequence=self.sequence, rank__gt=element.rank).order_by('rank').first()
 
         if previous_element:
-            previous_element.url = reverse('sequence_page_element_view',
-                                           args=(sequence.slug, previous_element.rank))
+            previous_element.url = reverse(
+                'sequence_page_element_view',
+                args=(self.sequence.slug, previous_element.rank))
         if next_element:
-            next_element.url = reverse('sequence_page_element_view',
-                                       args=(sequence.slug, next_element.rank))
-
+            next_element.url = reverse(
+                'sequence_page_element_view',
+                args=(self.sequence.slug, next_element.rank))
         progress = None
         viewing_duration_seconds = 0
+        user = self.request.user
         try:
             sequence_progress = SequenceProgress.objects.get(
-                sequence=sequence, user=user)
+                sequence=self.sequence, user=user)
             progress = EnumeratedProgress.objects.get(
-                progress=sequence_progress, rank=self.object.rank)
+                progress=sequence_progress, rank=element.rank)
             viewing_duration_seconds = progress.viewing_duration.total_seconds() \
                 if progress.viewing_duration else 0
         except (SequenceProgress.DoesNotExist, EnumeratedProgress.DoesNotExist):
             pass
 
         context.update({
-            'sequence': sequence,
+            'sequence': self.sequence,
+            'element': element,
             'previous_element': previous_element,
             'next_element': next_element,
             'ping_interval': settings.PING_INTERVAL,
             'progress': progress,
-            'viewing_duration_seconds': viewing_duration_seconds
+            'viewing_duration_seconds': viewing_duration_seconds,
         })
 
         context_urls = {
             'api_enumerated_progress_list_create': reverse(
                 'api_enumerated_progress_list_create',
-                args=(sequence.slug,)),
+                args=(self.sequence.slug,)),
             'api_enumerated_progress_user_detail': reverse(
                 'api_enumerated_progress_user_detail',
-                args=(sequence.slug, user.username, self.object.rank)),
+                args=(self.sequence.slug, user.username, element.rank)),
             'sequence_progress_view': reverse(
                 'sequence_progress_view',
-                args=(sequence.slug,)),
+                args=(self.sequence.slug,)),
         }
 
-        if self.object.is_live_event:
-            event = self.object.page_element.events.first()
+        if hasattr(element, 'is_live_event') and element.is_live_event:
+            event = element.page_element.events.first()
             if event:
                 context_urls['live_event_location'] = event.location
 
-        if self.object.is_certificate:
-            certificate = sequence.get_certificate
+        if hasattr(element, 'is_certificate') and element.is_certificate:
+            certificate = self.sequence.get_certificate
             if certificate:
                 context_urls['certificate_download'] = reverse(
                     'certificate_download',
-                    args=(sequence.slug,))
+                    args=(self.sequence.slug,))
 
         update_context_urls(context, context_urls)
 

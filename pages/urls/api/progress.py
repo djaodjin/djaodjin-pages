@@ -29,7 +29,7 @@ API URLs for EnumeratedProgress objects
 from ...api.progress import (EnumeratedProgressListCreateAPIView,
   EnumeratedProgressRetrieveDestroyAPIView)
 
-from ...compat import path
+from ...compat import path, re_path
 
 urlpatterns = [
     path('<slug:sequence>',
@@ -38,7 +38,7 @@ urlpatterns = [
     path('<slug:sequence>/<username>',
          EnumeratedProgressListCreateAPIView.as_view(),
          name='api_enumerated_progress_user_list'),
-    path('<slug:sequence>/<username>/<int:rank>',
+    re_path(r'(?P<sequence>[^/]+)/(?P<username>[^/]+)/(?P<rank>-?\d+)',
          EnumeratedProgressRetrieveDestroyAPIView.as_view(),
          name='api_enumerated_progress_user_detail')
 ]
