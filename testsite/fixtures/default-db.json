@@ -1,17 +1,47 @@
 [{
     "fields": {
-      "date_joined": "2012-09-14T14:16:55-09:00",
+      "date_joined": "2024-01-01T00:00:00Z",
       "email": "alice@localhost.localdomain",
       "first_name": "Alice",
       "is_active": true,
       "is_staff": true,
       "is_superuser": true,
-      "last_login": "2012-09-14T14:57:48-09:00",
+      "last_login": "2024-01-01T00:00:00Z",
       "last_name": "Doe",
-      "password": "pbkdf2_sha256$10000$z0MBiWn0Rlem$iZdC6uHomlE07qGK/TqfcfxNzKJtFp03c0JILF1frRc=", 
+      "password": "pbkdf2_sha256$10000$z0MBiWn0Rlem$iZdC6uHomlE07qGK/TqfcfxNzKJtFp03c0JILF1frRc=",
       "username": "alice"
     },
     "model": "auth.User", "pk": 2
+},
+{
+    "fields": {
+      "date_joined": "2024-01-01T00:00:00Z",
+      "email": "alliance@localhost.localdomain",
+      "first_name": "Alliance",
+      "is_active": true,
+      "is_staff": false,
+      "is_superuser": false,
+      "last_login": "2024-01-01T00:00:00Z",
+      "last_name": "Profile",
+      "password": "pbkdf2_sha256$10000$z0MBiWn0Rlem$iZdC6uHomlE07qGK/TqfcfxNzKJtFp03c0JILF1frRc=",
+      "username": "alliance"
+    },
+    "model": "auth.User", "pk": 3
+},
+{
+    "fields": {
+      "date_joined": "2024-01-01T00:00:00Z",
+      "email": "steve@localhost.localdomain",
+      "first_name": "Steve",
+      "is_active": true,
+      "is_staff": false,
+      "is_superuser": false,
+      "last_login": "2024-01-01T00:00:00Z",
+      "last_name": "User",
+      "password": "pbkdf2_sha256$10000$z0MBiWn0Rlem$iZdC6uHomlE07qGK/TqfcfxNzKJtFp03c0JILF1frRc=",
+      "username": "steve"
+    },
+    "model": "auth.User", "pk": 4
 },
 {
   "fields": {
@@ -146,7 +176,7 @@
 {
   "fields": {
     "title": "Sequence with Certificate",
-    "slug": "seq-cert",
+    "slug": "ghg-accounting-training",
     "account": 2,
     "has_certificate": true,
     "created_at": "2023-01-02T00:00:00Z"
@@ -181,21 +211,10 @@
     "model": "pages.EnumeratedElements",   "pk": 106
 },
 {
-    "fields": {
-      "element": 107,
-      "created_at": "2023-03-15T10:00:00Z",
-      "scheduled_at": "2023-04-10T15:00:00Z",
-      "location": "http://127.0.0.1:8000/webinar/sustainability",
-      "max_attendees": 100,
-      "extra": "{}"
-    },
-    "model": "pages.LiveEvent", "pk": 200
-},
-{
   "fields": {
     "title": "Sequence with Certificate And Live Event",
-    "slug": "seq-cert-live_event",
-    "account": 2,
+    "slug": "seq-cert-live-event",
+    "account": 3,
     "has_certificate": true,
     "created_at": "2023-01-03T00:00:00Z"
   },
@@ -209,6 +228,17 @@
     "min_viewing_duration": "00:00:10"
   },
     "model": "pages.EnumeratedElements", "pk": 107
+},
+{
+    "fields": {
+      "element": 100,
+      "created_at": "2023-03-15T10:00:00Z",
+      "scheduled_at": "2023-04-10T15:00:00Z",
+      "location": "http://127.0.0.1:8000/webinar/sustainability",
+      "max_attendees": 100,
+      "extra": "{}"
+    },
+    "model": "pages.LiveEvent", "pk": 200
 },
 {
   "fields": {

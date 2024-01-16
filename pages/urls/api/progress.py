@@ -1,4 +1,4 @@
-# Copyright (c) 2022, DjaoDjin inc.
+# Copyright (c) 2024, DjaoDjin inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -26,19 +26,16 @@
 API URLs for EnumeratedProgress objects
 """
 
-from ...api.progress import (EnumeratedProgressListCreateAPIView,
-  EnumeratedProgressRetrieveDestroyAPIView)
+from ...api.progress import (EnumeratedProgressListAPIView,
+  EnumeratedProgressRetrieveAPIView)
 
-from ...compat import path, re_path
+from ...compat import path
 
 urlpatterns = [
-    path('<slug:sequence>',
-         EnumeratedProgressListCreateAPIView.as_view(),
-         name='api_enumerated_progress_list_create'),
-    path('<slug:sequence>/<username>',
-         EnumeratedProgressListCreateAPIView.as_view(),
+    path('<slug:user>/<slug:sequence>',
+         EnumeratedProgressListAPIView.as_view(),
          name='api_enumerated_progress_user_list'),
-    re_path(r'(?P<sequence>[^/]+)/(?P<username>[^/]+)/(?P<rank>-?\d+)',
-         EnumeratedProgressRetrieveDestroyAPIView.as_view(),
+    path('<slug:user>/<slug:sequence>/<int:rank>',
+         EnumeratedProgressRetrieveAPIView.as_view(),
          name='api_enumerated_progress_user_detail')
 ]

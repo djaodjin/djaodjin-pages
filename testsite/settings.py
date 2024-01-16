@@ -261,3 +261,8 @@ INTERNAL_IPS = ('127.0.0.1', '::1')
 # --------------
 LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = '/app/energy-utility/'
+
+
+PAGES = {
+    'ACCOUNT_URL_KWARG': 'profile'
+}

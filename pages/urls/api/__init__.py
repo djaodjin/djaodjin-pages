@@ -1,4 +1,4 @@
-# Copyright (c) 2023, DjaoDjin inc.
+# Copyright (c) 2024, DjaoDjin inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -24,19 +24,19 @@
 
 '''API URLs for the pages application'''
 
-from ...api.elements import (PageElementEditableListAPIView,
-    PageElementIndexAPIView)
+from ...api.elements import PageElementIndexAPIView
+from ...api.sequences import SequencesIndexAPIView
 from ...compat import include, path
 
 urlpatterns = [
-    path('content/editables/', include('pages.urls.api.editables')),
-    path('content/editables', PageElementEditableListAPIView.as_view(),
-        name='pages_api_editables_index'),
+    path('editables/', include('pages.urls.api.editables')),
+    path('attendance/', include('pages.urls.api.sequences')),
     path('content/', include('pages.urls.api.readers')),
     path('content/', include('pages.urls.api.noauth')),
     path('content', PageElementIndexAPIView.as_view(),
         name="api_content_index"),
-    path('', include('pages.urls.api.sequences')),
     path('progress/', include('pages.urls.api.progress')),
-    # path('', include('pages.urls.api.assets'))
+    path('sequences', SequencesIndexAPIView.as_view(),
+         name='api_sequences_index'),
+    path('', include('pages.urls.api.assets'))
 ]

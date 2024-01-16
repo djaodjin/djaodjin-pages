@@ -1,4 +1,4 @@
-# Copyright (c) 2023, Djaodjin Inc.
+# Copyright (c) 2024, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -24,180 +24,178 @@
 
 from datetime import timedelta
 
-from django.utils import timezone
-
+from deployutils.helpers import datetime_or_now
+from django.db import transaction
 from rest_framework import response as api_response, status
-from rest_framework.generics import (ListCreateAPIView,
-    RetrieveDestroyAPIView)
+from rest_framework.generics import (get_object_or_404, DestroyAPIView,
+    ListAPIView, RetrieveAPIView)
 
-from ..models import EnumeratedProgress
-from ..serializers import (EnumeratedProgressSerializer,
-    EnumeratedProgressCreateSerializer, EnumeratedProgressPingSerializer)
 from .. import settings
+from ..docs import extend_schema
+from ..mixins import SequenceProgressMixin
+from ..models import (EnumeratedElements, EnumeratedProgress, SequenceProgress,
+    LiveEvent)
+from ..serializers import (EnumeratedProgressSerializer,
+    AttendanceInputSerializer)
 
 
-class EnumeratedProgressListCreateAPIView(ListCreateAPIView):
+class EnumeratedProgressListAPIView(SequenceProgressMixin, ListAPIView):
+    """
+    Lists progress for a user on a sequence
 
-    def get_serializer_class(self):
-        if self.request.method == 'POST':
-            return EnumeratedProgressCreateSerializer
-        return EnumeratedProgressSerializer
+    **Tags**: content, progress
+
+    **Example**
+
+    .. code-block:: http
+
+         GET /api/progress/steve/ghg-accounting-training HTTP/1.1
+
+    responds
+
+    .. code-block:: json
+
+        {
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "created_at": "2020-09-28T00:00:00.0000Z",
+              "rank": 1,
+              "viewing_duration": "00:00:00"
+            }
+          ]
+        }
+    """
+    serializer_class = EnumeratedProgressSerializer
 
     def get_queryset(self):
-        sequence = self.kwargs.get('sequence')
-        username = self.kwargs.get('username')
-        queryset = EnumeratedProgress.objects.filter(
-            progress__sequence__slug=sequence).order_by('rank')
-        if username:
-            queryset = queryset.filter(progress__user__username=username)
+        # Implementation Note:
+        # Couldn't figure out how to return all EnumeratedElements for
+        # a sequence annotated with the viewing_duration for a specific user.
+        queryset = EnumeratedElements.objects.raw(
+"""
+WITH progresses AS (
+SELECT * FROM pages_enumeratedprogress
+INNER JOIN pages_sequenceprogress
+ON pages_enumeratedprogress.sequence_progress_id = pages_sequenceprogress.id
+WHERE pages_sequenceprogress.user_id = %(user_id)d
+)
+SELECT *
+FROM pages_enumeratedelements
+LEFT OUTER JOIN progresses
+ON pages_enumeratedelements.id = progresses.progress_id
+WHERE pages_enumeratedelements.sequence_id = %(sequence_id)d
+""" % {
+    'user_id': self.user.pk,
+    'sequence_id': self.sequence.pk
+})
         return queryset
 
-    def get(self, request, *args, **kwargs):
-        """
-        Lists EnumeratedProgress for a Sequence or a user within a Sequence
-
-        **Tags**: Progress
-
-        **Example**
-
-        .. code-block:: http
-
-             GET /api/progress/educational-sequence/alice HTTP/1.1
-
-        responds
-
-        .. code-block:: json
-
-            {
-              "count": 1,
-              "next": null,
-              "previous": null,
-              "results": [
-                {
-                  "created_at": "2020-09-28T00:00:00.0000Z",
-                  "rank": 1,
-                  "viewing_duration": "00:00:00"
-                }
-              ]
-            }
-        """
-        return super(EnumeratedProgressListCreateAPIView, self).list(
-            request, *args, **kwargs)
-
-    def post(self, request, *args, **kwargs):
-        """
-        Creates an EnumeratedProgress for a user on a Sequence
-
-        **Examples**
-
-        .. code-block:: http
-
-            POST /api/progress/educational-sequence HTTP/1.1
-
-        .. code-block:: json
-
-            {
-                "sequence_slug": "educational-sequence",
-                "username": "alice",
-                "rank": 2,
-                "viewing_duration": null,
-            }
-
-        responds
-
-        .. code-block:: json
-
-            {
-                "sequence_slug": "educational-sequence",
-                "username": "alice",
-                "rank": 2,
-                "viewing_duration": "00:00:00"
-            }
-        """
-        return super(EnumeratedProgressListCreateAPIView, self).create(
-            request, *args, **kwargs)
+    def paginate_queryset(self, queryset):
+        page = super(
+            EnumeratedProgressListAPIView, self).paginate_queryset(queryset)
+        results = page if page else queryset
+        for elem in results:
+            if elem.viewing_duration:
+                elem.viewing_duration = timedelta(
+                    microseconds=elem.viewing_duration)
+        return results
 
 
-class EnumeratedProgressRetrieveDestroyAPIView(RetrieveDestroyAPIView):
+class EnumeratedProgressResetAPIView(SequenceProgressMixin, DestroyAPIView):
+    """
+    Resets a user's progress on a sequence
 
+    **Tags**: editors, progress
+
+    **Example**
+
+    .. code-block:: http
+
+         DELETE /api/attendance/alliance/ghg-accounting-training/steve HTTP/1.1
+
+    responds
+
+         204 No Content
+    """
+    def delete(self, request, *args, **kwargs):
+        EnumeratedProgress.objects.filter(
+            sequence_progress__user=self.user,
+            progress__sequence=self.sequence).delete()
+        return api_response.Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class EnumeratedProgressRetrieveAPIView(SequenceProgressMixin,
+                                        RetrieveAPIView):
+    """
+    Retrieves viewing time for an element
+
+    **Tags**: content, progress
+
+    **Examples**
+
+    .. code-block:: http
+
+        GET /api/progress/steve/ghg-accounting-training/1 HTTP/1.1
+
+    responds
+
+    .. code-block:: json
+
+        {
+            "created_at": "2020-09-28T00:00:00.0000Z",
+            "rank": 1,
+            "viewing_duration": "00:00:00"
+        }
+    """
     serializer_class = EnumeratedProgressSerializer
     lookup_url_kwarg = 'rank'
     lookup_field = 'rank'
 
-    def get_queryset(self):
-        sequence = self.kwargs.get('sequence')
-        username = self.kwargs.get('username')
-        return EnumeratedProgress.objects.filter(
-            progress__user__username=username,
-            progress__sequence__slug=sequence)
+    def get_object(self):
+        progress = get_object_or_404(EnumeratedElements.objects.all(),
+            sequence=self.sequence,
+            rank=self.kwargs.get(self.lookup_url_kwarg, 1))
+        with transaction.atomic():
+            sequence_progress, _ = SequenceProgress.objects.get_or_create(
+                sequence=self.sequence, user=self.user)
+            instance, _  = EnumeratedProgress.objects.get_or_create(
+                sequence_progress=sequence_progress,
+                progress=progress)
+        # We are using a derivative of `EnumeratedElementsSerializer`
+        # to return an `EnumeratedProgress` instance.
+        instance.page_element = progress.page_element
+        instance.rank = progress.rank
+        instance.min_viewing_duration = progress.min_viewing_duration
+        return instance
 
-    def get(self, request, *args, **kwargs):
-        """
-        Retrieves an EnumeratedProgress instance.
-
-        **Tags**: Progress
-
-        **Examples**
-
-        .. code-block:: http
-
-            GET /api/progress/educational-sequence/alice/1 HTTP/1.1
-
-        responds
-
-        .. code-block:: json
-
-            {
-                "created_at": "2020-09-28T00:00:00.0000Z",
-                "rank": 1,
-                "viewing_duration": "00:00:00"
-            }
-        """
-        return super(EnumeratedProgressRetrieveDestroyAPIView, self).retrieve(
-            request, *args, **kwargs)
-
-    def delete(self, request, *args, **kwargs):
-        """
-        Deletes a specific EnumeratedProgress instance.
-
-        **Tags**: Progress
-
-        **Examples**
-
-        .. code-block:: http
-
-            DELETE /api/progress/educational-sequence/alice/1 HTTP/1.1
-
-        """
-        return super(EnumeratedProgressRetrieveDestroyAPIView, self).destroy(
-            request, *args, **kwargs)
-
+    @extend_schema(request=None)
     def post(self, request, *args, **kwargs):
         """
-        Updates the viewing duration of a EnumeratedProgress instance.
+        Updates viewing time for an element
 
-        **Tags**: Progress, Viewing Durattion
+        **Tags**: content, progress
 
         **Examples**
 
         .. code-block:: http
 
-            POST /api/progress/educational-sequence/alice/1 HTTP/1.1
+            POST /api/progress/steve/ghg-accounting-training/1 HTTP/1.1
 
         responds
 
         .. code-block:: json
 
             {
-                "created_at": "2020-09-28T00:00:00.0000Z",
                 "rank": 1,
-                "viewing_duration": "00:00:56.000000",
-                "last_ping_time": "2020-09-28T00:10:00.0000Z"
+                "created_at": "2020-09-28T00:00:00.0000Z",
+                "viewing_duration": "00:00:56.000000"
             }
         """
-
         instance = self.get_object()
-        now = timezone.now()
+        now = datetime_or_now()
 
         if instance.last_ping_time:
             time_elapsed = now - instance.last_ping_time
@@ -212,5 +210,78 @@ class EnumeratedProgressRetrieveDestroyAPIView(RetrieveDestroyAPIView):
         instance.save()
 
         status_code = status.HTTP_200_OK
-        serializer = EnumeratedProgressPingSerializer(instance)
+        serializer = self.get_serializer(instance)
         return api_response.Response(serializer.data, status=status_code)
+
+
+class LiveEventAttendanceAPIView(EnumeratedProgressRetrieveAPIView):
+    """
+    Retrieves attendance to live event
+
+    **Tags**: content, progress
+
+    **Examples**
+
+    .. code-block:: http
+
+        GET /api/attendance/alliance/ghg-accounting-training/1/steve HTTP/1.1
+
+    responds
+
+    .. code-block:: json
+
+        {
+            "created_at": "2020-09-28T00:00:00.0000Z",
+            "rank": 1,
+            "viewing_duration": "00:00:00"
+        }
+    """
+    rank_url_kwarg = 'rank'
+
+    def get_serializer_class(self):
+        if self.request.method.lower() == 'post':
+            return AttendanceInputSerializer
+        return super(LiveEventAttendanceAPIView, self).get_serializer_class()
+
+    def post(self, request, *args, **kwargs):
+        """
+        Marks a user's attendance to a live event
+
+        Indicates that a user attended a live event, hence fullfilling
+        the requirements for the element of the sequence.
+
+        **Tags**: editors, live-events, attendance
+
+        **Example**
+
+        .. code-block:: http
+
+            POST /api/attendance/alliance/ghg-accounting-training/1/steve HTTP/1.1
+
+        responds
+
+        .. code-block:: json
+
+            {
+                "detail": "Attendance marked successfully"
+            }
+        """
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        progress = self.get_object()
+        element = progress.progress
+        page_element = element.page_element
+        live_event = LiveEvent.objects.filter(element=page_element).first()
+
+        # We use if live_event to confirm the existence of the LiveEvent object
+        if (live_event and
+            progress.viewing_duration <= element.min_viewing_duration):
+            progress.viewing_duration = element.min_viewing_duration
+            progress.save()
+            return api_response.Response(
+                {'detail': 'Attendance marked successfully'},
+                status=status.HTTP_200_OK)
+        return api_response.Response(
+            {'detail': 'Attendance not marked'},
+            status=status.HTTP_400_BAD_REQUEST)

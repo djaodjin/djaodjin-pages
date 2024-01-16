@@ -1,4 +1,4 @@
-# Copyright (c) 2022, DjaoDjin inc.
+# Copyright (c) 2024, DjaoDjin inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -26,16 +26,16 @@
 API URLs for readers who could be unauthenticated
 """
 from ... import settings
-from ...compat import path, re_path
+from ...compat import path
 from ...api.elements import (PageElementSearchAPIView, PageElementAPIView,
-  PageElementIndexAPIView, PageElementDetailAPIView)
+  PageElementDetailAPIView)
 
 urlpatterns = [
     path('search',
         PageElementSearchAPIView.as_view(), name='api_page_element_search'),
-    re_path(r'detail/(?P<path>%s)$' % settings.PATH_RE,
+    path(r'detail/<path:path>',
         PageElementDetailAPIView.as_view(),
         name='pages_api_pageelement'),
-    re_path(r'(?P<path>%s)$' % settings.PATH_RE,
+    path('<path:path>',
         PageElementAPIView.as_view(), name="api_content"),
 ]

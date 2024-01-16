@@ -1,4 +1,4 @@
-# Copyright (c) 2023, Djaodjin Inc.
+# Copyright (c) 2024, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -27,19 +27,15 @@ import json, markdown
 
 import bleach
 from rest_framework import serializers
-from django.contrib.auth import get_user_model
-from django.db import transaction
-from django.shortcuts import get_object_or_404
 
 
 from . import settings
 from .compat import gettext_lazy as _, is_authenticated
-from .models import (Comment, Follow, PageElement, Vote,
-                     Sequence, EnumeratedElements, EnumeratedProgress,
-                     SequenceProgress)
+from .models import (Comment, Follow, PageElement, Vote, Sequence,
+    EnumeratedElements)
 from .utils import get_account_model
 
-#pylint: disable=no-init,abstract-method
+#pylint: disable=abstract-method
 
 
 class HTMLField(serializers.CharField):
@@ -178,12 +174,25 @@ class NodeElementSerializer(serializers.ModelSerializer):
         return "/%s" % obj.slug
 
 
+class NodeElementCreateSerializer(NodeElementSerializer):
+    """
+    Serializer to create a PageElement as a node in a content tree
+    """
+    title = serializers.CharField(required=True,
+        help_text=_("Title of the page element"))
+
+    class Meta(NodeElementSerializer.Meta):
+        """
+        """
+
+
 class PageElementSerializer(serializers.ModelSerializer):
     """
     Serializes a PageElement.
     """
 
-    path = serializers.SerializerMethodField()
+    path = serializers.SerializerMethodField(
+        help_text=_("path from the root of content tree"))
     slug = serializers.SlugField(required=False,
         help_text=_("Unique identifier that can be used in URL paths"))
     account = serializers.SlugRelatedField(read_only=True, required=False,
@@ -201,10 +210,14 @@ class PageElementSerializer(serializers.ModelSerializer):
     html_formatted = serializers.SerializerMethodField()
     extra = serializers.SerializerMethodField(required=False, allow_null=True,
         help_text=_("Extra meta data (can be stringify JSON)"))
-    nb_upvotes = serializers.IntegerField(required=False)
-    nb_followers = serializers.IntegerField(required=False)
-    upvote = serializers.SerializerMethodField(required=False, allow_null=True)
-    follow = serializers.SerializerMethodField(required=False, allow_null=True)
+    nb_upvotes = serializers.IntegerField(required=False,
+        help_text=_("Number of times the content has been upvoted"))
+    nb_followers = serializers.IntegerField(required=False,
+        help_text=_("Number of followers notified when content is updated"))
+    upvote = serializers.SerializerMethodField(required=False, allow_null=True,
+        help_text=_("Set to true when the request user upvoted the content"))
+    follow = serializers.SerializerMethodField(required=False, allow_null=True,
+        help_text=_("Set to true when the request user follows the content"))
     count = serializers.IntegerField(required=False)
     results = serializers.ListField(required=False,
         child=NodeElementSerializer())
@@ -319,17 +332,15 @@ class SequenceSerializer(serializers.ModelSerializer):
     """
     Serializes a Sequence object
     """
-    elements = serializers.SerializerMethodField()
-    account = serializers.SlugRelatedField(
-        queryset=get_account_model().objects.all(),
+    account = serializers.SlugRelatedField(required=False, read_only=True,
         slug_field=settings.ACCOUNT_LOOKUP_FIELD,
-        help_text=_("Account the sequence belongs to"),
-        required=False)
+        help_text=_("Account that can edit the sequence"))
 
     class Meta:
         model = Sequence
-        fields = (('created_at', 'slug', 'title', 'account', 'has_certificate',
-                   'extra') + ('elements',))
+        fields = ('created_at', 'slug', 'title', 'account', 'has_certificate',
+                   'extra')
+        read_only_fields = ('created_at', 'account',)
 
     @staticmethod
     def get_elements(obj):
@@ -338,54 +349,32 @@ class SequenceSerializer(serializers.ModelSerializer):
             many=True).data
 
 
-class EnumeratedProgressSerializer(serializers.ModelSerializer):
+class SequenceCreateSerializer(SequenceSerializer):
+    """
+    Serializer to create a `Sequence`
+    """
+    slug = serializers.SlugField(required=False,
+        help_text=_("Unique identifier for the sequence"))
+    title = serializers.CharField(required=True,
+        help_text=_("Title of the sequence"))
+
+    class Meta(SequenceSerializer.Meta):
+        """
+        """
+
+
+class EnumeratedProgressSerializer(EnumeratedElementSerializer):
     """
     Serializes a EnumeratedProgress object
     """
-    class Meta:
-        model = EnumeratedProgress
-        fields = ('created_at', 'rank', 'viewing_duration')
+    viewing_duration = serializers.DurationField(
+        help_text=_("Time spent by the user on the material (in hh:mm:ss)"))
 
-
-class EnumeratedProgressCreateSerializer(serializers.ModelSerializer):
-    sequence_slug = serializers.SlugRelatedField(
-        slug_field='slug',
-        queryset=Sequence.objects.all(),
-        source='progress.sequence')
-    username = serializers.SlugRelatedField(
-        slug_field='username',
-        queryset=get_user_model().objects.all(),
-        source='progress.user')
-    viewing_duration = serializers.DurationField(required=False)
-
-    class Meta:
-        model = EnumeratedProgress
-        fields = ['sequence_slug', 'username', 'rank', 'viewing_duration']
-
-    def create(self, validated_data):
-        progress_data = validated_data.pop('progress')
-        sequence = Sequence.objects.get(
-            slug=progress_data['sequence'])
-        user = get_user_model().objects.get(
-            username=progress_data['user'])
-        with transaction.atomic():
-            progress, created = SequenceProgress.objects.get_or_create(
-                sequence=sequence,
-                user=user)
-            enumerated_progress = EnumeratedProgress.objects.create(
-                progress=progress,
-                **validated_data)
-        return enumerated_progress
-
-
-class EnumeratedProgressPingSerializer(serializers.ModelSerializer):
-    """
-    Serializes a EnumeratedProgress object to update its last_ping_time
-    """
-    class Meta:
-        model = EnumeratedProgress
-        fields = ('created_at', 'rank', 'viewing_duration', 'last_ping_time')
-        read_only_fields = ('rank',)
+    class Meta(EnumeratedElementSerializer.Meta):
+        fields =  EnumeratedElementSerializer.Meta.fields + (
+            'viewing_duration',)
+        read_only_fields = ('page_element', 'rank', 'min_viewing_duration',
+            'certificate', 'viewing_duration',)
 
 
 class AttendanceInputSerializer(serializers.Serializer):
@@ -393,12 +382,3 @@ class AttendanceInputSerializer(serializers.Serializer):
     Serializer to validate input to mark users' attendance
     to a LiveEvent(LiveEventAttendanceAPIView)
     """
-    sequence = serializers.SlugField()
-    username = serializers.CharField()
-    rank = serializers.IntegerField()
-
-    def validate_sequence(self, value):
-        return get_object_or_404(Sequence, slug=value)
-
-    def validate_username(self, value):
-        return get_object_or_404(get_user_model(), username=value)

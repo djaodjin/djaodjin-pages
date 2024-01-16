@@ -21,26 +21,46 @@
 # WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+"""
+API URLs for editing content
+"""
 
-'''API URLs for the pages application'''
-
-from ...import settings
-from ...compat import path, re_path
-from ...api.elements import PageElementEditableDetail, ImportDocxView
+from ...compat import path
+from ...api.elements import (ImportDocxView, PageElementEditableDetail,
+    PageElementEditableListAPIView)
 from ...api.relationship import (PageElementAliasAPIView,
     PageElementMirrorAPIView, PageElementMoveAPIView, RelationShipListAPIView)
+from ...api.sequences import (SequenceListCreateAPIView,
+    SequenceRetrieveUpdateDestroyAPIView,
+    RemoveElementFromSequenceAPIView, AddElementToSequenceAPIView)
 
 
 urlpatterns = [
-    path('import-docx', ImportDocxView.as_view(), name='import_docx'),
-    path('relationship',
+    path(r'sequences/<slug:sequence>/elements/<int:rank>',
+         RemoveElementFromSequenceAPIView.as_view(),
+         name='api_remove_element_from_sequence'),
+    path('sequences/<slug:sequence>/elements',
+         AddElementToSequenceAPIView.as_view(),
+         name='api_add_element_to_sequence'),
+    path('sequences/<slug:sequence>',
+         SequenceRetrieveUpdateDestroyAPIView.as_view(),
+         name='api_sequence_retrieve_update_destroy'),
+    path('sequences',
+         SequenceListCreateAPIView.as_view(),
+         name='api_sequence_list_create'),
+
+    path('content/relationship',
         RelationShipListAPIView.as_view(), name='relationships'),
-    re_path(r'^alias/(?P<path>%s)$' % settings.PATH_RE,
+    path('content/alias/<path:path>',
         PageElementAliasAPIView.as_view(), name='pages_api_alias_node'),
-    re_path(r'^attach/(?P<path>%s)$' % settings.PATH_RE,
+    path('content/attach/<path:path>',
         PageElementMoveAPIView.as_view(), name='pages_api_move_node'),
-    re_path(r'^mirror/(?P<path>%s)$' % settings.PATH_RE,
+    path('content/mirror/<path:path>',
         PageElementMirrorAPIView.as_view(), name='pages_api_mirror_node'),
-    re_path(r'^(?P<path>%s)$' % settings.NON_EMPTY_PATH_RE,
+    path('content/<path:path>/import',
+         ImportDocxView.as_view(), name='import_docx'),
+    path('content/<path:path>',
         PageElementEditableDetail.as_view(), name='pages_api_edit_element'),
+    path('content', PageElementEditableListAPIView.as_view(),
+        name='pages_api_editables_index'),
 ]

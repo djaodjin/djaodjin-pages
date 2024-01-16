@@ -1,4 +1,4 @@
-# Copyright (c) 2022, Djaodjin Inc.
+# Copyright (c) 2024, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -22,10 +22,10 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from ..compat import include, re_path
+from ..compat import include, path
 
 
 urlpatterns = [
-    re_path(r'^api/', include('pages.urls.api')),
-    re_path(r'^', include('pages.urls.views')),
+    path(r'api/', include('pages.urls.api')),
+    path(r'', include('pages.urls.views')),
 ]

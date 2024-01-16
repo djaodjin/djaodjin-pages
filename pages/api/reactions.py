@@ -189,7 +189,7 @@ class CommentListCreateAPIView(PageElementMixin, generics.ListCreateAPIView):
 
     def get_queryset(self):
         return Comment.objects.filter(
-            element=self.element).select_related('user')
+            element=self.element).select_related('user').order_by('created_at')
 
     def get(self, request, *args, **kwargs):
         """

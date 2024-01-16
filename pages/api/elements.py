@@ -1,4 +1,4 @@
-# Copyright (c) 2023, Djaodjin Inc.
+# Copyright (c) 2024, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -26,8 +26,8 @@ import logging
 import re
 from io import BytesIO
 
+import mammoth, requests
 from bs4 import BeautifulSoup
-from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import (SimpleUploadedFile,
     TemporaryUploadedFile)
 from django.db import transaction
@@ -39,18 +39,18 @@ from rest_framework import (generics, response as api_response,
 from rest_framework.exceptions import ValidationError
 from rest_framework.filters import OrderingFilter, SearchFilter
 from rest_framework.mixins import CreateModelMixin
-from rest_framework.views import APIView
 from rest_framework.request import Request
 
-import mammoth
-import requests
-from ..compat import reverse
+from .. import settings
+from ..docs import extend_schema
+from ..compat import reverse, gettext_lazy as _
 from ..helpers import ContentCut, get_extra
 from ..mixins import AccountMixin, PageElementMixin, TrailMixin
 from ..models import (PageElement, RelationShip, build_content_tree,
     flatten_content_tree)
 from ..serializers import (AssetSerializer, NodeElementSerializer,
-    PageElementSerializer, PageElementTagSerializer)
+    NodeElementCreateSerializer, PageElementSerializer,
+    PageElementTagSerializer)
 from ..utils import validate_title
 from .assets import process_upload
 
@@ -60,6 +60,9 @@ LOGGER = logging.getLogger(__name__)
 class PageElementAPIView(TrailMixin, generics.ListAPIView):
     """
     Lists tree of page elements matching prefix
+
+    Returns a flat list of page elements starting with a prefix. The `indent`
+    field is used to indicate the level of the element in the tree.
 
     **Tags: content
 
@@ -111,7 +114,6 @@ class PageElementAPIView(TrailMixin, generics.ListAPIView):
         return None
 
     def attach(self, elements):
-        #pylint:disable=no-self-use
         return elements
 
     def get_cut(self):
@@ -173,7 +175,7 @@ class PageElementIndexAPIView(PageElementAPIView):
 
     .. code-block:: http
 
-        GET /api/content/ HTTP/1.1
+        GET /api/content HTTP/1.1
 
     responds
 
@@ -205,12 +207,18 @@ class PageElementIndexAPIView(PageElementAPIView):
           ]
         }
     """
-    pass
+
+    @extend_schema(operation_id='content_index')
+    def get(self, request, *args, **kwargs):
+        return super(PageElementIndexAPIView, self).get(
+            request, *args, **kwargs)
 
 
 class PageElementSearchAPIView(PageElementAPIView):
     """
     Searches page elements
+
+    Returns a list of page elements whose title matches a search criteria.
 
     **Tags: content
 
@@ -236,6 +244,11 @@ class PageElementSearchAPIView(PageElementAPIView):
         }
     """
 
+    @extend_schema(operation_id='content_search')
+    def get(self, request, *args, **kwargs):
+        return super(PageElementSearchAPIView, self).get(
+            request, *args, **kwargs)
+
     def get_results(self):
         results = []
         for item in super(PageElementSearchAPIView, self).get_results():
@@ -245,22 +258,6 @@ class PageElementSearchAPIView(PageElementAPIView):
                 if searchable:
                     results += [item]
         return results
-
-    def get_queryset(self):
-        # XXX This code is actually not triggered because of inheritance
-        # from `PageElementAPIView`.
-        try:
-            queryset = PageElement.objects.filter(account=self.account)
-            search_string = self.request.query_params.get('q', None)
-            if search_string is not None:
-                validate_title(search_string)
-                queryset = queryset.filter(
-                    Q(extra__icontains=search_string)
-                    | Q(title__icontains=search_string))
-                return queryset
-        except ValidationError:
-            pass
-        return []
 
 
 class PageElementDetailAPIView(TrailMixin, generics.RetrieveAPIView):
@@ -308,7 +305,7 @@ class PageElementEditableListAPIView(AccountMixin, TrailMixin,
 
     .. code-block:: http
 
-        GET /api/content/editables/energy-utility/ HTTP/1.1
+        GET /api/editables/alliance/content HTTP/1.1
 
     responds
 
@@ -375,6 +372,13 @@ class PageElementEditableListAPIView(AccountMixin, TrailMixin,
 
     filter_backends = (SearchFilter, OrderingFilter,)
 
+    def get_serializer_class(self):
+        if self.request.method.lower() == 'post':
+            return NodeElementCreateSerializer
+        return super(PageElementEditableListAPIView,
+            self).get_serializer_class()
+
+
     def get_queryset(self):
         """
         Returns a list of heading and best practices
@@ -395,6 +399,7 @@ class PageElementEditableListAPIView(AccountMixin, TrailMixin,
             pass
         return queryset
 
+    @extend_schema(operation_id='editables_content_create')
     def post(self, request, *args, **kwargs):
         """
         Creates a page element
@@ -405,7 +410,7 @@ class PageElementEditableListAPIView(AccountMixin, TrailMixin,
 
         .. code-block:: http
 
-            POST /api/content/editables HTTP/1.1
+            POST /api/editables/alliance/content HTTP/1.1
 
         .. code-block:: json
 
@@ -442,7 +447,7 @@ class PageElementEditableDetail(AccountMixin, TrailMixin, CreateModelMixin,
 
     .. code-block:: http
 
-        GET /api/content/editables/boxes-enclosures/ HTTP/1.1
+        GET /api/editables/alliance/content/boxes-enclosures HTTP/1.1
 
     responds
 
@@ -470,7 +475,7 @@ class PageElementEditableDetail(AccountMixin, TrailMixin, CreateModelMixin,
 
         .. code-block:: http
 
-            DELETE /api/content/editables/boxes-enclosures/ HTTP/1.1
+            DELETE /api/editables/alliance/content/boxes-enclosures/ HTTP/1.1
         """
         #pylint:disable=useless-super-delegation
         return super(PageElementEditableDetail, self).delete(
@@ -486,7 +491,7 @@ class PageElementEditableDetail(AccountMixin, TrailMixin, CreateModelMixin,
 
         .. code-block:: http
 
-            POST /api/content/editables/boxes-enclosures/ HTTP/1.1
+            POST /api/editables/alliance/content/boxes-enclosures/ HTTP/1.1
 
         .. code-block:: json
 
@@ -518,7 +523,7 @@ class PageElementEditableDetail(AccountMixin, TrailMixin, CreateModelMixin,
 
         .. code-block:: http
 
-            PUT /api/content/editables/boxes-enclosures/ HTTP/1.1
+            PUT /api/editables/alliance/content/boxes-enclosures/ HTTP/1.1
 
         .. code-block:: json
 
@@ -580,7 +585,7 @@ class PageElementAddTags(AccountMixin, PageElementMixin,
 
     .. code-block:: http
 
-        PUT /api/content/editables/boxes-and-enclosures/add-tags/ HTTP/1.1
+        PUT /api/editables/alliance/content/boxes-and-enclosures/add-tags HTTP/1.1
 
     .. code-block:: json
 
@@ -625,7 +630,7 @@ class PageElementRemoveTags(AccountMixin, PageElementMixin,
 
     .. code-block:: http
 
-        PUT /api/content/editables/boxes-and-enclosures/remove-tags/ HTTP/1.1
+        PUT /api/editables/alliance/content/boxes-and-enclosures/remove-tags HTTP/1.1
 
     .. code-block:: json
 
@@ -660,11 +665,37 @@ class PageElementRemoveTags(AccountMixin, PageElementMixin,
         serializer.instance.extra = ','.join(curr_tags)
         serializer.instance.save()
 
-class ImportDocxView(AccountMixin, APIView):
+
+class ImportDocxView(AccountMixin, PageElementMixin, generics.GenericAPIView):
     """
-    Imports content from a .docx file and update a page element's text
-    with the imported content.
+    Imports a .docx file's content into a PageElement's
+    text field.
+
+    **Tags**: editors
+
+    **Example
+
+    .. code-block:: http
+
+        POST /api/editables/alliance/content/boxes-and-enclosures/import HTTP/1.1
+
+    .. code-block:: json
+
+        {
+            "docx_location": "http://example.com/document.docx",
+            "content_format": "MD"
+        }
+
+    responds
+
+    .. code-block:: json
+
+        {
+            "slug": "boxes-enclosures",
+            "text": "Hello"
+        }
     """
+    serializer_class = PageElementSerializer
 
     def upload_image(self, request):
         """
@@ -680,6 +711,8 @@ class ImportDocxView(AccountMixin, APIView):
         response_data, response_status = process_upload(
             request, self.account, location, is_public_asset,
             store_hash, replace_stored, content_type)
+        if response_status not in [200, 201]:
+            raise ValidationError({'detail': _("error uploading asset")})
 
         return AssetSerializer().to_representation(response_data)['location']
 
@@ -689,13 +722,14 @@ class ImportDocxView(AccountMixin, APIView):
         """
         image_data = img_tag["src"]
         if not image_data.startswith("data:image"):
-            return
+            return None
 
         img_info, encoded = image_data.split(",", 1)
         image_bytes = base64.b64decode(encoded)
         content_type = img_info.split(";")[0].split(":")[1]
 
-        image_stream = SimpleUploadedFile("image.jpg", image_bytes, content_type)
+        image_stream = SimpleUploadedFile("image.jpg", image_bytes,
+            content_type)
 
         # Make a mutable copy of the request data
         if isinstance(original_request.data, QueryDict):
@@ -706,7 +740,9 @@ class ImportDocxView(AccountMixin, APIView):
         mutable_data['file'] = image_stream
 
         # Create a new request object with the modified data
-        new_request = Request(original_request._request, parsers=original_request.parsers)
+        #pylint:disable=protected-access
+        new_request = Request(original_request._request,
+            parsers=original_request.parsers)
         new_request._full_data = mutable_data
         new_request._data = mutable_data
         new_request._files = original_request._files
@@ -718,6 +754,7 @@ class ImportDocxView(AccountMixin, APIView):
             new_request._authenticator = original_request.authenticator
 
         return self.upload_image(new_request)
+
 
     def extract_and_upload_images(self, html, original_request):
         """
@@ -732,47 +769,24 @@ class ImportDocxView(AccountMixin, APIView):
         return str(soup)
 
     def post(self, request, *args, **kwargs):
-        """
-        Imports a .docx file's content into a PageElement's
-        text field.
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        docx_location = serializer.validated_data.get("docx_location")
+        content_format = serializer.validated_data.get("content_format", "MD")
 
-        **Example
-
-        .. code-block:: http
-
-            POST /api/content/editables/import-docx HTTP/1.1
-
-        .. code-block:: json
-
-            {
-                "docx_location": "http://example.com/document.docx",
-                "page_element_slug": "example-element",
-                "content_format": "MD"
-            }
-
-        responds
-
-        .. code-block:: json
-
-            {
-                "detail": "Page element updated successfully"
-            }
-
-        """
-        docx_location = request.data.get("docx_location")
-        page_element_slug = request.data.get("page_element_slug")
-        content_format = request.data.get("content_format", "MD")
-
-        page_element = PageElement.objects.filter(slug=page_element_slug).first()
+        page_element = self.element
         if not page_element:
             return api_response.Response({'detail': 'Page Element not found'})
         if isinstance(docx_location, TemporaryUploadedFile):
             docx_content = docx_location
         elif docx_location.startswith(("http://", "https://", "www.")):
-            response = requests.get(self.format_drive_url(docx_location), stream=True)
+            response = requests.get(self.format_drive_url(docx_location),
+                timeout=settings.HTTP_REQUESTS_TIMEOUT,
+                stream=True)
             docx_content = BytesIO(response.content)
         else:
-            docx_content = BytesIO(open(docx_location, "rb").read())
+            with open(docx_location, "rb") as docx_file:
+                docx_content = BytesIO(docx_file.read())
 
         # Convert .docx content to HTML
         result = mammoth.convert_to_html(docx_content)

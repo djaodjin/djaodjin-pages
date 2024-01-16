@@ -1,4 +1,4 @@
-# Copyright (c) 2022, Djaodjin Inc.
+# Copyright (c) 2023, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -22,16 +22,12 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from ... import settings
-from ...compat import re_path, path
-from ...views.elements import PageElementView, CertificateDownloadView
+from ...compat import path
+from ...views.elements import PageElementView
 
 urlpatterns = [
-    path('<slug:sequence>/certificate/',
-         CertificateDownloadView.as_view(),
-         name='certificate_download'),
-    re_path(r'^(?P<path>%s)$' % settings.PATH_RE,
+    path('<path:path>',
         PageElementView.as_view(), name='pages_element'),
-    re_path(r'^$',
+    path('',
         PageElementView.as_view(), name='pages_index'),
 ]

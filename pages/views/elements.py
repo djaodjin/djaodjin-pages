@@ -1,4 +1,4 @@
-# Copyright (c) 2023, Djaodjin Inc.
+# Copyright (c) 2024, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -23,18 +23,15 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import logging
 
-from datetime import datetime
-from django.http import HttpResponseForbidden, Http404
-from django.views.generic import TemplateView, DetailView
-
+from django.http import Http404
+from django.views.generic import TemplateView
 from deployutils.apps.django.mixins import AccessiblesMixin
-from extended_templates.backends.pdf import PdfTemplateResponse
 
-
+from .. import settings
 from ..compat import NoReverseMatch, reverse, six
 from ..helpers import get_extra, update_context_urls
-from ..models import RelationShip, Sequence, SequenceProgress
 from ..mixins import AccountMixin, TrailMixin
+from ..models import RelationShip
 
 
 LOGGER = logging.getLogger(__name__)
@@ -47,6 +44,7 @@ class PageElementView(TrailMixin, AccessiblesMixin, TemplateView):
     of that node that are both visible and searchable.
     """
     template_name = 'pages/index.html'
+    account_url_kwarg = settings.ACCOUNT_URL_KWARG
     direct_text_load = False
 
     def get_reverse_kwargs(self):
@@ -68,6 +66,7 @@ class PageElementView(TrailMixin, AccessiblesMixin, TemplateView):
 
     @property
     def is_prefix(self):
+        #pylint:disable=attribute-defined-outside-init
         if not hasattr(self, '_is_prefix'):
             try:
                 self._is_prefix = (not self.element or
@@ -222,47 +221,3 @@ class PageElementEditableView(AccountMixin, PageElementView):
                         kwargs=url_kwargs),
                 })
         return context
-
-
-class CertificateDownloadView(DetailView):
-    model = Sequence
-    slug_url_kwarg = 'sequence'
-    template_name = 'pages/certificate.html'
-    response_class = PdfTemplateResponse
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        sequence = self.object
-
-        sequence_progress, created = SequenceProgress.objects.get_or_create(
-            sequence=sequence,
-            user=self.request.user)
-
-        has_completed_sequence = sequence_progress.is_completed
-        context.update({
-            'user': self.request.user,
-            'sequence': sequence,
-            'has_certificate': sequence.has_certificate,
-            'certificate': sequence.get_certificate,
-            'has_completed_sequence': has_completed_sequence
-        })
-
-        if has_completed_sequence:
-            completion_date = sequence_progress.completion_date or datetime.now()
-            if not sequence_progress.completion_date:
-                sequence_progress.completion_date = completion_date
-                sequence_progress.save()
-            context['completion_date'] = completion_date
-
-        return context
-
-    def get(self, request, *args, **kwargs):
-        self.object = self.get_object()
-        context = self.get_context_data(**kwargs)
-
-        if not context.get('has_certificate', False) or not context.get('has_completed_sequence', False):
-            return HttpResponseForbidden(
-                'A certificate is not available for download.')
-
-        return self.render_to_response(context)
-

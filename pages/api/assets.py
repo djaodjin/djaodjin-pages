@@ -43,6 +43,8 @@ from ..serializers import AssetSerializer
 
 LOGGER = logging.getLogger(__name__)
 
+URL_PATH_SEP = '/'
+
 
 class AssetAPIView(AccountMixin, GenericAPIView):
 
@@ -149,8 +151,7 @@ class UploadAssetAPIView(AccountMixin, GenericAPIView):
 
 def process_upload(request, account=None, location=None, is_public_asset=None,
                    store_hash=None, replace_stored=None, content_type=None):
-
-    URL_PATH_SEP = '/'
+    #pylint:disable=too-many-arguments,too-many-locals
     media_prefix = _get_media_prefix()
     response_status = status.HTTP_200_OK
 

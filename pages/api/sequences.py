@@ -1,4 +1,4 @@
-# Copyright (c) 2023, Djaodjin Inc.
+# Copyright (c) 2024, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -23,88 +23,156 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import logging
 
-from django.db import IntegrityError
+from django.db import transaction, IntegrityError
+from django.template.defaultfilters import slugify
 from rest_framework import response as api_response, status
-from rest_framework.views import APIView
-from rest_framework.generics import (ListCreateAPIView,
-    RetrieveUpdateDestroyAPIView)
+from rest_framework.filters import OrderingFilter, SearchFilter
+from rest_framework.generics import (get_object_or_404, DestroyAPIView,
+    ListAPIView, ListCreateAPIView, RetrieveUpdateDestroyAPIView)
 
-from ..models import (Sequence, EnumeratedElements, SequenceProgress,
-    EnumeratedProgress, LiveEvent)
-from ..serializers import (SequenceSerializer, EnumeratedElementSerializer,
-    AttendanceInputSerializer)
+from ..mixins import AccountMixin, SequenceMixin
+from ..models import Sequence, EnumeratedElements
+from ..serializers import (SequenceSerializer, SequenceCreateSerializer,
+    EnumeratedElementSerializer)
 
 LOGGER = logging.getLogger(__name__)
 
 
-class SequenceListCreateAPIView(ListCreateAPIView):
+class SequencesIndexAPIView(ListAPIView):
+    """
+    Lists sequences of page elements
+
+    Returns a list of {{PAGE_SIZE}} sequences available to the request user.
+
+    The queryset can be further refined to match a search filter (``q``)
+    and sorted on specific fields (``o``).
+
+    **Tags: content
+
+    **Example
+
+    .. code-block:: http
+
+         GET /api/sequences HTTP/1.1
+
+    responds
+
+    .. code-block:: json
+
+        {
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "created_at": "2024-01-01T00:00:00.0000Z",
+              "slug": "ghg-accounting-training",
+              "title": "GHG Accounting Training",
+              "account": "djaopsp",
+              "has_certificate": true
+            }
+          ]
+        }
+    """
     queryset = Sequence.objects.all().order_by('slug')
     serializer_class = SequenceSerializer
 
-    def get(self, request, *args, **kwargs):
-        """
-        Lists Sequences
+    search_fields = (
+        'title',
+        'extra'
+    )
+    ordering_fields = (
+        ('title', 'title'),
+    )
+    ordering = ('title',)
 
-        **Tags**: Sequence
+    filter_backends = (SearchFilter, OrderingFilter,)
 
-        **Example**
 
-        .. code-block:: http
+class SequenceListCreateAPIView(AccountMixin, ListCreateAPIView):
+    """
+    Lists editable sequences
 
-             GET /api/sequences HTTP/1.1
+    Returns a list of {{PAGE_SIZE}} sequences editable by profile.
 
-        responds
+    The queryset can be further refined to match a search filter (``q``)
+    and sorted on specific fields (``o``).
 
-        .. code-block:: json
+    **Tags: editors
 
+    **Example
+
+    .. code-block:: http
+
+         GET /api/editables/alliance/sequences HTTP/1.1
+
+    responds
+
+    .. code-block:: json
+
+        {
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
             {
-              "count": 1,
-              "next": null,
-              "previous": null,
-              "results": [
-                {
-                  "created_at": "2020-09-28T00:00:00.0000Z",
-                  "slug": "educational-sequence",
-                  "title": "Educational Sequence",
-                  "account": "djaopsp",
-                  "has_certificate": true,
-                  "extra": null,
-                  "elements": [
-                    {
-                      "page_element": "text-content",
-                      "rank": 1,
-                      "min_viewing_duration": "00:00:10"
-                    },
-                    {
-                      "page_element": "survey-event",
-                      "rank": 2,
-                      "min_viewing_duration": "00:00:20"
-                    }
-                  ]
-                }
-              ]
+              "created_at": "2020-09-28T00:00:00.0000Z",
+              "slug": "ghg-accounting-training",
+              "title": "GHG Accounting Training",
+              "account": "djaopsp",
+              "has_certificate": true
             }
+          ]
+        }
+    """
+    serializer_class = SequenceSerializer
+
+    search_fields = (
+        'title',
+        'extra'
+    )
+    ordering_fields = (
+        ('title', 'title'),
+    )
+    ordering = ('title',)
+
+    filter_backends = (SearchFilter, OrderingFilter,)
+
+
+    def get_serializer_class(self):
+        if self.request.method.lower() == 'post':
+            return SequenceCreateSerializer
+        return super(SequenceListCreateAPIView, self).get_serializer_class()
+
+
+    def get_queryset(self):
         """
-        return super(SequenceListCreateAPIView, self).list(
-            request, *args, **kwargs)
+        Returns a list of heading and best practices
+        """
+        queryset = Sequence.objects.all()
+        if self.account_url_kwarg in self.kwargs:
+            queryset = queryset.filter(account=self.account)
+        return queryset
 
     def post(self, request, *args, **kwargs):
         """
-        Creates a Sequence
+        Creates a sequence of page elements
 
-        **Examples**
+        Creates a new sequence editable by profile.
+
+        **Tags: editors
+
+        **Example
 
         .. code-block:: http
 
-            POST /api/sequences HTTP/1.1
+            POST /api/editables/alliance/sequences HTTP/1.1
 
         .. code-block:: json
 
             {
-                "slug": "educational-sequence2",
-                "title": "Educational Sequence 2",
-                "has_certificate": True,
-                "viewing_duration": null,
+                "slug": "ghg-accounting-training",
+                "title": "GHG Accounting Training"
             }
 
         responds
@@ -113,86 +181,96 @@ class SequenceListCreateAPIView(ListCreateAPIView):
 
             {
               "created_at": "2023-01-01T04:00:00.000000Z",
-              "slug": "educational-sequence2",
-              "title": "Educational Sequence 2",
+              "slug": "ghg-accounting-training",
+              "title": "GHG Accounting Training",
               "account": null,
-              "has_certificate": true,
-              "extra": null,
-              "elements": []
+              "has_certificate": true
             }
         """
-        return super(SequenceListCreateAPIView, self).create(
-            request, *args, **kwargs)
+        return self.create(request, *args, **kwargs)
 
 
-class SequenceRetrieveUpdateDestroyAPIView(RetrieveUpdateDestroyAPIView):
-    queryset = Sequence.objects.all().order_by('slug')
+    def perform_create(self, serializer):
+        serializer.save(account=self.account,
+            slug=slugify(serializer.validated_data['title']))
+
+
+class SequenceRetrieveUpdateDestroyAPIView(AccountMixin, SequenceMixin,
+                                           RetrieveUpdateDestroyAPIView):
+    """
+    Retrieves a sequence
+
+    **Tags: editors
+
+    **Example
+
+    .. code-block:: http
+
+        GET /api/editables/alliance/sequences/ghg-accounting-training HTTP/1.1
+
+    responds
+
+    .. code-block:: json
+
+        {
+            "created_at": "2023-12-29T04:33:33.078661Z",
+            "slug": "ghg-accounting-training",
+            "title": "GHG Accounting Training",
+            "account": null,
+            "has_certificate": true,
+            "results": [
+                {
+                    "rank": 1,
+                    "page_element": "text-content",
+                    "min_viewing_duration": "00:00:10"
+                },
+                {
+                    "rank": 2,
+                    "page_element": "survey-event",
+                    "min_viewing_duration": "00:00:20"
+                }
+            ]
+        }
+    """
     serializer_class = SequenceSerializer
     lookup_field = 'slug'
-    lookup_url_kwarg = 'sequence'
+    lookup_url_kwarg = SequenceMixin.sequence_url_kwarg
 
-    def get(self, request, *args, **kwargs):
-        """
-        Retrieves a Sequence.
-
-        **Tags**: Sequence
-
-        **Examples**
-
-        .. code-block:: http
-
-            GET /api/sequences/educational-sequence2 HTTP/1.1
-
-        responds
-
-        .. code-block:: json
-
-            {
-                "created_at": "2023-12-29T04:33:33.078661Z",
-                "slug": "educational-sequence2",
-                "title": "Educational Sequence 2",
-                "account": null,
-                "has_certificate": true,
-                "extra": null,
-                "elements": []
-            }
-        """
-        return super(SequenceRetrieveUpdateDestroyAPIView, self).retrieve(
-            request, *args, **kwargs)
+    def get_object(self):
+        return self.sequence
 
     def delete(self, request, *args, **kwargs):
         """
-        Deletes a Sequence.
+        Deletes a sequence
 
-        **Tags**: Sequence
-
-        **Examples**
-
-        .. code-block:: http
-
-            DELETE /api/progress/educational-sequence HTTP/1.1
-
-        """
-        print('deleting')
-        return super(SequenceRetrieveUpdateDestroyAPIView, self).destroy(
-            request, *args, **kwargs)
-
-    def patch(self, request, *args, **kwargs):
-        """
-        Updates a Sequence.
-
-        **Tags**: Sequence
+        **Tags**: editors
 
         **Examples**
 
         .. code-block:: http
 
-            PATCH /api/progress/educational-sequence HTTP/1.1
+            DELETE /api/editables/alliance/sequences/ghg-accounting-training\
+ HTTP/1.1
+
+        """
+        return self.destroy(request, *args, **kwargs)
+
+    def put(self, request, *args, **kwargs):
+        """
+        Updates a sequence
+
+        **Tags**: editors
+
+        **Examples**
+
+        .. code-block:: http
+
+            PUT /api/editables/alliance/sequences/ghg-accounting-training HTTP/1.1
 
         .. code-block:: json
 
             {
-                "title": "Updated Educational Sequence Title",
+                "title": "Updated GHG Accounting Training Title",
                 "has_certificate": false,
                 "extra": "Additional info"
             }
@@ -203,36 +281,50 @@ class SequenceRetrieveUpdateDestroyAPIView(RetrieveUpdateDestroyAPIView):
 
             {
                 "created_at": "2023-12-29T04:33:33.078661Z",
-                "slug": "educational-sequence",
-                "title": "Updated Educational Sequence Title",
+                "slug": "ghg-accounting-training",
+                "title": "Updated GHG Accounting Training Title",
                 "account": null,
                 "has_certificate": false,
                 "extra": "Additional info",
-                "elements": []
+                "results": []
             }
         """
-        return super(SequenceRetrieveUpdateDestroyAPIView, self).partial_update(
-            request, *args, **kwargs)
+        #pylint:disable=useless-parent-delegation
+        return self.update(request, *args, **kwargs)
 
 
-class AddElementToSequenceAPIView(APIView):
+class AddElementToSequenceAPIView(AccountMixin, SequenceMixin,
+                                  ListCreateAPIView):
     """
-    Adds an element to a sequence.
+    Lists page elements in a sequence
 
-    **Tags**: Sequence
+    **Tags**: editors
 
-    **Example**
+    **Example
 
     .. code-block:: http
 
-        POST /api/sequences/educational-sequence/elements HTTP/1.1
+        GET /api/editables/alliance/sequences/ghg-accounting-training/elements HTTP/1.1
 
     .. code-block:: json
 
-            {
-                "page_element": "production",
-                "rank": 10
-            }
+        {
+            "previous": null,
+            "next": null,
+            "count": 2,
+            "results": [
+                {
+                    "rank": 1,
+                    "page_element": "text-content",
+                    "min_viewing_duration": "00:00:10"
+                },
+                {
+                    "rank": 2,
+                    "page_element": "survey-event",
+                    "min_viewing_duration": "00:00:20"
+                }
+            ]
+        }
 
     responds
 
@@ -242,127 +334,101 @@ class AddElementToSequenceAPIView(APIView):
             "detail": "element added"
         }
     """
+    serializer_class = EnumeratedElementSerializer
+
+    def get_queryset(self):
+        return self.sequence.sequence_enumerated_elements.order_by('rank')
 
     def post(self, request, *args, **kwargs):
-        sequence_slug = self.kwargs.get('sequence')
-        sequence = Sequence.objects.get(slug=sequence_slug)
-        serializer = EnumeratedElementSerializer(data=request.data)
+        """
+        Inserts a page element in a sequence
 
-        if serializer.is_valid(raise_exception=True):
-            is_certificate = serializer.validated_data.pop('certificate', False)
-            rank = serializer.validated_data.get('rank')
+        **Tags**: editors
 
-            if sequence.has_certificate:
-                last_rank = sequence.sequence_enumerated_elements.order_by('-rank').first().rank
-                if is_certificate:
-                    return api_response.Response({
-                        'detail': 'The sequence already has a certificate.'},
-                        status=status.HTTP_400_BAD_REQUEST)
-                if rank is not None and rank > last_rank:
-                    return api_response.Response({
-                        'detail': 'Cannot add an element with a rank higher than the certificate.'},
-                        status=status.HTTP_400_BAD_REQUEST)
+        **Example
 
-            try:
-                serializer.save(sequence=sequence)
-                if is_certificate and not sequence.has_certificate:
-                    sequence.has_certificate = True
-                    sequence.save()
-                return api_response.Response(
-                    {'detail': 'Element added'},
-                    status=status.HTTP_201_CREATED)
-            except IntegrityError as e:
-                return api_response.Response(
-                    {'detail': str(e)},
+        .. code-block:: http
+
+            POST /api/editables/alliance/sequences/ghg-accounting-training/elements HTTP/1.1
+
+        .. code-block:: json
+
+                {
+                    "page_element": "production",
+                    "rank": 10
+                }
+
+        responds
+
+        .. code-block:: json
+
+                {
+                    "rank": 1,
+                    "page_element": "text-content",
+                    "min_viewing_duration": "00:00:00"
+                }
+        """
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        is_certificate = serializer.validated_data.pop('certificate', False)
+        rank = serializer.validated_data.get('rank')
+
+        if self.sequence.has_certificate:
+            last_rank = self.sequence.get_last_element.rank
+            if is_certificate:
+                return api_response.Response({
+                    'detail': 'The sequence already has a certificate.'},
                     status=status.HTTP_400_BAD_REQUEST)
+            if rank is not None and rank > last_rank:
+                return api_response.Response({
+                    'detail': 'Cannot add an element with a rank higher'\
+                    ' than the certificate.'},
+                    status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            serializer.save(sequence=self.sequence)
+            if is_certificate and not self.sequence.has_certificate:
+                self.sequence.has_certificate = True
+                self.sequence.save()
+            serializer = self.get_serializer(serializer.instance)
+            headers = self.get_success_headers(serializer.data)
+            return api_response.Response(
+                serializer.data, status=status.HTTP_201_CREATED,
+                headers=headers)
+        except IntegrityError as err:
+            return api_response.Response(
+                {'detail': str(err)},
+                status=status.HTTP_400_BAD_REQUEST)
 
         return api_response.Response(
             serializer.errors,
             status=status.HTTP_400_BAD_REQUEST)
 
 
-class RemoveElementFromSequenceAPIView(APIView):
+class RemoveElementFromSequenceAPIView(AccountMixin, SequenceMixin,
+                                       DestroyAPIView):
     """
-    Removes an element from a sequence by its rank.
+    Removes a page element from a sequence
+
+    **Tags**: editors
 
     **Example**
 
-        DELETE /api/sequences/educational-sequence/elements/1 HTTP/1.1
+        DELETE /api/editables/alliance/sequences/ghg-accounting-training/elements/1 HTTP/1.1
 
     responds
 
-        {
-            "detail": "element removed"
-        }
+        204 No Content
     """
+    def get_object(self):
+        return get_object_or_404(EnumeratedElements.objects.all(),
+            sequence=self.sequence, rank=self.kwargs.get('rank'))
 
-    def delete(self, request, *args, **kwargs):
-        sequence_slug = self.kwargs.get('sequence')
-        rank = self.kwargs.get('rank')
-        sequence = Sequence.objects.get(slug=sequence_slug)
-        if rank is not None:
-            try:
-                element = EnumeratedElements.objects.get(sequence=sequence, rank=rank)
-                if element.is_certificate:
-                    sequence.has_certificate = False
-                    sequence.save()
-                element.delete()
-                return api_response.Response(
-                    {'detail': 'element removed'}, status=status.HTTP_200_OK)
-            except EnumeratedElements.DoesNotExist:
-                return api_response.Response(
-                    {'detail': 'element not found in sequence'}, status=status.HTTP_404_NOT_FOUND)
-
-        return api_response.Response({'detail': 'Invalid rank'}, status=status.HTTP_400_BAD_REQUEST)
-
-
-class LiveEventAttendanceAPIView(APIView):
-    '''
-    Allows marking a user's attendance to a Live Event.
-
-
-    **Tags**: attendance, live events
-    '''
-    def post(self, request, *args, **kwargs):
-        """
-        Mark a User's attendance at a Live Event
-
-        **Example**
-
-        .. code-block:: http
-
-            POST /api/sequences/{sequence}/{rank}/{username}/mark-attendance HTTP/1.1
-
-        Responds
-
-        .. code-block:: json
-
-            {
-                "detail": "Attendance marked successfully"
-            }
-        """
-
-        input_serializer = AttendanceInputSerializer(data=self.kwargs)
-        input_serializer.is_valid(raise_exception=True)
-
-        sequence = input_serializer.validated_data['sequence']
-        user = input_serializer.validated_data['username']
-        rank = input_serializer.validated_data['rank']
-
-        sequence_progress, _ = SequenceProgress.objects.get_or_create(
-            user=user, sequence=sequence)
-        enumerated_progress, _ = EnumeratedProgress.objects.get_or_create(
-            progress=sequence_progress, rank=rank)
-        enumerated_element = EnumeratedElements.objects.get(
-            rank=rank, sequence=sequence)
-        page_element = enumerated_element.page_element
-        live_event = LiveEvent.objects.filter(element=page_element).first()
-
-        # We use if live_event to confirm the existence of the LiveEvent object
-        if live_event and enumerated_progress.viewing_duration <= enumerated_element.min_viewing_duration:
-            enumerated_progress.viewing_duration = enumerated_element.min_viewing_duration
-            enumerated_progress.save()
-            return api_response.Response(
-                {'detail': 'Attendance marked successfully'}, status=status.HTTP_200_OK)
-        return api_response.Response(
-            {'detail': 'Attendance not marked'}, status=status.HTTP_400_BAD_REQUEST)
+    def perform_destroy(self, instance):
+        with transaction.atomic():
+            if (self.sequence.has_certificate and
+                instance == self.sequence.get_last_element):
+                self.sequence.has_certificate = False
+                self.sequence.save()
+            instance.delete()

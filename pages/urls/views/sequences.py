@@ -23,14 +23,18 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from ...compat import path
-from ...views.sequences import SequenceProgressView, SequencePageElementView
+from ...views.sequences import (CertificateDownloadView, SequenceProgressView,
+    SequencePageElementView)
 
 
 urlpatterns = [
-    path('<slug:sequence>/',
-            SequenceProgressView.as_view(),
-            name='sequence_progress_view'),
-    path('<slug:sequence>/<int:rank>/',
+    path('<slug:user>/<slug:sequence>/certificate/',
+         CertificateDownloadView.as_view(),
+         name='certificate_download'),
+    path('<slug:user>/<slug:sequence>/<int:rank>/',
             SequencePageElementView.as_view(),
             name='sequence_page_element_view'),
+    path('<slug:user>/<slug:sequence>/',
+            SequenceProgressView.as_view(),
+            name='sequence_progress_view'),
 ]

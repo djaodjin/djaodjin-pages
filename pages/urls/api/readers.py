@@ -1,4 +1,4 @@
-# Copyright (c) 2020, DjaoDjin inc.
+# Copyright (c) 2024, DjaoDjin inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -25,24 +25,23 @@
 """
 API URLs for readers who must be authenticated
 """
-from ... import settings
-from ...compat import re_path
+from ...compat import path
 
 from ...api.reactions import (FollowAPIView, UnfollowAPIView, UpvoteAPIView,
   DownvoteAPIView, CommentListCreateAPIView)
 
 urlpatterns = [
     # Following
-    re_path(r'^follow/(?P<path>%s)$' % settings.PATH_RE,
+    path('follow/<path:path>',
         FollowAPIView.as_view(), name='pages_api_follow'),
-    re_path(r'^unfollow/(?P<path>%s)$' % settings.PATH_RE,
+    path('unfollow/<path:path>',
         UnfollowAPIView.as_view(), name='pages_api_unfollow'),
     # Votes
-    re_path(r'^upvote/(?P<path>%s)$' % settings.PATH_RE,
+    path('upvote/<path:path>',
         UpvoteAPIView.as_view(), name='pages_api_upvote'),
-    re_path(r'^downvote/(?P<path>%s)$' % settings.PATH_RE,
+    path('downvote/<path:path>',
         DownvoteAPIView.as_view(), name='pages_api_downvote'),
     # Comments
-    re_path(r'^comments/(?P<path>%s)$' % settings.PATH_RE,
+    path('comments/<path:path>',
         CommentListCreateAPIView.as_view(), name='pages_api_comments'),
 ]

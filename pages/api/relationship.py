@@ -1,4 +1,4 @@
-# Copyright (c) 2020, DjaoDjin inc.
+# Copyright (c) 2024, DjaoDjin inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -85,7 +85,7 @@ class PageElementAliasAPIView(EdgesUpdateAPIView):
 
     .. code-block:: http
 
-        POST /api/content/editables/envconnect/alias/construction HTTP/1.1
+        POST /api/editables/tspproject/content/alias/construction HTTP/1.1
 
     .. code-block:: json
 
@@ -125,7 +125,7 @@ class PageElementMirrorAPIView(EdgesUpdateAPIView):
 
     .. code-block:: http
 
-        POST /api/content/editables/envconnect/mirror/construction HTTP/1.1
+        POST /api/editables/tspproject/content/mirror/construction HTTP/1.1
 
     .. code-block:: json
 
@@ -193,7 +193,7 @@ class PageElementMoveAPIView(EdgesUpdateAPIView):
 
     .. code-block:: http
 
-        POST /api/content/editables/envconnect/attach/construction HTTP/1.1
+        POST /api/editables/tspproject/content/attach/construction HTTP/1.1
 
     .. code-block:: json
 
@@ -245,7 +245,7 @@ class RelationShipListAPIView(DestroyModelMixin, generics.ListCreateAPIView):
 
     .. code-block:: http
 
-        GET /api/content/editables/envconnect/relationship HTTP/1.1
+        GET /api/editables/tspproject/content/relationship HTTP/1.1
 
     responds
 
@@ -273,7 +273,7 @@ class RelationShipListAPIView(DestroyModelMixin, generics.ListCreateAPIView):
 
         .. code-block:: http
 
-            DELETE /api/content/editables/envconnect/relationship HTTP/1.1
+            DELETE /api/editables/tspproject/content/relationship HTTP/1.1
        """
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid()
@@ -292,7 +292,7 @@ class RelationShipListAPIView(DestroyModelMixin, generics.ListCreateAPIView):
 
         .. code-block:: http
 
-            POST /api/content/editables/envconnect/relationship HTTP/1.1
+            POST /api/editables/tspproject/content/relationship HTTP/1.1
 
         .. code-block:: json
 

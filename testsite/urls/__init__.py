@@ -27,14 +27,30 @@ from django.conf.urls.static import static
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 from django.views.generic import TemplateView
 
-from pages.compat import include, re_path
+from pages.compat import include, path
+from pages.api.elements import PageElementIndexAPIView
+from pages.api.sequences import SequencesIndexAPIView
+
 
 urlpatterns = staticfiles_urlpatterns() \
     + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 urlpatterns += [
-    re_path(r'^', include('django.contrib.auth.urls')),
-    re_path(r'^app/energy-utility/',
+    path('', include('django.contrib.auth.urls')),
+    path('app/energy-utility/',
         TemplateView.as_view(template_name='index.html')),
-    re_path(r'^', include('pages.urls')),
+    # Replaced
+    # path('', include('pages.urls')),
+    # by following to insert `account` into the path.
+    path('api/editables/<slug:profile>/', include('pages.urls.api.editables')),
+    path('api/attendance/<slug:profile>/', include('pages.urls.api.sequences')),
+    path('api/progress/', include('pages.urls.api.progress')),
+    path('api/content/', include('pages.urls.api.readers')),
+    path('api/content/', include('pages.urls.api.noauth')),
+    path('api/content', PageElementIndexAPIView.as_view(),
+        name="api_content_index"),
+    path('api/sequences', SequencesIndexAPIView.as_view(),
+         name='api_sequences_index'),
+    path('api/', include('pages.urls.api.assets')),
+    path('', include('pages.urls.views')),
 ]

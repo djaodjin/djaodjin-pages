@@ -1,4 +1,4 @@
-# Copyright (c) 2022 DjaoDjin inc.
+# Copyright (c) 2024 DjaoDjin inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -33,7 +33,7 @@ from rest_framework.generics import get_object_or_404
 
 from . import settings
 from .compat import gettext_lazy as _, is_authenticated, reverse
-from .models import PageElement, LiveEvent, EnumeratedElements
+from .models import EnumeratedElements, PageElement, LiveEvent, Sequence
 from .utils import get_account_model
 
 LOGGER = logging.getLogger(__name__)
@@ -111,6 +111,47 @@ class AccountMixin(object):
             if url_kwarg_val:
                 url_kwargs.update({url_kwarg: url_kwarg_val})
         return url_kwargs
+
+
+class PageElementMixin(object):
+
+    URL_PATH_SEP = '/'
+    path_url_kwarg = 'path'
+    element_field = 'slug'
+    element_url_kwarg = 'slug'
+
+    @property
+    def element(self):
+        if not hasattr(self, '_element'):
+            element_value = None
+            element_url_kwarg = self.element_url_kwarg or self.element_field
+            if element_url_kwarg in self.kwargs:
+                element_value = self.kwargs[element_url_kwarg]
+            else:
+                path = self.kwargs.get(self.path_url_kwarg, '').strip(
+                    self.URL_PATH_SEP)
+                if not path:
+                    raise Http404()
+                parts = path.split(self.URL_PATH_SEP)
+                element_value = parts[-1]
+            filter_kwargs = {self.element_field: element_value}
+            self._element = get_object_or_404(
+                PageElement.objects.all(), **filter_kwargs)
+        return self._element
+
+
+class SequenceMixin(object):
+    """
+    Returns an ``User`` from a URL.
+    """
+    sequence_url_kwarg = 'sequence'
+
+    @property
+    def sequence(self):
+        if not hasattr(self, '_sequence'):
+            self._sequence = get_object_or_404(Sequence.objects.all(),
+                slug=self.kwargs.get(self.sequence_url_kwarg))
+        return self._sequence
 
 
 class TrailMixin(object):
@@ -205,38 +246,35 @@ class TrailMixin(object):
         return context
 
 
-class PageElementMixin(object):
-
-    URL_PATH_SEP = '/'
-    path_url_kwarg = 'path'
-    element_field = 'slug'
-    element_url_kwarg = 'slug'
+class UserMixin(object):
+    """
+    Returns an ``User`` from a URL.
+    """
+    user_url_kwarg = 'user'
 
     @property
-    def element(self):
-        if not hasattr(self, '_element'):
-            element_value = None
-            element_url_kwarg = self.element_url_kwarg or self.element_field
-            if element_url_kwarg in self.kwargs:
-                element_value = self.kwargs[element_url_kwarg]
-            else:
-                path = self.kwargs.get(self.path_url_kwarg, '').strip(
-                    self.URL_PATH_SEP)
-                if not path:
-                    raise Http404()
-                parts = path.split(self.URL_PATH_SEP)
-                element_value = parts[-1]
-            filter_kwargs = {self.element_field: element_value}
-            self._element = get_object_or_404(
-                PageElement.objects.all(), **filter_kwargs)
-        return self._element
+    def user(self):
+        if not hasattr(self, '_user'):
+            self._user = None
+            username = self.kwargs.get(self.user_url_kwarg, None)
+            if username:
+                user_model = get_user_model()
+                try:
+                    self._user = user_model.objects.get(username=username)
+                except user_model.DoesNotExist:
+                    pass
+            elif is_authenticated(self.request):
+                self._user = self.request.user
+        return self._user
 
 
-class SequenceProgressMixin(object):
+class SequenceProgressMixin(UserMixin, SequenceMixin):
+
 
     def update_element(self, obj):
         obj.title = obj.page_element.title
-        obj.url = reverse('sequence_page_element_view', args=(self.sequence.slug, obj.rank))
+        obj.url = reverse('sequence_page_element_view',
+            args=(self.sequence.slug, obj.rank))
         obj.is_live_event = obj.page_element.slug in self.live_events
         obj.is_certificate = (obj.rank == self.last_rank_element.rank) if \
             self.last_rank_element else False
@@ -255,7 +293,9 @@ class SequenceProgressMixin(object):
 
         self.last_rank_element = None
         if self.sequence.has_certificate:
-            self.last_rank_element = self.sequence.sequence_enumerated_elements.order_by('rank').last()
+            self.last_rank_element = \
+                self.sequence.sequence_enumerated_elements.order_by(
+                'rank').last()
 
         for obj in queryset:
             self.update_element(obj)

@@ -1,4 +1,4 @@
-# Copyright (c) 2022, DjaoDjin inc.
+# Copyright (c) 2024, DjaoDjin inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -26,28 +26,16 @@
 API URLs for sequence objects
 """
 
-from ...api.sequences import (SequenceListCreateAPIView,
-    SequenceRetrieveUpdateDestroyAPIView, LiveEventAttendanceAPIView,
-    RemoveElementFromSequenceAPIView, AddElementToSequenceAPIView)
+from ...api.progress import (EnumeratedProgressResetAPIView,
+    LiveEventAttendanceAPIView)
+from ...compat import path
 
-from ...compat import path, re_path
 
 urlpatterns = [
-    path('sequences',
-         SequenceListCreateAPIView.as_view(),
-         name='api_sequence_list_create'),
-    path('sequences/<slug:sequence>',
-         SequenceRetrieveUpdateDestroyAPIView.as_view(),
-         name='api_sequence_retrieve_update_destroy'),
-
-    path('sequences/<slug:sequence>/elements',
-         AddElementToSequenceAPIView.as_view(),
-         name='api_add_element_to_sequence'),
-    re_path(r'sequences/(?P<sequence>[^/]+)/elements/(?P<rank>-?\d+)',
-         RemoveElementFromSequenceAPIView.as_view(),
-         name='api_remove_element_from_sequence'),
-
-    re_path(r'sequences/(?P<sequence>[^/]+)/(?P<rank>-?\d+)/(?P<username>[^/]+)/mark-attendance',
+    path('<slug:sequence>/<slug:user>',
+         EnumeratedProgressResetAPIView.as_view(),
+         name='api_progress_reset'),
+    path('<slug:sequence>/<int:rank>/<slug:user>',
          LiveEventAttendanceAPIView.as_view(),
          name='api_mark_attendance')
 ]

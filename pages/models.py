@@ -191,8 +191,8 @@ class PageElement(models.Model):
     reading_time = models.DurationField(null=True,
         default=datetime.timedelta,  # stored in microseconds
         help_text=_("Reading time of the material (in hh:mm:ss)"))
-    lang = models.CharField(_("Language the material is written in"),
-         default=settings.LANGUAGE_CODE, max_length=8)
+    lang = models.CharField(default=settings.LANGUAGE_CODE, max_length=8,
+        help_text=_("Language the material is written in"))
     extra = get_extra_field_class()(null=True, blank=True)
     relationships = models.ManyToManyField("self",
         related_name='related_to', through='RelationShip', symmetrical=False)
@@ -315,14 +315,15 @@ class Comment(models.Model):
     """
     A user comments about a PageElement.
     """
-    created_at = models.DateTimeField(_('date/time submitted'),
-        default=None, db_index=True)
-    text = models.TextField(_('text'), max_length=settings.COMMENT_MAX_LENGTH)
-
+    created_at = models.DateTimeField(default=None, db_index=True,
+        help_text=_("Date/time the comment was submitted (in ISO format)"))
+    text = models.TextField(max_length=settings.COMMENT_MAX_LENGTH,
+        help_text=_("Text of the comment"))
     ip_address = models.GenericIPAddressField(_('IP address'),
         unpack_ipv4=True, blank=True, null=True)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name=_('user'),
-        related_name="%(class)s_comments", on_delete=models.CASCADE)
+        related_name="%(class)s_comments", on_delete=models.CASCADE,
+        help_text=_("User that submitted the comment"))
     element = models.ForeignKey(PageElement, on_delete=models.CASCADE,
         related_name='comments')
 
@@ -363,7 +364,8 @@ class Follow(models.Model):
     """
     objects = FollowManager()
 
-    created_at = models.DateTimeField(editable=False, auto_now_add=True)
+    created_at = models.DateTimeField(editable=False, auto_now_add=True,
+        help_text=_("Date/time the follow was created (in ISO format)"))
     user = models.ForeignKey(settings.AUTH_USER_MODEL, db_column='user_id',
          related_name='follows', on_delete=models.CASCADE)
     element = models.ForeignKey(PageElement,
@@ -383,8 +385,10 @@ class LiveEvent(models.Model):
     """
     element = models.ForeignKey(PageElement, on_delete=models.CASCADE,
         related_name='events')
-    created_at = models.DateTimeField(editable=False, auto_now_add=True)
-    scheduled_at = models.DateTimeField()
+    created_at = models.DateTimeField(editable=False, auto_now_add=True,
+        help_text=_("Date/time the live event was created (in ISO format)"))
+    scheduled_at = models.DateTimeField(
+        help_text=_("Date/time the live event is scheduled (in ISO format)"))
     location = models.URLField(_("URL to the calendar event"), max_length=2083)
     max_attendees = models.IntegerField(default=0)
     extra = get_extra_field_class()(null=True, blank=True,
@@ -399,15 +403,19 @@ class Sequence(models.Model):
     """
     Sequence of `PageElement` typically used to implement courses
     """
-    created_at = models.DateTimeField(editable=False, auto_now_add=True)
+    created_at = models.DateTimeField(editable=False, auto_now_add=True,
+        help_text=_("Date/time the sequence was created (in ISO format)"))
     slug = models.SlugField(unique=True,
         help_text=_("Unique identifier that can be used in URL paths"))
     title = models.CharField(max_length=1024, blank=True,
         help_text=_("Title of the sequence"))
     account = models.ForeignKey(
         settings.ACCOUNT_MODEL, related_name='account_sequences',
-        null=True, on_delete=models.SET_NULL)
-    has_certificate = models.BooleanField(default=False)
+        null=True, on_delete=models.SET_NULL,
+        help_text=_("Account that can edit the sequence"))
+    has_certificate = models.BooleanField(default=False,
+        help_text=_("True when the sequence ends with a certificate"\
+        " of completion"))
     extra = get_extra_field_class()(null=True, blank=True,
         help_text=_("Extra meta data (can be stringify JSON)"))
 
@@ -417,8 +425,13 @@ class Sequence(models.Model):
     @property
     def get_certificate(self):
         if self.has_certificate:
-            return self.sequence_enumerated_elements.order_by('rank').last().page_element
+            return self.get_last_element.page_element
         return None
+
+    @property
+    def get_last_element(self):
+        return self.sequence_enumerated_elements.order_by(
+            'rank').last()
 
 
 @python_2_unicode_compatible
@@ -430,10 +443,10 @@ class EnumeratedElements(models.Model):
                                  related_name='sequence_enumerated_elements')
     page_element = models.ForeignKey(PageElement, on_delete=models.CASCADE)
     rank = models.IntegerField(
-        help_text=_("used to order elements when presenting a sequence."))
+        help_text=_("Used to order elements when presenting a sequence"))
     min_viewing_duration = models.DurationField(
         default=datetime.timedelta,  # stored in microseconds
-        help_text=_("Minimum viewing time of the material (in hh:mm:ss)."))
+        help_text=_("Minimum viewing time of the material (in hh:mm:ss)"))
 
     class Meta:
         unique_together = ('sequence', 'rank')
@@ -488,9 +501,9 @@ class EnumeratedProgress(models.Model):
     Progress of a `User` on each element of a sequence.
     """
     created_at = models.DateTimeField(editable=False, auto_now_add=True)
-    progress = models.ForeignKey(SequenceProgress, on_delete=models.CASCADE)
-    rank = models.IntegerField(
-        help_text=_("used to order elements when presenting a sequence."))
+    sequence_progress = models.ForeignKey(
+        SequenceProgress, on_delete=models.CASCADE)
+    progress = models.ForeignKey(EnumeratedElements, on_delete=models.CASCADE)
     viewing_duration = models.DurationField(
         default=datetime.timedelta,  # stored in microseconds
         help_text=_("Total recorded viewing time for the material"))
@@ -500,10 +513,10 @@ class EnumeratedProgress(models.Model):
         help_text=_("Timestamp of the last activity ping"))
 
     class Meta:
-        unique_together = ('progress', 'rank')
+        unique_together = ('sequence_progress', 'progress')
 
     def __str__(self):
-        return "%s-%d" % (self.progress, self.rank)
+        return "%s-%s" % (self.sequence_progress.user, self.progress)
 
 
 class VoteManager(models.Manager):
@@ -739,12 +752,3 @@ def flatten_content_tree(roots, sort_by_key=True, depth=0):
         results += flatten_content_tree(nodes,
             sort_by_key=sort_by_key, depth=depth + 1)
     return results
-
-
-def get_active_theme():
-    """
-    Returns the active theme from a request.
-    """
-    if settings.ACTIVE_THEME_CALLABLE:
-        return import_string(settings.ACTIVE_THEME_CALLABLE)()
-    return settings.APP_NAME

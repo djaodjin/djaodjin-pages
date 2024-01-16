@@ -47,7 +47,7 @@ class ContentCut(object):
         return True
 
     def leave(self, attrs, subtrees):
-        #pylint:disable=unused-argument,no-self-use
+        #pylint:disable=unused-argument
         return True
 
 
