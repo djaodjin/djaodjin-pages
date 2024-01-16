@@ -1,100 +1,19 @@
 {% extends "base.html" %}
+
 {% block content %}
 <div id="app" style="margin-left: 5px;">
-    <h1 class="editable" id="leaderboard-title">Edit tools</h1>
+  <h1>DjaoDjin Pages</1>
+  <div>
+    <h2>For users</h2>
     <div>
-<p class="editable edit-formatted" id="injected-tools-formatted">
-The edit tools comprise the UI elements for the editors as well as code
-that must be injected into the edited page. The code in
-<code>djaodjin-editor.js</code> and <code>less.js</code>) can be injected
-into the edited page one of two ways:
-</p>
-<ol>
-    <li>Through a server-side decorator</li>
-    <li>Through a client-side iframe</li>
-</ol>
+      <h3>Content</h3>
     </div>
     <div>
-      <h2 class="editable" id="leaderboard-subtitle">Server-side decorator</h2>
-      <div>
-          <a href="/" id="inject-edit-mode">click here</a>
-      </div>
-      <div>
-Features
-<ul>
-<li>The edited page URL os shown in the browser bar.</li>
-<li>Any change to stylesheets will affect both page and tools.</li>
-<li>The list of templates used to render the edited page is available.</li>
-</ul>
-      </div>
+      <h2>Sequences</h2>
     </div>
-    <div>
-        <h2 class="editable" id="client-side">Client-side iframe</h2>
-        <div>
-            <a href="/edit/">click here</a>
-            <div>
-Features
-<ul>
-<li>Any change to page stylesheets will not affect the UI for edit tools.</li>
-<li>The editor URL is shown in the browser bar<sup>1</sup></li>
-<li>The list of templates used to render the page is not available.<sup>2</sup></li>
-<li>There is effectively two HTTP requests (one for the EditView and one
-for the edited page).<sup>3</sup></li>
-</ul>
-<div class="lead editable edit-markdown" data-intro="Paragraph editable in markdown" data-position="bottom" id="leaderboard-message">
-This is a template for a marketing or informational website. Use it as a starting point to create something unique!
+  </div>
+  <div>
+    <h2>For editors</h2>
+  </div>
 </div>
-<div class="lead">
-<sup>1</sup> The server URL could be configured so that all editable pages
-are servered under a /content/ prefix. Example:
-</div>
-<pre class="code">testsite/urls/content.py:
-    url(r'^$', TemplateView.as_view(template_name='index.html')),
-
-testsite/urls/__init__.py:
-    url(r'^content/', include('testsite.urls.content')),
-    url(r'^(?P&lt;page&gt;\S+)?', EditView.as_view(), name='pages_edit'),
-</pre>
-<p>
-<sup>2</sup> The list of templates used to render the page could still be
-available if we use a minimal server-side decorator that adds the list into
-the edited page.
-</p>
-<p class="editable edit-markdown" id="injected-tools-markdown">
-<sup>3</sup> When we tried to <a href="http://stackoverflow.com/questions/6102636/html-code-as-iframe-source-rather-than-a-url">set iframe content through <code>src="data:text/html..."</code></a>,
-the stylesheet links defined in the iframe content are not loaded.
-When we tried to <a href="http://stackoverflow.com/questions/18044073/iframe-without-src-but-still-has-content">insert content in the iframe through Javascript</a>,
-the page loads forever (this might be a side effect of how we inject the tools
-into the iframe). I haven't tried to use <code>&lt;iframe srcdoc="..."</code> yet.
-</p>
-            </div>
-        </div>
-    </div>
-    <div>
-        <h2 class="editable" id="more-properties">More PageElement editors</h2>
-        <h3>Currencies</h3>
-        <div class="editable edit-currency" id="main-currency">$10.00</div>
-        <div class="editable edit-currency" data-currency-position="after" data-currency-unit="€" id="main-currency2">23.99€</div>
-        <h3>Ranges</h3>
-        <div class="editable edit-range" data-range-max="3" data-range-min="1" data-range-step="1" id="main-range">1</div>
-        <h3>Images</h3>
-        <img alt="Portrait of statisfied customer" class="img-responsive img-circle editable droppable-image" id="site-feedback-portrait" src="data:image/gif;base64,R0lGODlhAQABAIAAAMLCwgAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw==" style="width:150px;height:150px;margin-left:auto;margin-right:auto;margin-top:15px;margin-bottom:15px;"/>
-    </div>
-</div>
-{% endblock content %}
-
-{% block pages_scripts %}
-<script type="text/javascript">
-jQuery(document).ready(function($) {
-    $("#inject-edit-mode").click(function(event) {
-        var linkTo = $(this).attr("href");
-        event.preventDefault();
-        if( window.location !== window.top.location ) {
-            window.top.location = linkTo;
-        } else {
-            window.location = linkTo;
-        }
-    });
-});
-</script>
 {% endblock %}
