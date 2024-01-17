@@ -88,7 +88,7 @@ vendor-assets-prerequisites: $(ASSETS_DIR)/vendor/vue.js
 $(ASSETS_DIR)/vendor/vue.js: $(srcDir)/testsite/package.json
 	$(installFiles) $^ $(installTop)
 	$(NPM) install --loglevel verbose --cache $(installTop)/.npm --tmp $(installTop)/tmp --prefix $(installTop)
-	$(installDirs) $(ASSETS_DIR)/vendor
+	$(installDirs) $(ASSETS_DIR)/vendor $(ASSETS_DIR)/fonts
 	$(installFiles) $(installTop)/node_modules/dropzone/dist/dropzone.css $(ASSETS_DIR)/vendor
 	$(installFiles) $(installTop)/node_modules/dropzone/dist/dropzone.js $(ASSETS_DIR)/vendor
 	$(installFiles) $(installTop)/node_modules/font-awesome/css/font-awesome.css $(ASSETS_DIR)/vendor
