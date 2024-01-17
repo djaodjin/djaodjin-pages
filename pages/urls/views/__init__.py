@@ -1,4 +1,4 @@
-# Copyright (c) 2022, Djaodjin Inc.
+# Copyright (c) 2024, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -22,10 +22,10 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from ...compat import include, re_path, path
+from ...compat import include, path
 
 urlpatterns = [
-    path('app/sequences/', include('pages.urls.views.sequences')),
-    re_path(r'^editables/', include('pages.urls.views.editables')),
-    re_path(r'^', include('pages.urls.views.elements')),
+    path('sequences/', include('pages.urls.views.sequences')),
+    path('editables/', include('pages.urls.views.editables')),
+    path('', include('pages.urls.views.elements')),
 ]

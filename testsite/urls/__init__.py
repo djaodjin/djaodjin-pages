@@ -52,5 +52,6 @@ urlpatterns += [
     path('api/sequences', SequencesIndexAPIView.as_view(),
          name='api_sequences_index'),
     path('api/', include('pages.urls.api.assets')),
+    path('', TemplateView.as_view(template_name='index.html')),
     path('', include('pages.urls.views')),
 ]

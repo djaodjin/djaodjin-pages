@@ -73,7 +73,7 @@ $(DESTDIR)$(CONFIG_DIR)/gunicorn.conf: $(srcDir)/testsite/etc/gunicorn.conf
 		-e 's,%(LOCALSTATEDIR)s,$(LOCALSTATEDIR),' $< > $@
 
 
-initdb: clean-dbs install-conf $(ASSETS_DIR)/vendor/bootstrap.css
+initdb: clean-dbs
 	$(installDirs) $(dir $(DB_NAME))
 	cd $(srcDir) && $(MANAGE) migrate $(RUNSYNCDB) --noinput
 	cd $(srcDir) && $(MANAGE) loaddata \

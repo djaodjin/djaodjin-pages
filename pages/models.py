@@ -518,6 +518,26 @@ class EnumeratedProgress(models.Model):
     def __str__(self):
         return "%s-%s" % (self.sequence_progress.user, self.step)
 
+    # Implementation Note on the following properties:
+    # We are using a derivative of `EnumeratedElementsSerializer`
+    # to return an `EnumeratedProgress` instance.
+
+    @property
+    def content(self):
+        return self.step.content
+
+    @property
+    def min_viewing_duration(self):
+        return self.step.min_viewing_duration
+
+    @property
+    def rank(self):
+        return self.step.rank
+
+    @property
+    def sequence(self):
+        return self.step.sequence
+
 
 class VoteManager(models.Manager):
 

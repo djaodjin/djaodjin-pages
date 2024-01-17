@@ -28,12 +28,14 @@ import logging
 
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ImproperlyConfigured
+from django.db import transaction
 from django.http import Http404
 from rest_framework.generics import get_object_or_404
 
 from . import settings
 from .compat import gettext_lazy as _, is_authenticated, reverse
-from .models import EnumeratedElements, PageElement, LiveEvent, Sequence
+from .models import (EnumeratedElements, PageElement, LiveEvent, Sequence,
+    SequenceProgress, EnumeratedProgress)
 from .utils import get_account_model
 
 LOGGER = logging.getLogger(__name__)
@@ -270,11 +272,17 @@ class UserMixin(object):
 
 class SequenceProgressMixin(UserMixin, SequenceMixin):
 
+    @property
+    def sequence_progress(self):
+        if not hasattr(self, '_sequence_progress'):
+            self._sequence_progress, _ = SequenceProgress.objects.get_or_create(
+                sequence=self.sequence, user=self.user)
+        return self._sequence_progress
 
     def update_element(self, obj):
         obj.title = obj.content.title
         obj.url = reverse('sequence_page_element_view',
-            args=(self.sequence.slug, obj.rank))
+            args=(self.user, self.sequence, obj.rank))
         obj.is_live_event = obj.content.slug in self.live_events
         obj.is_certificate = (obj.rank == self.last_rank_element.rank) if \
             self.last_rank_element else False
@@ -300,3 +308,20 @@ class SequenceProgressMixin(UserMixin, SequenceMixin):
         for obj in queryset:
             self.update_element(obj)
         return queryset
+
+
+class EnumeratedProgressMixin(SequenceProgressMixin):
+
+    rank_url_kwarg = 'rank'
+
+    @property
+    def progress(self):
+        if not hasattr(self, '_progress'):
+            step = get_object_or_404(EnumeratedElements.objects.all(),
+                sequence=self.sequence,
+                rank=self.kwargs.get(self.rank_url_kwarg, 1))
+            with transaction.atomic():
+                self._progress, _  = EnumeratedProgress.objects.get_or_create(
+                    sequence_progress=self.sequence_progress,
+                    step=step)
+        return self._progress

@@ -68,6 +68,11 @@ class EdgesUpdateAPIView(TrailMixin, generics.CreateAPIView):
                     " > ".join([target.title for target in targets]))})
 
 
+    def perform_change(self, sources, targets, rank=None):
+        # Implemented in subclasses
+        raise RuntimeError(
+            "calling abstract method EdgesUpdateAPIView.perform_change")
+
     def perform_create(self, serializer):
         targets = self.get_full_element_path(self.path)
         sources = self.get_full_element_path(serializer.validated_data.get(

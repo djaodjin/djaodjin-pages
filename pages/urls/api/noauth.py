@@ -25,7 +25,6 @@
 """
 API URLs for readers who could be unauthenticated
 """
-from ... import settings
 from ...compat import path
 from ...api.elements import (PageElementSearchAPIView, PageElementAPIView,
   PageElementDetailAPIView)

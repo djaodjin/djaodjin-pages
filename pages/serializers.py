@@ -33,7 +33,6 @@ from . import settings
 from .compat import gettext_lazy as _, is_authenticated
 from .models import (Comment, Follow, PageElement, Vote, Sequence,
     EnumeratedElements)
-from .utils import get_account_model
 
 #pylint: disable=abstract-method
 
@@ -183,6 +182,7 @@ class NodeElementCreateSerializer(NodeElementSerializer):
 
     class Meta(NodeElementSerializer.Meta):
         """
+        Same fields as `NodeElementSerializer`
         """
 
 
@@ -360,6 +360,7 @@ class SequenceCreateSerializer(SequenceSerializer):
 
     class Meta(SequenceSerializer.Meta):
         """
+        Same fields as `SequenceSerializer`
         """
 
 

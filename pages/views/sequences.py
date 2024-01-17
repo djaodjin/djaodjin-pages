@@ -24,17 +24,15 @@
 import logging
 
 from deployutils.helpers import datetime_or_now
-from django.http import HttpResponseForbidden
+from django.core.exceptions import PermissionDenied
 from django.views.generic import TemplateView, DetailView
-from django.shortcuts import get_object_or_404
 from extended_templates.backends.pdf import PdfTemplateResponse
 
+from .. import settings
 from ..compat import reverse
 from ..helpers import update_context_urls
-from ..mixins import SequenceProgressMixin
-from ..models import (Sequence, SequenceProgress, EnumeratedProgress,
-    EnumeratedElements)
-from .. import settings
+from ..mixins import EnumeratedProgressMixin, SequenceProgressMixin
+from ..models import EnumeratedElements
 
 LOGGER = logging.getLogger(__name__)
 
@@ -44,15 +42,12 @@ class SequenceProgressView(SequenceProgressMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        sequence_slug = self.kwargs.get('sequence')
-        user = self.request.user
-        self.sequence = get_object_or_404(Sequence, slug=sequence_slug)
 
         queryset = self.get_queryset()
         decorated_queryset = self.decorate_queryset(queryset)
 
         context.update({
-            'user': user,
+            'user': self.user,
             'sequence': self.sequence,
             'elements': decorated_queryset,
         })
@@ -60,20 +55,20 @@ class SequenceProgressView(SequenceProgressMixin, TemplateView):
         context_urls = {
             'api_enumerated_progress_user_list': reverse(
                 'api_enumerated_progress_user_list',
-                args=(self.sequence.slug, user.username)),
+                args=(self.user, self.sequence,)),
         }
 
         if self.sequence.has_certificate:
             context_urls['certificate_download'] = reverse(
                 'certificate_download',
-                args=(self.sequence.slug,))
+                args=(self.user, self.sequence,))
 
         update_context_urls(context, context_urls)
 
         return context
 
 
-class SequencePageElementView(SequenceProgressMixin, TemplateView):
+class SequencePageElementView(EnumeratedProgressMixin, TemplateView):
 
     template_name = 'pages/app/sequences/pageelement.html'
 
@@ -81,57 +76,43 @@ class SequencePageElementView(SequenceProgressMixin, TemplateView):
         #pylint:disable=too-many-locals
         context = super().get_context_data(**kwargs)
 
-        queryset = self.get_queryset()
-        decorated_queryset = self.decorate_queryset(queryset)
-        decorated_elements = list(decorated_queryset)
-        element = decorated_elements[0] if decorated_elements else None
-
+        element = self.progress.step
         previous_element = EnumeratedElements.objects.filter(
-            sequence=self.sequence, rank__lt=element.rank).order_by('-rank').first()
+            sequence=element.sequence, rank__lt=element.rank).order_by(
+            '-rank').first()
         next_element = EnumeratedElements.objects.filter(
-            sequence=self.sequence, rank__gt=element.rank).order_by('rank').first()
+            sequence=element.sequence, rank__gt=element.rank).order_by(
+            'rank').first()
 
         if previous_element:
             previous_element.url = reverse(
                 'sequence_page_element_view',
-                args=(self.sequence.slug, previous_element.rank))
+                args=(self.user, element.sequence, previous_element.rank))
         if next_element:
             next_element.url = reverse(
                 'sequence_page_element_view',
-                args=(self.sequence.slug, next_element.rank))
-        progress = None
-        viewing_duration_seconds = 0
-        user = self.request.user
-        try:
-            sequence_progress = SequenceProgress.objects.get(
-                sequence=self.sequence, user=user)
-            progress = EnumeratedProgress.objects.get(
-                progress=sequence_progress, rank=element.rank)
-            viewing_duration_seconds = progress.viewing_duration.total_seconds() \
-                if progress.viewing_duration else 0
-        except (SequenceProgress.DoesNotExist, EnumeratedProgress.DoesNotExist):
-            pass
+                args=(self.user, element.sequence, next_element.rank))
+        viewing_duration_seconds = (
+            self.progress.viewing_duration.total_seconds()
+            if self.progress.viewing_duration else 0)
 
         context.update({
-            'sequence': self.sequence,
+            'sequence': element.sequence,
             'element': element,
             'previous_element': previous_element,
             'next_element': next_element,
             'ping_interval': settings.PING_INTERVAL,
-            'progress': progress,
+            'progress': self.progress,
             'viewing_duration_seconds': viewing_duration_seconds,
         })
 
         context_urls = {
-            'api_enumerated_progress_list_create': reverse(
-                'api_enumerated_progress_list_create',
-                args=(self.sequence.slug,)),
             'api_enumerated_progress_user_detail': reverse(
                 'api_enumerated_progress_user_detail',
-                args=(self.sequence.slug, user.username, element.rank)),
+                args=(self.user, element.sequence, element.rank)),
             'sequence_progress_view': reverse(
                 'sequence_progress_view',
-                args=(self.sequence.slug,)),
+                args=(self.user, element.sequence,)),
         }
 
         if hasattr(element, 'is_live_event') and element.is_live_event:
@@ -140,11 +121,10 @@ class SequencePageElementView(SequenceProgressMixin, TemplateView):
                 context_urls['live_event_location'] = event.location
 
         if hasattr(element, 'is_certificate') and element.is_certificate:
-            certificate = self.sequence.get_certificate
+            certificate = element.sequence.get_certificate
             if certificate:
                 context_urls['certificate_download'] = reverse(
-                    'certificate_download',
-                    args=(self.sequence.slug,))
+                    'certificate_download', args=(element.sequence,))
 
         update_context_urls(context, context_urls)
 
@@ -152,45 +132,36 @@ class SequencePageElementView(SequenceProgressMixin, TemplateView):
 
 
 class CertificateDownloadView(SequenceProgressMixin, DetailView):
-    model = Sequence
-    slug_url_kwarg = 'sequence'
+
     template_name = 'pages/certificate.html'
     response_class = PdfTemplateResponse
 
     def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        sequence = self.object
-
-        sequence_progress, _unused_created = \
-            SequenceProgress.objects.get_or_create(
-                sequence=sequence,
-                user=self.request.user)
-
-        has_completed_sequence = sequence_progress.is_completed
+        context = super(CertificateDownloadView, self).get_context_data(
+            **kwargs)
+        has_completed_sequence = self.sequence_progress.is_completed
         context.update({
-            'user': self.request.user,
-            'sequence': sequence,
-            'has_certificate': sequence.has_certificate,
-            'certificate': sequence.get_certificate,
+            'user': self.user,
+            'sequence': self.sequence_progress.sequence,
+            'has_certificate': self.sequence_progress.sequence.has_certificate,
+            'certificate': self.sequence_progress.sequence.get_certificate,
             'has_completed_sequence': has_completed_sequence
         })
 
         if has_completed_sequence:
-            completion_date = datetime_or_now(sequence_progress.completion_date)
-            if not sequence_progress.completion_date:
-                sequence_progress.completion_date = completion_date
-                sequence_progress.save()
+            completion_date = datetime_or_now(
+                self.sequence_progress.completion_date)
+            if not self.sequence_progress.completion_date:
+                self.sequence_progress.completion_date = completion_date
+                self.sequence_progress.save()
             context['completion_date'] = completion_date
 
         return context
 
     def get(self, request, *args, **kwargs):
-        self.object = self.get_object()
-        context = self.get_context_data(**kwargs)
-
-        if (not context.get('has_certificate', False) or
-            not context.get('has_completed_sequence', False)):
-            return HttpResponseForbidden(
-                'A certificate is not available for download.')
-
-        return self.render_to_response(context)
+        if (self.sequence_progress.has_certificate and
+            not self.sequence_progress.is_completed):
+            raise PermissionDenied("Certificate is not available for download"\
+                " until you complete all elements.")
+        return super(CertificateDownloadView, self).get(
+            request, *args, **kwargs)

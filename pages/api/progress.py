@@ -25,16 +25,13 @@
 from datetime import timedelta
 
 from deployutils.helpers import datetime_or_now
-from django.db import transaction
 from rest_framework import response as api_response, status
-from rest_framework.generics import (get_object_or_404, DestroyAPIView,
-    ListAPIView, RetrieveAPIView)
+from rest_framework.generics import DestroyAPIView, ListAPIView, RetrieveAPIView
 
 from .. import settings
 from ..docs import extend_schema
-from ..mixins import SequenceProgressMixin
-from ..models import (EnumeratedElements, EnumeratedProgress, SequenceProgress,
-    LiveEvent)
+from ..mixins import EnumeratedProgressMixin, SequenceProgressMixin
+from ..models import EnumeratedElements, EnumeratedProgress, LiveEvent
 from ..serializers import (EnumeratedProgressSerializer,
     AttendanceInputSerializer)
 
@@ -98,7 +95,8 @@ WHERE pages_enumeratedelements.sequence_id = %(sequence_id)d
             EnumeratedProgressListAPIView, self).paginate_queryset(queryset)
         results = page if page else queryset
         for elem in results:
-            if elem.viewing_duration:
+            if (elem.viewing_duration is not None and
+                not isinstance(elem.viewing_duration, timedelta)):
                 elem.viewing_duration = timedelta(
                     microseconds=elem.viewing_duration)
         return results
@@ -127,7 +125,7 @@ class EnumeratedProgressResetAPIView(SequenceProgressMixin, DestroyAPIView):
         return api_response.Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class EnumeratedProgressRetrieveAPIView(SequenceProgressMixin,
+class EnumeratedProgressRetrieveAPIView(EnumeratedProgressMixin,
                                         RetrieveAPIView):
     """
     Retrieves viewing time for an element
@@ -151,25 +149,9 @@ class EnumeratedProgressRetrieveAPIView(SequenceProgressMixin,
         }
     """
     serializer_class = EnumeratedProgressSerializer
-    lookup_url_kwarg = 'rank'
-    lookup_field = 'rank'
 
     def get_object(self):
-        progress = get_object_or_404(EnumeratedElements.objects.all(),
-            sequence=self.sequence,
-            rank=self.kwargs.get(self.lookup_url_kwarg, 1))
-        with transaction.atomic():
-            sequence_progress, _ = SequenceProgress.objects.get_or_create(
-                sequence=self.sequence, user=self.user)
-            instance, _  = EnumeratedProgress.objects.get_or_create(
-                sequence_progress=sequence_progress,
-                step=progress)
-        # We are using a derivative of `EnumeratedElementsSerializer`
-        # to return an `EnumeratedProgress` instance.
-        instance.content = progress.content
-        instance.rank = progress.rank
-        instance.min_viewing_duration = progress.min_viewing_duration
-        return instance
+        return self.progress
 
     @extend_schema(request=None)
     def post(self, request, *args, **kwargs):
