@@ -6,16 +6,16 @@
         Back to {{ sequence.slug }}
     </a>
 
-    <h1>{{ element.page_element.title }}</h1>
-    {% if element.page_element.text %}
+    <h1>{{ element.content.title }}</h1>
+    {% if element.content.text %}
         <hr>
-        <p>{{ element.page_element.text|safe }}</p>
+        <p>{{ element.content.text|safe }}</p>
         <hr>
     {% endif %}
 
 
     {% if element.is_live_event %}
-        <p>Live Event URL: <a href="{{ urls.live_event_location }}">{{ element.page_element.events.first.location }}</a></p>
+        <p>Live Event URL: <a href="{{ urls.live_event_location }}">{{ element.content.events.first.location }}</a></p>
 
     {% elif element.is_certificate %}
         <p>This is a certificate. <a href="{{ urls.certificate_download }}">Download Certificate</a></p>

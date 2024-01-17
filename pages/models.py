@@ -1,4 +1,4 @@
-# Copyright (c) 2023, Djaodjin Inc.
+# Copyright (c) 2024, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -425,7 +425,7 @@ class Sequence(models.Model):
     @property
     def get_certificate(self):
         if self.has_certificate:
-            return self.get_last_element.page_element
+            return self.get_last_element.content
         return None
 
     @property
@@ -441,7 +441,7 @@ class EnumeratedElements(models.Model):
     """
     sequence = models.ForeignKey(Sequence, on_delete=models.CASCADE,
                                  related_name='sequence_enumerated_elements')
-    page_element = models.ForeignKey(PageElement, on_delete=models.CASCADE)
+    content = models.ForeignKey(PageElement, on_delete=models.CASCADE)
     rank = models.IntegerField(
         help_text=_("Used to order elements when presenting a sequence"))
     min_viewing_duration = models.DurationField(
@@ -478,7 +478,7 @@ class SequenceProgress(models.Model):
             certificate_element = self.sequence.get_certificate
             enumerated_elements = EnumeratedElements.objects.filter(
                 sequence=self.sequence).exclude(
-                page_element__slug=certificate_element.slug)
+                content__slug=certificate_element.slug)
         else:
             enumerated_elements = EnumeratedElements.objects.filter(
                 sequence=self.sequence).order_by('rank')
@@ -503,7 +503,7 @@ class EnumeratedProgress(models.Model):
     created_at = models.DateTimeField(editable=False, auto_now_add=True)
     sequence_progress = models.ForeignKey(
         SequenceProgress, on_delete=models.CASCADE)
-    progress = models.ForeignKey(EnumeratedElements, on_delete=models.CASCADE)
+    step = models.ForeignKey(EnumeratedElements, on_delete=models.CASCADE)
     viewing_duration = models.DurationField(
         default=datetime.timedelta,  # stored in microseconds
         help_text=_("Total recorded viewing time for the material"))
@@ -513,10 +513,10 @@ class EnumeratedProgress(models.Model):
         help_text=_("Timestamp of the last activity ping"))
 
     class Meta:
-        unique_together = ('sequence_progress', 'progress')
+        unique_together = ('sequence_progress', 'step')
 
     def __str__(self):
-        return "%s-%s" % (self.sequence_progress.user, self.progress)
+        return "%s-%s" % (self.sequence_progress.user, self.step)
 
 
 class VoteManager(models.Manager):

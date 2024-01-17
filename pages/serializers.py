@@ -307,7 +307,7 @@ class EnumeratedElementSerializer(serializers.ModelSerializer):
     Serializes an EnumeratedElement
     """
 
-    page_element = serializers.SlugRelatedField(
+    content = serializers.SlugRelatedField(
         queryset=PageElement.objects.all(),
         slug_field="slug",
         help_text=_("Page element the enumerated element is for"),
@@ -320,7 +320,7 @@ class EnumeratedElementSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = EnumeratedElements
-        fields = ('page_element', 'rank', 'min_viewing_duration', 'certificate')
+        fields = ('content', 'rank', 'min_viewing_duration', 'certificate')
 
     def create(self, validated_data):
         validated_data.pop('certificate', None)
@@ -373,7 +373,7 @@ class EnumeratedProgressSerializer(EnumeratedElementSerializer):
     class Meta(EnumeratedElementSerializer.Meta):
         fields =  EnumeratedElementSerializer.Meta.fields + (
             'viewing_duration',)
-        read_only_fields = ('page_element', 'rank', 'min_viewing_duration',
+        read_only_fields = ('content', 'rank', 'min_viewing_duration',
             'certificate', 'viewing_duration',)
 
 

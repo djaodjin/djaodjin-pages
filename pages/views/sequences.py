@@ -135,7 +135,7 @@ class SequencePageElementView(SequenceProgressMixin, TemplateView):
         }
 
         if hasattr(element, 'is_live_event') and element.is_live_event:
-            event = element.page_element.events.first()
+            event = element.content.events.first()
             if event:
                 context_urls['live_event_location'] = event.location
 

@@ -272,10 +272,10 @@ class SequenceProgressMixin(UserMixin, SequenceMixin):
 
 
     def update_element(self, obj):
-        obj.title = obj.page_element.title
+        obj.title = obj.content.title
         obj.url = reverse('sequence_page_element_view',
             args=(self.sequence.slug, obj.rank))
-        obj.is_live_event = obj.page_element.slug in self.live_events
+        obj.is_live_event = obj.content.slug in self.live_events
         obj.is_certificate = (obj.rank == self.last_rank_element.rank) if \
             self.last_rank_element else False
 
@@ -288,7 +288,7 @@ class SequenceProgressMixin(UserMixin, SequenceMixin):
 
     def decorate_queryset(self, queryset):
         self.live_events = LiveEvent.objects.filter(
-            element__in=[obj.page_element for obj in queryset]
+            element__in=[obj.content for obj in queryset]
         ).values_list('element__slug', flat=True)
 
         self.last_rank_element = None

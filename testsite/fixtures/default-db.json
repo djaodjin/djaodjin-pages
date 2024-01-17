@@ -149,7 +149,7 @@
 {
     "fields": {
       "sequence": 101,
-      "page_element": 100,
+      "content": 100,
       "rank": 1,
       "min_viewing_duration": "00:00:10"
     },
@@ -158,7 +158,7 @@
 {
     "fields": {
       "sequence": 101,
-      "page_element": 101,
+      "content": 101,
       "rank": 2,
       "min_viewing_duration": "00:00:20"
     },
@@ -167,7 +167,7 @@
 {
     "fields": {
       "sequence": 101,
-      "page_element": 102,
+      "content": 102,
       "rank": 3,
       "min_viewing_duration": "00:00:30"
     },
@@ -186,7 +186,7 @@
 {
   "fields": {
     "sequence": 102,
-    "page_element": 100,
+    "content": 100,
     "rank": 1,
     "min_viewing_duration": "00:00:10"
   },
@@ -195,7 +195,7 @@
 {
   "fields": {
     "sequence": 102,
-    "page_element": 101,
+    "content": 101,
     "rank": 2,
     "min_viewing_duration": "00:00:20"
   },
@@ -204,7 +204,7 @@
 {
   "fields": {
     "sequence": 102,
-    "page_element": 108,
+    "content": 108,
     "rank": 3,
     "min_viewing_duration": "00:00:30"
   },
@@ -223,7 +223,7 @@
 {
   "fields": {
     "sequence": 103,
-    "page_element": 100,
+    "content": 100,
     "rank": 1,
     "min_viewing_duration": "00:00:10"
   },
@@ -243,7 +243,7 @@
 {
   "fields": {
     "sequence": 103,
-    "page_element": 101,
+    "content": 101,
     "rank": 2,
     "min_viewing_duration": "00:00:20"
   },
@@ -252,7 +252,7 @@
 {
   "fields": {
     "sequence": 103,
-    "page_element": 107,
+    "content": 107,
     "rank": 3,
     "min_viewing_duration": "00:00:30"
   },
@@ -261,7 +261,7 @@
 {
   "fields": {
     "sequence": 103,
-    "page_element": 108,
+    "content": 108,
     "rank": 4,
     "min_viewing_duration": "00:00:00"
   },

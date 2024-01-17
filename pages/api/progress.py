@@ -85,7 +85,7 @@ WHERE pages_sequenceprogress.user_id = %(user_id)d
 SELECT *
 FROM pages_enumeratedelements
 LEFT OUTER JOIN progresses
-ON pages_enumeratedelements.id = progresses.progress_id
+ON pages_enumeratedelements.id = progresses.step_id
 WHERE pages_enumeratedelements.sequence_id = %(sequence_id)d
 """ % {
     'user_id': self.user.pk,
@@ -123,7 +123,7 @@ class EnumeratedProgressResetAPIView(SequenceProgressMixin, DestroyAPIView):
     def delete(self, request, *args, **kwargs):
         EnumeratedProgress.objects.filter(
             sequence_progress__user=self.user,
-            progress__sequence=self.sequence).delete()
+            step__sequence=self.sequence).delete()
         return api_response.Response(status=status.HTTP_204_NO_CONTENT)
 
 
@@ -163,10 +163,10 @@ class EnumeratedProgressRetrieveAPIView(SequenceProgressMixin,
                 sequence=self.sequence, user=self.user)
             instance, _  = EnumeratedProgress.objects.get_or_create(
                 sequence_progress=sequence_progress,
-                progress=progress)
+                step=progress)
         # We are using a derivative of `EnumeratedElementsSerializer`
         # to return an `EnumeratedProgress` instance.
-        instance.page_element = progress.page_element
+        instance.content = progress.content
         instance.rank = progress.rank
         instance.min_viewing_duration = progress.min_viewing_duration
         return instance
@@ -270,9 +270,8 @@ class LiveEventAttendanceAPIView(EnumeratedProgressRetrieveAPIView):
         serializer.is_valid(raise_exception=True)
 
         progress = self.get_object()
-        element = progress.progress
-        page_element = element.page_element
-        live_event = LiveEvent.objects.filter(element=page_element).first()
+        element = progress.step
+        live_event = LiveEvent.objects.filter(element=element.content).first()
 
         # We use if live_event to confirm the existence of the LiveEvent object
         if (live_event and

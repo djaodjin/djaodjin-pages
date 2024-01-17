@@ -221,12 +221,12 @@ class SequenceRetrieveUpdateDestroyAPIView(AccountMixin, SequenceMixin,
             "results": [
                 {
                     "rank": 1,
-                    "page_element": "text-content",
+                    "content": "text-content",
                     "min_viewing_duration": "00:00:10"
                 },
                 {
                     "rank": 2,
-                    "page_element": "survey-event",
+                    "content": "survey-event",
                     "min_viewing_duration": "00:00:20"
                 }
             ]
@@ -315,12 +315,12 @@ class AddElementToSequenceAPIView(AccountMixin, SequenceMixin,
             "results": [
                 {
                     "rank": 1,
-                    "page_element": "text-content",
+                    "content": "text-content",
                     "min_viewing_duration": "00:00:10"
                 },
                 {
                     "rank": 2,
-                    "page_element": "survey-event",
+                    "content": "survey-event",
                     "min_viewing_duration": "00:00:20"
                 }
             ]
@@ -354,7 +354,7 @@ class AddElementToSequenceAPIView(AccountMixin, SequenceMixin,
         .. code-block:: json
 
                 {
-                    "page_element": "production",
+                    "content": "production",
                     "rank": 10
                 }
 
@@ -364,7 +364,7 @@ class AddElementToSequenceAPIView(AccountMixin, SequenceMixin,
 
                 {
                     "rank": 1,
-                    "page_element": "text-content",
+                    "content": "text-content",
                     "min_viewing_duration": "00:00:00"
                 }
         """
