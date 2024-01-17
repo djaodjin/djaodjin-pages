@@ -83,11 +83,12 @@ doc:
 	$(installDirs) build/docs
 	cd $(srcDir) && sphinx-build -b html ./docs $(PWD)/build/docs
 
-vendor-assets-prerequisites: $(ASSETS_DIR)/vendor/bootstrap.css
+vendor-assets-prerequisites: $(ASSETS_DIR)/vendor/vue.js
 
-$(ASSETS_DIR)/vendor/bootstrap.css: $(srcDir)/testsite/package.json
+$(ASSETS_DIR)/vendor/vue.js: $(srcDir)/testsite/package.json
 	$(installFiles) $^ $(installTop)
 	$(NPM) install --loglevel verbose --cache $(installTop)/.npm --tmp $(installTop)/tmp --prefix $(installTop)
+	$(installDirs) $(ASSETS_DIR)/vendor
 	$(installFiles) $(installTop)/node_modules/dropzone/dist/dropzone.css $(ASSETS_DIR)/vendor
 	$(installFiles) $(installTop)/node_modules/dropzone/dist/dropzone.js $(ASSETS_DIR)/vendor
 	$(installFiles) $(installTop)/node_modules/font-awesome/css/font-awesome.css $(ASSETS_DIR)/vendor
