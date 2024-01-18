@@ -814,11 +814,11 @@ class ImportDocxView(AccountMixin, PageElementMixin, generics.GenericAPIView):
         Formats a Google Docs' URL.
         """
         if "docs.google.com/document" not in url:
-            raise ValueError(f'Invalid Google Docs URL: "{url}"')
+            raise ValueError("Invalid Google Docs URL: \"%s\"" % str(url))
 
         match = re.search(r"/d/([0-9A-Za-z_-]+)/", url)
         if not match:
-            raise ValueError(f'Could not extract document ID from URL: "{url}"')
-
-        doc_id = match.group(1)
-        return f"https://docs.google.com/document/d/{doc_id}/export?format=docx"
+            raise ValueError(
+                "Could not extract document ID from URL: \"%s\"" % str(url))
+        return ("https://docs.google.com/document/d/%s/export?format=docx" %
+            str(match.group(1)))
