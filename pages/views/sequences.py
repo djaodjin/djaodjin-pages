@@ -41,7 +41,7 @@ class SequenceProgressView(SequenceProgressMixin, TemplateView):
     template_name = 'pages/app/sequences/index.html'
 
     def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
+        context = super(SequenceProgressView, self).get_context_data(**kwargs)
 
         queryset = self.get_queryset()
         decorated_queryset = self.decorate_queryset(queryset)
@@ -74,7 +74,8 @@ class SequencePageElementView(EnumeratedProgressMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         #pylint:disable=too-many-locals
-        context = super().get_context_data(**kwargs)
+        context = super(SequencePageElementView,
+            self).get_context_data(**kwargs)
 
         element = self.progress.step
         previous_element = EnumeratedElements.objects.filter(

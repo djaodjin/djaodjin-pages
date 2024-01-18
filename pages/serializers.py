@@ -292,7 +292,7 @@ class PageElementSerializer(serializers.ModelSerializer):
             html_field = HTMLField(html_tags=settings.ALLOWED_TAGS,
                                    html_attributes=settings.ALLOWED_ATTRIBUTES)
             data['text'] = html_field.to_internal_value(data['text'])
-        return super().to_internal_value(data)
+        return super(PageElementSerializer, self).to_internal_value(data)
 
 
 class PageElementTagSerializer(serializers.ModelSerializer):
