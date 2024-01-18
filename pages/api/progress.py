@@ -91,8 +91,13 @@ WHERE pages_enumeratedelements.sequence_id = %(sequence_id)d
         return queryset
 
     def paginate_queryset(self, queryset):
-        page = super(
-            EnumeratedProgressListAPIView, self).paginate_queryset(queryset)
+        try:
+            page = super(
+                EnumeratedProgressListAPIView, self).paginate_queryset(queryset)
+        except TypeError:
+            # Python2.7/Django1.11 doesn't support `len` on `RawQuerySet`.
+            page = super(EnumeratedProgressListAPIView, self).paginate_queryset(
+                list(queryset))
         results = page if page else queryset
         for elem in results:
             if (elem.viewing_duration is not None and
