@@ -25,6 +25,7 @@ dependencies = [
   "Django>=1.11",
   "djangorestframework>=3.3.1",
   "djaodjin-deployutils>=0.10.6",
+  "djaodjin-extended-templates>=0.4.5",
   "mammoth>=1.6.0",
   "markdownify>=0.11.6",
   "Markdown>=3.4.1",
