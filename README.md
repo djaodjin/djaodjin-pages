@@ -41,11 +41,11 @@ Tested with
 - **Python:** 3.10, **Django:** 4.2 (latest)
 - **Python:** 2.7, **Django:** 1.11 (legacy) - use testsite/requirements-legacy.txt
 
-0.6.9
+0.7.0
 
-  * adds tags into practice description
-  * compatibles with Bootstrap5
-  * publishes distribution using pyproject.toml
+  * generates usable OpenAPI 3 schema
+  * adds sequences and user progress through a sequence
+  * imports content of PageElement as a .docx
 
 [previous release notes](changelog)
 
