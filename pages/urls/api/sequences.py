@@ -32,10 +32,10 @@ from ...compat import path
 
 
 urlpatterns = [
-    path('<slug:sequence>/<slug:user>',
-         EnumeratedProgressResetAPIView.as_view(),
-         name='api_progress_reset'),
     path('<slug:sequence>/<int:rank>/<slug:user>',
          LiveEventAttendanceAPIView.as_view(),
          name='api_mark_attendance')
+    path('<slug:sequence>/<slug:user>',
+         EnumeratedProgressResetAPIView.as_view(),
+         name='api_progress_reset'),
 ]
