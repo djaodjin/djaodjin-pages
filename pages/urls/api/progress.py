@@ -32,10 +32,10 @@ from ...api.progress import (EnumeratedProgressListAPIView,
 from ...compat import path
 
 urlpatterns = [
+    path('<slug:user>/<slug:sequence>/<int:rank>',
+         EnumeratedProgressRetrieveAPIView.as_view(),
+         name='api_enumerated_progress_user_detail'),
     path('<slug:user>/<slug:sequence>',
          EnumeratedProgressListAPIView.as_view(),
          name='api_enumerated_progress_user_list'),
-    path('<slug:user>/<slug:sequence>/<int:rank>',
-         EnumeratedProgressRetrieveAPIView.as_view(),
-         name='api_enumerated_progress_user_detail')
 ]
