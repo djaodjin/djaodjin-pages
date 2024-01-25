@@ -41,7 +41,7 @@ Tested with
 - **Python:** 3.10, **Django:** 4.2 (latest)
 - **Python:** 2.7, **Django:** 1.11 (legacy) - use testsite/requirements-legacy.txt
 
-0.7.0
+0.7.1
 
   * generates usable OpenAPI 3 schema
   * adds sequences and user progress through a sequence

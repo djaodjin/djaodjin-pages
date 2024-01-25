@@ -1,3 +1,9 @@
+0.7.1
+
+  * fixes URL routes regression introduced in version 0.7.0
+
+ -- Sebastien Mirolo <smirolo@djaodjin.com>  Thu, 25 Jan 2024 12:35:00 -0700
+
 0.7.0
 
   * generates usable OpenAPI 3 schema
