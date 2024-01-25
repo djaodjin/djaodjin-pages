@@ -182,9 +182,12 @@ class PageElementMirrorAPIView(EdgesUpdateAPIView):
             new_prefix = '/%s' % "/".join([elm.slug for elm in targets])
             new_node = self.mirror_recursive(node,
                 prefix=prefix, new_prefix=new_prefix)
-            RelationShip.objects.create(
+            # special case when we are mirroring a leaf element that already
+            # exist under the root node (ref: `new_node == node`
+            # through `mirror_leaf`).
+            RelationShip.objects.get_or_create(
                 orig_element=root, dest_element=new_node,
-                rank=self.rank_or_max(root, rank))
+                defaults={'rank': self.rank_or_max(root, rank)})
         return new_node
 
 
@@ -239,78 +242,3 @@ class PageElementMoveAPIView(EdgesUpdateAPIView):
             edge.rank = rank
             edge.save()
         return sources[-1]
-
-
-class RelationShipListAPIView(DestroyModelMixin, generics.ListCreateAPIView):
-    """
-    Lists edges of an editable node
-
-
-    **Examples
-
-    .. code-block:: http
-
-        GET /api/editables/tspproject/content/relationship HTTP/1.1
-
-    responds
-
-    .. code-block:: json
-
-        {
-          "count": 1,
-          "next": null,
-          "previous": null,
-          "results": [{
-            "orig_elements": ["readme"],
-            "dest_elements": []
-          }]
-        }
-    """
-    model = RelationShip
-    serializer_class = RelationShipSerializer
-    queryset = RelationShip.objects.all()
-
-    def delete(self, request, *args, **kwargs):#pylint: disable=unused-argument
-        """
-        Deletes edges of an editable node
-
-        **Examples
-
-        .. code-block:: http
-
-            DELETE /api/editables/tspproject/content/relationship HTTP/1.1
-       """
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid()
-        elements = self.queryset.filter(
-            orig_element__slug__in=serializer.validated_data['orig_elements'],
-            dest_element__slug__in=serializer.validated_data['dest_elements'])
-        elements.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
-
-    def post(self, request, *args, **kwargs):
-        """
-        Creates edges of an editable node
-
-
-        **Examples
-
-        .. code-block:: http
-
-            POST /api/editables/tspproject/content/relationship HTTP/1.1
-
-        .. code-block:: json
-
-             {
-             }
-
-        responds
-
-        .. code-block:: json
-
-             {
-             }
-        """
-        #pylint: disable=unused-argument,useless-super-delegation
-        return super(RelationShipListAPIView, self).post(
-            request, *args, **kwargs)

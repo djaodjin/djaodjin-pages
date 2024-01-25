@@ -1,4 +1,4 @@
-# Copyright (c) 2022, DjaoDjin inc.
+# Copyright (c) 2024, DjaoDjin inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -25,11 +25,12 @@
 API URLs for editing content
 """
 
-from ...compat import path
+from ... import settings
+from ...compat import path, re_path
 from ...api.elements import (ImportDocxView, PageElementEditableDetail,
     PageElementEditableListAPIView)
 from ...api.relationship import (PageElementAliasAPIView,
-    PageElementMirrorAPIView, PageElementMoveAPIView, RelationShipListAPIView)
+    PageElementMirrorAPIView, PageElementMoveAPIView)
 from ...api.sequences import (SequenceListCreateAPIView,
     SequenceRetrieveUpdateDestroyAPIView,
     RemoveElementFromSequenceAPIView, AddElementToSequenceAPIView)
@@ -49,13 +50,13 @@ urlpatterns = [
          SequenceListCreateAPIView.as_view(),
          name='api_sequence_list_create'),
 
-    path('content/relationship',
-        RelationShipListAPIView.as_view(), name='relationships'),
-    path('content/alias/<path:path>',
+    # We need `re_path` here otherwise it requires to duplicate the URLs
+    # when dealing with the path to the root of the element tree.
+    re_path('^content/alias/(?P<path>%s)$' % settings.PATH_RE,
         PageElementAliasAPIView.as_view(), name='pages_api_alias_node'),
-    path('content/attach/<path:path>',
+    re_path('^content/attach/(?P<path>%s)$' % settings.PATH_RE,
         PageElementMoveAPIView.as_view(), name='pages_api_move_node'),
-    path('content/mirror/<path:path>',
+    re_path('^content/mirror/(?P<path>%s)$' % settings.PATH_RE,
         PageElementMirrorAPIView.as_view(), name='pages_api_mirror_node'),
     path('content/<path:path>/import',
          ImportDocxView.as_view(), name='import_docx'),
