@@ -21,6 +21,7 @@
 # WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+import dateutil.parser
 import logging
 
 from django.db import transaction, IntegrityError
@@ -28,12 +29,14 @@ from django.template.defaultfilters import slugify
 from rest_framework import response as api_response, status
 from rest_framework.filters import OrderingFilter, SearchFilter
 from rest_framework.generics import (get_object_or_404, DestroyAPIView,
-    ListAPIView, ListCreateAPIView, RetrieveUpdateDestroyAPIView)
+    ListAPIView, ListCreateAPIView, RetrieveUpdateDestroyAPIView, CreateAPIView)
+from rest_framework.views import APIView
 
-from ..mixins import AccountMixin, SequenceMixin
-from ..models import Sequence, EnumeratedElements
+from ..mixins import AccountMixin, SequenceMixin, PageElementMixin
+from ..models import Sequence, EnumeratedElements, PageElement, LiveEvent
 from ..serializers import (SequenceSerializer, SequenceCreateSerializer,
-    EnumeratedElementSerializer)
+    EnumeratedElementSerializer, LiveEventSerializer)
+
 
 LOGGER = logging.getLogger(__name__)
 
@@ -401,9 +404,9 @@ class AddElementToSequenceAPIView(AccountMixin, SequenceMixin,
                 {'detail': str(err)},
                 status=status.HTTP_400_BAD_REQUEST)
 
-        return api_response.Response(
-            serializer.errors,
-            status=status.HTTP_400_BAD_REQUEST)
+        # return api_response.Response(
+        #     serializer.errors,
+        #     status=status.HTTP_400_BAD_REQUEST)
 
 
 class RemoveElementFromSequenceAPIView(AccountMixin, SequenceMixin,
@@ -432,3 +435,44 @@ class RemoveElementFromSequenceAPIView(AccountMixin, SequenceMixin,
                 self.sequence.has_certificate = False
                 self.sequence.save()
             instance.delete()
+
+
+class LiveEventCreateAPIView(CreateAPIView):
+    # Adds LiveEvent to PageElement
+    serializer_class = LiveEventSerializer
+
+    def post(self, request, *args, **kwargs):
+        return self.create(request, *args, **kwargs)
+
+
+class LiveEventDeleteAPIView(PageElementMixin, APIView):
+    # Deletes a LiveEvent
+    serializer_class = LiveEventSerializer
+
+    def get_object(self, request):
+        # Under the assumption that a Page Element only has
+        # a single LiveEvent object
+
+        # Which is not true
+
+        # Even if we have the same scheduled_at, there's still no
+        # guarantee it's a singular one, there could be multiple
+        # LiveEvents with the same scheduled_at datetime.
+
+        # Maybe a slug field? or set unique_together for 
+        # each pageelement/scheduled_at?
+        scheduled_at = request.data.get('scheduled_at', None)
+        try:
+            # Convert string to datetime object
+            scheduled_at_str = dateutil.parser.parse(scheduled_at)
+        except (ValueError, TypeError):
+            return
+
+        obj = LiveEvent.objects.get(element=self.element, scheduled_at=scheduled_at_str)
+        return obj
+
+    def delete(self, request, *args, **kwargs):
+        obj = self.get_object(request)
+        obj.delete()
+
+        return api_response.Response(status=status.HTTP_204_NO_CONTENT)

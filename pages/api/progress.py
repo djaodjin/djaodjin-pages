@@ -22,7 +22,9 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import dateutil.parser
 from datetime import timedelta
+
 
 from deployutils.helpers import datetime_or_now
 from rest_framework import response as api_response, status
@@ -253,21 +255,32 @@ class LiveEventAttendanceAPIView(EnumeratedProgressRetrieveAPIView):
                 "detail": "Attendance marked successfully"
             }
         """
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
+        # serializer = self.get_serializer(data=request.data)
+        # serializer.is_valid(raise_exception=True)
+        # scheduled_at_str = serializer.data['scheduled_at']
+        scheduled_at = request.data.get('scheduled_at', None)
+        scheduled_at_str = None
+        try:
+            scheduled_at_str = dateutil.parser.parse(scheduled_at)
+        # Placeholder try/except clauses
+        except:
+            pass
 
         progress = self.get_object()
         element = progress.step
-        live_event = LiveEvent.objects.filter(element=element.content).first()
+        # Finding the LiveEvent from its scheduled_at
+        if scheduled_at_str:
+            live_event = LiveEvent.objects.filter(
+                element=element.content, scheduled_at=scheduled_at_str).first()
 
-        # We use if live_event to confirm the existence of the LiveEvent object
-        if (live_event and
-            progress.viewing_duration <= element.min_viewing_duration):
-            progress.viewing_duration = element.min_viewing_duration
-            progress.save()
-            return api_response.Response(
-                {'detail': 'Attendance marked successfully'},
-                status=status.HTTP_200_OK)
+            # We use if live_event to confirm the existence of the LiveEvent object
+            if (live_event and
+                progress.viewing_duration <= element.min_viewing_duration):
+                progress.viewing_duration = element.min_viewing_duration
+                progress.save()
+                return api_response.Response(
+                    {'detail': 'Attendance marked successfully'},
+                    status=status.HTTP_200_OK)
         return api_response.Response(
             {'detail': 'Attendance not marked'},
             status=status.HTTP_400_BAD_REQUEST)

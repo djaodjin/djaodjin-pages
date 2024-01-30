@@ -396,6 +396,9 @@ class LiveEvent(models.Model):
 
     def __str__(self):
         return "%s-live" % str(self.element)
+    
+    class Meta:
+        unique_together = ('element', 'scheduled_at')
 
 
 @python_2_unicode_compatible
@@ -483,12 +486,12 @@ class SequenceProgress(models.Model):
             enumerated_elements = EnumeratedElements.objects.filter(
                 sequence=self.sequence).order_by('rank')
         user_enumerated_progress = EnumeratedProgress.objects.filter(
-            progress=self,
-            rank__in=enumerated_elements.values_list(
+            sequence_progress=self,
+            step__rank__in=enumerated_elements.values_list(
             'rank', flat=True))
         for element in enumerated_elements:
             if not user_enumerated_progress.filter(
-                    rank=element.rank,
+                    step__rank=element.rank,
                     viewing_duration__gte=element.min_viewing_duration
             ).exists():
                 return False

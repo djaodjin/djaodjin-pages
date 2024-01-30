@@ -32,7 +32,7 @@ from rest_framework import serializers
 from . import settings
 from .compat import gettext_lazy as _, is_authenticated
 from .models import (Comment, Follow, PageElement, Vote, Sequence,
-    EnumeratedElements)
+    EnumeratedElements, LiveEvent)
 
 #pylint: disable=abstract-method
 
@@ -383,3 +383,23 @@ class AttendanceInputSerializer(serializers.Serializer):
     Serializer to validate input to mark users' attendance
     to a LiveEvent(LiveEventAttendanceAPIView)
     """
+    scheduled_at = serializers.DateTimeField(
+        help_text='Date/time the live event is scheduled')
+
+
+class LiveEventSerializer(serializers.ModelSerializer):
+    element = serializers.SlugRelatedField(
+        queryset=PageElement.objects.all(),
+        slug_field="slug",
+        help_text=_("LiveEvent the enumerated element is for"),
+        required=True)
+    scheduled_at = serializers.DateTimeField(
+        help_text='Date/time the live event is scheduled')
+    location = serializers.URLField(
+        help_text='URL to the live event')
+    max_attendees = serializers.IntegerField(default=0,
+        help_text='Max attendees for the LiveEvent')
+
+    class Meta:
+        model = LiveEvent
+        fields = ('element', 'scheduled_at', 'location', 'max_attendees')

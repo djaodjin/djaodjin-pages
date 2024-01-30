@@ -144,7 +144,7 @@ class PageElementMixin(object):
 
 class SequenceMixin(object):
     """
-    Returns an ``User`` from a URL.
+    Returns a ``Sequence`` from a URL.
     """
     sequence_url_kwarg = 'sequence'
 
@@ -315,11 +315,17 @@ class EnumeratedProgressMixin(SequenceProgressMixin):
     rank_url_kwarg = 'rank'
 
     @property
+    def rank(self):
+        if not hasattr(self, '_rank'):
+            self._rank = self.kwargs.get(self.rank_url_kwarg, 1)
+        return self._rank
+
+    @property
     def progress(self):
         if not hasattr(self, '_progress'):
             step = get_object_or_404(EnumeratedElements.objects.all(),
                 sequence=self.sequence,
-                rank=self.kwargs.get(self.rank_url_kwarg, 1))
+                rank=self.rank)
             with transaction.atomic():
                 self._progress, _  = EnumeratedProgress.objects.get_or_create(
                     sequence_progress=self.sequence_progress,

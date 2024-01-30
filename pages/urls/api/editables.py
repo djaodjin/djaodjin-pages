@@ -33,10 +33,17 @@ from ...api.relationship import (PageElementAliasAPIView,
     PageElementMirrorAPIView, PageElementMoveAPIView)
 from ...api.sequences import (SequenceListCreateAPIView,
     SequenceRetrieveUpdateDestroyAPIView,
-    RemoveElementFromSequenceAPIView, AddElementToSequenceAPIView)
+    RemoveElementFromSequenceAPIView, AddElementToSequenceAPIView,
+    LiveEventCreateAPIView, LiveEventDeleteAPIView)
 
 
 urlpatterns = [
+    path('elements/live-event/<slug:slug>', 
+         LiveEventDeleteAPIView.as_view(),
+         name='liveeventdel'),
+    path('elements/live-event', 
+         LiveEventCreateAPIView.as_view(),
+         name='liveeventadd'),
     path(r'sequences/<slug:sequence>/elements/<int:rank>',
          RemoveElementFromSequenceAPIView.as_view(),
          name='api_remove_element_from_sequence'),
