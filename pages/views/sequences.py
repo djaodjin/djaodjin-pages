@@ -43,7 +43,7 @@ class SequenceProgressView(SequenceProgressMixin, TemplateView):
     def get_context_data(self, **kwargs):
         context = super(SequenceProgressView, self).get_context_data(**kwargs)
 
-        queryset = self.get_queryset()
+        queryset = self.get_queryset().order_by('rank')
         decorated_queryset = self.decorate_queryset(queryset)
 
         context.update({
@@ -129,9 +129,9 @@ class SequencePageElementView(EnumeratedProgressMixin, TemplateView):
         }
 
         if hasattr(element, 'is_live_event') and element.is_live_event:
-            event = element.content.events.first()
-            if event:
-                context_urls['live_event_location'] = event.location
+            events = self.live_events
+            if events:
+                context.update({'events': events})
 
         if hasattr(element, 'is_certificate') and element.is_certificate:
             certificate = element.sequence.get_certificate

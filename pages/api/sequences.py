@@ -32,7 +32,7 @@ from rest_framework.generics import (get_object_or_404, DestroyAPIView,
     ListAPIView, ListCreateAPIView, RetrieveUpdateDestroyAPIView, CreateAPIView)
 from rest_framework.views import APIView
 
-from ..mixins import AccountMixin, SequenceMixin, PageElementMixin
+from ..mixins import AccountMixin, SequenceMixin, PageElementMixin, EnumeratedProgressMixin
 from ..models import Sequence, EnumeratedElements, PageElement, LiveEvent
 from ..serializers import (SequenceSerializer, SequenceCreateSerializer,
     EnumeratedElementSerializer, LiveEventSerializer)
@@ -437,42 +437,38 @@ class RemoveElementFromSequenceAPIView(AccountMixin, SequenceMixin,
             instance.delete()
 
 
-class LiveEventCreateAPIView(CreateAPIView):
-    # Adds LiveEvent to PageElement
+class LiveEventListCreatePIView(AccountMixin, PageElementMixin, ListCreateAPIView):
+    # Should this be in editables(?)
     serializer_class = LiveEventSerializer
 
+    def get_queryset(self):
+        queryset = LiveEvent.objects.all()
+        if self.element_url_kwarg in self.kwargs:
+            queryset = queryset.filter(element=self.element)
+        if self.account_url_kwarg in self.kwargs:
+            # Won't be necessary in the front-end view so the 
+            # if statement helps
+            queryset = queryset.filter(element__account=self.account)
+        return queryset
+
+    def get(self, request, *args, **kwargs):
+        return self.list(request, *args, **kwargs)
+
     def post(self, request, *args, **kwargs):
+        # We're asking for an Element here again(via the Serializer), 
+        # even though we've ascribed an element in the URL
         return self.create(request, *args, **kwargs)
 
 
-class LiveEventDeleteAPIView(PageElementMixin, APIView):
+class LiveEventDeleteAPIView(PageElementMixin, DestroyAPIView):
     # Deletes a LiveEvent
-    serializer_class = LiveEventSerializer
 
-    def get_object(self, request):
-        # Under the assumption that a Page Element only has
-        # a single LiveEvent object
-
-        # Which is not true
-
-        # Even if we have the same scheduled_at, there's still no
-        # guarantee it's a singular one, there could be multiple
-        # LiveEvents with the same scheduled_at datetime.
-
-        # Maybe a slug field? or set unique_together for 
-        # each pageelement/scheduled_at?
-        scheduled_at = request.data.get('scheduled_at', None)
-        try:
-            # Convert string to datetime object
-            scheduled_at_str = dateutil.parser.parse(scheduled_at)
-        except (ValueError, TypeError):
-            return
-
-        obj = LiveEvent.objects.get(element=self.element, scheduled_at=scheduled_at_str)
-        return obj
+    def get_object(self):
+        return get_object_or_404(LiveEvent.objects.all(),
+            element=self.element, index=self.kwargs.get('index'))
 
     def delete(self, request, *args, **kwargs):
-        obj = self.get_object(request)
-        obj.delete()
-
-        return api_response.Response(status=status.HTTP_204_NO_CONTENT)
+        # How do we deal with the fact that this removes
+        # the live event but not the enumeratedelement which
+        # might not have any attached liveevents?
+        return self.destroy(self, request, *args, **kwargs)

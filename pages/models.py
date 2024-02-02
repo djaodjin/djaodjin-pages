@@ -389,16 +389,19 @@ class LiveEvent(models.Model):
         help_text=_("Date/time the live event was created (in ISO format)"))
     scheduled_at = models.DateTimeField(
         help_text=_("Date/time the live event is scheduled (in ISO format)"))
+    index = models.PositiveSmallIntegerField(default=1,
+        help_text="Unique integer to denote the index of the LiveEvent")
     location = models.URLField(_("URL to the calendar event"), max_length=2083)
     max_attendees = models.IntegerField(default=0)
     extra = get_extra_field_class()(null=True, blank=True,
         help_text=_("Extra meta data (can be stringify JSON)"))
-
+    # Maybe we can add "status" to the extra and use it to filter
+    # live events for ones that are active or a new status field
     def __str__(self):
         return "%s-live" % str(self.element)
     
     class Meta:
-        unique_together = ('element', 'scheduled_at')
+        unique_together = ('element', 'index')
 
 
 @python_2_unicode_compatible

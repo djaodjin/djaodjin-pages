@@ -22,9 +22,7 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import dateutil.parser
 from datetime import timedelta
-
 
 from deployutils.helpers import datetime_or_now
 from rest_framework import response as api_response, status
@@ -34,8 +32,7 @@ from .. import settings
 from ..docs import extend_schema
 from ..mixins import EnumeratedProgressMixin, SequenceProgressMixin
 from ..models import EnumeratedElements, EnumeratedProgress, LiveEvent
-from ..serializers import (EnumeratedProgressSerializer,
-    AttendanceInputSerializer)
+from ..serializers import (EnumeratedProgressSerializer, LiveEventSerializer)
 
 
 class EnumeratedProgressListAPIView(SequenceProgressMixin, ListAPIView):
@@ -228,8 +225,6 @@ class LiveEventAttendanceAPIView(EnumeratedProgressRetrieveAPIView):
     rank_url_kwarg = 'rank'
 
     def get_serializer_class(self):
-        if self.request.method.lower() == 'post':
-            return AttendanceInputSerializer
         return super(LiveEventAttendanceAPIView, self).get_serializer_class()
 
     def post(self, request, *args, **kwargs):
@@ -255,31 +250,29 @@ class LiveEventAttendanceAPIView(EnumeratedProgressRetrieveAPIView):
                 "detail": "Attendance marked successfully"
             }
         """
-        # serializer = self.get_serializer(data=request.data)
-        # serializer.is_valid(raise_exception=True)
-        # scheduled_at_str = serializer.data['scheduled_at']
-        scheduled_at = request.data.get('scheduled_at', None)
-        scheduled_at_str = None
-        try:
-            scheduled_at_str = dateutil.parser.parse(scheduled_at)
-        # Placeholder try/except clauses
-        except:
-            pass
-
+        # Get the LiveEvent using request.data
+        index = request.data.get('index', None)
         progress = self.get_object()
         element = progress.step
-        # Finding the LiveEvent from its scheduled_at
-        if scheduled_at_str:
+        if index:
             live_event = LiveEvent.objects.filter(
-                element=element.content, scheduled_at=scheduled_at_str).first()
+                element=element.content, index=index).first()
 
             # We use if live_event to confirm the existence of the LiveEvent object
             if (live_event and
-                progress.viewing_duration <= element.min_viewing_duration):
+                progress.viewing_duration < element.min_viewing_duration):
                 progress.viewing_duration = element.min_viewing_duration
                 progress.save()
                 return api_response.Response(
                     {'detail': 'Attendance marked successfully'},
+                    status=status.HTTP_200_OK)
+            # To prevent marking attendance continuously on a LiveEvent
+            # that has already been marked
+            elif (live_event and
+                progress.viewing_duration == element.min_viewing_duration) and (
+                element.min_viewing_duration > 0):
+                return api_response.Response(
+                    {'detail': 'Attendance already marked'},
                     status=status.HTTP_200_OK)
         return api_response.Response(
             {'detail': 'Attendance not marked'},

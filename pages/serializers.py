@@ -378,28 +378,21 @@ class EnumeratedProgressSerializer(EnumeratedElementSerializer):
             'certificate', 'viewing_duration',)
 
 
-class AttendanceInputSerializer(serializers.Serializer):
-    """
-    Serializer to validate input to mark users' attendance
-    to a LiveEvent(LiveEventAttendanceAPIView)
-    """
-    scheduled_at = serializers.DateTimeField(
-        help_text='Date/time the live event is scheduled')
-
-
 class LiveEventSerializer(serializers.ModelSerializer):
     element = serializers.SlugRelatedField(
         queryset=PageElement.objects.all(),
         slug_field="slug",
-        help_text=_("LiveEvent the enumerated element is for"),
+        help_text=_('LiveEvent the enumerated element is for'),
         required=True)
     scheduled_at = serializers.DateTimeField(
-        help_text='Date/time the live event is scheduled')
+        help_text=_('Date/time the live event is scheduled'))
+    index = serializers.IntegerField(
+        help_text=_('Unique integer to denote the index of the LiveEvent'))
     location = serializers.URLField(
-        help_text='URL to the live event')
+        help_text=_('URL to the live event'))
     max_attendees = serializers.IntegerField(default=0,
-        help_text='Max attendees for the LiveEvent')
+        help_text=_('Max attendees for the LiveEvent'))
 
     class Meta:
         model = LiveEvent
-        fields = ('element', 'scheduled_at', 'location', 'max_attendees')
+        fields = ('element', 'scheduled_at', 'index', 'location', 'max_attendees')

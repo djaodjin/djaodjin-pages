@@ -29,6 +29,7 @@ import logging
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ImproperlyConfigured
 from django.db import transaction
+from django.db.models import F
 from django.http import Http404
 from rest_framework.generics import get_object_or_404
 
@@ -283,7 +284,7 @@ class SequenceProgressMixin(UserMixin, SequenceMixin):
         obj.title = obj.content.title
         obj.url = reverse('sequence_page_element_view',
             args=(self.user, self.sequence, obj.rank))
-        obj.is_live_event = obj.content.slug in self.live_events
+        obj.is_live_event = obj.content.slug in self.live_events.values_list('element_slug', flat=True)
         obj.is_certificate = (obj.rank == self.last_rank_element.rank) if \
             self.last_rank_element else False
 
@@ -296,8 +297,10 @@ class SequenceProgressMixin(UserMixin, SequenceMixin):
 
     def decorate_queryset(self, queryset):
         self.live_events = LiveEvent.objects.filter(
-            element__in=[obj.content for obj in queryset]
-        ).values_list('element__slug', flat=True)
+            element__in=[
+                obj.content for obj in queryset]).order_by(
+                'scheduled_at').annotate(
+                element_slug=F('element__slug'))
 
         self.last_rank_element = None
         if self.sequence.has_certificate:

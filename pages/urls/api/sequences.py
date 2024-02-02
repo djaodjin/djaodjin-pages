@@ -32,7 +32,7 @@ from ...compat import path
 
 
 urlpatterns = [
-    path('<slug:sequence>/<int:rank>/<slug:user>',
+    path('<slug:sequence>/<slug:user>/<int:rank>/',
          LiveEventAttendanceAPIView.as_view(),
          name='api_mark_attendance'),
     path('<slug:sequence>/<slug:user>',
