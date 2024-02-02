@@ -429,8 +429,7 @@ class PageElementEditableListAPIView(AccountMixin, TrailMixin,
 
         """
         #pylint:disable=useless-super-delegation
-        return super(PageElementEditableListAPIView, self).create(
-            request, *args, **kwargs)
+        return self.create(request, *args, **kwargs)
 
     def perform_create(self, serializer):
         serializer.save(account=self.account)
