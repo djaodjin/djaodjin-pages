@@ -26,13 +26,15 @@ from __future__ import unicode_literals
 from deployutils.helpers import datetime_or_now
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
+from django.db.models import OuterRef, Subquery, DateTimeField
+from django.db.models.functions import Coalesce, Greatest
 from rest_framework import generics
 
 from .. import signals
 from ..compat import is_authenticated
-from ..mixins import PageElementMixin
+from ..mixins import PageElementMixin, UserMixin
 from ..models import Comment, Follow, Vote
-from ..serializers import CommentSerializer, PageElementSerializer
+from ..serializers import CommentSerializer, PageElementSerializer, PageElementUpdateSerializer
 
 
 class FollowAPIView(PageElementMixin, generics.CreateAPIView):
@@ -268,3 +270,32 @@ class CommentListCreateAPIView(PageElementMixin, generics.ListCreateAPIView):
 
         signals.comment_was_posted.send(
             sender=__name__, comment=serializer.instance, request=self.request)
+
+
+class UpdateFeedAPIView(UserMixin, generics.ListAPIView):
+    serializer_class = PageElementUpdateSerializer
+
+    def get_queryset(self):
+        user = self.user
+        latest_comment_subquery = Comment.objects.filter(
+            element=OuterRef('pk')
+        ).order_by('-created_at').values('created_at')[:1]
+
+        queryset = Follow.objects.followed_elements(user).annotate(
+            last_comment_time=Subquery(
+                latest_comment_subquery,
+                output_field=DateTimeField()),
+            last_update_time=Greatest(
+            Coalesce('text_updated_at', 'last_comment_time'),
+            Coalesce('last_comment_time', 'text_updated_at'))
+            # For some reason simply using Greatest isn't working
+            # so we do a Coalesce on both fields
+        ).order_by('-last_update_time').filter(
+            last_update_time__isnull=False
+            # To ensure we don't have any null values
+        )
+
+        return queryset
+
+    def get(self, request, *args, **kwargs):
+        return self.list(request, *args, **kwargs)

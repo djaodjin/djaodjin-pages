@@ -28,9 +28,11 @@ API URLs for readers who must be authenticated
 from ...compat import path
 
 from ...api.reactions import (FollowAPIView, UnfollowAPIView, UpvoteAPIView,
-  DownvoteAPIView, CommentListCreateAPIView)
+  DownvoteAPIView, CommentListCreateAPIView, UpdateFeedAPIView)
 
 urlpatterns = [
+    # UpdateFeed
+    path('<slug:user>/updates-feed', UpdateFeedAPIView.as_view(), name='api_update_feed'),
     # Following
     path('follow/<path:path>',
         FollowAPIView.as_view(), name='pages_api_follow'),

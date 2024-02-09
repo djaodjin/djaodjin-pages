@@ -295,6 +295,42 @@ class PageElementSerializer(serializers.ModelSerializer):
         return super(PageElementSerializer, self).to_internal_value(data)
 
 
+class PageElementUpdateSerializer(PageElementSerializer):
+    text_updated_at = serializers.DateTimeField(
+        required=False,
+        help_text=_("Datetime of last update on the page element's text"))
+    last_comment_time = serializers.DateTimeField(
+        help_text=_("Datetime of last comment on the page element"))
+    last_update_time = serializers.DateTimeField(
+        help_text=_("Datetime of the most recent update on the page element"))
+
+    descr = serializers.SerializerMethodField()
+
+    class Meta(PageElementSerializer.Meta):
+        fields = PageElementSerializer.Meta.fields + (
+            'text_updated_at', 'last_comment_time', 'last_update_time', 'descr')
+        read_only_fields = PageElementSerializer.Meta.read_only_fields + (
+            'text_updated_at', 'last_comment_time', 'last_update_time', 'descr')
+
+    def get_descr(self, obj):
+        latest_comment = None
+        comment_str = None
+
+        if obj.last_comment_time:
+            latest_comment = obj.comments.latest('created_at')
+            comment_str = f'Comment added at {obj.last_comment_time} by {latest_comment.user}'
+
+        if obj.text_updated_at and obj.last_comment_time:
+            if obj.last_update_time == obj.last_comment_time:
+                return comment_str
+            else:
+                return f'Article updated at {obj.text_updated_at}'
+        elif obj.last_comment_time:
+                return comment_str
+        else:
+            return f'Article updated at {obj.text_updated_at}'
+
+
 class PageElementTagSerializer(serializers.ModelSerializer):
 
     class Meta:
