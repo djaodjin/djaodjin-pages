@@ -379,20 +379,28 @@ class EnumeratedProgressSerializer(EnumeratedElementSerializer):
 
 
 class LiveEventSerializer(serializers.ModelSerializer):
-    element = serializers.SlugRelatedField(
-        queryset=PageElement.objects.all(),
-        slug_field="slug",
-        help_text=_('LiveEvent the enumerated element is for'),
-        required=True)
     scheduled_at = serializers.DateTimeField(
         help_text=_('Date/time the live event is scheduled'))
-    index = serializers.IntegerField(
+    rank = serializers.IntegerField(
         help_text=_('Unique integer to denote the index of the LiveEvent'))
     location = serializers.URLField(
         help_text=_('URL to the live event'))
     max_attendees = serializers.IntegerField(default=0,
         help_text=_('Max attendees for the LiveEvent'))
+    status = serializers.CharField(read_only=True)
 
     class Meta:
         model = LiveEvent
-        fields = ('element', 'scheduled_at', 'index', 'location', 'max_attendees')
+        fields = ('scheduled_at', 'rank', 'location', 'max_attendees', 'status')
+        read_only_fields = ('status',)
+
+class LiveEventAttendeesSerializer(EnumeratedProgressSerializer):
+    user = serializers.SerializerMethodField(
+        help_text=_("Username of the attendee"))
+
+    class Meta(EnumeratedProgressSerializer.Meta):
+        fields = EnumeratedProgressSerializer.Meta.fields + ('user',)
+        read_only_fields = EnumeratedProgressSerializer.Meta.read_only_fields + ('user',)
+
+    def get_user(self, obj):
+        return obj.sequence_progress.user.username

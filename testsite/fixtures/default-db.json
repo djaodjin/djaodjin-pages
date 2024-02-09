@@ -234,7 +234,7 @@
       "element": 107,
       "created_at": "2023-03-15T10:00:00Z",
       "scheduled_at": "2023-04-10T15:00:00Z",
-      "index": 1,
+      "rank": 1,
       "location": "http://127.0.0.1:8000/webinar/sustainability",
       "max_attendees": 100,
       "extra": "{}"
@@ -246,7 +246,7 @@
     "element": 107,
     "created_at": "2023-03-15T10:00:00Z",
     "scheduled_at": "2023-04-10T15:00:00Z",
-    "index": 2,
+    "rank": 2,
     "location": "http://127.0.0.1:8000/webinar/sustainability",
     "max_attendees": 10,
     "extra": "{}"

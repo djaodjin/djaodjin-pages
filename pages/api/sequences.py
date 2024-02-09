@@ -437,38 +437,40 @@ class RemoveElementFromSequenceAPIView(AccountMixin, SequenceMixin,
             instance.delete()
 
 
-class LiveEventListCreatePIView(AccountMixin, PageElementMixin, ListCreateAPIView):
-    # Should this be in editables(?)
+class LiveEventListCreateAPIView(AccountMixin, PageElementMixin, ListCreateAPIView):
+    '''
+    Lists Live Events belonging to a Page Element
+    '''
     serializer_class = LiveEventSerializer
 
     def get_queryset(self):
-        queryset = LiveEvent.objects.all()
+        queryset = LiveEvent.objects.all().order_by('rank')
         if self.element_url_kwarg in self.kwargs:
             queryset = queryset.filter(element=self.element)
-        if self.account_url_kwarg in self.kwargs:
-            # Won't be necessary in the front-end view so the 
-            # if statement helps
-            queryset = queryset.filter(element__account=self.account)
         return queryset
 
     def get(self, request, *args, **kwargs):
         return self.list(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
-        # We're asking for an Element here again(via the Serializer), 
-        # even though we've ascribed an element in the URL
         return self.create(request, *args, **kwargs)
 
+    def perform_create(self, serializer):
+        serializer.save(
+            element=self.element, status='active')
 
-class LiveEventDeleteAPIView(PageElementMixin, DestroyAPIView):
-    # Deletes a LiveEvent
+
+class LiveEventRetrieveUpdateDestroyAPIView(PageElementMixin, RetrieveUpdateDestroyAPIView):
+    '''
+    Retrieve a LiveEvent
+    '''
+    serializer_class = LiveEventSerializer
+    # Doesn't allow editing the Status field because it is a read_only
+    # field in the Serializer.
 
     def get_object(self):
         return get_object_or_404(LiveEvent.objects.all(),
-            element=self.element, index=self.kwargs.get('index'))
+            element=self.element, rank=self.kwargs.get('rank'))
 
     def delete(self, request, *args, **kwargs):
-        # How do we deal with the fact that this removes
-        # the live event but not the enumeratedelement which
-        # might not have any attached liveevents?
         return self.destroy(self, request, *args, **kwargs)

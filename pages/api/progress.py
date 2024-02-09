@@ -199,6 +199,8 @@ class EnumeratedProgressRetrieveAPIView(EnumeratedProgressMixin,
         serializer = self.get_serializer(instance)
         return api_response.Response(serializer.data, status=status_code)
 
+from django.http import Http404
+from django.shortcuts import get_object_or_404
 
 class LiveEventAttendanceAPIView(EnumeratedProgressRetrieveAPIView):
     """
@@ -223,9 +225,23 @@ class LiveEventAttendanceAPIView(EnumeratedProgressRetrieveAPIView):
         }
     """
     rank_url_kwarg = 'rank'
+    event_rank_kwarg = 'event_rank'
+
+    def get_object(self):
+        return self.progress
 
     def get_serializer_class(self):
         return super(LiveEventAttendanceAPIView, self).get_serializer_class()
+
+    def get(self, request, *args, **kwargs):
+        progress = self.progress
+        live_event_rank = get_extra(progress, "live_event_rank")
+        if live_event_rank == self.kwargs.get(self.event_rank_kwarg):
+            serializer = self.get_serializer(progress)
+            return api_response.Response(serializer.data)
+        else:
+            raise Http404()
+
 
     def post(self, request, *args, **kwargs):
         """
@@ -250,30 +266,65 @@ class LiveEventAttendanceAPIView(EnumeratedProgressRetrieveAPIView):
                 "detail": "Attendance marked successfully"
             }
         """
-        # Get the LiveEvent using request.data
-        index = request.data.get('index', None)
+
+        event_rank = kwargs.get(self.event_rank_kwarg)
         progress = self.get_object()
         element = progress.step
-        if index:
-            live_event = LiveEvent.objects.filter(
-                element=element.content, index=index).first()
+        live_event = get_object_or_404(LiveEvent, element=element.content, rank=event_rank)
 
-            # We use if live_event to confirm the existence of the LiveEvent object
-            if (live_event and
-                progress.viewing_duration < element.min_viewing_duration):
-                progress.viewing_duration = element.min_viewing_duration
-                progress.save()
-                return api_response.Response(
-                    {'detail': 'Attendance marked successfully'},
-                    status=status.HTTP_200_OK)
-            # To prevent marking attendance continuously on a LiveEvent
-            # that has already been marked
-            elif (live_event and
-                progress.viewing_duration == element.min_viewing_duration) and (
-                element.min_viewing_duration > 0):
-                return api_response.Response(
-                    {'detail': 'Attendance already marked'},
-                    status=status.HTTP_200_OK)
+        if live_event.scheduled_at >= datetime_or_now():
+            return api_response.Response(
+                {'detail': 'Attendance not marked'},
+                status=status.HTTP_400_BAD_REQUEST)
+
+        extra = json.loads(progress.extra) if progress.extra else {}
+        extra["live_event_rank"] = event_rank
+
+        if get_extra(progress, "live_event_rank") == event_rank and progress.viewing_duration >= progress.step.min_viewing_duration:
+            progress.extra = json.dumps(extra)
+            progress.save()
+            return api_response.Response({'detail': 'Attendance already marked'}, status=status.HTTP_200_OK)
+        if progress.viewing_duration < progress.step.min_viewing_duration:
+            progress.viewing_duration = progress.step.min_viewing_duration
+        progress.extra = json.dumps(extra)
+        progress.save()
         return api_response.Response(
-            {'detail': 'Attendance not marked'},
-            status=status.HTTP_400_BAD_REQUEST)
+            {'detail': 'Attendance marked successfully'}, status=status.HTTP_200_OK)
+
+from ..models import Sequence
+from ..serializers import LiveEventAttendeesSerializer
+from ..mixins import SequenceMixin
+import json
+from ..helpers import get_extra
+
+class LiveEventAttendeesAPIView(SequenceMixin, ListAPIView):
+    serializer_class = LiveEventAttendeesSerializer
+
+    rank_url_kwarg = 'rank'
+    event_rank_kwarg = 'event_rank'
+
+    def get_queryset(self):
+        element_rank = self.kwargs.get(self.rank_url_kwarg)
+        event_rank = self.kwargs.get(self.event_rank_kwarg)
+
+        element = EnumeratedElements.objects.filter(
+            sequence=self.sequence, rank=element_rank
+        ).first()
+
+        live_event = element.content.events.filter(
+            rank=event_rank).first()
+
+        queryset = EnumeratedProgress.objects.filter(
+            step__content=element.content,
+            viewing_duration__gte=element.min_viewing_duration)
+        if live_event:
+            progress_ids = [progress.id for progress in queryset 
+                if get_extra(progress, 'live_event_rank') == live_event.rank]
+            queryset = queryset.filter(id__in=progress_ids)
+
+            return queryset
+        return EnumeratedProgress.objects.none()
+
+    def get(self, request, *args, **kwargs):
+        return self.list(request, *args, **kwargs)
+

@@ -389,19 +389,21 @@ class LiveEvent(models.Model):
         help_text=_("Date/time the live event was created (in ISO format)"))
     scheduled_at = models.DateTimeField(
         help_text=_("Date/time the live event is scheduled (in ISO format)"))
-    index = models.PositiveSmallIntegerField(default=1,
+    rank = models.PositiveSmallIntegerField(default=1,
         help_text="Unique integer to denote the index of the LiveEvent")
     location = models.URLField(_("URL to the calendar event"), max_length=2083)
     max_attendees = models.IntegerField(default=0)
+    status = models.CharField(
+        choices=(('active', 'Active'), ('cancelled', 'Cancelled'), 
+                 ('updated', 'Updated')), max_length=9)
     extra = get_extra_field_class()(null=True, blank=True,
         help_text=_("Extra meta data (can be stringify JSON)"))
-    # Maybe we can add "status" to the extra and use it to filter
-    # live events for ones that are active or a new status field
+
     def __str__(self):
-        return "%s-live" % str(self.element)
+        return "%s-live-%s" % (str(self.element), str(self.rank))
     
     class Meta:
-        unique_together = ('element', 'index')
+        unique_together = ('element', 'rank')
 
 
 @python_2_unicode_compatible
@@ -514,9 +516,10 @@ class EnumeratedProgress(models.Model):
         default=datetime.timedelta,  # stored in microseconds
         help_text=_("Total recorded viewing time for the material"))
     last_ping_time = models.DateTimeField(
-        null=True,
-        blank=True,
+        null=True, blank=True,
         help_text=_("Timestamp of the last activity ping"))
+    extra = get_extra_field_class()(null=True, blank=True,
+        help_text=_("Extra meta data (can be stringify JSON)"))
 
     class Meta:
         unique_together = ('sequence_progress', 'step')
