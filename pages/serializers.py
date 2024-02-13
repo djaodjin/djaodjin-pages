@@ -394,12 +394,13 @@ class LiveEventSerializer(serializers.ModelSerializer):
         fields = ('scheduled_at', 'rank', 'location', 'max_attendees', 'status')
         read_only_fields = ('status',)
 
+
 class LiveEventAttendeesSerializer(EnumeratedProgressSerializer):
     user = serializers.SerializerMethodField(
         help_text=_("Username of the attendee"))
 
     class Meta(EnumeratedProgressSerializer.Meta):
-        fields = EnumeratedProgressSerializer.Meta.fields + ('user',)
+        fields = ('user', 'content', 'viewing_duration', 'min_viewing_duration')
         read_only_fields = EnumeratedProgressSerializer.Meta.read_only_fields + ('user',)
 
     def get_user(self, obj):

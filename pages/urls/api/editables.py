@@ -39,7 +39,8 @@ from ...api.sequences import (SequenceListCreateAPIView,
 
 urlpatterns = [
     # Move these live event URLs with PageElement URLs
-    # They also have the account in the URL, not necessary?
+    # They also have the account in the URL, how to check
+    # access?
     path('<slug>/live-events/<int:rank>',
          LiveEventRetrieveUpdateDestroyAPIView.as_view(),
          name='api_live_event_destroy'),

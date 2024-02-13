@@ -394,8 +394,9 @@ class LiveEvent(models.Model):
     location = models.URLField(_("URL to the calendar event"), max_length=2083)
     max_attendees = models.IntegerField(default=0)
     status = models.CharField(
-        choices=(('active', 'Active'), ('cancelled', 'Cancelled'), 
-                 ('updated', 'Updated')), max_length=9)
+        max_length=9,
+        choices=(('scheduled', 'Scheduled'), ('cancelled', 'Cancelled')),
+        default='scheduled', help_text=_("Current status of the LiveEvent"))
     extra = get_extra_field_class()(null=True, blank=True,
         help_text=_("Extra meta data (can be stringify JSON)"))
 

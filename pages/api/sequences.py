@@ -444,9 +444,11 @@ class LiveEventListCreateAPIView(AccountMixin, PageElementMixin, ListCreateAPIVi
     serializer_class = LiveEventSerializer
 
     def get_queryset(self):
-        queryset = LiveEvent.objects.all().order_by('rank')
-        if self.element_url_kwarg in self.kwargs:
-            queryset = queryset.filter(element=self.element)
+        queryset = LiveEvent.objects.filter(
+            element=self.element
+            ).order_by('-status', 'rank')
+        # if self.element_url_kwarg in self.kwargs:
+        #     queryset = queryset.filter(element=self.element)
         return queryset
 
     def get(self, request, *args, **kwargs):
@@ -456,8 +458,7 @@ class LiveEventListCreateAPIView(AccountMixin, PageElementMixin, ListCreateAPIVi
         return self.create(request, *args, **kwargs)
 
     def perform_create(self, serializer):
-        serializer.save(
-            element=self.element, status='active')
+        serializer.save(element=self.element, status='scheduled')
 
 
 class LiveEventRetrieveUpdateDestroyAPIView(PageElementMixin, RetrieveUpdateDestroyAPIView):
@@ -466,11 +467,15 @@ class LiveEventRetrieveUpdateDestroyAPIView(PageElementMixin, RetrieveUpdateDest
     '''
     serializer_class = LiveEventSerializer
     # Doesn't allow editing the Status field because it is a read_only
-    # field in the Serializer.
+    # field in the Serializer since we're using the Delete method
+    # to set it.
 
     def get_object(self):
         return get_object_or_404(LiveEvent.objects.all(),
             element=self.element, rank=self.kwargs.get('rank'))
 
     def delete(self, request, *args, **kwargs):
-        return self.destroy(self, request, *args, **kwargs)
+        live_event = self.get_object()
+        live_event.status = 'cancelled'
+        live_event.save()
+        return api_response.Response(status=status.HTTP_204_NO_CONTENT)
