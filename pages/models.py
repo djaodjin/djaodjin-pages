@@ -384,6 +384,8 @@ class Follow(models.Model):
          related_name='follows', on_delete=models.CASCADE)
     element = models.ForeignKey(PageElement,
         related_name='followers', on_delete=models.CASCADE)
+    last_read_at = models.DateTimeField(blank=True, null=True,
+        help_text=_("Last date/time the element was read by the user"))
 
     class Meta:
         unique_together = (('user', 'element'),)

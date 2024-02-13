@@ -26,7 +26,7 @@ from __future__ import unicode_literals
 from deployutils.helpers import datetime_or_now
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
-from django.db.models import OuterRef, Subquery, DateTimeField
+from django.db.models import Subquery, OuterRef, F, Q
 from django.db.models.functions import Coalesce, Greatest
 from rest_framework import generics
 
@@ -272,28 +272,32 @@ class CommentListCreateAPIView(PageElementMixin, generics.ListCreateAPIView):
             sender=__name__, comment=serializer.instance, request=self.request)
 
 
-class UpdateFeedAPIView(UserMixin, generics.ListAPIView):
+class NewsFeedListAPIView(UserMixin, generics.ListAPIView):
     serializer_class = PageElementUpdateSerializer
 
     def get_queryset(self):
         user = self.user
-        latest_comment_subquery = Comment.objects.filter(
-            element=OuterRef('pk')
+
+        last_comments_subquery = Comment.objects.filter(
+            element=OuterRef('pk'),
         ).order_by('-created_at').values('created_at')[:1]
 
         queryset = Follow.objects.followed_elements(user).annotate(
-            last_comment_time=Subquery(
-                latest_comment_subquery,
-                output_field=DateTimeField()),
+            last_comment_time=Subquery(last_comments_subquery),
             last_update_time=Greatest(
-            Coalesce('text_updated_at', 'last_comment_time'),
-            Coalesce('last_comment_time', 'text_updated_at'))
-            # For some reason simply using Greatest isn't working
-            # so we do a Coalesce on both fields
-        ).order_by('-last_update_time').filter(
-            last_update_time__isnull=False
-            # To ensure we don't have any null values
-        )
+                Coalesce('text_updated_at', 'last_comment_time'),
+                Coalesce('last_comment_time', 'text_updated_at')),
+            # Greatest doesn't work on non-null values
+            # So we use Coalesces for both values
+            last_read_at=Subquery(
+                Follow.objects.filter(
+                    user=user, element=OuterRef('pk')
+                    ).values('last_read_at')[:1]
+                )
+            ).exclude(
+                Q(last_update_time__isnull=True) |
+                Q(last_update_time__lte=F('last_read_at'))
+            ).order_by('-last_update_time')
 
         return queryset
 
