@@ -299,36 +299,39 @@ class PageElementUpdateSerializer(PageElementSerializer):
     text_updated_at = serializers.DateTimeField(
         required=False,
         help_text=_("Datetime of last update on the page element's text"))
-    last_comment_time = serializers.DateTimeField(
-        help_text=_("Datetime of last comment on the page element"))
-    last_update_time = serializers.DateTimeField(
-        help_text=_("Datetime of the most recent update on the page element"))
+    comments_since_last_read = serializers.IntegerField(
+        help_text=_("Number of comments since last read"),
+        required=False)
+    last_read_at = serializers.DateTimeField(
+        required=False,
+        help_text=_("Last time the PageElement was read"),
+        read_only=True)
 
     descr = serializers.SerializerMethodField()
 
     class Meta(PageElementSerializer.Meta):
         fields = PageElementSerializer.Meta.fields + (
-            'text_updated_at', 'last_comment_time', 'last_update_time', 'descr')
+            'text_updated_at', 'comments_since_last_read', 'last_read_at', 'descr')
         read_only_fields = PageElementSerializer.Meta.read_only_fields + (
-            'text_updated_at', 'last_comment_time', 'last_update_time', 'descr')
+            'text_updated_at', 'comments_since_last_read', 'last_read_at', 'descr')
 
     def get_descr(self, obj):
-        latest_comment = None
-        comment_str = None
+        final_str_list = []
 
-        if obj.last_comment_time:
-            latest_comment = obj.comments.latest('created_at')
-            comment_str = f'Comment added at {obj.last_comment_time} by {latest_comment.user}'
+        if obj.text_updated_at and obj.last_read_at:
+            text_updated_at_str = obj.text_updated_at.strftime(
+                '%m-%d-%Y:%H:%M:%S')
+            final_str_list.append(
+                f"Text last updated on {text_updated_at_str}.")
+        
+        if obj.comments_since_last_read:
+            comments_str = "comment" if obj.comments_since_last_read \
+                == 1 else "comments"
+            final_str_list.append(
+                f"{obj.comments_since_last_read} new "
+                f"{comments_str} since last visit.")
 
-        if obj.text_updated_at and obj.last_comment_time:
-            if obj.last_update_time == obj.last_comment_time:
-                return comment_str
-            else:
-                return f'Article updated at {obj.text_updated_at}'
-        elif obj.last_comment_time:
-                return comment_str
-        else:
-            return f'Article updated at {obj.text_updated_at}'
+        return ' '.join(final_str_list)
 
 
 class PageElementTagSerializer(serializers.ModelSerializer):

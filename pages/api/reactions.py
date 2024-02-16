@@ -26,15 +26,15 @@ from __future__ import unicode_literals
 from deployutils.helpers import datetime_or_now
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
-from django.db.models import Subquery, OuterRef, F, Q
-from django.db.models.functions import Coalesce, Greatest
+from django.db.models import Subquery, OuterRef, F, Q, Count
 from rest_framework import generics
 
 from .. import signals
 from ..compat import is_authenticated
 from ..mixins import PageElementMixin, UserMixin
-from ..models import Comment, Follow, Vote
-from ..serializers import CommentSerializer, PageElementSerializer, PageElementUpdateSerializer
+from ..models import Comment, Follow, PageElement, Vote
+from ..serializers import (CommentSerializer, PageElementSerializer, 
+        PageElementUpdateSerializer)
 
 
 class FollowAPIView(PageElementMixin, generics.CreateAPIView):
@@ -278,28 +278,26 @@ class NewsFeedListAPIView(UserMixin, generics.ListAPIView):
     def get_queryset(self):
         user = self.user
 
-        last_comments_subquery = Comment.objects.filter(
-            element=OuterRef('pk'),
-        ).order_by('-created_at').values('created_at')[:1]
-
-        queryset = Follow.objects.followed_elements(user).annotate(
-            last_comment_time=Subquery(last_comments_subquery),
-            last_update_time=Greatest(
-                Coalesce('text_updated_at', 'last_comment_time'),
-                Coalesce('last_comment_time', 'text_updated_at')),
-            # Greatest doesn't work on non-null values
-            # So we use Coalesces for both values
+        queryset = PageElement.objects.followed_by(user).annotate(
             last_read_at=Subquery(
                 Follow.objects.filter(
-                    user=user, element=OuterRef('pk')
-                    ).values('last_read_at')[:1]
-                )
+                    user=user, 
+                    element=OuterRef("pk")
+                    ).values("last_read_at")[:1]),
+            comments_since_last_read=Count(
+                "comments",
+                filter=Q(comments__created_at__gte=F("last_read_at")))
             ).exclude(
-                Q(last_update_time__isnull=True) |
-                Q(last_update_time__lte=F('last_read_at'))
-            ).order_by('-last_update_time')
+                (
+                    (Q(text_updated_at__isnull=True) | 
+                     Q(text_updated_at__lte=F("last_read_at")))
+                    &
+                    Q(comments_since_last_read__lte=0)
+                )
+            )
 
         return queryset
 
     def get(self, request, *args, **kwargs):
-        return self.list(request, *args, **kwargs)
+        return super(NewsFeedListAPIView, self).get(
+            request, *args, **kwargs)

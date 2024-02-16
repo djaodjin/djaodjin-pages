@@ -163,6 +163,11 @@ class PageElementManager(models.Manager):
             ' WHERE pages_relationship.orig_element_id = pages_pageelement.id)'\
             ' = 0'])
 
+    @staticmethod
+    def followed_by(user):
+        page_element_slugs = user.follows.all().values_list('element__slug', flat=True)
+        return PageElement.objects.filter(slug__in=page_element_slugs)
+
 
 @python_2_unicode_compatible
 class PageElement(models.Model):
@@ -350,11 +355,6 @@ class FollowManager(models.Manager):
         """
         return get_user_model().objects.filter(follows__element=element)
 
-    @staticmethod
-    def followed_elements(user):
-        page_element_slugs = user.follows.all().values_list('element__slug', flat=True)
-        return PageElement.objects.filter(slug__in=page_element_slugs)
-
     def subscribe(self, element, user):
         """
         Subscribe a User to changes to a Element.
@@ -384,7 +384,7 @@ class Follow(models.Model):
          related_name='follows', on_delete=models.CASCADE)
     element = models.ForeignKey(PageElement,
         related_name='followers', on_delete=models.CASCADE)
-    last_read_at = models.DateTimeField(blank=True, null=True,
+    last_read_at = models.DateTimeField(default=datetime_or_now,
         help_text=_("Last date/time the element was read by the user"))
 
     class Meta:
