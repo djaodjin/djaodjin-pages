@@ -404,10 +404,6 @@ class AddElementToSequenceAPIView(AccountMixin, SequenceMixin,
                 {'detail': str(err)},
                 status=status.HTTP_400_BAD_REQUEST)
 
-        # return api_response.Response(
-        #     serializer.errors,
-        #     status=status.HTTP_400_BAD_REQUEST)
-
 
 class RemoveElementFromSequenceAPIView(AccountMixin, SequenceMixin,
                                        DestroyAPIView):
@@ -447,15 +443,14 @@ class LiveEventListCreateAPIView(AccountMixin, PageElementMixin, ListCreateAPIVi
         queryset = LiveEvent.objects.filter(
             element=self.element
             ).order_by('-status', 'rank')
-        # if self.element_url_kwarg in self.kwargs:
-        #     queryset = queryset.filter(element=self.element)
+
         return queryset
 
     def get(self, request, *args, **kwargs):
-        return self.list(request, *args, **kwargs)
+        return super(LiveEventListCreateAPIView, self).get(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
-        return self.create(request, *args, **kwargs)
+        return super(LiveEventListCreateAPIView, self).post(request, *args, **kwargs)
 
     def perform_create(self, serializer):
         serializer.save(element=self.element, status='scheduled')
@@ -476,6 +471,6 @@ class LiveEventRetrieveUpdateDestroyAPIView(PageElementMixin, RetrieveUpdateDest
 
     def delete(self, request, *args, **kwargs):
         live_event = self.get_object()
-        live_event.status = 'cancelled'
+        live_event.status = 'CANCELLED'
         live_event.save()
         return api_response.Response(status=status.HTTP_204_NO_CONTENT)

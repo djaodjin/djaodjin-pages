@@ -71,7 +71,7 @@ class SequenceProgressView(SequenceProgressMixin, TemplateView):
 class SequencePageElementView(EnumeratedProgressMixin, TemplateView):
 
     template_name = 'pages/app/sequences/pageelement.html'
-    # is_live_event and is_certificate flags not being added
+
     def get_context_data(self, **kwargs):
         #pylint:disable=too-many-locals
         context = super(SequencePageElementView,
