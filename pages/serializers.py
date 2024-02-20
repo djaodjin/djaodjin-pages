@@ -387,7 +387,8 @@ class LiveEventSerializer(serializers.ModelSerializer):
         help_text=_('URL to the live event'))
     max_attendees = serializers.IntegerField(default=0,
         help_text=_('Max attendees for the LiveEvent'))
-    status = serializers.CharField(read_only=True)
+    status = serializers.CharField(
+        help_text=_("Current status of the LiveEvent"))
 
     class Meta:
         model = LiveEvent

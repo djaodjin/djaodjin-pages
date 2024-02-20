@@ -453,7 +453,7 @@ class LiveEventListCreateAPIView(AccountMixin, PageElementMixin, ListCreateAPIVi
         return super(LiveEventListCreateAPIView, self).post(request, *args, **kwargs)
 
     def perform_create(self, serializer):
-        serializer.save(element=self.element, status='scheduled')
+        serializer.save(element=self.element, status=LiveEvent.SCHEDULED)
 
 
 class LiveEventRetrieveUpdateDestroyAPIView(PageElementMixin, RetrieveUpdateDestroyAPIView):
@@ -471,6 +471,6 @@ class LiveEventRetrieveUpdateDestroyAPIView(PageElementMixin, RetrieveUpdateDest
 
     def delete(self, request, *args, **kwargs):
         live_event = self.get_object()
-        live_event.status = 'CANCELLED'
+        live_event.status = LiveEvent.CANCELLED
         live_event.save()
         return api_response.Response(status=status.HTTP_204_NO_CONTENT)

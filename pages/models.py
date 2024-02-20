@@ -383,9 +383,12 @@ class LiveEvent(models.Model):
     """
     A live webinar, onsite classroom, etc.
     """
+    CANCELLED = "Cancelled"
+    SCHEDULED = "Scheduled"
+
     EVENT_STATUS_CHOICES = (
-        ('SCHEDULED', 'Scheduled'),
-        ('CANCELLED', 'Cancelled')
+        (CANCELLED, 'Cancelled'),
+        (SCHEDULED, 'Scheduled')
     )
 
     element = models.ForeignKey(PageElement, on_delete=models.CASCADE,
@@ -400,7 +403,7 @@ class LiveEvent(models.Model):
     max_attendees = models.IntegerField(default=0)
     status = models.CharField(
         max_length=9,
-        choices=EVENT_STATUS_CHOICES, default='SCHEDULED',
+        choices=EVENT_STATUS_CHOICES, default=SCHEDULED,
         help_text=_("Current status of the LiveEvent"))
     extra = get_extra_field_class()(null=True, blank=True,
         help_text=_("Extra meta data (can be stringify JSON)"))
