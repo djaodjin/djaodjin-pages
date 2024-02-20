@@ -284,7 +284,7 @@ class NewsFeedListAPIView(UserMixin, generics.ListAPIView):
                     user=user, 
                     element=OuterRef("pk")
                     ).values("last_read_at")[:1]),
-            comments_since_last_read=Count(
+            nb_comments_since_last_read=Count(
                 "comments",
                 filter=Q(comments__created_at__gte=F("last_read_at")))
             ).exclude(
@@ -292,7 +292,7 @@ class NewsFeedListAPIView(UserMixin, generics.ListAPIView):
                     (Q(text_updated_at__isnull=True) | 
                      Q(text_updated_at__lte=F("last_read_at")))
                     &
-                    Q(comments_since_last_read__lte=0)
+                    Q(nb_comments_since_last_read__lte=0)
                 )
             )
 
