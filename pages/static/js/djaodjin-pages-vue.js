@@ -649,3 +649,16 @@ Vue.filter('formatDuration', function (value) {
 
     return value || '00:00:00';
 });
+
+Vue.component('news-feed', {
+    mixins: [
+        itemListMixin],
+    data() {
+        return {
+            url: this.$urls.api_news_feed
+        };
+    },
+    mounted() {
+        this.get();
+    }
+});
