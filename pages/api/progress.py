@@ -22,7 +22,7 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import json, datetime
+import datetime
 
 from deployutils.helpers import datetime_or_now
 from django.shortcuts import get_object_or_404
@@ -33,10 +33,10 @@ from rest_framework.mixins import DestroyModelMixin
 
 from .. import settings
 from ..docs import extend_schema
-from ..helpers import get_extra
+from ..helpers import get_extra, set_extra
 from ..mixins import EnumeratedProgressMixin, SequenceProgressMixin, SequenceMixin
 from ..models import EnumeratedElements, EnumeratedProgress, LiveEvent
-from ..serializers import (EnumeratedProgressSerializer, 
+from ..serializers import (EnumeratedProgressSerializer,
         LiveEventAttendeesSerializer)
 
 
@@ -105,7 +105,7 @@ WHERE pages_enumeratedelements.sequence_id = %(sequence_id)d
         results = page if page else queryset
         for elem in results:
             if (elem.viewing_duration is not None and
-                not isinstance(elem.viewing_duration, datetime.timedelta)):
+                    not isinstance(elem.viewing_duration, datetime.timedelta)):
                 elem.viewing_duration = datetime.timedelta(
                     microseconds=elem.viewing_duration)
         return results
@@ -200,9 +200,8 @@ class EnumeratedProgressRetrieveAPIView(EnumeratedProgressMixin,
         instance.last_ping_time = now
         instance.save()
 
-        status_code = status.HTTP_200_OK
         serializer = self.get_serializer(instance)
-        return api_response.Response(serializer.data, status=status_code)
+        return api_response.Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class LiveEventAttendanceAPIView(DestroyModelMixin, EnumeratedProgressRetrieveAPIView):
@@ -268,44 +267,33 @@ class LiveEventAttendanceAPIView(DestroyModelMixin, EnumeratedProgressRetrieveAP
                 "detail": "Attendance marked successfully"
             }
         """
-
+        at_time = datetime_or_now()
         event_rank = kwargs.get(self.event_rank_kwarg)
         progress = self.get_object()
         element = progress.step
         live_event = get_object_or_404(
             LiveEvent, element=element.content, rank=event_rank)
-        at_time = datetime_or_now()
 
-        progress_event_rank = get_extra(progress, "live_event_rank")
-        if progress_event_rank and progress_event_rank != event_rank:
+        progress_event_rank = set_extra(
+            progress, "live_event_rank", event_rank)
+
+        if progress.viewing_duration < element.min_viewing_duration and live_event.scheduled_at < at_time:
+            if progress_event_rank and progress_event_rank != event_rank:
+                return api_response.Response(
+                    {'detail': f'Attendance already marked for Live Event '
+                               f'with rank: {event_rank}'},
+                    status=status.HTTP_400_BAD_REQUEST)
+            progress.viewing_duration = max(
+                progress.viewing_duration, element.min_viewing_duration)
+            progress.save()
+            serializer = self.get_serializer(progress)
             return api_response.Response(
-                {'detail': 'Attendance already marked for a different '
-                 'Live Event on this PageElement'},
-                status=status.HTTP_400_BAD_REQUEST)
+                serializer.data, status=status.HTTP_201_CREATED)
 
-        if live_event.scheduled_at >= at_time:
-            return api_response.Response(
-                {'detail': 'Can not mark attendance for future events'},
-                status=status.HTTP_400_BAD_REQUEST)
-    
-        extra = json.loads(progress.extra) if isinstance(
-            progress.extra, str) else progress.extra or {}
-
-        if progress.viewing_duration >= element.min_viewing_duration:
-            return api_response.Response(
-                {'detail': 'Attendance already marked'},
-                status=status.HTTP_400_BAD_REQUEST)
-
-        progress.viewing_duration = max(
-            progress.viewing_duration, element.min_viewing_duration)
-
-        extra["live_event_rank"] = event_rank
-        progress.extra = json.dumps(extra)
-        progress.save()
         return api_response.Response(
-            {'detail': 'Attendance marked successfully'},
-            status=status.HTTP_201_CREATED)
-        
+            {'detail': 'Attendance not marked'},
+            status=status.HTTP_400_BAD_REQUEST)
+
     def delete(self, request, *args, **kwargs):
         '''
         Resets Live Event Attendance
@@ -315,17 +303,16 @@ class LiveEventAttendanceAPIView(DestroyModelMixin, EnumeratedProgressRetrieveAP
         event_rank = kwargs.get(self.event_rank_kwarg)
         progress = self.get_object()
 
-        extra = json.loads(progress.extra) if isinstance(
-            progress.extra, str) else progress.extra or {}
+        curr_val = set_extra(
+            progress, "live_event_rank", '')
 
-        if get_extra(progress, "live_event_rank") == event_rank:
-            extra["live_event_rank"] = ""
-            progress.extra = json.dumps(extra)
-            progress.viewing_duration = datetime.timedelta(seconds=0)
-            progress.save()
-            return api_response.Response(status=status.HTTP_204_NO_CONTENT)
+        if curr_val != event_rank:
+            return api_response.Response(
+                status=status.HTTP_400_BAD_REQUEST)
 
-        return api_response.Response(status=status.HTTP_400_BAD_REQUEST)
+        progress.viewing_duration = datetime.timedelta(seconds=0)
+        progress.save()
+        return api_response.Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class LiveEventAttendeesAPIView(SequenceMixin, ListAPIView):
@@ -344,9 +331,9 @@ class LiveEventAttendeesAPIView(SequenceMixin, ListAPIView):
         queryset = EnumeratedProgress.objects.filter(
             step__content=element.content,
             viewing_duration__gte=element.min_viewing_duration)
-    
-        progress_ids = [progress.id for progress in queryset if 
-                get_extra(progress, "live_event_rank") == event_rank]
+
+        progress_ids = [progress.id for progress in queryset if
+            get_extra(progress, "live_event_rank") == event_rank]
         queryset = queryset.filter(id__in=progress_ids)
         return queryset
 

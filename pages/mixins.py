@@ -330,7 +330,7 @@ class EnumeratedProgressMixin(SequenceProgressMixin):
                 sequence=self.sequence,
                 rank=self.rank)
             with transaction.atomic():
-                self._progress, _  = EnumeratedProgress.objects.get_or_create(
+                self._progress, _ = EnumeratedProgress.objects.get_or_create(
                     sequence_progress=self.sequence_progress,
                     step=step)
         return self._progress
