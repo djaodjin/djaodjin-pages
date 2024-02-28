@@ -1,4 +1,4 @@
-# Copyright (c) 2022, Djaodjin Inc.
+# Copyright (c) 2024, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -36,7 +36,8 @@ from rest_framework.generics import GenericAPIView
 from rest_framework.response import Response as HttpResponse
 
 from .. import settings
-from ..compat import force_str, gettext_lazy as _, reverse, urljoin, urlparse
+from ..compat import (NoReverseMatch, force_str, gettext_lazy as _, reverse,
+    urljoin, urlparse)
 from ..mixins import AccountMixin
 from ..serializers import AssetSerializer
 
@@ -172,7 +173,7 @@ def process_upload(request, account=None, location=None, is_public_asset=None,
         if prefix.startswith(media_prefix):
             prefix = prefix[len(media_prefix) + 1:]
         storage_key_name = "%s%s%s" % (prefix,
-                                       hashlib.sha256(uploaded_file.read()).hexdigest(), ext)
+            hashlib.sha256(uploaded_file.read()).hexdigest(), ext)
 
         dst_key_name = "%s/%s" % (media_prefix, storage_key_name)
         LOGGER.info("S3 bucket %s: copy %s to %s",
@@ -228,8 +229,12 @@ def process_upload(request, account=None, location=None, is_public_asset=None,
         path = urlparse(location).path.lstrip(URL_PATH_SEP)
         if path.startswith(media_prefix):
             path = path[len(media_prefix):].lstrip(URL_PATH_SEP)
-        location = request.build_absolute_uri(
-            reverse('pages_api_asset', args=(path,)))
+        try:
+            location = request.build_absolute_uri(
+                reverse('pages_api_asset', args=(account, path,)))
+        except NoReverseMatch:
+            location = request.build_absolute_uri(
+                reverse('pages_api_asset', args=(path,)))
 
     return ({
         'location': location,
