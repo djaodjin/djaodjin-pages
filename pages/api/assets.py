@@ -251,7 +251,10 @@ def get_default_storage(request, **kwargs):
 def get_default_storage_base(request, public=False, **kwargs):
     # default implementation
     storage_class = get_storage_class()
-    if 's3boto' in storage_class.__name__.lower():
+    if storage_class.__name__.endswith('3Storage'):
+        # Hacky way to test for `storages.backends.s3.S3Storage`
+        # and `storages.backends.s3boto3.S3Boto3Storage` without importing
+        # the optional package 'django-storages'.
         storage_kwargs = {}
         storage_kwargs.update(**kwargs)
         if public:
