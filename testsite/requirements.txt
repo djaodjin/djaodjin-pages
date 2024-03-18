@@ -1,6 +1,6 @@
 # djaodjin-pages
 bleach==6.0.0
-Django==3.2.23
+Django==3.2.25
 djangorestframework==3.14.0         #  3.12.4 does not support Django4.2
 djaodjin-deployutils==0.10.7
 djaodjin-extended-templates==0.4.5
