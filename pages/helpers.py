@@ -73,7 +73,6 @@ def set_extra(obj, attr_name, attr_value):
         # is to set it to some value.
         obj.extra = {}
     obj.extra.update({attr_name: attr_value})
-    obj.extra = json.dumps(obj.extra)
     return prev_val
 
 
