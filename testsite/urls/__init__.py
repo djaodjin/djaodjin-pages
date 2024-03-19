@@ -29,8 +29,8 @@ from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 from pages.compat import include, path
 from pages.api.elements import PageElementIndexAPIView
 from pages.api.sequences import SequencesIndexAPIView
-from pages.views import IndexView
 
+from ..views.app import IndexView
 
 urlpatterns = staticfiles_urlpatterns() \
     + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

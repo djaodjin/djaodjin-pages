@@ -294,7 +294,6 @@ class PageElementDetailAPIView(TrailMixin, generics.RetrieveAPIView):
     def get(self, request, *args, **kwargs):
         # Marking the last time the PageElement was read by a user 
         # following it
-
         try:
             follow_obj = Follow.objects.get(
                 user=self.request.user,

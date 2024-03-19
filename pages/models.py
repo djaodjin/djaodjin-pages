@@ -165,8 +165,7 @@ class PageElementManager(models.Manager):
 
     @staticmethod
     def followed_by(user):
-        page_element_slugs = user.follows.all().values_list('element__slug', flat=True)
-        return PageElement.objects.filter(slug__in=page_element_slugs)
+        return PageElement.objects.filter(followers__user=user)
 
 
 @python_2_unicode_compatible

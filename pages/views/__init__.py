@@ -22,13 +22,9 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from django.views.generic import RedirectView, TemplateView
+from django.views.generic import RedirectView
 
 from ..utils import get_current_account
-
-from ..compat import reverse
-from ..helpers import update_context_urls
-
 
 class AccountRedirectView(RedirectView):
     """
@@ -40,14 +36,3 @@ class AccountRedirectView(RedirectView):
         app = get_current_account()
         kwargs.update({self.slug_url_kwarg: app})
         return super(AccountRedirectView, self).get(request, *args, **kwargs)
-
-class IndexView(TemplateView):
-    template_name = 'index.html'
-
-    def get_context_data(self, **kwargs):
-        context = super(IndexView, self).get_context_data(**kwargs)
-        update_context_urls(context, {
-            'api_news_feed': reverse('api_news_feed', args=(self.request.user,))
-        })
-
-        return context
