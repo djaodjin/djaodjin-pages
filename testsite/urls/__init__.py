@@ -25,12 +25,12 @@
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
-from django.views.generic import TemplateView
 
 from pages.compat import include, path
 from pages.api.elements import PageElementIndexAPIView
 from pages.api.sequences import SequencesIndexAPIView
 
+from ..views.app import IndexView
 
 urlpatterns = staticfiles_urlpatterns() \
     + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
@@ -38,7 +38,7 @@ urlpatterns = staticfiles_urlpatterns() \
 urlpatterns += [
     path('', include('django.contrib.auth.urls')),
     path('app/energy-utility/',
-        TemplateView.as_view(template_name='index.html')),
+        IndexView.as_view()),
     # Replaced
     # path('', include('pages.urls')),
     # by following to insert `account` into the path.
@@ -52,6 +52,6 @@ urlpatterns += [
     path('api/sequences', SequencesIndexAPIView.as_view(),
          name='api_sequences_index'),
     path('api/', include('pages.urls.api.assets')),
-    path('', TemplateView.as_view(template_name='index.html')),
+    path('', IndexView.as_view()),
     path('', include('pages.urls.views')),
 ]

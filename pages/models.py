@@ -26,6 +26,7 @@ from __future__ import unicode_literals
 
 import datetime, json, logging, random
 from collections import OrderedDict
+from deployutils.helpers import datetime_or_now
 
 from django.contrib.auth import get_user_model
 from django.db import IntegrityError, models, transaction
@@ -162,6 +163,10 @@ class PageElementManager(models.Manager):
             ' WHERE pages_relationship.orig_element_id = pages_pageelement.id)'\
             ' = 0'])
 
+    @staticmethod
+    def followed_by(user):
+        return PageElement.objects.filter(followers__user=user)
+
 
 @python_2_unicode_compatible
 class PageElement(models.Model):
@@ -193,6 +198,8 @@ class PageElement(models.Model):
         help_text=_("Reading time of the material (in hh:mm:ss)"))
     lang = models.CharField(default=settings.LANGUAGE_CODE, max_length=8,
         help_text=_("Language the material is written in"))
+    text_updated_at = models.DateTimeField(blank=True, null=True,
+        help_text=_("Last updated at date for the text field"))
     extra = get_extra_field_class()(null=True, blank=True)
     relationships = models.ManyToManyField("self",
         related_name='related_to', through='RelationShip', symmetrical=False)
@@ -277,8 +284,15 @@ class PageElement(models.Model):
             from_element__tag=tag,
             from_element__dest_element=self)
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.__original_text = self.text
+
     def save(self, force_insert=False, force_update=False,
              using=None, update_fields=None):
+        if self.__original_text != self.text:
+            self.text_updated_at = datetime_or_now()
+
         if self.slug: # serializer will set created slug to '' instead of None.
             return super(PageElement, self).save(
                 force_insert=force_insert, force_update=force_update,
@@ -356,7 +370,6 @@ class FollowManager(models.Manager):
             pass
 
 
-
 @python_2_unicode_compatible
 class Follow(models.Model):
     """
@@ -370,6 +383,8 @@ class Follow(models.Model):
          related_name='follows', on_delete=models.CASCADE)
     element = models.ForeignKey(PageElement,
         related_name='followers', on_delete=models.CASCADE)
+    last_read_at = models.DateTimeField(default=datetime_or_now,
+        help_text=_("Last date/time the element was read by the user"))
 
     class Meta:
         unique_together = (('user', 'element'),)

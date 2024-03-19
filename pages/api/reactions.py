@@ -26,13 +26,15 @@ from __future__ import unicode_literals
 from deployutils.helpers import datetime_or_now
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
+from django.db.models import Subquery, OuterRef, F, Q, Count
 from rest_framework import generics
 
 from .. import signals
 from ..compat import is_authenticated
-from ..mixins import PageElementMixin
-from ..models import Comment, Follow, Vote
-from ..serializers import CommentSerializer, PageElementSerializer
+from ..mixins import PageElementMixin, UserMixin
+from ..models import Comment, Follow, PageElement, Vote
+from ..serializers import (CommentSerializer, PageElementSerializer, 
+        PageElementUpdateSerializer)
 
 
 class FollowAPIView(PageElementMixin, generics.CreateAPIView):
@@ -268,3 +270,34 @@ class CommentListCreateAPIView(PageElementMixin, generics.ListCreateAPIView):
 
         signals.comment_was_posted.send(
             sender=__name__, comment=serializer.instance, request=self.request)
+
+
+class NewsFeedListAPIView(UserMixin, generics.ListAPIView):
+    serializer_class = PageElementUpdateSerializer
+
+    def get_queryset(self):
+        user = self.user
+
+        queryset = PageElement.objects.followed_by(user).annotate(
+            last_read_at=Subquery(
+                Follow.objects.filter(
+                    user=user, 
+                    element=OuterRef("pk")
+                    ).values("last_read_at")[:1]),
+            nb_comments_since_last_read=Count(
+                "comments",
+                filter=Q(comments__created_at__gte=F("last_read_at")))
+            ).exclude(
+                (
+                    (Q(text_updated_at__isnull=True) | 
+                     Q(text_updated_at__lte=F("last_read_at")))
+                    &
+                    Q(nb_comments_since_last_read__lte=0)
+                )
+            )
+
+        return queryset
+
+    def get(self, request, *args, **kwargs):
+        return super(NewsFeedListAPIView, self).get(
+            request, *args, **kwargs)

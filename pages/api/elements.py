@@ -28,6 +28,7 @@ from io import BytesIO
 
 import mammoth, requests
 from bs4 import BeautifulSoup
+from deployutils.helpers import datetime_or_now
 from django.core.files.uploadedfile import (SimpleUploadedFile,
     TemporaryUploadedFile)
 from django.db import transaction
@@ -47,7 +48,7 @@ from ..compat import reverse, gettext_lazy as _
 from ..helpers import ContentCut, get_extra
 from ..mixins import AccountMixin, PageElementMixin, TrailMixin
 from ..models import (PageElement, RelationShip, build_content_tree,
-    flatten_content_tree)
+    flatten_content_tree, Follow)
 from ..serializers import (AssetSerializer, NodeElementSerializer,
     NodeElementCreateSerializer, PageElementSerializer,
     PageElementTagSerializer)
@@ -289,6 +290,20 @@ class PageElementDetailAPIView(TrailMixin, generics.RetrieveAPIView):
 
     def get_object(self):
         return self.element
+
+    def get(self, request, *args, **kwargs):
+        # Marking the last time the PageElement was read by a user 
+        # following it
+        try:
+            follow_obj = Follow.objects.get(
+                user=self.request.user,
+                element=self.element)
+            follow_obj.last_read_at = datetime_or_now()
+            follow_obj.save()
+        except Follow.DoesNotExist:
+            pass
+
+        return self.retrieve(request, *args, **kwargs)
 
 
 class PageElementEditableListAPIView(AccountMixin, TrailMixin,

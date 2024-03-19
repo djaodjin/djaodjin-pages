@@ -26,7 +26,6 @@ from django.views.generic import RedirectView
 
 from ..utils import get_current_account
 
-
 class AccountRedirectView(RedirectView):
     """
     Redirects to the URL containing the app.

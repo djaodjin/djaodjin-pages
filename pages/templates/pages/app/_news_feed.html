@@ -1,0 +1,19 @@
+<h1>News Feed</h1>
+
+<news-feed inline-template>
+    <div>
+        <div v-if="items.results.length > 0">
+            <div v-for="item in items.results">
+                <ul>
+                    <li>
+                        <strong>[[ item.title ]]</strong><br>
+                        [[ item.descr ]]
+                    </li>
+                </ul>
+            </div>
+        </div>
+        <div v-else>
+            No updates to show. Please check back again later!
+        </div>
+    </div>
+</news-feed>
