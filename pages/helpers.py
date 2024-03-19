@@ -63,6 +63,19 @@ def get_extra(obj, attr_name, default=None):
         extra = obj.get('extra')
     return extra.get(attr_name, default) if extra else default
 
+
+def set_extra(obj, attr_name, attr_value):
+    prev_val = get_extra(obj, attr_name)
+
+    if not obj.extra:
+        # In case we have a None type or empty string, initialize
+        # extra as a dict because if we're using this method the intention
+        # is to set it to some value.
+        obj.extra = {}
+    obj.extra.update({attr_name: attr_value})
+    return prev_val
+
+
 def update_context_urls(context, urls):
     if 'urls' in context:
         for key, val in six.iteritems(urls):

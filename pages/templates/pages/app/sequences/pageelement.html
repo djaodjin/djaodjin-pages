@@ -15,7 +15,20 @@
 
 
     {% if element.is_live_event %}
-        <p>Live Event URL: <a href="{{ urls.live_event_location }}">{{ element.content.events.first.location }}</a></p>
+    <table>
+        <tr>
+            <th>Event URL</th>
+            <th>Event Date</th>
+            <th>Event Max Attendees</th>
+        </tr>
+    {% for event in events %}
+        <tr>
+            <td><a href="{{ event.location }}">{{ event.location }}</a></td>
+            <td>{{ event.scheduled_at }}</td>
+            <td>{{ event.max_attendees }}</td>
+        </tr>
+    {% endfor %}
+    </table>
 
     {% elif element.is_certificate %}
         <p>This is a certificate. <a href="{{ urls.certificate_download }}">Download Certificate</a></p>

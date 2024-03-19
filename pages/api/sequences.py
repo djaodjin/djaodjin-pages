@@ -21,6 +21,7 @@
 # WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+import dateutil.parser
 import logging
 
 from django.db import transaction, IntegrityError
@@ -28,12 +29,14 @@ from django.template.defaultfilters import slugify
 from rest_framework import response as api_response, status
 from rest_framework.filters import OrderingFilter, SearchFilter
 from rest_framework.generics import (get_object_or_404, DestroyAPIView,
-    ListAPIView, ListCreateAPIView, RetrieveUpdateDestroyAPIView)
+    ListAPIView, ListCreateAPIView, RetrieveUpdateDestroyAPIView, CreateAPIView)
+from rest_framework.views import APIView
 
-from ..mixins import AccountMixin, SequenceMixin
-from ..models import Sequence, EnumeratedElements
+from ..mixins import AccountMixin, SequenceMixin, PageElementMixin, EnumeratedProgressMixin
+from ..models import Sequence, EnumeratedElements, PageElement, LiveEvent
 from ..serializers import (SequenceSerializer, SequenceCreateSerializer,
-    EnumeratedElementSerializer)
+    EnumeratedElementSerializer, LiveEventSerializer)
+
 
 LOGGER = logging.getLogger(__name__)
 
@@ -401,10 +404,6 @@ class AddElementToSequenceAPIView(AccountMixin, SequenceMixin,
                 {'detail': str(err)},
                 status=status.HTTP_400_BAD_REQUEST)
 
-        return api_response.Response(
-            serializer.errors,
-            status=status.HTTP_400_BAD_REQUEST)
-
 
 class RemoveElementFromSequenceAPIView(AccountMixin, SequenceMixin,
                                        DestroyAPIView):
@@ -432,3 +431,46 @@ class RemoveElementFromSequenceAPIView(AccountMixin, SequenceMixin,
                 self.sequence.has_certificate = False
                 self.sequence.save()
             instance.delete()
+
+
+class LiveEventListCreateAPIView(AccountMixin, PageElementMixin, ListCreateAPIView):
+    '''
+    Lists Live Events belonging to a Page Element
+    '''
+    serializer_class = LiveEventSerializer
+
+    def get_queryset(self):
+        queryset = LiveEvent.objects.filter(
+            element=self.element
+            ).order_by('-status', 'rank')
+
+        return queryset
+
+    def get(self, request, *args, **kwargs):
+        return super(LiveEventListCreateAPIView, self).get(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        return super(LiveEventListCreateAPIView, self).post(request, *args, **kwargs)
+
+    def perform_create(self, serializer):
+        serializer.save(element=self.element, status=LiveEvent.SCHEDULED)
+
+
+class LiveEventRetrieveUpdateDestroyAPIView(PageElementMixin, RetrieveUpdateDestroyAPIView):
+    '''
+    Retrieve a LiveEvent
+    '''
+    serializer_class = LiveEventSerializer
+    # Doesn't allow editing the Status field because it is a read_only
+    # field in the Serializer since we're using the Delete method
+    # to set it.
+
+    def get_object(self):
+        return get_object_or_404(LiveEvent.objects.all(),
+            element=self.element, rank=self.kwargs.get('rank'))
+
+    def delete(self, request, *args, **kwargs):
+        live_event = self.get_object()
+        live_event.status = LiveEvent.CANCELLED
+        live_event.save()
+        return api_response.Response(status=status.HTTP_204_NO_CONTENT)
