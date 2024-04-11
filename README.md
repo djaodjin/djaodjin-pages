@@ -41,11 +41,11 @@ Tested with
 - **Python:** 3.10, **Django:** 4.2 (latest)
 - **Python:** 2.7, **Django:** 1.11 (legacy) - use testsite/requirements-legacy.txt
 
-0.7.1
+0.7.2
 
-  * generates usable OpenAPI 3 schema
-  * adds sequences and user progress through a sequence
-  * imports content of PageElement as a .docx
+  * loads commenter picture/name from profile API
+  * makes API endpoint with or without account slug depending on URL pattern
+  * handles updates to django-storages>=1.14 properly
 
 [previous release notes](changelog)
 

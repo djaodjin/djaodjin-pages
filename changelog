@@ -1,3 +1,11 @@
+0.7.2
+
+  * loads commenter picture/name from profile API
+  * makes API endpoint with or without account slug depending on URL pattern
+  * handles updates to django-storages>=1.14 properly
+
+ -- Sebastien Mirolo <smirolo@djaodjin.com>  Thu, 11 Apr 2024 16:40:00 -0700
+
 0.7.1
 
   * fixes URL routes regression introduced in version 0.7.0
