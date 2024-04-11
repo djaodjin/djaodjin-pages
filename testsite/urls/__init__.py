@@ -1,4 +1,4 @@
-# Copyright (c) 2022, Djaodjin Inc.
+# Copyright (c) 2024, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -37,6 +37,8 @@ urlpatterns = staticfiles_urlpatterns() \
 
 urlpatterns += [
     path('', include('django.contrib.auth.urls')),
+    path('app/supplier-1/',
+        TemplateView.as_view(template_name='index.html')),
     path('app/energy-utility/',
         IndexView.as_view()),
     # Replaced

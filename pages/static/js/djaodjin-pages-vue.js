@@ -44,7 +44,8 @@ Vue.component('editables-list', {
 
 Vue.component('editables-detail', {
     mixins: [
-        itemMixin
+        itemMixin,
+        accountDetailMixin
     ],
     data: function() {
         return {
@@ -124,6 +125,9 @@ Vue.component('editables-detail', {
         vm.reqGet(this.$urls.api_comments,
         function success(resp) {
             vm.comments = resp;
+            // XXX If we are trying to load all user details at once,
+            //     we end up matching multiple profiles for a specific `slug`.
+            // vm.populateAccounts(resp, 'user');
         }, function error() {
             // We might be looking at the page anonymously and the comments
             // will only load for authenticated users.

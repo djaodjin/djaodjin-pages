@@ -44,6 +44,21 @@
     "model": "auth.User", "pk": 4
 },
 {
+    "fields": {
+      "date_joined": "2024-01-01T00:00:00Z",
+      "email": "kathryn@localhost.localdomain",
+      "first_name": "Kathryn",
+      "is_active": true,
+      "is_staff": false,
+      "is_superuser": false,
+      "last_login": "2024-01-01T00:00:00Z",
+      "last_name": "User",
+      "password": "pbkdf2_sha256$10000$z0MBiWn0Rlem$iZdC6uHomlE07qGK/TqfcfxNzKJtFp03c0JILF1frRc=",
+      "username": "kathryn"
+    },
+    "model": "auth.User", "pk": 5
+},
+{
   "fields": {
     "title": "Metal structures & equipment",
     "slug": "metal",
@@ -86,8 +101,8 @@
 },
 {
   "fields": {
-    "title": "Process heating",
-    "slug": "process-heating",
+    "title": "Energy efficiency",
+    "slug": "energy-efficiency",
     "extra": "{\"searchable\":true,\"visibility\":[\"public\"]}",
     "account": 2
   },
@@ -98,6 +113,22 @@
     "orig_element": 102, "dest_element": 104
   },
   "model": "pages.RelationShip", "pk": 103
+},
+
+{
+  "fields": {
+    "title": "Process heating",
+    "slug": "process-heating",
+    "extra": "{\"searchable\":true,\"visibility\":[\"public\"]}",
+    "account": 2
+  },
+  "model": "pages.PageElement", "pk": 105
+},
+{
+  "fields": {
+    "orig_element": 104, "dest_element": 105
+  },
+  "model": "pages.RelationShip", "pk": 105
 },
 {
   "fields": {
@@ -111,9 +142,9 @@
 },
 {
   "fields": {
-    "orig_element": 104, "dest_element": 106
+    "orig_element": 105, "dest_element": 106
   },
-  "model": "pages.RelationShip", "pk": 105
+  "model": "pages.RelationShip", "pk": 106
 },
 {
   "fields": {

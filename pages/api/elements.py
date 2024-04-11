@@ -103,8 +103,19 @@ class PageElementAPIView(TrailMixin, generics.ListAPIView):
           ]
         }
     """
-    serializer_class = PageElementSerializer
     queryset = PageElement.objects.all()
+    serializer_class = PageElementSerializer
+
+    search_fields = (
+        'title',
+        'extra'
+    )
+    ordering_fields = (
+        ('title', 'title'),
+    )
+    ordering = ('title',)
+
+    filter_backends = (SearchFilter, OrderingFilter,)
 
     @property
     def visibility(self):
@@ -306,8 +317,8 @@ class PageElementDetailAPIView(TrailMixin, generics.RetrieveAPIView):
         return self.retrieve(request, *args, **kwargs)
 
 
-class PageElementEditableListAPIView(AccountMixin, TrailMixin,
-                                     generics.ListCreateAPIView):
+class PageElementEditableListAPIView(AccountMixin, CreateModelMixin,
+                                     PageElementAPIView):
     """
     Lists editable page elements
 
@@ -376,17 +387,6 @@ class PageElementEditableListAPIView(AccountMixin, TrailMixin,
     """
     serializer_class = NodeElementSerializer
 
-    search_fields = (
-        'title',
-        'extra'
-    )
-    ordering_fields = (
-        ('title', 'title'),
-    )
-    ordering = ('title',)
-
-    filter_backends = (SearchFilter, OrderingFilter,)
-
     def get_serializer_class(self):
         if self.request.method.lower() == 'post':
             return NodeElementCreateSerializer
@@ -413,6 +413,9 @@ class PageElementEditableListAPIView(AccountMixin, TrailMixin,
         except ValidationError:
             pass
         return queryset
+
+    def get(self, request, *args, **kwargs): # Overrides the overide in PageElementAPIView
+        return self.list(request, *args, **kwargs)
 
     @extend_schema(operation_id='editables_content_create')
     def post(self, request, *args, **kwargs):

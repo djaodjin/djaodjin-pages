@@ -260,7 +260,7 @@ INTERNAL_IPS = ('127.0.0.1', '::1')
 # Authentication
 # --------------
 LOGIN_URL = 'login'
-LOGIN_REDIRECT_URL = '/app/energy-utility/'
+LOGIN_REDIRECT_URL = '/app/supplier-1/'
 
 
 PAGES = {
