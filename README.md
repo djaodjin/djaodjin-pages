@@ -41,7 +41,7 @@ Tested with
 - **Python:** 3.10, **Django:** 4.2 (latest)
 - **Python:** 2.7, **Django:** 1.11 (legacy) - use testsite/requirements-legacy.txt
 
-0.7.2
+0.8.1
 
   * loads commenter picture/name from profile API
   * makes API endpoint with or without account slug depending on URL pattern
