@@ -386,8 +386,6 @@ class PageElementEditableListAPIView(AccountMixin, CreateModelMixin,
             ]
         }
     """
-    serializer_class = NodeElementSerializer
-
     def get_serializer_class(self):
         if self.request.method.lower() == 'post':
             return NodeElementCreateSerializer
@@ -395,7 +393,7 @@ class PageElementEditableListAPIView(AccountMixin, CreateModelMixin,
             self).get_serializer_class()
 
 
-    def get_queryset(self):
+    def get_results(self):
         """
         Returns a list of heading and best practices
         """
@@ -415,8 +413,6 @@ class PageElementEditableListAPIView(AccountMixin, CreateModelMixin,
             pass
         return queryset
 
-    def get(self, request, *args, **kwargs): # Overrides the overide in PageElementAPIView
-        return self.list(request, *args, **kwargs)
 
     @extend_schema(operation_id='editables_content_create')
     def post(self, request, *args, **kwargs):
