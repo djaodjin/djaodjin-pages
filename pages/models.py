@@ -285,7 +285,7 @@ class PageElement(models.Model):
             from_element__dest_element=self)
 
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+        super(PageElement, self).__init__(*args, **kwargs)
         self.__original_text = self.text
 
     def save(self, force_insert=False, force_update=False,
