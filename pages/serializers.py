@@ -311,25 +311,28 @@ class PageElementUpdateSerializer(PageElementSerializer):
 
     class Meta(PageElementSerializer.Meta):
         fields = PageElementSerializer.Meta.fields + (
-            'text_updated_at', 'nb_comments_since_last_read', 'last_read_at', 'descr')
+            'text_updated_at', 'nb_comments_since_last_read',
+            'last_read_at', 'descr')
         read_only_fields = PageElementSerializer.Meta.read_only_fields + (
-            'text_updated_at', 'nb_comments_since_last_read', 'last_read_at', 'descr')
+            'text_updated_at', 'nb_comments_since_last_read',
+            'last_read_at', 'descr')
 
     def get_descr(self, obj):
         final_str_list = []
 
         if obj.text_updated_at and obj.last_read_at:
-            text_updated_at_str = obj.text_updated_at.strftime(
-                '%m-%d-%Y:%H:%M:%S')
             final_str_list.append(
-                f"Text last updated on {text_updated_at_str}.")
+                _("Text last updated on %(text_updated_at)s.") % {
+                    'text_updated_at': obj.text_updated_at.isoformat()})
 
         if obj.nb_comments_since_last_read:
-            comments_str = "comment" if obj.nb_comments_since_last_read \
+            comment_or_comments = "comment" if obj.nb_comments_since_last_read \
                 == 1 else "comments"
-            final_str_list.append(
-                f"{obj.nb_comments_since_last_read} new "
-                f"{comments_str} since last visit.")
+            final_str_list.append(_("%(nb_comments)s new "\
+                    "%(comment_or_comments)s since last visit.") % {
+                    'nb_comments': obj.nb_comments_since_last_read,
+                    'comment_or_comments': comment_or_comments
+                })
 
         return ' '.join(final_str_list)
 

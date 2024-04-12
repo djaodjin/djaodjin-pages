@@ -46,6 +46,7 @@ Tested with
   * loads commenter picture/name from profile API
   * makes API endpoint with or without account slug depending on URL pattern
   * handles updates to django-storages>=1.14 properly
+  * newsfeed API for updates to PageElement a user follows (experimental)
 
 [previous release notes](changelog)
 
