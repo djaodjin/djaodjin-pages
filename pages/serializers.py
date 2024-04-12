@@ -323,7 +323,7 @@ class PageElementUpdateSerializer(PageElementSerializer):
                 '%m-%d-%Y:%H:%M:%S')
             final_str_list.append(
                 f"Text last updated on {text_updated_at_str}.")
-        
+
         if obj.nb_comments_since_last_read:
             comments_str = "comment" if obj.nb_comments_since_last_read \
                 == 1 else "comments"

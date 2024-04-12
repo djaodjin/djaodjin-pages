@@ -37,10 +37,8 @@ urlpatterns = staticfiles_urlpatterns() \
 
 urlpatterns += [
     path('', include('django.contrib.auth.urls')),
-    path('app/supplier-1/',
-        TemplateView.as_view(template_name='index.html')),
-    path('app/energy-utility/',
-        IndexView.as_view()),
+    path('app/supplier-1/', IndexView.as_view()),
+    path('app/energy-utility/', IndexView.as_view()),
     # Replaced
     # path('', include('pages.urls')),
     # by following to insert `account` into the path.

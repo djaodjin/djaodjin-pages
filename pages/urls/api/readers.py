@@ -32,7 +32,7 @@ from ...api.reactions import (FollowAPIView, UnfollowAPIView, UpvoteAPIView,
 
 urlpatterns = [
     # NewsFeed
-    path('<slug:user>/news-feed', 
+    path('<slug:user>/newsfeed',
          NewsFeedListAPIView.as_view(), name='api_news_feed'),
     # Following
     path('follow/<path:path>',

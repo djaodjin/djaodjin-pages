@@ -8,7 +8,9 @@
       <div v-show="itemsLoaded && items.results.length > 0">
         <div v-for="item in items.results">
           <a :id="item.slug" :href="item.slug + '/'">
+            <div class="title">
               [[item.title]]
+            </div>
           </a>
           <a :href="'#tab-' + item.slug" name="tab-' + item.slug"></a>
         </div>

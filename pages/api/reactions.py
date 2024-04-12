@@ -33,7 +33,7 @@ from .. import signals
 from ..compat import is_authenticated
 from ..mixins import PageElementMixin, UserMixin
 from ..models import Comment, Follow, PageElement, Vote
-from ..serializers import (CommentSerializer, PageElementSerializer, 
+from ..serializers import (CommentSerializer, PageElementSerializer,
         PageElementUpdateSerializer)
 
 
@@ -281,7 +281,7 @@ class NewsFeedListAPIView(UserMixin, generics.ListAPIView):
         queryset = PageElement.objects.followed_by(user).annotate(
             last_read_at=Subquery(
                 Follow.objects.filter(
-                    user=user, 
+                    user=user,
                     element=OuterRef("pk")
                     ).values("last_read_at")[:1]),
             nb_comments_since_last_read=Count(
@@ -289,7 +289,7 @@ class NewsFeedListAPIView(UserMixin, generics.ListAPIView):
                 filter=Q(comments__created_at__gte=F("last_read_at")))
             ).exclude(
                 (
-                    (Q(text_updated_at__isnull=True) | 
+                    (Q(text_updated_at__isnull=True) |
                      Q(text_updated_at__lte=F("last_read_at")))
                     &
                     Q(nb_comments_since_last_read__lte=0)
@@ -297,7 +297,3 @@ class NewsFeedListAPIView(UserMixin, generics.ListAPIView):
             )
 
         return queryset
-
-    def get(self, request, *args, **kwargs):
-        return super(NewsFeedListAPIView, self).get(
-            request, *args, **kwargs)

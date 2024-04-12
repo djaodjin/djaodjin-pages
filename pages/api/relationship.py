@@ -27,14 +27,12 @@ from copy import deepcopy
 
 from django.db import transaction
 from django.db.models import Max
-from rest_framework import generics, status
+from rest_framework import generics
 from rest_framework.exceptions import ValidationError
-from rest_framework.mixins import DestroyModelMixin
-from rest_framework.response import Response
 
 from ..mixins import TrailMixin
 from ..models import RelationShip
-from ..serializers import EdgeCreateSerializer, RelationShipSerializer
+from ..serializers import EdgeCreateSerializer
 
 
 LOGGER = logging.getLogger(__name__)

@@ -1,7 +1,7 @@
 <div>
   <h4>[[comments.count]] Comments</h4>
   <table>
-    <tr v-for="comment in comments.results">
+    <tr :id="'comment_from_'+ comment.user" v-for="comment in comments.results">
       <td>
         [[comment.user]]<br />
         <small>[[comment.created_at]]</small>

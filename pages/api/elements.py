@@ -44,7 +44,7 @@ from rest_framework.request import Request
 
 from .. import settings
 from ..docs import extend_schema
-from ..compat import reverse, gettext_lazy as _
+from ..compat import is_authenticated, reverse, gettext_lazy as _
 from ..helpers import ContentCut, get_extra
 from ..mixins import AccountMixin, PageElementMixin, TrailMixin
 from ..models import (PageElement, RelationShip, build_content_tree,
@@ -303,16 +303,17 @@ class PageElementDetailAPIView(TrailMixin, generics.RetrieveAPIView):
         return self.element
 
     def get(self, request, *args, **kwargs):
-        # Marking the last time the PageElement was read by a user 
-        # following it
-        try:
-            follow_obj = Follow.objects.get(
-                user=self.request.user,
-                element=self.element)
-            follow_obj.last_read_at = datetime_or_now()
-            follow_obj.save()
-        except Follow.DoesNotExist:
-            pass
+        if is_authenticated(self.request):
+            # Marking the last time the PageElement was read by a user
+            # following it
+            try:
+                follow_obj = Follow.objects.get(
+                    user=self.request.user,
+                    element=self.element)
+                follow_obj.last_read_at = datetime_or_now()
+                follow_obj.save()
+            except Follow.DoesNotExist:
+                pass
 
         return self.retrieve(request, *args, **kwargs)
 
