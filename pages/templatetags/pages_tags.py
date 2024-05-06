@@ -1,4 +1,4 @@
-# Copyright (c) 2020, Djaodjin Inc.
+# Copyright (c) 2024, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -22,7 +22,9 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import markdown
 from django import template
+from django.template.defaultfilters import stringfilter
 from django.utils.safestring import mark_safe
 
 from ..compat import six
@@ -34,6 +36,15 @@ register = template.Library()
 @register.filter
 def get_relationships(element, tag=None):
     return element.get_relationships(tag).all()
+
+
+@register.filter(needs_autoescape=False)
+@stringfilter
+def md(text): #pylint: disable=invalid-name
+    # XXX safe_mode is deprecated. Should we use bleach? As shown in example:
+    # https://pythonhosted.org/Markdown/reference.html#markdown
+    return mark_safe(markdown.markdown(text, enable_attributes=False))
+
 
 @register.simple_tag
 def print_tree(tree, excludes=None):
