@@ -163,6 +163,7 @@ class TrailMixin(object):
     URL_PATH_SEP = '/'
     path_url_kwarg = 'path'
     breadcrumb_url = 'pages_element'
+    breadcrumb_url_index = None
 
     @property
     def breadcrumbs(self):
@@ -180,6 +181,12 @@ class TrailMixin(object):
                             parts[:idx + 1])})
                     self._breadcrumbs += [(part, title,
                         reverse(self.breadcrumb_url, kwargs=url_kwargs))]
+            if self.breadcrumb_url_index:
+                url_kwargs = self.get_url_kwargs()
+                url_kwargs.pop(self.path_url_kwarg, None)
+                self._breadcrumbs.insert(0, ('', "",
+                    reverse(self.breadcrumb_url_index,
+                    kwargs=url_kwargs)))
         return self._breadcrumbs
 
     @property
