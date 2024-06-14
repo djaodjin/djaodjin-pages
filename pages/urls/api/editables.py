@@ -33,10 +33,21 @@ from ...api.relationship import (PageElementAliasAPIView,
     PageElementMirrorAPIView, PageElementMoveAPIView)
 from ...api.sequences import (SequenceListCreateAPIView,
     SequenceRetrieveUpdateDestroyAPIView,
-    RemoveElementFromSequenceAPIView, AddElementToSequenceAPIView)
+    RemoveElementFromSequenceAPIView, AddElementToSequenceAPIView,
+    LiveEventListCreateAPIView, LiveEventRetrieveUpdateDestroyAPIView)
 
 
 urlpatterns = [
+    # Move these live event URLs with PageElement URLs
+    # They also have the account in the URL, how to check
+    # access?
+    path('<slug>/live-events/<int:rank>',
+         LiveEventRetrieveUpdateDestroyAPIView.as_view(),
+         name='api_live_event_destroy'),
+    path('<slug>/live-events',
+         LiveEventListCreateAPIView.as_view(),
+         name='api_live_event_list_create'),
+
     path(r'sequences/<slug:sequence>/elements/<int:rank>',
          RemoveElementFromSequenceAPIView.as_view(),
          name='api_remove_element_from_sequence'),

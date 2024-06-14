@@ -27,14 +27,17 @@ API URLs for sequence objects
 """
 
 from ...api.progress import (EnumeratedProgressResetAPIView,
-    LiveEventAttendanceAPIView)
+    LiveEventAttendanceAPIView, LiveEventAttendeesAPIView)
 from ...compat import path
 
 
 urlpatterns = [
-    path('<slug:sequence>/<int:rank>/<slug:user>',
+    path('<slug:sequence>/<int:rank>/<int:event_rank>/attendees/<slug:user>',
          LiveEventAttendanceAPIView.as_view(),
          name='api_mark_attendance'),
+     path('<slug:sequence>/<int:rank>/<int:event_rank>/attendees',
+         LiveEventAttendeesAPIView.as_view(),
+         name='api_live_event_attendees'),
     path('<slug:sequence>/<slug:user>',
          EnumeratedProgressResetAPIView.as_view(),
          name='api_progress_reset'),

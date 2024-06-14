@@ -32,7 +32,7 @@ from rest_framework import serializers
 from . import settings
 from .compat import gettext_lazy as _, is_authenticated
 from .models import (Comment, Follow, PageElement, Vote, Sequence,
-    EnumeratedElements)
+    EnumeratedElements, LiveEvent)
 
 #pylint: disable=abstract-method
 
@@ -420,8 +420,31 @@ class EnumeratedProgressSerializer(EnumeratedElementSerializer):
             'certificate', 'viewing_duration',)
 
 
-class AttendanceInputSerializer(serializers.Serializer):
-    """
-    Serializer to validate input to mark users' attendance
-    to a LiveEvent(LiveEventAttendanceAPIView)
-    """
+class LiveEventSerializer(serializers.ModelSerializer):
+    scheduled_at = serializers.DateTimeField(
+        help_text=_('Date/time the live event is scheduled'))
+    rank = serializers.IntegerField(
+        help_text=_('Unique integer to denote the index of the LiveEvent'))
+    location = serializers.URLField(
+        help_text=_('URL to the live event'))
+    max_attendees = serializers.IntegerField(default=0,
+        help_text=_('Max attendees for the LiveEvent'))
+    status = serializers.CharField(
+        help_text=_("Current status of the LiveEvent"))
+
+    class Meta:
+        model = LiveEvent
+        fields = ('scheduled_at', 'rank', 'location', 'max_attendees', 'status')
+        read_only_fields = ('status',)
+
+
+class LiveEventAttendeesSerializer(EnumeratedProgressSerializer):
+    user = serializers.SerializerMethodField(
+        help_text=_("Username of the attendee"))
+
+    class Meta(EnumeratedProgressSerializer.Meta):
+        fields = ('user', 'content', 'viewing_duration', 'min_viewing_duration')
+        read_only_fields = EnumeratedProgressSerializer.Meta.read_only_fields + ('user',)
+
+    def get_user(self, obj):
+        return obj.sequence_progress.user.username

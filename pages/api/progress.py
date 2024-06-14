@@ -22,18 +22,22 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from datetime import timedelta
+import datetime
 
 from deployutils.helpers import datetime_or_now
+from django.shortcuts import get_object_or_404
+from django.http import Http404
 from rest_framework import response as api_response, status
-from rest_framework.generics import DestroyAPIView, ListAPIView, RetrieveAPIView
+from rest_framework.generics import (DestroyAPIView, ListAPIView, RetrieveAPIView)
+from rest_framework.mixins import DestroyModelMixin
 
 from .. import settings
 from ..docs import extend_schema
-from ..mixins import EnumeratedProgressMixin, SequenceProgressMixin
+from ..helpers import get_extra, set_extra
+from ..mixins import EnumeratedProgressMixin, SequenceProgressMixin, SequenceMixin
 from ..models import EnumeratedElements, EnumeratedProgress, LiveEvent
 from ..serializers import (EnumeratedProgressSerializer,
-    AttendanceInputSerializer)
+        LiveEventAttendeesSerializer)
 
 
 class EnumeratedProgressListAPIView(SequenceProgressMixin, ListAPIView):
@@ -101,8 +105,8 @@ WHERE pages_enumeratedelements.sequence_id = %(sequence_id)d
         results = page if page else queryset
         for elem in results:
             if (elem.viewing_duration is not None and
-                not isinstance(elem.viewing_duration, timedelta)):
-                elem.viewing_duration = timedelta(
+                    not isinstance(elem.viewing_duration, datetime.timedelta)):
+                elem.viewing_duration = datetime.timedelta(
                     microseconds=elem.viewing_duration)
         return results
 
@@ -187,21 +191,20 @@ class EnumeratedProgressRetrieveAPIView(EnumeratedProgressMixin,
         if instance.last_ping_time:
             time_elapsed = now - instance.last_ping_time
             # Add only the actual time elapsed, with a cap for inactivity
-            time_increment = min(time_elapsed, timedelta(seconds=settings.PING_INTERVAL+1))
+            time_increment = min(time_elapsed, datetime.timedelta(seconds=settings.PING_INTERVAL+1))
         else:
             # Set the initial increment to the expected ping interval (i.e., 10 seconds)
-            time_increment = timedelta(seconds=settings.PING_INTERVAL)
+            time_increment = datetime.timedelta(seconds=settings.PING_INTERVAL)
 
         instance.viewing_duration += time_increment
         instance.last_ping_time = now
         instance.save()
 
-        status_code = status.HTTP_200_OK
         serializer = self.get_serializer(instance)
-        return api_response.Response(serializer.data, status=status_code)
+        return api_response.Response(serializer.data, status=status.HTTP_200_OK)
 
 
-class LiveEventAttendanceAPIView(EnumeratedProgressRetrieveAPIView):
+class LiveEventAttendanceAPIView(DestroyModelMixin, EnumeratedProgressRetrieveAPIView):
     """
     Retrieves attendance to live event
 
@@ -224,11 +227,22 @@ class LiveEventAttendanceAPIView(EnumeratedProgressRetrieveAPIView):
         }
     """
     rank_url_kwarg = 'rank'
+    event_rank_kwarg = 'event_rank'
 
-    def get_serializer_class(self):
-        if self.request.method.lower() == 'post':
-            return AttendanceInputSerializer
-        return super(LiveEventAttendanceAPIView, self).get_serializer_class()
+    serializer_class = EnumeratedProgressSerializer
+
+    def get(self, request, *args, **kwargs):
+        # Need to ensure the EnumeratedProgress matches the correct LiveEvent
+        # As it currently returns any EnumeratedProgress on the PageElement.
+        progress = self.progress
+        live_event_rank = get_extra(progress, "live_event_rank")
+
+        if live_event_rank != self.kwargs.get(self.event_rank_kwarg):
+            raise Http404
+
+        serializer = self.get_serializer(progress)
+        return api_response.Response(
+            serializer.data, status=status.HTTP_200_OK)
 
     def post(self, request, *args, **kwargs):
         """
@@ -253,21 +267,76 @@ class LiveEventAttendanceAPIView(EnumeratedProgressRetrieveAPIView):
                 "detail": "Attendance marked successfully"
             }
         """
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-
+        at_time = datetime_or_now()
+        event_rank = kwargs.get(self.event_rank_kwarg)
         progress = self.get_object()
         element = progress.step
-        live_event = LiveEvent.objects.filter(element=element.content).first()
+        live_event = get_object_or_404(
+            LiveEvent, element=element.content, rank=event_rank)
 
-        # We use if live_event to confirm the existence of the LiveEvent object
-        if (live_event and
-            progress.viewing_duration <= element.min_viewing_duration):
-            progress.viewing_duration = element.min_viewing_duration
+        progress_event_rank = set_extra(
+            progress, "live_event_rank", event_rank)
+
+        if progress.viewing_duration < element.min_viewing_duration and live_event.scheduled_at < at_time:
+            if progress_event_rank and progress_event_rank != event_rank:
+                return api_response.Response(
+                    {'detail': f'Attendance already marked for Live Event '
+                               f'with rank: {event_rank}'},
+                    status=status.HTTP_400_BAD_REQUEST)
+            progress.viewing_duration = max(
+                progress.viewing_duration, element.min_viewing_duration)
             progress.save()
+            serializer = self.get_serializer(progress)
             return api_response.Response(
-                {'detail': 'Attendance marked successfully'},
-                status=status.HTTP_200_OK)
+                serializer.data, status=status.HTTP_201_CREATED)
+
         return api_response.Response(
             {'detail': 'Attendance not marked'},
             status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, *args, **kwargs):
+        '''
+        Resets Live Event Attendance
+        '''
+        # Maybe redundant because we're already resetting EnumeratedProgress
+        # in EnumeratedProgressResetAPIView?
+        event_rank = kwargs.get(self.event_rank_kwarg)
+        progress = self.get_object()
+
+        curr_val = set_extra(
+            progress, "live_event_rank", '')
+
+        if curr_val != event_rank:
+            return api_response.Response(
+                status=status.HTTP_400_BAD_REQUEST)
+
+        progress.viewing_duration = datetime.timedelta(seconds=0)
+        progress.save()
+        return api_response.Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class LiveEventAttendeesAPIView(SequenceMixin, ListAPIView):
+    serializer_class = LiveEventAttendeesSerializer
+
+    rank_url_kwarg = 'rank'
+    event_rank_kwarg = 'event_rank'
+
+    def get_queryset(self):
+        element_rank = self.kwargs.get(self.rank_url_kwarg)
+        event_rank = self.kwargs.get(self.event_rank_kwarg)
+
+        element = get_object_or_404(
+            EnumeratedElements, sequence=self.sequence, rank=element_rank)
+
+        queryset = EnumeratedProgress.objects.filter(
+            step__content=element.content,
+            viewing_duration__gte=element.min_viewing_duration)
+
+        progress_ids = [progress.id for progress in queryset if
+            get_extra(progress, "live_event_rank") == event_rank]
+        queryset = queryset.filter(id__in=progress_ids)
+        return queryset
+
+    def get(self, request, *args, **kwargs):
+        return super(LiveEventAttendeesAPIView, self).get(request, *args, **kwargs)
+

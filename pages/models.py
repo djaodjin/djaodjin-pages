@@ -398,19 +398,36 @@ class LiveEvent(models.Model):
     """
     A live webinar, onsite classroom, etc.
     """
+    CANCELLED = "Cancelled"
+    SCHEDULED = "Scheduled"
+
+    EVENT_STATUS_CHOICES = (
+        (CANCELLED, 'Cancelled'),
+        (SCHEDULED, 'Scheduled')
+    )
+
     element = models.ForeignKey(PageElement, on_delete=models.CASCADE,
         related_name='events')
     created_at = models.DateTimeField(editable=False, auto_now_add=True,
         help_text=_("Date/time the live event was created (in ISO format)"))
     scheduled_at = models.DateTimeField(
         help_text=_("Date/time the live event is scheduled (in ISO format)"))
+    rank = models.PositiveSmallIntegerField(default=1,
+        help_text="Unique integer to denote the index of the LiveEvent")
     location = models.URLField(_("URL to the calendar event"), max_length=2083)
     max_attendees = models.IntegerField(default=0)
+    status = models.CharField(
+        max_length=9,
+        choices=EVENT_STATUS_CHOICES, default=SCHEDULED,
+        help_text=_("Current status of the LiveEvent"))
     extra = get_extra_field_class()(null=True, blank=True,
         help_text=_("Extra meta data (can be stringify JSON)"))
 
     def __str__(self):
-        return "%s-live" % str(self.element)
+        return "%s-live-%s" % (str(self.element), str(self.rank))
+    
+    class Meta:
+        unique_together = ('element', 'rank')
 
 
 @python_2_unicode_compatible
@@ -455,7 +472,7 @@ class EnumeratedElements(models.Model):
     One element in a sequence
     """
     sequence = models.ForeignKey(Sequence, on_delete=models.CASCADE,
-                                 related_name='sequence_enumerated_elements')
+        related_name='sequence_enumerated_elements')
     content = models.ForeignKey(PageElement, on_delete=models.CASCADE)
     rank = models.IntegerField(
         help_text=_("Used to order elements when presenting a sequence"))
@@ -498,12 +515,12 @@ class SequenceProgress(models.Model):
             enumerated_elements = EnumeratedElements.objects.filter(
                 sequence=self.sequence).order_by('rank')
         user_enumerated_progress = EnumeratedProgress.objects.filter(
-            progress=self,
-            rank__in=enumerated_elements.values_list(
+            sequence_progress=self,
+            step__rank__in=enumerated_elements.values_list(
             'rank', flat=True))
         for element in enumerated_elements:
             if not user_enumerated_progress.filter(
-                    rank=element.rank,
+                    step__rank=element.rank,
                     viewing_duration__gte=element.min_viewing_duration
             ).exists():
                 return False
@@ -523,9 +540,10 @@ class EnumeratedProgress(models.Model):
         default=datetime.timedelta,  # stored in microseconds
         help_text=_("Total recorded viewing time for the material"))
     last_ping_time = models.DateTimeField(
-        null=True,
-        blank=True,
+        null=True, blank=True,
         help_text=_("Timestamp of the last activity ping"))
+    extra = get_extra_field_class()(null=True, blank=True,
+        help_text=_("Extra meta data (can be stringify JSON)"))
 
     class Meta:
         unique_together = ('sequence_progress', 'step')
