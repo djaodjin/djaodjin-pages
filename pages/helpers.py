@@ -63,6 +63,7 @@ def get_extra(obj, attr_name, default=None):
         extra = obj.get('extra')
     return extra.get(attr_name, default) if extra else default
 
+
 def update_context_urls(context, urls):
     if 'urls' in context:
         for key, val in six.iteritems(urls):

@@ -22,10 +22,11 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-'''API URLs for the pages application'''
+"""
+API URLs for the pages application
+"""
 
-from ...api.elements import PageElementIndexAPIView
-from ...api.sequences import SequencesIndexAPIView
+from ...api.elements import PageElementAPIView, PageElementIndexAPIView
 from ...compat import include, path
 
 urlpatterns = [
@@ -33,10 +34,10 @@ urlpatterns = [
     path('attendance/', include('pages.urls.api.sequences')),
     path('content/', include('pages.urls.api.readers')),
     path('content/', include('pages.urls.api.noauth')),
+    path('<path:path>', PageElementAPIView.as_view(),
+        name="api_content"),
     path('content', PageElementIndexAPIView.as_view(),
         name="api_content_index"),
     path('progress/', include('pages.urls.api.progress')),
-    path('sequences', SequencesIndexAPIView.as_view(),
-         name='api_sequences_index'),
     path('', include('pages.urls.api.assets'))
 ]

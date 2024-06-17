@@ -296,6 +296,9 @@ class PageElementSerializer(serializers.ModelSerializer):
 
 
 class PageElementUpdateSerializer(PageElementSerializer):
+    """
+    Serializer for news updates
+    """
     text_updated_at = serializers.DateTimeField(
         required=False,
         help_text=_("Datetime of last update on the page element's text"))
@@ -391,19 +394,26 @@ class SequenceSerializer(serializers.ModelSerializer):
             many=True).data
 
 
-class SequenceCreateSerializer(SequenceSerializer):
+class SequenceUpdateSerializer(SequenceSerializer):
     """
     Serializer to create a `Sequence`
     """
     slug = serializers.SlugField(required=False,
         help_text=_("Unique identifier for the sequence"))
+
+    class Meta(SequenceSerializer.Meta):
+        fields = SequenceSerializer.Meta.fields
+
+
+class SequenceCreateSerializer(SequenceUpdateSerializer):
+    """
+    Serializer to create a `Sequence`
+    """
     title = serializers.CharField(required=True,
         help_text=_("Title of the sequence"))
 
-    class Meta(SequenceSerializer.Meta):
-        """
-        Same fields as `SequenceSerializer`
-        """
+    class Meta(SequenceUpdateSerializer.Meta):
+        fields = SequenceUpdateSerializer.Meta.fields
 
 
 class EnumeratedProgressSerializer(EnumeratedElementSerializer):
@@ -420,8 +430,9 @@ class EnumeratedProgressSerializer(EnumeratedElementSerializer):
             'certificate', 'viewing_duration',)
 
 
-class AttendanceInputSerializer(serializers.Serializer):
+class ValidationErrorSerializer(NoModelSerializer):
     """
-    Serializer to validate input to mark users' attendance
-    to a LiveEvent(LiveEventAttendanceAPIView)
+    Details when an error occurs
     """
+    detail = serializers.CharField(help_text=_("Describes the reason for"\
+        " the error in plain text"))

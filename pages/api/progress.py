@@ -26,14 +26,15 @@ from datetime import timedelta
 
 from deployutils.helpers import datetime_or_now
 from rest_framework import response as api_response, status
+from rest_framework.exceptions import ValidationError
 from rest_framework.generics import DestroyAPIView, ListAPIView, RetrieveAPIView
 
 from .. import settings
+from ..compat import gettext_lazy as _
 from ..docs import extend_schema
 from ..mixins import EnumeratedProgressMixin, SequenceProgressMixin
 from ..models import EnumeratedElements, EnumeratedProgress, LiveEvent
-from ..serializers import (EnumeratedProgressSerializer,
-    AttendanceInputSerializer)
+from ..serializers import EnumeratedProgressSerializer
 
 
 class EnumeratedProgressListAPIView(SequenceProgressMixin, ListAPIView):
@@ -58,8 +59,8 @@ class EnumeratedProgressListAPIView(SequenceProgressMixin, ListAPIView):
           "previous": null,
           "results": [
             {
-              "created_at": "2020-09-28T00:00:00.0000Z",
               "rank": 1,
+              "content": "ghg-emissions-scope3-details",
               "viewing_duration": "00:00:00"
             }
           ]
@@ -148,8 +149,8 @@ class EnumeratedProgressRetrieveAPIView(EnumeratedProgressMixin,
     .. code-block:: json
 
         {
-            "created_at": "2020-09-28T00:00:00.0000Z",
             "rank": 1,
+            "content": "metal",
             "viewing_duration": "00:00:00"
         }
     """
@@ -177,7 +178,7 @@ class EnumeratedProgressRetrieveAPIView(EnumeratedProgressMixin,
 
             {
                 "rank": 1,
-                "created_at": "2020-09-28T00:00:00.0000Z",
+                "content": "metal",
                 "viewing_duration": "00:00:56.000000"
             }
         """
@@ -218,18 +219,15 @@ class LiveEventAttendanceAPIView(EnumeratedProgressRetrieveAPIView):
     .. code-block:: json
 
         {
-            "created_at": "2020-09-28T00:00:00.0000Z",
             "rank": 1,
-            "viewing_duration": "00:00:00"
+            "content":"ghg-emissions-scope3-details",
+            "viewing_duration": "00:00:00",
+            "min_viewing_duration": "00:01:00"
         }
     """
     rank_url_kwarg = 'rank'
 
-    def get_serializer_class(self):
-        if self.request.method.lower() == 'post':
-            return AttendanceInputSerializer
-        return super(LiveEventAttendanceAPIView, self).get_serializer_class()
-
+    @extend_schema(request=None)
     def post(self, request, *args, **kwargs):
         """
         Marks a user's attendance to a live event
@@ -243,31 +241,33 @@ class LiveEventAttendanceAPIView(EnumeratedProgressRetrieveAPIView):
 
         .. code-block:: http
 
-            POST /api/attendance/alliance/ghg-accounting-training/1/steve HTTP/1.1
+            POST /api/attendance/alliance/ghg-accounting-training/1/steve \
+HTTP/1.1
 
         responds
 
         .. code-block:: json
 
             {
-                "detail": "Attendance marked successfully"
+              "rank": 1,
+              "content":"ghg-emissions-scope3-details",
+              "viewing_duration": "00:00:00",
+              "min_viewing_duration": "00:01:00"
             }
         """
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-
         progress = self.get_object()
         element = progress.step
         live_event = LiveEvent.objects.filter(element=element.content).first()
 
         # We use if live_event to confirm the existence of the LiveEvent object
-        if (live_event and
-            progress.viewing_duration <= element.min_viewing_duration):
-            progress.viewing_duration = element.min_viewing_duration
-            progress.save()
-            return api_response.Response(
-                {'detail': 'Attendance marked successfully'},
-                status=status.HTTP_200_OK)
-        return api_response.Response(
-            {'detail': 'Attendance not marked'},
-            status=status.HTTP_400_BAD_REQUEST)
+        if (not live_event or
+            progress.viewing_duration > element.min_viewing_duration):
+            raise ValidationError(_("Cannot mark attendance of %(user)s"\
+                " to %(sequence)s:%(rank)s.") % {
+                'user': self.user, 'sequence': self.sequence,
+                'rank': self.kwargs.get(self.rank_url_kwarg)})
+
+        progress.viewing_duration = element.min_viewing_duration
+        progress.save()
+        serializer = self.get_serializer(instance=progress)
+        return api_response.Response(serializer.data)

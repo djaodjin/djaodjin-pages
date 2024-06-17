@@ -129,7 +129,7 @@ class UploadAssetAPIView(AccountMixin, GenericAPIView):
 
         .. code-block:: http
 
-            POST /api/assets HTTP/1.1
+            POST /api/supplier-1/assets HTTP/1.1
 
         responds
 

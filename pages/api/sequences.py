@@ -32,8 +32,8 @@ from rest_framework.generics import (get_object_or_404, DestroyAPIView,
 
 from ..mixins import AccountMixin, SequenceMixin
 from ..models import Sequence, EnumeratedElements
-from ..serializers import (SequenceSerializer, SequenceCreateSerializer,
-    EnumeratedElementSerializer)
+from ..serializers import (EnumeratedElementSerializer, SequenceSerializer,
+    SequenceUpdateSerializer, SequenceCreateSerializer)
 
 LOGGER = logging.getLogger(__name__)
 
@@ -53,7 +53,7 @@ class SequencesIndexAPIView(ListAPIView):
 
     .. code-block:: http
 
-         GET /api/sequences HTTP/1.1
+         GET /api/content/sequences HTTP/1.1
 
     responds
 
@@ -66,7 +66,7 @@ class SequencesIndexAPIView(ListAPIView):
           "results": [
             {
               "created_at": "2024-01-01T00:00:00.0000Z",
-              "slug": "ghg-accounting-training",
+              "slug": "ghg-accounting-webinar",
               "title": "GHG Accounting Training",
               "account": "djaopsp",
               "has_certificate": true
@@ -117,7 +117,7 @@ class SequenceListCreateAPIView(AccountMixin, ListCreateAPIView):
           "results": [
             {
               "created_at": "2020-09-28T00:00:00.0000Z",
-              "slug": "ghg-accounting-training",
+              "slug": "ghg-accounting-webinar",
               "title": "GHG Accounting Training",
               "account": "djaopsp",
               "has_certificate": true
@@ -171,7 +171,7 @@ class SequenceListCreateAPIView(AccountMixin, ListCreateAPIView):
         .. code-block:: json
 
             {
-                "slug": "ghg-accounting-training",
+                "slug": "ghg-accounting-webinar",
                 "title": "GHG Accounting Training"
             }
 
@@ -181,7 +181,7 @@ class SequenceListCreateAPIView(AccountMixin, ListCreateAPIView):
 
             {
               "created_at": "2023-01-01T04:00:00.000000Z",
-              "slug": "ghg-accounting-training",
+              "slug": "ghg-accounting-webinar",
               "title": "GHG Accounting Training",
               "account": null,
               "has_certificate": true
@@ -206,7 +206,7 @@ class SequenceRetrieveUpdateDestroyAPIView(AccountMixin, SequenceMixin,
 
     .. code-block:: http
 
-        GET /api/editables/alliance/sequences/ghg-accounting-training HTTP/1.1
+        GET /api/editables/alliance/sequences/ghg-accounting-webinar HTTP/1.1
 
     responds
 
@@ -214,27 +214,21 @@ class SequenceRetrieveUpdateDestroyAPIView(AccountMixin, SequenceMixin,
 
         {
             "created_at": "2023-12-29T04:33:33.078661Z",
-            "slug": "ghg-accounting-training",
+            "slug": "ghg-accounting-webinar",
             "title": "GHG Accounting Training",
             "account": null,
-            "has_certificate": true,
-            "results": [
-                {
-                    "rank": 1,
-                    "content": "text-content",
-                    "min_viewing_duration": "00:00:10"
-                },
-                {
-                    "rank": 2,
-                    "content": "survey-event",
-                    "min_viewing_duration": "00:00:20"
-                }
-            ]
+            "has_certificate": true
         }
     """
     serializer_class = SequenceSerializer
     lookup_field = 'slug'
     lookup_url_kwarg = SequenceMixin.sequence_url_kwarg
+
+    def get_serializer_class(self):
+        if self.request.method.lower() == 'put':
+            return SequenceUpdateSerializer
+        return super(SequenceRetrieveUpdateDestroyAPIView,
+            self).get_serializer_class()
 
     def get_object(self):
         return self.sequence
@@ -249,7 +243,7 @@ class SequenceRetrieveUpdateDestroyAPIView(AccountMixin, SequenceMixin,
 
         .. code-block:: http
 
-            DELETE /api/editables/alliance/sequences/ghg-accounting-training\
+            DELETE /api/editables/alliance/sequences/ghg-accounting-webinar\
  HTTP/1.1
 
         """
@@ -265,7 +259,7 @@ class SequenceRetrieveUpdateDestroyAPIView(AccountMixin, SequenceMixin,
 
         .. code-block:: http
 
-            PUT /api/editables/alliance/sequences/ghg-accounting-training HTTP/1.1
+            PUT /api/editables/alliance/sequences/ghg-accounting-webinar HTTP/1.1
 
         .. code-block:: json
 
@@ -281,12 +275,11 @@ class SequenceRetrieveUpdateDestroyAPIView(AccountMixin, SequenceMixin,
 
             {
                 "created_at": "2023-12-29T04:33:33.078661Z",
-                "slug": "ghg-accounting-training",
+                "slug": "ghg-accounting-webinar",
                 "title": "Updated GHG Accounting Training Title",
                 "account": null,
                 "has_certificate": false,
-                "extra": "Additional info",
-                "results": []
+                "extra": "Additional info"
             }
         """
         #pylint:disable=useless-parent-delegation
@@ -304,7 +297,9 @@ class AddElementToSequenceAPIView(AccountMixin, SequenceMixin,
 
     .. code-block:: http
 
-        GET /api/editables/alliance/sequences/ghg-accounting-training/elements HTTP/1.1
+        GET /api/editables/alliance/sequences/ghg-accounting-webinar/elements HTTP/1.1
+
+    responds
 
     .. code-block:: json
 
@@ -325,14 +320,6 @@ class AddElementToSequenceAPIView(AccountMixin, SequenceMixin,
                 }
             ]
         }
-
-    responds
-
-    .. code-block:: json
-
-        {
-            "detail": "element added"
-        }
     """
     serializer_class = EnumeratedElementSerializer
 
@@ -349,7 +336,7 @@ class AddElementToSequenceAPIView(AccountMixin, SequenceMixin,
 
         .. code-block:: http
 
-            POST /api/editables/alliance/sequences/ghg-accounting-training/elements HTTP/1.1
+            POST /api/editables/alliance/sequences/ghg-accounting-webinar/elements HTTP/1.1
 
         .. code-block:: json
 
@@ -415,7 +402,7 @@ class RemoveElementFromSequenceAPIView(AccountMixin, SequenceMixin,
 
     **Example**
 
-        DELETE /api/editables/alliance/sequences/ghg-accounting-training/elements/1 HTTP/1.1
+        DELETE /api/editables/alliance/sequences/ghg-accounting-webinar/elements/1 HTTP/1.1
 
     responds
 

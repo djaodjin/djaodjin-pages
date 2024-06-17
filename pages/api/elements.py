@@ -49,9 +49,8 @@ from ..helpers import ContentCut, get_extra
 from ..mixins import AccountMixin, PageElementMixin, TrailMixin
 from ..models import (PageElement, RelationShip, build_content_tree,
     flatten_content_tree, Follow)
-from ..serializers import (AssetSerializer, NodeElementSerializer,
-    NodeElementCreateSerializer, PageElementSerializer,
-    PageElementTagSerializer)
+from ..serializers import (AssetSerializer, NodeElementCreateSerializer,
+    PageElementSerializer, PageElementTagSerializer)
 from ..utils import validate_title
 from .assets import process_upload
 
@@ -489,7 +488,7 @@ class PageElementEditableDetail(AccountMixin, TrailMixin, CreateModelMixin,
 
         .. code-block:: http
 
-            DELETE /api/editables/alliance/content/boxes-enclosures/ HTTP/1.1
+            DELETE /api/editables/alliance/content/boxes-enclosures HTTP/1.1
         """
         #pylint:disable=useless-super-delegation
         return super(PageElementEditableDetail, self).delete(
@@ -505,7 +504,7 @@ class PageElementEditableDetail(AccountMixin, TrailMixin, CreateModelMixin,
 
         .. code-block:: http
 
-            POST /api/editables/alliance/content/boxes-enclosures/ HTTP/1.1
+            POST /api/editables/alliance/content/boxes-enclosures HTTP/1.1
 
         .. code-block:: json
 
@@ -537,7 +536,7 @@ class PageElementEditableDetail(AccountMixin, TrailMixin, CreateModelMixin,
 
         .. code-block:: http
 
-            PUT /api/editables/alliance/content/boxes-enclosures/ HTTP/1.1
+            PUT /api/editables/alliance/content/boxes-enclosures HTTP/1.1
 
         .. code-block:: json
 
@@ -709,6 +708,7 @@ class ImportDocxView(AccountMixin, PageElementMixin, generics.GenericAPIView):
             "text": "Hello"
         }
     """
+    schema = None # XXX currently disabled in API documentation
     serializer_class = PageElementSerializer
 
     def upload_image(self, request):

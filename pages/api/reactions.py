@@ -273,6 +273,34 @@ class CommentListCreateAPIView(PageElementMixin, generics.ListCreateAPIView):
 
 
 class NewsFeedListAPIView(UserMixin, generics.ListAPIView):
+    """
+    Retrieves relevant news for a user
+
+    **Tags**: content
+
+    **Examples**
+
+    .. code-block:: http
+
+        GET /api/content/steve/newsfeed HTTP/1.1
+
+    responds
+
+    .. code-block:: json
+
+        {
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [{
+              "path": "/metal/boxes-and-enclosures/production/energy-efficiency/process-heating/combustion/adjust-air-fuel-ratio",
+              "text_updated_at": "2024-01-01T00:00:00Z",
+              "last_read_at": "2023-12-01T00:00:00Z",
+              "nb_comments_since_last_read": 5,
+              "descr": ""
+          }]
+        }
+    """
     serializer_class = PageElementUpdateSerializer
 
     def get_queryset(self):
