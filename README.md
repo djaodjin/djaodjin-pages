@@ -41,12 +41,10 @@ Tested with
 - **Python:** 3.10, **Django:** 4.2 (latest)
 - **Python:** 2.7, **Django:** 1.11 (legacy) - use testsite/requirements-legacy.txt
 
-0.8.1
+0.8.2
 
-  * loads commenter picture/name from profile API
-  * makes API endpoint with or without account slug depending on URL pattern
-  * handles updates to django-storages>=1.14 properly
-  * newsfeed API for updates to PageElement a user follows (experimental)
+  * updates API documentation
+  * adds root in breadcrumbs
 
 [previous release notes](changelog)
 

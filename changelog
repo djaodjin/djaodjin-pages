@@ -1,3 +1,10 @@
+0.8.2
+
+  * updates API documentation
+  * adds root in breadcrumbs
+
+ -- Sebastien Mirolo <smirolo@djaodjin.com>  Tue, 18 Jun 2024 02:25:00 -0700
+
 0.8.1
 
   * loads commenter picture/name from profile API
