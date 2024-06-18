@@ -23,18 +23,15 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 """
-API URLs for the pages application
+API URLs for readers who could be unauthenticated
 """
-
+from ...compat import path
 from ...api.elements import PageElementAPIView, PageElementIndexAPIView
-from ...compat import include, path
+
 
 urlpatterns = [
-    path('editables/', include('pages.urls.api.editables')),
-    path('attendance/', include('pages.urls.api.sequences')),
-    path('content/', include('pages.urls.api.readers')),
-    path('content/', include('pages.urls.api.noauth')),
-    path('', include('pages.urls.api.noauth2')), # 'api/content' index
-    path('progress/', include('pages.urls.api.progress')),
-    path('', include('pages.urls.api.assets'))
+    path('content/<path:path>', PageElementAPIView.as_view(),
+        name="api_content"),
+    path('content', PageElementIndexAPIView.as_view(),
+        name="api_content_index"),
 ]

@@ -28,7 +28,6 @@ from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 
 from pages.compat import include, path
 from pages.api.elements import PageElementIndexAPIView
-from pages.api.sequences import SequencesIndexAPIView
 
 from ..views.app import IndexView
 
@@ -47,10 +46,7 @@ urlpatterns += [
     path('api/progress/', include('pages.urls.api.progress')),
     path('api/content/', include('pages.urls.api.readers')),
     path('api/content/', include('pages.urls.api.noauth')),
-    path('api/content', PageElementIndexAPIView.as_view(),
-        name="api_content_index"),
-    path('api/sequences', SequencesIndexAPIView.as_view(),
-         name='api_sequences_index'),
+    path('api/', include('pages.urls.api.noauth2')),
     path('api/', include('pages.urls.api.assets')),
     path('', IndexView.as_view()),
     path('', include('pages.urls.views')),
