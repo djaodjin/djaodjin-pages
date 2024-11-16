@@ -44,7 +44,7 @@ class FollowAPIView(PageElementMixin, generics.CreateAPIView):
     The authenticated user making the request will receive notification
     whenever someone comments on the practice.
 
-    **Tags**: content
+    **Tags**: content, user
 
     **Examples**
 
@@ -81,7 +81,7 @@ class UnfollowAPIView(PageElementMixin, generics.CreateAPIView):
     The authenticated user making the request will stop receiving notification
     whenever someone comments on the practice.
 
-    **Tags**: content
+    **Tags**: content, user
 
     **Examples**
 
@@ -118,7 +118,7 @@ class UpvoteAPIView(PageElementMixin, generics.CreateAPIView):
     The authenticated user making the request indicates the practice is
     considered worthwhile implementing.
 
-    **Tags**: content
+    **Tags**: content, user
 
     **Examples**
 
@@ -155,7 +155,7 @@ class DownvoteAPIView(PageElementMixin, generics.CreateAPIView):
     The authenticated user making the request indicates the practice is
     not worth implementing.
 
-    **Tags**: content
+    **Tags**: content, user
 
     **Examples**
 
@@ -230,7 +230,7 @@ class CommentListCreateAPIView(PageElementMixin, generics.ListCreateAPIView):
         """
         Comments on a page element
 
-        **Tags**: content
+        **Tags**: content, user
 
         **Examples**
 
@@ -276,7 +276,7 @@ class NewsFeedListAPIView(UserMixin, generics.ListAPIView):
     """
     Retrieves relevant news for a user
 
-    **Tags**: content
+    **Tags**: content, user
 
     **Examples**
 

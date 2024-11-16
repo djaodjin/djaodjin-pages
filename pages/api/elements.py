@@ -57,7 +57,61 @@ from .assets import process_upload
 LOGGER = logging.getLogger(__name__)
 
 
-class PageElementAPIView(TrailMixin, generics.ListAPIView):
+class PageElementListMixin(TrailMixin):
+
+    @property
+    def visibility(self):
+        return None
+
+    @property
+    def owners(self):
+        return None
+
+    def attach(self, elements):
+        return elements
+
+    def get_cut(self):
+        cut_param = self.get_query_param('cut')
+        return ContentCut(cut_param) if cut_param else None
+
+    def get_results(self):
+        if self.element:
+            content_tree = build_content_tree(
+                roots=[self.element], prefix=self.full_path,
+                cut=self.get_cut(),
+                visibility=self.visibility,
+                accounts=self.owners)
+            items = flatten_content_tree(
+                content_tree, sort_by_key=False, depth=-1)
+            items.pop(0)
+        else:
+            cut = self.get_cut()
+            if not cut:
+                cut = ContentCut()
+            content_tree = build_content_tree(
+                roots=None, prefix=self.full_path,
+                cut=cut,
+                visibility=self.visibility,
+                accounts=self.owners)
+            # We do not re-sort the roots such that member-only content
+            # appears at the top.
+            items = flatten_content_tree(content_tree, sort_by_key=False)
+
+        results = []
+        for item in items:
+            searchable = get_extra(item, 'searchable', False)
+            if searchable:
+                results += [item]
+
+        return results
+
+    def get_queryset(self):
+        results = self.get_results()
+        self.attach(results)
+        return results
+
+
+class PageElementAPIView(PageElementListMixin, generics.ListAPIView):
     """
     Lists tree of page elements matching prefix
 
@@ -102,7 +156,6 @@ class PageElementAPIView(TrailMixin, generics.ListAPIView):
           ]
         }
     """
-    queryset = PageElement.objects.all()
     serializer_class = PageElementSerializer
 
     search_fields = (
@@ -116,56 +169,9 @@ class PageElementAPIView(TrailMixin, generics.ListAPIView):
 
     filter_backends = (SearchFilter, OrderingFilter,)
 
-    @property
-    def visibility(self):
-        return None
-
-    @property
-    def owners(self):
-        return None
-
-    def attach(self, elements):
-        return elements
-
-    def get_cut(self):
-        cut_param = self.request.query_params.get('cut')
-        return ContentCut(cut_param) if cut_param else None
-
-    def get_results(self):
-        if self.element:
-            content_tree = build_content_tree(
-                roots=[self.element], prefix=self.full_path,
-                cut=self.get_cut(),
-                visibility=self.visibility,
-                accounts=self.owners)
-            items = flatten_content_tree(
-                content_tree, sort_by_key=False, depth=-1)
-            items.pop(0)
-        else:
-            cut = self.get_cut()
-            if not cut:
-                cut = ContentCut()
-            content_tree = build_content_tree(
-                roots=None, prefix=self.full_path,
-                cut=cut,
-                visibility=self.visibility,
-                accounts=self.owners)
-            # We do not re-sort the roots such that member-only content
-            # appears at the top.
-            items = flatten_content_tree(content_tree, sort_by_key=False)
-
-        results = []
-        for item in items:
-            searchable = get_extra(item, 'searchable', False)
-            if searchable:
-                results += [item]
-
-        return results
-
     def list(self, request, *args, **kwargs):
         #pylint:disable=unused-argument
-        results = self.get_results()
-        self.attach(results)
+        results = self.get_queryset()
 
         # We have multiple roots so we create an unifying top-level root.
         element = self.element if self.element else PageElement()

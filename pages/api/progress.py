@@ -112,7 +112,7 @@ class EnumeratedProgressResetAPIView(SequenceProgressMixin, DestroyAPIView):
     """
     Resets a user's progress on a sequence
 
-    **Tags**: editors, progress
+    **Tags**: editors, progress, provider
 
     **Example**
 
@@ -206,7 +206,7 @@ class LiveEventAttendanceAPIView(EnumeratedProgressRetrieveAPIView):
     """
     Retrieves attendance to live event
 
-    **Tags**: content, progress
+    **Tags**: content, progress, provider
 
     **Examples**
 
@@ -235,7 +235,7 @@ class LiveEventAttendanceAPIView(EnumeratedProgressRetrieveAPIView):
         Indicates that a user attended a live event, hence fullfilling
         the requirements for the element of the sequence.
 
-        **Tags**: editors, live-events, attendance
+        **Tags**: editors, live-events, attendance, provider
 
         **Example**
 

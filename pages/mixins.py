@@ -240,6 +240,13 @@ class TrailMixin(object):
             results = candidates[0]
         return results
 
+    def get_query_param(self, key, default_value=None):
+        try:
+            return self.request.query_params.get(key, default_value)
+        except AttributeError:
+            pass
+        return self.request.GET.get(key, default_value)
+
     def get_reverse_kwargs(self):
         """
         List of kwargs taken from the url that needs to be passed through
