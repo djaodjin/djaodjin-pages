@@ -6,7 +6,6 @@ srcDir        ?= $(realpath .)
 installTop    ?= $(if $(VIRTUAL_ENV),$(VIRTUAL_ENV),$(abspath $(srcDir))/.venv)
 binDir        ?= $(installTop)/bin
 CONFIG_DIR    ?= $(installTop)/etc/testsite
-RUN_DIR       ?= $(installTop)/var/run
 
 installDirs   ?= install -d
 installFiles  := install -m 644

@@ -24,7 +24,6 @@
 import logging, os
 
 from django.http import Http404
-from django.utils._os import safe_join
 from django.views.generic import TemplateView
 
 from .. import settings
@@ -85,7 +84,7 @@ class PageElementView(TrailMixin, TemplateView):
                 for layout in get_extra(self.element, 'layouts', [])]
         if self.is_prefix:
             # It is not a leaf, let's return the list view
-            candidates += [safe_join(os.path.dirname(
+            candidates += [os.path.join(os.path.dirname(
                 self.template_name), 'index.html')]
         else:
             candidates += super(PageElementView, self).get_template_names()
