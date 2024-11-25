@@ -3,11 +3,10 @@
 -include $(buildTop)/share/dws/prefix.mk
 
 srcDir        ?= $(realpath .)
-installTop    ?= $(VIRTUAL_ENV)
+installTop    ?= $(if $(VIRTUAL_ENV),$(VIRTUAL_ENV),$(abspath $(srcDir))/.venv)
 binDir        ?= $(installTop)/bin
-CONFIG_DIR    ?= $(srcDir)
-# XXX CONFIG_DIR should really be $(installTop)/etc/testsite
-LOCALSTATEDIR ?= $(installTop)/var
+CONFIG_DIR    ?= $(installTop)/etc/testsite
+RUN_DIR       ?= $(installTop)/var/run
 
 installDirs   ?= install -d
 installFiles  := install -m 644
@@ -35,9 +34,6 @@ install::
 
 install-conf:: $(DESTDIR)$(CONFIG_DIR)/credentials \
                 $(DESTDIR)$(CONFIG_DIR)/gunicorn.conf
-	$(installDirs) $(DESTDIR)$(LOCALSTATEDIR)/db
-	$(installDirs) $(DESTDIR)$(LOCALSTATEDIR)/run
-	$(installDirs) $(DESTDIR)$(LOCALSTATEDIR)/log/gunicorn
 
 
 dist::
@@ -69,8 +65,7 @@ $(DESTDIR)$(CONFIG_DIR)/credentials: $(srcDir)/testsite/etc/credentials
 
 $(DESTDIR)$(CONFIG_DIR)/gunicorn.conf: $(srcDir)/testsite/etc/gunicorn.conf
 	$(installDirs) $(dir $@)
-	[ -f $@ ] || sed \
-		-e 's,%(LOCALSTATEDIR)s,$(LOCALSTATEDIR),' $< > $@
+	[ -f $@ ] || sed -e 's,%(RUN_DIR)s,$(RUN_DIR),' $< > $@
 
 
 initdb: clean-dbs
