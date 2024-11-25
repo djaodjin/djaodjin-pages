@@ -63,6 +63,7 @@
     "title": "Metal structures & equipment",
     "slug": "metal",
     "extra": "{\"visibility\":[\"public\"]}",
+    "text_updated_at": "2024-01-01T00:00:00.000Z",
     "account": 2
   },
   "model": "pages.PageElement", "pk": 100
@@ -72,6 +73,7 @@
     "title": "Boxes & enclosures",
     "slug": "boxes-and-enclosures",
     "extra": "{\"searchable\":true,\"visibility\":[\"public\"],\"pagebreak\":true,\"layouts\":[\"sustainability\"]}",
+    "text_updated_at": "2024-01-01T00:00:00.000Z",
     "account": 2
   },
   "model": "pages.PageElement", "pk": 101
@@ -88,6 +90,7 @@
     "slug": "production",
     "picture": "/static/img/production.png",
     "extra": "{\"searchable\":true,\"visibility\":[\"public\"]}",
+    "text_updated_at": "2024-01-01T00:00:00.000Z",
     "account": 2
   },
   "model": "pages.PageElement", "pk": 102
@@ -104,6 +107,7 @@
     "title": "Energy efficiency",
     "slug": "energy-efficiency",
     "extra": "{\"searchable\":true,\"visibility\":[\"public\"]}",
+    "text_updated_at": "2024-01-01T00:00:00.000Z",
     "account": 2
   },
   "model": "pages.PageElement", "pk": 104
@@ -120,6 +124,7 @@
     "title": "Process heating",
     "slug": "process-heating",
     "extra": "{\"searchable\":true,\"visibility\":[\"public\"]}",
+    "text_updated_at": "2024-01-01T00:00:00.000Z",
     "account": 2
   },
   "model": "pages.PageElement", "pk": 105
@@ -135,8 +140,9 @@
     "title": "Adjust air/fuel ratio",
     "slug": "adjust-air-fuel-ratio",
     "extra": "{\"searchable\":true,\"visibility\":[\"public\"],\"tags\":[\"Energy & Emissions\"]}",
-    "account": 2,
-    "text": "<h2>Background</h2><p>Some manufacturing processes may involve heating operations.</p>"
+    "text": "<h2>Background</h2><p>Some manufacturing processes may involve heating operations.</p>",
+    "text_updated_at": "2024-01-01T00:00:00.000Z",
+    "account": 2
   },
   "model": "pages.PageElement", "pk": 106
 },
@@ -151,8 +157,9 @@
     "title": "Webinar on Sustainability",
     "slug": "sustainability-webinar",
     "extra": "{\"searchable\":true,\"visibility\":[\"public\"]}",
-    "account": 2,
-    "text": "<h2>Join our Webinar!</h2><p>Learn about sustainability practices.</p>"
+    "text": "<h2>Join our Webinar!</h2><p>Learn about sustainability practices.</p>",
+    "text_updated_at": "2024-01-01T00:00:00.000Z",
+    "account": 2
   },
       "model": "pages.PageElement", "pk": 107
 },
@@ -161,8 +168,9 @@
     "title": "Certificate of Completion",
     "slug": "certificate-of-completion",
     "extra": "{\"searchable\":true,\"visibility\":[\"public\"]}",
-    "account": 2,
-    "text": "<h2>Congratulations!</h2><p>You have completed the course.</p>"
+    "text": "<h2>Congratulations!</h2><p>You have completed the course.</p>",
+    "text_updated_at": "2024-01-01T00:00:00.000Z",
+    "account": 2
   },
       "model": "pages.PageElement", "pk": 108
 },
