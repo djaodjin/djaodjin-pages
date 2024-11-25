@@ -51,7 +51,8 @@ pages = [
   'static/js/*',
   'static/vendor/css/*',
   'static/vendor/js/*',
-  'templates/pages/*.html'
+  'templates/pages/*.html',
+  'templates/pages/editables/*.html',
 ]
 
 [tool.setuptools.dynamic]

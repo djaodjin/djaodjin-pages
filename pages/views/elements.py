@@ -21,11 +21,11 @@
 # WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-import logging
+import logging, os
 
 from django.http import Http404
+from django.utils._os import safe_join
 from django.views.generic import TemplateView
-from deployutils.apps.django.mixins import AccessiblesMixin
 
 from .. import settings
 from ..compat import NoReverseMatch, reverse, six
@@ -37,13 +37,13 @@ from ..models import RelationShip
 LOGGER = logging.getLogger(__name__)
 
 
-class PageElementView(TrailMixin, AccessiblesMixin, TemplateView):
+class PageElementView(TrailMixin, TemplateView):
     """
     When {path} points to an internal node in the content DAG, an index
     page is created that contains the children (up to `pagebreak`)
     of that node that are both visible and searchable.
     """
-    template_name = 'pages/index.html'
+    template_name = 'pages/element.html'
     account_url_kwarg = settings.ACCOUNT_URL_KWARG
     direct_text_load = False
 
@@ -85,9 +85,10 @@ class PageElementView(TrailMixin, AccessiblesMixin, TemplateView):
                 for layout in get_extra(self.element, 'layouts', [])]
         if self.is_prefix:
             # It is not a leaf, let's return the list view
-            candidates += super(PageElementView, self).get_template_names()
+            candidates += [safe_join(os.path.dirname(
+                self.template_name), 'index.html')]
         else:
-            candidates += ['pages/element.html']
+            candidates += super(PageElementView, self).get_template_names()
         return candidates
 
     def get_context_data(self, **kwargs):
@@ -104,10 +105,6 @@ class PageElementView(TrailMixin, AccessiblesMixin, TemplateView):
             if isinstance(path, six.string_types):
                 path = path.strip(self.URL_PATH_SEP)
             if path:
-                if self.manages(self.element.account):
-                    context.update({
-                        'edit_perm': self.manages(self.element.account)
-                    })
                 url_kwargs = {'path': path}
                 update_context_urls(context, {
                     'api_content': reverse('api_content', kwargs=url_kwargs),
@@ -121,33 +118,9 @@ class PageElementView(TrailMixin, AccessiblesMixin, TemplateView):
                 })
         else:
             url_kwargs = {'path': self.element.slug}
-            if self.manages(self.element.account):
-                context.update({
-                    'edit_perm': self.manages(self.element.account)
-                })
-                url_kwargs.update({
-                    self.account_url_kwarg: self.element.account})
-                update_context_urls(context, {
-                    'api_content': reverse('pages_api_edit_element',
-                        kwargs=url_kwargs),
-                })
-                try:
-                    update_context_urls(context, {
-                        'edit': {
-                        'api_medias': reverse(
-                            'uploaded_media_elements',
-                            args=(self.element.account, self.element)),
-                    }})
-                except NoReverseMatch:
-                    # There is no API end-point to upload POD assets (images,
-                    # etc.)
-                    pass
-
-            else:
-                update_context_urls(context, {
-                    'api_content': reverse('api_content',
-                        kwargs=url_kwargs),
-                })
+            update_context_urls(context, {
+                'api_content': reverse('api_content', kwargs=url_kwargs),
+            })
             if self.direct_text_load:
                 context.update({
                     'element': {
@@ -179,7 +152,7 @@ class PageElementEditableView(AccountMixin, PageElementView):
     page is created that contains the direct children of that belongs
     to the `account`.
     """
-    template_name = 'pages/editables.html'
+    template_name = 'pages/editables/element.html'
     breadcrumb_url = 'pages_editables_element'
 
     def get_reverse_kwargs(self):
@@ -204,9 +177,6 @@ class PageElementEditableView(AccountMixin, PageElementView):
             if isinstance(path, six.string_types):
                 path = path.strip(self.URL_PATH_SEP)
             if path:
-                context.update({
-                    'edit_perm': self.manages(self.element.account)
-                })
                 url_kwargs = {
                     'path': path,
                     self.account_url_kwarg: self.element.account,
@@ -220,4 +190,25 @@ class PageElementEditableView(AccountMixin, PageElementView):
                     'api_content': reverse('pages_api_editables_index',
                         kwargs=url_kwargs),
                 })
+        else:
+            url_kwargs = {
+                'path': self.element.slug,
+                self.account_url_kwarg: self.element.account,
+            }
+            update_context_urls(context, {
+                'api_content': reverse('pages_api_edit_element',
+                    kwargs=url_kwargs),
+            })
+            try:
+                update_context_urls(context, {
+                    'edit': {
+                    'api_medias': reverse(
+                        'uploaded_media_elements',
+                        args=(self.element.account, self.element)),
+                }})
+            except NoReverseMatch:
+                # There is no API end-point to upload POD assets (images,
+                # etc.)
+                pass
+
         return context

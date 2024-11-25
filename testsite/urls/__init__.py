@@ -31,7 +31,16 @@ from pages.api.elements import PageElementIndexAPIView
 
 from ..views.app import IndexView
 
-urlpatterns = staticfiles_urlpatterns() \
+if settings.DEBUG:
+    import debug_toolbar
+    urlpatterns = [
+        path('__debug__/', include(debug_toolbar.urls)),
+    ]
+else:
+    urlpatterns = []
+
+
+urlpatterns += staticfiles_urlpatterns() \
     + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 urlpatterns += [

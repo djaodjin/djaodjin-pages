@@ -577,9 +577,12 @@ class PageElementEditableDetail(AccountMixin, TrailMixin, CreateModelMixin,
                 orig_element=parent, dest_element=element, rank=rank)
 
     def get_success_headers(self, data):
-        path = data.get('path').strip(self.URL_PATH_SEP) + self.URL_PATH_SEP
-        return {'Location': reverse('pages_editables_element',
-            args=(self.element.account, path))}
+        path = data.get('path')
+        if path:
+            return {'Location': reverse('pages_editables_element', args=(
+                self.element.account,
+                path.strip(self.URL_PATH_SEP) + self.URL_PATH_SEP))}
+        return {}
 
     def update(self, request, *args, **kwargs):
         with transaction.atomic():

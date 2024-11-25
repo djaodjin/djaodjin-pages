@@ -198,7 +198,7 @@ class PageElement(models.Model):
         help_text=_("Reading time of the material (in hh:mm:ss)"))
     lang = models.CharField(default=settings.LANGUAGE_CODE, max_length=8,
         help_text=_("Language the material is written in"))
-    text_updated_at = models.DateTimeField(blank=True, null=True,
+    text_updated_at = models.DateTimeField(auto_now_add=True,
         help_text=_("Last updated at date for the text field"))
     extra = get_extra_field_class()(null=True, blank=True)
     relationships = models.ManyToManyField("self",
