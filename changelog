@@ -1,3 +1,9 @@
+0.8.3
+
+  * rationalizes templates for read-only and editable elements
+
+ -- Sebastien Mirolo <smirolo@djaodjin.com>  Mon, 25 Nov 2024 16:10:00 -0700
+
 0.8.2
 
   * updates API documentation

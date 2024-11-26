@@ -41,10 +41,9 @@ Tested with
 - **Python:** 3.10, **Django:** 4.2 (latest)
 - **Python:** 2.7, **Django:** 1.11 (legacy) - use testsite/requirements-legacy.txt
 
-0.8.2
+0.8.3
 
-  * updates API documentation
-  * adds root in breadcrumbs
+  * rationalizes templates for read-only and editable elements
 
 [previous release notes](changelog)
 
