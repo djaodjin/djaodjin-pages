@@ -27,7 +27,7 @@ import hashlib, logging, os
 
 import boto3
 from deployutils.helpers import datetime_or_now
-from django.core.files.storage import get_storage_class, FileSystemStorage
+from django.core.files.storage import FileSystemStorage
 from django.http import HttpResponseRedirect
 from django.utils.module_loading import import_string
 from rest_framework import parsers, status
@@ -37,7 +37,7 @@ from rest_framework.response import Response as HttpResponse
 
 from .. import settings
 from ..compat import (NoReverseMatch, force_str, gettext_lazy as _, reverse,
-    urljoin, urlparse)
+    urljoin, urlparse, get_storage_class)
 from ..mixins import AccountMixin
 from ..serializers import AssetSerializer
 

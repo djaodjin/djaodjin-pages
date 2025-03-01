@@ -196,3 +196,23 @@ def is_authenticated(request):
     if callable(request.user.is_authenticated):
         return request.user.is_authenticated()
     return request.user.is_authenticated
+
+
+try:
+    from django.core.files.storage import storages # Added in Django 4.2
+    def get_storage_class():
+        """Returns a class object of of the default storage backend.
+
+        Simplified re-implementation of the old upstream version. Takes no
+        arguments, since we only ever use it to get the default backend.
+        Whenever we drop support for Django 3.2, we should rewrite references
+        to this function to use `django.core.files.storage.storages' instead
+        (not a drop-in replacement).
+
+        See:
+        https://docs.djangoproject.com/en/4.2/_modules/django/core/files/storage/
+
+        """
+        return import_string(storages.backends['default']['BACKEND'])
+except ImportError:
+    from django.core.files.storage import get_storage_class # Removed in Django 5.0
