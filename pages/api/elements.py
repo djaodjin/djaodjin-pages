@@ -1,4 +1,4 @@
-# Copyright (c) 2024, Djaodjin Inc.
+# Copyright (c) 2025, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -50,7 +50,7 @@ from ..mixins import AccountMixin, PageElementMixin, TrailMixin
 from ..models import (PageElement, RelationShip, build_content_tree,
     flatten_content_tree, Follow)
 from ..serializers import (AssetSerializer, NodeElementCreateSerializer,
-    PageElementSerializer, PageElementTagSerializer)
+    PageElementDetailSerializer, PageElementTagSerializer)
 from ..utils import validate_title
 from .assets import process_upload
 
@@ -156,7 +156,7 @@ class PageElementAPIView(PageElementListMixin, generics.ListAPIView):
           ]
         }
     """
-    serializer_class = PageElementSerializer
+    serializer_class = PageElementDetailSerializer
 
     search_fields = (
         'title',
@@ -302,7 +302,7 @@ class PageElementDetailAPIView(TrailMixin, generics.RetrieveAPIView):
             "extra": null
         }
     """
-    serializer_class = PageElementSerializer
+    serializer_class = PageElementDetailSerializer
 
     def get_object(self):
         return self.element
@@ -478,7 +478,7 @@ class PageElementEditableDetail(AccountMixin, TrailMixin, CreateModelMixin,
             "text": "Hello"
         }
     """
-    serializer_class = PageElementSerializer
+    serializer_class = PageElementDetailSerializer
 
     def get_object(self):
         self.element.results = self.element.get_relationships()
@@ -718,7 +718,7 @@ class ImportDocxView(AccountMixin, PageElementMixin, generics.GenericAPIView):
         }
     """
     schema = None # XXX currently disabled in API documentation
-    serializer_class = PageElementSerializer
+    serializer_class = PageElementDetailSerializer
 
     def upload_image(self, request):
         """

@@ -1,4 +1,4 @@
-# Copyright (c) 2024, Djaodjin Inc.
+# Copyright (c) 2025, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -23,7 +23,7 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 from __future__ import unicode_literals
 
-import json, markdown
+import json
 
 import bleach
 from rest_framework import serializers
@@ -188,11 +188,8 @@ class NodeElementCreateSerializer(NodeElementSerializer):
 
 class PageElementSerializer(serializers.ModelSerializer):
     """
-    Serializes a PageElement.
+    Serializes a short summary of a `PageElement`
     """
-
-    path = serializers.SerializerMethodField(
-        help_text=_("path from the root of content tree"))
     slug = serializers.SlugField(required=False,
         help_text=_("Unique identifier that can be used in URL paths"))
     account = serializers.SlugRelatedField(read_only=True, required=False,
@@ -204,33 +201,33 @@ class PageElementSerializer(serializers.ModelSerializer):
         choices=PageElement.FORMAT_CHOICES,
         required=False,
         help_text=_("Format of the content, HTML or MD"))
-    text = serializers.CharField(
-        required=False,
-        help_text=_("Long description of the page element"))
-    html_formatted = serializers.SerializerMethodField()
     extra = serializers.SerializerMethodField(required=False, allow_null=True,
         help_text=_("Extra meta data (can be stringify JSON)"))
     nb_upvotes = serializers.IntegerField(required=False,
         help_text=_("Number of times the content has been upvoted"))
     nb_followers = serializers.IntegerField(required=False,
         help_text=_("Number of followers notified when content is updated"))
+    # The following fields will be set when a request user is authenticated.
     upvote = serializers.SerializerMethodField(required=False, allow_null=True,
         help_text=_("Set to true when the request user upvoted the content"))
     follow = serializers.SerializerMethodField(required=False, allow_null=True,
         help_text=_("Set to true when the request user follows the content"))
-    count = serializers.IntegerField(required=False)
-    results = serializers.ListField(required=False,
-        child=NodeElementSerializer())
+    last_read_at = serializers.SerializerMethodField(
+        required=False, read_only=True,
+        help_text=_("Last time the PageElement was read"))
+    nb_comments_since_last_read = serializers.SerializerMethodField(
+        required=False, read_only=True,
+        help_text=_("Number of comments since last read"))
 
     class Meta:
         model = PageElement
-        fields = ('path', 'slug', 'picture', 'title', 'content_format',
-            'text', 'reading_time', 'lang', 'account', 'extra',
+        fields = ('slug', 'picture', 'title', 'content_format',
+            'text_updated_at', 'reading_time', 'lang', 'account', 'extra',
             'nb_upvotes', 'nb_followers', 'upvote', 'follow',
-            'count', 'results', 'html_formatted')
-        read_only_fields = ('path', 'slug', 'account',
+            'last_read_at', 'nb_comments_since_last_read')
+        read_only_fields = ('slug', 'account', 'text_updated_at',
             'nb_upvotes', 'nb_followers', 'upvote', 'follow',
-            'count', 'results', 'html_formatted')
+            'last_read_at', 'nb_comments_since_last_read')
 
     @staticmethod
     def get_extra(obj):
@@ -249,6 +246,8 @@ class PageElementSerializer(serializers.ModelSerializer):
         request = self.context.get('request')
         if request and is_authenticated(request):
             if isinstance(data, PageElement):
+                if hasattr(data, 'vote'):
+                    return data.vote
                 vote = Vote.objects.filter(
                     user=request.user, element=data).first()
                 return vote and vote.vote == Vote.UP_VOTE
@@ -258,9 +257,62 @@ class PageElementSerializer(serializers.ModelSerializer):
         request = self.context.get('request')
         if request and is_authenticated(request):
             if isinstance(data, PageElement):
+                if hasattr(data, 'follow'):
+                    return data.follow
                 return Follow.objects.filter(
                     user=request.user, element=data).exists()
         return None
+
+    def get_last_read_at(self, data):
+        request = self.context.get('request')
+        if request and is_authenticated(request):
+            if isinstance(data, PageElement):
+                if hasattr(data, 'nb_comments_since_last_read'):
+                    return data.nb_comments_since_last_read
+                last_read_at = Follow.objects.filter(
+                    user=request.user, element=data).values(
+                    'last_read_at').first()
+                return last_read_at
+        return None
+
+    def get_nb_comments_since_last_read(self, data):
+        request = self.context.get('request')
+        if request and is_authenticated(request):
+            if isinstance(data, PageElement):
+                if hasattr(data, 'nb_comments_since_last_read'):
+                    return data.nb_comments_since_last_read
+                nb_comments = Comment.objects.filter(
+                    user=request.user, element=data,
+                    element__text_updated_at__gt=self.get_last_read_at(
+                    data)).count()
+                return nb_comments
+        return None
+
+
+class PageElementDetailSerializer(PageElementSerializer):
+    """
+    Serializes details of a `PageElement`
+    """
+    path = serializers.SerializerMethodField(
+        help_text=_("path from the root of content tree"))
+    text = serializers.CharField(
+        required=False,
+        help_text=_("Long description of the page element"))
+    html_formatted = HTMLField(required=False,
+        html_tags=settings.ALLOWED_TAGS,
+        html_attributes=settings.ALLOWED_ATTRIBUTES,
+        help_text=_("Text field formatted as HTML"))
+    count = serializers.IntegerField(required=False)
+    results = serializers.ListField(required=False,
+        child=NodeElementSerializer())
+
+    class Meta(PageElementSerializer.Meta):
+        fields = PageElementSerializer.Meta.fields + (
+            'path', 'text', 'html_formatted',
+            'count', 'results')
+        read_only_fields = PageElementSerializer.Meta.fields + (
+            'path', 'html_formatted',
+            'count', 'results')
 
     def get_path(self, obj):
         prefix = self.context.get('prefix', "")
@@ -278,11 +330,6 @@ class PageElementSerializer(serializers.ModelSerializer):
             slug = obj.get('slug', "")
         return prefix + slug
 
-    @staticmethod
-    def get_html_formatted(obj):
-        return markdown.markdown(obj.text, extensions=['tables']) \
-            if obj.content_format == 'MD' else obj.text
-
     def to_internal_value(self, data):
         data = data.copy()
         content_format = data.get('content_format')
@@ -292,52 +339,22 @@ class PageElementSerializer(serializers.ModelSerializer):
             html_field = HTMLField(html_tags=settings.ALLOWED_TAGS,
                                    html_attributes=settings.ALLOWED_ATTRIBUTES)
             data['text'] = html_field.to_internal_value(data['text'])
-        return super(PageElementSerializer, self).to_internal_value(data)
+        return super(PageElementDetailSerializer, self).to_internal_value(data)
 
 
-class PageElementUpdateSerializer(PageElementSerializer):
+class UserNewsSerializer(PageElementSerializer):
     """
     Serializer for news updates
     """
-    text_updated_at = serializers.DateTimeField(
-        required=False,
-        help_text=_("Datetime of last update on the page element's text"))
-    nb_comments_since_last_read = serializers.IntegerField(
-        help_text=_("Number of comments since last read"),
-        required=False)
-    last_read_at = serializers.DateTimeField(
-        required=False,
-        help_text=_("Last time the PageElement was read"),
-        read_only=True)
-
-    descr = serializers.SerializerMethodField()
+    descr = HTMLField(required=False,
+        html_tags=settings.ALLOWED_TAGS,
+        html_attributes=settings.ALLOWED_ATTRIBUTES,
+        help_text=_("first paragraph of HTML-formatted content"))
 
     class Meta(PageElementSerializer.Meta):
-        fields = PageElementSerializer.Meta.fields + (
-            'text_updated_at', 'nb_comments_since_last_read',
-            'last_read_at', 'descr')
+        fields = PageElementSerializer.Meta.fields + ('descr',)
         read_only_fields = PageElementSerializer.Meta.read_only_fields + (
-            'text_updated_at', 'nb_comments_since_last_read',
-            'last_read_at', 'descr')
-
-    def get_descr(self, obj):
-        final_str_list = []
-
-        if obj.text_updated_at and obj.last_read_at:
-            final_str_list.append(
-                _("Text last updated on %(text_updated_at)s.") % {
-                    'text_updated_at': obj.text_updated_at.isoformat()})
-
-        if obj.nb_comments_since_last_read:
-            comment_or_comments = "comment" if obj.nb_comments_since_last_read \
-                == 1 else "comments"
-            final_str_list.append(_("%(nb_comments)s new "\
-                    "%(comment_or_comments)s since last visit.") % {
-                    'nb_comments': obj.nb_comments_since_last_read,
-                    'comment_or_comments': comment_or_comments
-                })
-
-        return ' '.join(final_str_list)
+            'descr',)
 
 
 class PageElementTagSerializer(serializers.ModelSerializer):

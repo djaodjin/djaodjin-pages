@@ -21,6 +21,7 @@ classifiers = [
   "License :: OSI Approved :: BSD License"
 ]
 dependencies = [
+  "beautifulsoup4>=4.13.4",
   "bleach>=6.0.0",
   "Django>=1.11",
   "djangorestframework>=3.3.1",

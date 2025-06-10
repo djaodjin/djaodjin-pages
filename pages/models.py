@@ -1,4 +1,4 @@
-# Copyright (c) 2024, Djaodjin Inc.
+# Copyright (c) 2025, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -26,8 +26,10 @@ from __future__ import unicode_literals
 
 import datetime, json, logging, random
 from collections import OrderedDict
-from deployutils.helpers import datetime_or_now
 
+import markdown
+from bs4 import BeautifulSoup
+from deployutils.helpers import datetime_or_now
 from django.contrib.auth import get_user_model
 from django.db import IntegrityError, models, transaction
 from django.db.models import Max, Q
@@ -36,7 +38,7 @@ from rest_framework.exceptions import ValidationError
 
 from . import settings
 from .compat import (gettext_lazy as _, import_string,
-    python_2_unicode_compatible, six)
+    python_2_unicode_compatible, reverse, six)
 
 
 LOGGER = logging.getLogger(__name__)
@@ -134,7 +136,7 @@ class PageElementManager(models.Manager):
     def get_queryset(self):
         return PageElementQuerySet(self.model, using=self._db)
 
-    def get_roots(self, visibility=None, accounts=None):
+    def filter_available(self, visibility=None, accounts=None):
         filtered_in = None
         if visibility:
             for visible in visibility:
@@ -149,9 +151,11 @@ class PageElementManager(models.Manager):
                 filtered_in |= accounts_q
             else:
                 filtered_in = accounts_q
+        return self.filter(filtered_in) if filtered_in else self.all()
 
-        queryset = (self.filter(filtered_in)
-            if filtered_in else self.all()).extra(where=[
+    def get_roots(self, visibility=None, accounts=None):
+        queryset = self.filter_available(
+            visibility=visibility, accounts=accounts).extra(where=[
             '(SELECT COUNT(*) FROM pages_relationship'\
             ' WHERE pages_relationship.dest_element_id = pages_pageelement.id)'\
             ' = 0'])
@@ -173,7 +177,9 @@ class PageElement(models.Model):
     """
     Elements of an editable HTML page.
     """
+    #pylint:disable=too-many-instance-attributes
     objects = PageElementManager()
+
     FORMAT_CHOICES = (
         ('HTML', 'HTML'),
         ('MD', 'Markdown'),
@@ -208,6 +214,20 @@ class PageElement(models.Model):
         return self.slug
 
     @property
+    def descr(self):
+        #pylint:disable=attribute-defined-outside-init
+        if not hasattr(self, '_descr'):
+            self._descr = self.get_descr()
+        return self._descr
+
+    @property
+    def html_formatted(self):
+        #pylint:disable=attribute-defined-outside-init
+        if not hasattr(self, '_html_formatted'):
+            self._html_formatted = self.get_html_formatted()
+        return self._html_formatted
+
+    @property
     def nb_upvotes(self):
         return Vote.objects.filter(element=self, vote=Vote.UP_VOTE).count()
 
@@ -229,6 +249,49 @@ class PageElement(models.Model):
             orig_element=self,
             dest_element=element).delete()
         return True
+
+    def get_descr(self):
+        #pylint:disable=too-many-nested-blocks
+        soup = BeautifulSoup(self.html_formatted, 'html5lib')
+        descr = soup.find('p')
+        if descr:
+            nb_available_characters = 5 * 60 # 5 lines of 60 characters
+            short_descr = soup.new_tag(name='p')
+            for child in descr.children:
+                if child.name:
+                    nb_available_characters -= len(child.text)
+                    short_descr.append(child)
+                else:
+                    child_text = child.text
+                    child_text_len = len(child_text)
+                    if nb_available_characters < child_text_len:
+                        for idx in range(nb_available_characters - 1, 0, -1):
+                            if child.text[idx] == " ":
+                                break
+                            nb_available_characters -= 1
+                        child_text = child.text[:nb_available_characters]
+                        nb_available_characters -= nb_available_characters
+                    else:
+                        nb_available_characters -= child_text_len
+                    short_descr.append(child_text)
+                if nb_available_characters < 0:
+                    break
+
+            # `string=` requires BeautifulSoup4>=4.13
+            tag = soup.new_tag(name='a',
+                href=reverse('pages_element', args=(self.slug,)))
+            tag.append("... read more")
+            short_descr.append(tag)
+            return str(short_descr)
+        return ""
+
+    def get_html_formatted(self):
+        content_format = self.content_format
+        text = self.text
+        if content_format and content_format == 'HTML':
+            return text
+        return markdown.markdown(text, extensions=['tables'])
+
 
     def get_parent_paths(self, depth=None, hints=None):
         """
@@ -402,7 +465,7 @@ class LiveEvent(models.Model):
         related_name='events')
     created_at = models.DateTimeField(editable=False, auto_now_add=True,
         help_text=_("Date/time the live event was created (in ISO format)"))
-    scheduled_at = models.DateTimeField(
+    scheduled_at = models.DateTimeField(null=True,
         help_text=_("Date/time the live event is scheduled (in ISO format)"))
     location = models.URLField(_("URL to the calendar event"), max_length=2083)
     max_attendees = models.IntegerField(default=0)
