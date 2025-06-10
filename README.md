@@ -37,13 +37,16 @@ Release Notes
 
 Tested with
 
-- **Python:** 3.7, **Django:** 3.2 ([LTS](https://www.djangoproject.com/download/))
-- **Python:** 3.10, **Django:** 4.2 (latest)
-- **Python:** 2.7, **Django:** 1.11 (legacy) - use testsite/requirements-legacy.txt
+- **Python:** 3.7, **Django:** 3.2 (legacy)
+- **Python:** 3.10, **Django:** 4.2 ([LTS](https://www.djangoproject.com/download/))
+- **Python:** 3.12, **Django:** 5.2 (latest)
 
-0.8.3
 
-  * rationalizes templates for read-only and editable elements
+0.8.4
+
+  * updates newsfeed API to return short paragraphs ordered by last update
+  * supports with Djanog 5.2
+
 
 [previous release notes](changelog)
 

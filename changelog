@@ -1,3 +1,10 @@
+0.8.4
+
+  * updates newsfeed API to return short paragraphs ordered by last update
+  * supports with Djanog 5.2
+
+ -- Sebastien Mirolo <smirolo@djaodjin.com>  Tue, 10 Jun 2025 09:30:00 -0700
+
 0.8.3
 
   * rationalizes templates for read-only and editable elements
