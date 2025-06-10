@@ -281,10 +281,16 @@ class PageElementSerializer(serializers.ModelSerializer):
             if isinstance(data, PageElement):
                 if hasattr(data, 'nb_comments_since_last_read'):
                     return data.nb_comments_since_last_read
+                last_read_at_qs = self.get_last_read_at(data)
+                comment_kwargs = {}
+                if last_read_at_qs:
+                    last_read_at = last_read_at_qs.get('last_read_at')
+                    if last_read_at:
+                        comment_kwargs.update({
+                            'element__text_updated_at__gt': last_read_at
+                        })
                 nb_comments = Comment.objects.filter(
-                    user=request.user, element=data,
-                    element__text_updated_at__gt=self.get_last_read_at(
-                    data)).count()
+                    user=request.user, element=data, **comment_kwargs).count()
                 return nb_comments
         return None
 
@@ -310,7 +316,7 @@ class PageElementDetailSerializer(PageElementSerializer):
         fields = PageElementSerializer.Meta.fields + (
             'path', 'text', 'html_formatted',
             'count', 'results')
-        read_only_fields = PageElementSerializer.Meta.fields + (
+        read_only_fields = PageElementSerializer.Meta.read_only_fields + (
             'path', 'html_formatted',
             'count', 'results')
 
