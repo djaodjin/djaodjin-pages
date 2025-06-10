@@ -1,4 +1,4 @@
-# Copyright (c) 2024, Djaodjin Inc.
+# Copyright (c) 2025, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,7 @@ import hashlib, logging, os
 
 import boto3
 from deployutils.helpers import datetime_or_now
-from django.core.files.storage import get_storage_class, FileSystemStorage
+from django.core.files.storage import default_storage, FileSystemStorage
 from django.http import HttpResponseRedirect
 from django.utils.module_loading import import_string
 from rest_framework import parsers, status
@@ -255,7 +255,7 @@ def get_default_storage(request, **kwargs):
 
 def get_default_storage_base(request, public=False, **kwargs):
     # default implementation
-    storage_class = get_storage_class()
+    storage_class = default_storage._wrapped.__class__
     if storage_class.__name__.endswith('3Storage'):
         # Hacky way to test for `storages.backends.s3.S3Storage`
         # and `storages.backends.s3boto3.S3Boto3Storage` without importing

@@ -29,7 +29,7 @@ dependencies = [
   "djaodjin-extended-templates>=0.4.5",
   "mammoth>=1.6.0",
   "markdownify>=0.11.6",
-  "Markdown>=3.4.1",
+  "Markdown>=3.4.4",
   "python-dateutil>=2.8",
   "requests>=2.22"
 ]

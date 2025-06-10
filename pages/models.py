@@ -351,7 +351,7 @@ class PageElement(models.Model):
         super(PageElement, self).__init__(*args, **kwargs)
         self.__original_text = self.text
 
-    def save(self, force_insert=False, force_update=False,
+    def save(self, *args, force_insert=False, force_update=False,
              using=None, update_fields=None):
         if self.__original_text != self.text:
             self.text_updated_at = datetime_or_now()
