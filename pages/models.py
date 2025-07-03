@@ -136,7 +136,8 @@ class PageElementManager(models.Manager):
     def get_queryset(self):
         return PageElementQuerySet(self.model, using=self._db)
 
-    def filter_available(self, visibility=None, accounts=None):
+    def filter_available(self, visibility=None, accounts=None,
+                         start_at=None, ends_at=None):
         filtered_in = None
         if visibility:
             for visible in visibility:
@@ -151,7 +152,15 @@ class PageElementManager(models.Manager):
                 filtered_in |= accounts_q
             else:
                 filtered_in = accounts_q
-        return self.filter(filtered_in) if filtered_in else self.all()
+        queryset = self.filter(filtered_in) if filtered_in else self.all()
+
+        filtered_dates = {}
+        if start_at:
+            filtered_dates.update({'text_updated_at__gte': start_at})
+        if ends_at:
+            filtered_dates.update({'text_updated_at__lt': ends_at})
+        return queryset.filter(**filtered_dates)
+
 
     def get_roots(self, visibility=None, accounts=None):
         queryset = self.filter_available(

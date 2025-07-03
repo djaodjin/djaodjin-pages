@@ -71,13 +71,14 @@ energy-efficiency/process-heating/combustion/adjust-air-fuel-ratio",
     def owners(self):
         return None
 
-    def get_updated_elements(self):
+    def get_updated_elements(self, start_at=None, ends_at=None):
         """
         Returns `PageElement` accessible to a user, ordered by last update
         time, with a priority with the ones followed.
         """
         queryset = PageElement.objects.filter_available(
-            visibility=self.visibility, accounts=self.owners).exclude(
+            visibility=self.visibility, accounts=self.owners,
+            start_at=start_at, ends_at=ends_at).exclude(
             Q(text__isnull=True) | Q(text="")).annotate(
             follow=Count('followers',
                 filter=Q(followers__user=self.user)),
