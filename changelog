@@ -1,7 +1,13 @@
+0.8.5
+
+  * adds start_at/ends_at to pick items in newsfeed
+
+ -- Sebastien Mirolo <smirolo@djaodjin.com>  Thu, 3 Jul 2025 10:05:00 -0700
+
 0.8.4
 
   * updates newsfeed API to return short paragraphs ordered by last update
-  * supports with Djanog 5.2
+  * supports for Django 5.2
 
  -- Sebastien Mirolo <smirolo@djaodjin.com>  Tue, 10 Jun 2025 09:30:00 -0700
 

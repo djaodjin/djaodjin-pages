@@ -41,11 +41,9 @@ Tested with
 - **Python:** 3.10, **Django:** 4.2 ([LTS](https://www.djangoproject.com/download/))
 - **Python:** 3.12, **Django:** 5.2 (latest)
 
+0.8.5
 
-0.8.4
-
-  * updates newsfeed API to return short paragraphs ordered by last update
-  * supports with Djanog 5.2
+  * adds start_at/ends_at to pick items in newsfeed
 
 
 [previous release notes](changelog)
