@@ -93,7 +93,7 @@ energy-efficiency/process-heating/combustion/adjust-air-fuel-ratio",
                 ).values('last_read_at')[:1]),
             nb_comments_since_last_read=Count('comments',
                 filter=Q(comments__created_at__gte=F('last_read_at')))
-            ).order_by('-follow', 'text_updated_at')
+            ).order_by('-follow', '-text_updated_at')
         return queryset
 
 
