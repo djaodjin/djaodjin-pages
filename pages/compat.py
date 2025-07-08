@@ -107,6 +107,14 @@ except ImportError: # django < 3.0
     from django.utils.translation import ugettext_lazy as gettext_lazy
 
 
+try:
+    from django.core.files.storage import storages # Added in Django 4.2
+    def get_storage_class():
+        return import_string(storages.backends['default']['BACKEND'])
+except ImportError:
+    from django.core.files.storage import get_storage_class # Removed in Django 5.0
+
+
 def get_loaders():
     loaders = []
     try:
