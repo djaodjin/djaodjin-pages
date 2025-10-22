@@ -59,6 +59,8 @@ Vue.component('editables-detail', {
             comments: {count: 0, results: []},
             message: "",
             newItem: {title: ""},
+            getCb: 'editableLoaded',
+            tagify: null
         }
     },
     methods: {
@@ -73,6 +75,37 @@ Vue.component('editables-detail', {
                 }
             });
             return false;
+        },
+        editableLoaded: function(data) {
+            var vm = this;
+            vm.item = data;
+            vm.itemLoaded = true;
+            vm.isFollowing = data.is_following;
+            vm.nbFollowers = data.nb_followers;
+            vm.isUpVote = data.is_upvote;
+            vm.nbUpVotes = data.nb_upvotes;
+            if( data.extra && data.extra.tags ) {
+                vm.tags = data.extra.tags;
+            }
+            try {
+                vm.tagify = new Tagify(vm.$el.querySelector(".tags"));
+                vm.tagify.addTags(vm.tags);
+                vm.tagify.on('blur', function(event) {
+                    vm.tags = [];
+                    for( let idx = 0;
+                         idx < vm.tagify.value.length; ++idx ) {
+                        vm.tags.push(vm.tagify.value[idx].value);
+                    }
+                    vm.item.extra["tags"] = vm.tags;
+                    vm.reqPut(vm.url, {extra: vm.item.extra});
+                });
+            } catch(Exception) {
+                vm.$el.querySelector(".tags").on('blur', function(event) {
+                    vm.tags = vm.$el.querySelector(".tags").value;
+                    vm.item.extra["tags"] = vm.tags;
+                    vm.reqPut(vm.url, {extra: vm.item.extra});
+                });
+            }
         },
         // functions available to readers
         submitFollow: function() {
@@ -112,15 +145,7 @@ Vue.component('editables-detail', {
         if( vm.item && vm.item.text ) {
             vm.itemLoaded = true;
         } else {
-            vm.get(function success(resp) {
-                vm.isFollowing = resp.data.is_following;
-                vm.nbFollowers = resp.data.nb_followers;
-                vm.isUpVote = resp.data.is_upvote;
-                vm.nbUpVotes = resp.data.nb_upvotes;
-                if( resp.data.extra && resp.data.extra.tags ) {
-                    vm.tags = resp.data.extra.tags;
-                }
-            });
+            vm.get();
         }
         vm.reqGet(this.$urls.api_comments,
         function success(resp) {

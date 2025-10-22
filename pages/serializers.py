@@ -36,6 +36,25 @@ from .models import (Comment, Follow, PageElement, Vote, Sequence,
 
 #pylint: disable=abstract-method
 
+class ExtraField(serializers.CharField):
+
+    def to_internal_value(self, data):
+        if isinstance(data, dict):
+            try:
+                return json.dumps(data)
+            except (TypeError, ValueError):
+                pass
+        return super(ExtraField, self).to_internal_value(data)
+
+    def to_representation(self, value):
+        if isinstance(value, dict):
+            return value
+        try:
+            return json.loads(value)
+        except (TypeError, ValueError):
+            pass
+        return super(ExtraField, self).to_representation(value)
+
 
 class HTMLField(serializers.CharField):
 
@@ -201,7 +220,7 @@ class PageElementSerializer(serializers.ModelSerializer):
         choices=PageElement.FORMAT_CHOICES,
         required=False,
         help_text=_("Format of the content, HTML or MD"))
-    extra = serializers.SerializerMethodField(required=False, allow_null=True,
+    extra = ExtraField(required=False, allow_null=True,
         help_text=_("Extra meta data (can be stringify JSON)"))
     nb_upvotes = serializers.IntegerField(required=False,
         help_text=_("Number of times the content has been upvoted"))
@@ -229,18 +248,6 @@ class PageElementSerializer(serializers.ModelSerializer):
             'nb_upvotes', 'nb_followers', 'upvote', 'follow',
             'last_read_at', 'nb_comments_since_last_read')
 
-    @staticmethod
-    def get_extra(obj):
-        try:
-            extra = obj.extra
-        except AttributeError:
-            extra = obj.get('extra', {})
-        if not isinstance(extra, dict):
-            try:
-                return json.loads(extra)
-            except (TypeError, ValueError):
-                pass
-        return extra
 
     def get_upvote(self, data):
         request = self.context.get('request')
