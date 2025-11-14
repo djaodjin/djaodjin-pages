@@ -41,10 +41,10 @@ Tested with
 - **Python:** 3.10, **Django:** 4.2 ([LTS](https://www.djangoproject.com/download/))
 - **Python:** 3.12, **Django:** 5.2 (latest)
 
-0.8.6
+0.8.7
 
-  * sorts newsfeed most recent first
-  * fixes using S3Storage with Django5
+  * updates extra/tags field through UI editor
+  * adds missing dependency html5lib
 
 [previous release notes](changelog)
 
