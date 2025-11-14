@@ -1,4 +1,4 @@
-# Copyright (c) 2024, Djaodjin Inc.
+# Copyright (c) 2025, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -25,8 +25,9 @@
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
+from django.views.static import serve
 
-from pages.compat import include, path
+from pages.compat import include, path, re_path
 from pages.api.elements import PageElementIndexAPIView
 
 from ..views.app import IndexView
@@ -40,7 +41,9 @@ else:
     urlpatterns = []
 
 
-urlpatterns += staticfiles_urlpatterns() \
+urlpatterns += [re_path(r'(?P<path>favicon.ico)', serve,
+                     kwargs={'document_root': settings.HTDOCS})] \
+    + staticfiles_urlpatterns() \
     + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 urlpatterns += [
