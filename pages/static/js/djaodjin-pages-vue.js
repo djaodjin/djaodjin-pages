@@ -208,9 +208,11 @@ Vue.component('explainer', {
             if( dataCompleteUrl && dataCompleteUrl != vm.upload_start_url ) {
                 vm.reqPost(dataCompleteUrl, resp, function(resp) {
                     vm.text += resp.location;
+                    vm.saveText();
                 })
             } else {
                 vm.text += resp.location;
+                vm.saveText();
             }
         },
         isTagged: function(tag) {
