@@ -16,9 +16,10 @@ djangorestframework==3.15.2 ; python_version >= "3.9" # Breaking
                                      # https://github.com/encode/django-rest-framework/releases
 djaodjin-deployutils==0.14.2
 djaodjin-extended-templates==0.4.11
-mammoth==1.6.0                    # to upload .docx as HTML
-markdownify==0.11.6               # to upload .docx as markdown
-Markdown==3.4.4                   # last version to support py3.7
+html5lib==1.1                        # required dep not pulled by bs4
+mammoth==1.6.0                       # to upload .docx as HTML
+markdownify==0.11.6                  # to upload .docx as markdown
+Markdown==3.4.4                      # last version to support py3.7
 python-dateutil==2.8.1
 requests==2.31.0
 
