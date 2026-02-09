@@ -1,4 +1,4 @@
-# Copyright (c) 2025, Djaodjin Inc.
+# Copyright (c) 2026, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -391,12 +391,6 @@ class PageElementEditableListAPIView(AccountMixin, CreateModelMixin,
             ]
         }
     """
-    def get_serializer_class(self):
-        if self.request.method.lower() == 'post':
-            return NodeElementCreateSerializer
-        return super(PageElementEditableListAPIView,
-            self).get_serializer_class()
-
 
     def get_results(self):
         """
@@ -417,6 +411,19 @@ class PageElementEditableListAPIView(AccountMixin, CreateModelMixin,
         except ValidationError:
             pass
         return queryset
+
+
+    def get_serializer_class(self):
+        if self.request.method.lower() == 'post':
+            return NodeElementCreateSerializer
+        return super(PageElementEditableListAPIView,
+            self).get_serializer_class()
+
+
+    def get_success_headers(self, data):
+        kwargs = self.get_url_kwargs()
+        kwargs.update({'path': data['path'].strip(self.URL_PATH_SEP)})
+        return {'Location': reverse('pages_editables_element', kwargs=kwargs)}
 
 
     @extend_schema(operation_id='editables_content_create')

@@ -39,7 +39,7 @@ from ..serializers import EnumeratedProgressSerializer
 
 class EnumeratedProgressListAPIView(SequenceProgressMixin, ListAPIView):
     """
-    Lists progress for a user on a sequence
+    Lists progress on a sequence
 
     **Tags**: content, progress
 
@@ -134,7 +134,10 @@ class EnumeratedProgressResetAPIView(SequenceProgressMixin, DestroyAPIView):
 class EnumeratedProgressRetrieveAPIView(EnumeratedProgressMixin,
                                         RetrieveAPIView):
     """
-    Retrieves viewing time for an element
+    Retrieves viewing duration for an element
+
+    Retrieves how long ``{user}`` was engaged with the element ``{rank}``
+    of the training course ``{sequence}``.
 
     **Tags**: content, progress
 
@@ -162,7 +165,11 @@ class EnumeratedProgressRetrieveAPIView(EnumeratedProgressMixin,
     @extend_schema(request=None)
     def post(self, request, *args, **kwargs):
         """
-        Updates viewing time for an element
+        Updates viewing duration for an element
+
+        A ``{user}`` can update the viewing duration for an element ``{rank}``
+        of a training course ``{sequence}`` by regularling pinging the server
+        with this API call.
 
         **Tags**: content, progress
 
@@ -206,6 +213,11 @@ class LiveEventAttendanceAPIView(EnumeratedProgressRetrieveAPIView):
     """
     Retrieves attendance to live event
 
+    Whenever a ``{user}`` participated in an live event (i.e. either a video
+    call or an in-person event) for the ``{rank}`` element of a training
+    course ``{sequence}`` provided by ``{profile}``, the
+    ``viewing_duration`` will be equal or greater to the ``min_viewing_time``.
+
     **Tags**: content, progress, provider
 
     **Examples**
@@ -230,7 +242,7 @@ class LiveEventAttendanceAPIView(EnumeratedProgressRetrieveAPIView):
     @extend_schema(request=None)
     def post(self, request, *args, **kwargs):
         """
-        Marks a user's attendance to a live event
+        Records attendance to a live event
 
         Indicates that a user attended a live event, hence fullfilling
         the requirements for the element of the sequence.

@@ -40,7 +40,7 @@ LOGGER = logging.getLogger(__name__)
 
 class SequencesIndexAPIView(ListAPIView):
     """
-    Lists sequences of page elements
+    Lists available sequences
 
     Returns a list of {{PAGE_SIZE}} sequences available to the request user.
 
@@ -156,7 +156,7 @@ class SequenceListCreateAPIView(AccountMixin, ListCreateAPIView):
 
     def post(self, request, *args, **kwargs):
         """
-        Creates a sequence of page elements
+        Creates a sequence
 
         Creates a new sequence editable by profile.
 

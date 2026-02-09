@@ -191,7 +191,7 @@ Vue.component('explainer', {
     methods: {
         // upload files
         _uploaderror: function(files, status, xhr) {
-            this.showErrorMessages("error uploading file");
+            showErrorMessages("error uploading file");
         },
         _uploadprogress: function(file, progress, bytesSent) {
             var progressBar = this.$el.querySelector(
@@ -413,7 +413,7 @@ Vue.component('explainer', {
                         return vm.startUpload(xhr, uploadUrl, formData);
                     },
                     function(resp) {
-                        vm.showErrorMessages(resp);
+                        showErrorMessages(resp);
                     });
             } else {
                 formData.append(
