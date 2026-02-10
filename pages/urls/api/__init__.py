@@ -1,4 +1,4 @@
-# Copyright (c) 2024, DjaoDjin inc.
+# Copyright (c) 2026, DjaoDjin inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -26,12 +26,15 @@
 API URLs for the pages application
 """
 
-from ...api.elements import PageElementAPIView, PageElementIndexAPIView
+from ...api.newsfeed import NewsFeedListAPIView
 from ...compat import include, path
 
 urlpatterns = [
     path('editables/', include('pages.urls.api.editables')),
     path('attendance/', include('pages.urls.api.sequences')),
+    # NewsFeed
+    path('content/<slug:user>/newsfeed',
+         NewsFeedListAPIView.as_view(), name='api_news_feed'),
     path('content/', include('pages.urls.api.readers')),
     path('content/', include('pages.urls.api.noauth')),
     path('', include('pages.urls.api.noauth2')), # 'api/content' index

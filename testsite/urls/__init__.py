@@ -1,4 +1,4 @@
-# Copyright (c) 2025, Djaodjin Inc.
+# Copyright (c) 2026, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -29,6 +29,7 @@ from django.views.static import serve
 
 from pages.compat import include, path, re_path
 from pages.api.elements import PageElementIndexAPIView
+from pages.api.newsfeed import NewsFeedListAPIView
 
 from ..views.app import IndexView
 
@@ -56,6 +57,8 @@ urlpatterns += [
     path('api/editables/<slug:profile>/', include('pages.urls.api.editables')),
     path('api/attendance/<slug:profile>/', include('pages.urls.api.sequences')),
     path('api/progress/', include('pages.urls.api.progress')),
+    path('api/content/<slug:user>/newsfeed', # profile can be a user
+         NewsFeedListAPIView.as_view(), name='api_news_feed'),
     path('api/content/', include('pages.urls.api.readers')),
     path('api/content/', include('pages.urls.api.noauth')),
     path('api/', include('pages.urls.api.noauth2')),

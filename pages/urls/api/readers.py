@@ -1,4 +1,4 @@
-# Copyright (c) 2025, DjaoDjin inc.
+# Copyright (c) 2026, DjaoDjin inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -27,15 +27,11 @@ API URLs for readers who must be authenticated
 """
 from ...compat import path
 
-from ...api.newsfeed import NewsFeedListAPIView
 from ...api.reactions import (FollowAPIView, UnfollowAPIView, UpvoteAPIView,
   DownvoteAPIView, CommentListCreateAPIView)
 
 
 urlpatterns = [
-    # NewsFeed
-    path('<slug:user>/newsfeed',
-         NewsFeedListAPIView.as_view(), name='api_news_feed'),
     # Following
     path('follow/<path:path>',
         FollowAPIView.as_view(), name='pages_api_follow'),
