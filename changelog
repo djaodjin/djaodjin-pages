@@ -1,3 +1,10 @@
+0.8.8
+
+  * separates newsfeed API so it is easier to override
+  * fixes create page elements at top level
+
+ -- Sebastien Mirolo <smirolo@djaodjin.com>  Tue, 10 Feb 2026 15:35:00 -0700
+
 0.8.7
 
   * updates extra/tags field through UI editor

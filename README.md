@@ -41,10 +41,10 @@ Tested with
 - **Python:** 3.10, **Django:** 4.2 ([LTS](https://www.djangoproject.com/download/))
 - **Python:** 3.12, **Django:** 5.2 (latest)
 
-0.8.7
+0.8.8
 
-  * updates extra/tags field through UI editor
-  * adds missing dependency html5lib
+  * separates newsfeed API so it is easier to override
+  * fixes create page elements at top level
 
 [previous release notes](changelog)
 
