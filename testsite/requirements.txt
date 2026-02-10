@@ -31,5 +31,5 @@ django-debug-toolbar==5.2.0 ; python_version >= "3.9"
                                   # 3.2.4 fails with SQLPanel is not scriptable
                                   # 2.2.1 is the last version for Django2.2
 django-extensions==3.2.1
-gunicorn==20.1.0
+gunicorn==23.0.0
 whitenoise==5.1.0
