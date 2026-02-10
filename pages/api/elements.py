@@ -44,7 +44,8 @@ from rest_framework.request import Request
 
 from .. import settings
 from ..docs import extend_schema
-from ..compat import is_authenticated, reverse, gettext_lazy as _
+from ..compat import (NoReverseMatch, is_authenticated, reverse,
+    gettext_lazy as _)
 from ..helpers import ContentCut, get_extra
 from ..mixins import AccountMixin, PageElementMixin, TrailMixin
 from ..models import (PageElement, RelationShip, build_content_tree,
@@ -421,8 +422,14 @@ class PageElementEditableListAPIView(AccountMixin, CreateModelMixin,
 
 
     def get_success_headers(self, data):
-        kwargs = self.get_url_kwargs()
+        kwargs = self.get_url_kwargs(**self.kwargs)
         kwargs.update({'path': data['path'].strip(self.URL_PATH_SEP)})
+        try:
+            return {'Location': reverse('pages_editables_element',
+                kwargs=kwargs)}
+        except NoReverseMatch:
+            pass
+        kwargs.pop(self.account_url_kwarg)
         return {'Location': reverse('pages_editables_element', kwargs=kwargs)}
 
 
