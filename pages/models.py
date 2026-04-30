@@ -123,6 +123,26 @@ class RelationShip(models.Model):
             self.orig_element.slug, self.dest_element.slug) #pylint: disable=no-member
 
 
+@python_2_unicode_compatible
+class AbstractMediaTag(models.Model):
+
+    location = models.CharField(max_length=250)
+    tag = models.CharField(max_length=50)
+
+    class Meta:
+        abstract = True
+
+
+@python_2_unicode_compatible
+class MediaTag(AbstractMediaTag):
+
+    class Meta(AbstractMediaTag.Meta):
+        swappable = 'PAGES_MEDIATAG_MODEL'
+
+    def __str__(self):
+        return str(self.tag)
+
+
 class PageElementQuerySet(models.QuerySet):
 
     def build_content_tree(self, prefix="", cut=None,

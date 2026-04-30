@@ -1,4 +1,4 @@
-# Copyright (c) 2024, Djaodjin Inc.
+# Copyright (c) 2026, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -32,7 +32,7 @@ from rest_framework.generics import (get_object_or_404, DestroyAPIView,
 
 from ..mixins import AccountMixin, SequenceMixin
 from ..models import Sequence, EnumeratedElements
-from ..serializers import (EnumeratedElementSerializer, SequenceSerializer,
+from .serializers import (EnumeratedElementSerializer, SequenceSerializer,
     SequenceUpdateSerializer, SequenceCreateSerializer)
 
 LOGGER = logging.getLogger(__name__)

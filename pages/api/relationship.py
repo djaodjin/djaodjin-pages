@@ -1,4 +1,4 @@
-# Copyright (c) 2024, DjaoDjin inc.
+# Copyright (c) 2026, DjaoDjin inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -32,7 +32,7 @@ from rest_framework.exceptions import ValidationError
 
 from ..mixins import TrailMixin
 from ..models import RelationShip
-from ..serializers import EdgeCreateSerializer
+from .serializers import EdgeCreateSerializer
 
 
 LOGGER = logging.getLogger(__name__)

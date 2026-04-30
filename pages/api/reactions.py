@@ -1,4 +1,4 @@
-# Copyright (c) 2025, DjaoDjin inc.
+# Copyright (c) 2026, DjaoDjin inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -32,7 +32,7 @@ from .. import signals
 from ..compat import is_authenticated
 from ..mixins import PageElementMixin
 from ..models import Comment, Follow, Vote
-from ..serializers import CommentSerializer, PageElementDetailSerializer
+from .serializers import CommentSerializer, PageElementDetailSerializer
 
 
 class FollowAPIView(PageElementMixin, generics.CreateAPIView):

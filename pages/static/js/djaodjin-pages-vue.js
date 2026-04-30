@@ -417,7 +417,7 @@ Vue.component('explainer', {
                     });
             } else {
                 formData.append(
-                    "csrfmiddlewaretoken", vm._getCSRFToken());
+                    "csrfmiddlewaretoken", djApi._getCSRFToken());
                 formData.append("file", file);
                 // submitRequest
                 return vm.startUpload(xhr, uploadUrl, formData);

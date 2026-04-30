@@ -1,4 +1,4 @@
-# Copyright (c) 2025, Djaodjin Inc.
+# Copyright (c) 2026, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -29,9 +29,9 @@ import bleach
 from rest_framework import serializers
 
 
-from . import settings
-from .compat import gettext_lazy as _, is_authenticated
-from .models import (Comment, Follow, PageElement, Vote, Sequence,
+from .. import settings
+from ..compat import gettext_lazy as _, is_authenticated
+from ..models import (Comment, Follow, PageElement, Vote, Sequence,
     EnumeratedElements)
 
 #pylint: disable=abstract-method
@@ -79,14 +79,6 @@ class NoModelSerializer(serializers.Serializer):
 
     def update(self, instance, validated_data):
         raise RuntimeError('`update()` should not be called.')
-
-
-class AssetSerializer(NoModelSerializer):
-
-    location = serializers.CharField(
-        help_text=_("URL where the asset content is stored."))
-    updated_at = serializers.DateTimeField(required=False,
-        help_text=_("Last date/time the asset content was updated."))
 
 
 class EdgeCreateSerializer(serializers.Serializer):

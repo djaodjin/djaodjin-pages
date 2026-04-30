@@ -79,6 +79,7 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
     'rest_framework',
     'debug_toolbar',
+    'extended_templates',
     'pages',
     'testsite',
 )

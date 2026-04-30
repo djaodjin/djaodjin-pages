@@ -1,4 +1,4 @@
-# Copyright (c) 2023, DjaoDjin inc.
+# Copyright (c) 2026, DjaoDjin inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -25,12 +25,12 @@
 """API URLs for uploading assets"""
 
 from ...compat import path
-from ...api.assets import AssetAPIView, UploadAssetAPIView
+from ...api.assets import AssetAPIView, ListUploadAssetAPIView
 
 
 urlpatterns = [
     path('assets/<path:path>',
         AssetAPIView.as_view(), name='pages_api_asset'),
     path('assets',
-        UploadAssetAPIView.as_view(), name='pages_api_upload_asset'),
+        ListUploadAssetAPIView.as_view(), name='pages_api_assets'),
 ]

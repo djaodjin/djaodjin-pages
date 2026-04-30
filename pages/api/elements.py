@@ -41,6 +41,9 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.filters import OrderingFilter, SearchFilter
 from rest_framework.mixins import CreateModelMixin
 from rest_framework.request import Request
+from extended_templates.api.assets import process_upload
+from extended_templates.api.serializers import AssetSerializer
+from extended_templates.utils import _get_media_prefix
 
 from .. import settings
 from ..docs import extend_schema
@@ -50,10 +53,9 @@ from ..helpers import ContentCut, get_extra
 from ..mixins import AccountMixin, PageElementMixin, TrailMixin
 from ..models import (PageElement, RelationShip, build_content_tree,
     flatten_content_tree, Follow)
-from ..serializers import (AssetSerializer, NodeElementCreateSerializer,
-    PageElementDetailSerializer, PageElementTagSerializer)
 from ..utils import validate_title
-from .assets import process_upload
+from .serializers import (NodeElementCreateSerializer,
+    PageElementDetailSerializer, PageElementTagSerializer)
 
 LOGGER = logging.getLogger(__name__)
 
@@ -733,21 +735,20 @@ class ImportDocxView(AccountMixin, PageElementMixin, generics.GenericAPIView):
     """
     schema = None # XXX currently disabled in API documentation
     serializer_class = PageElementDetailSerializer
+    store_hash = True
+    replace_stored = False
+    content_type = None
 
     def upload_image(self, request):
         """
         Upload an image and return its URL.
         """
-        store_hash = True
-        replace_stored = False
-        content_type = None
-
-        location = request.data.get("location", None)
         is_public_asset = request.query_params.get('public', False)
-
         response_data, response_status = process_upload(
-            request, self.account, location, is_public_asset,
-            store_hash, replace_stored, content_type)
+            request, account=self.account, is_public_asset=is_public_asset,
+            store_hash=self.store_hash, replace_stored=self.replace_stored,
+            content_type=self.content_type,
+            media_prefix=_get_media_prefix(self.account))
         if response_status not in [200, 201]:
             raise ValidationError({'detail': _("error uploading asset")})
 
