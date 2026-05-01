@@ -37,14 +37,13 @@ Release Notes
 
 Tested with
 
-- **Python:** 3.7, **Django:** 3.2 (legacy)
-- **Python:** 3.10, **Django:** 4.2 ([LTS](https://www.djangoproject.com/download/))
-- **Python:** 3.12, **Django:** 5.2 (latest)
+- **Python:** 3.10, **Django:** 4.2  ([LTS](https://www.djangoproject.com/download/))
+- **Python:** 3.12, **Django:** 5.2  (latest)
+- **Python:** 3.9,  **Django:** 3.2  (legacy)
 
-0.8.8
+0.9.0
 
-  * separates newsfeed API so it is easier to override
-  * fixes create page elements at top level
+  * relies on extended-templates to upload assets
 
 [previous release notes](changelog)
 

@@ -1,3 +1,10 @@
+
+0.9.0
+
+  * relies on extended-templates to upload assets
+
+ -- Sebastien Mirolo <smirolo@djaodjin.com>  Thu, 30 Apr 2026 19:00:00 -0700
+
 0.8.8
 
   * separates newsfeed API so it is easier to override
