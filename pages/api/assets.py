@@ -30,14 +30,14 @@ from rest_framework import status
 from rest_framework.generics import RetrieveUpdateDestroyAPIView
 from rest_framework.response import Response as HttpResponse
 from extended_templates.api.assets import (
-    ListUploadAssetAPIView as ListUploadAssetBaseAPIView)
+    ListUploadAssetAPIView as ListUploadAssetBaseAPIView,
+    resolve_permanent_location)
 from extended_templates.api.serializers import AssetSerializer
 from extended_templates.models import MediaTag
 from extended_templates.utils import _get_media_prefix, get_default_storage
 
-from .. import settings
 from ..compat import (NoReverseMatch,
-    gettext_lazy as _, reverse, urljoin, urlparse, urlunparse)
+    gettext_lazy as _, reverse, urlparse, urlunparse)
 from ..mixins import AccountMixin
 
 
@@ -50,26 +50,9 @@ class AssetAPIView(AccountMixin, RetrieveUpdateDestroyAPIView):
 
     serializer_class = AssetSerializer
 
-    def as_signed_url(self, location, request):
-        parts = urlparse(location)
-        key_name = parts.path.lstrip(URL_PATH_SEP)
-            # we remove leading '/' otherwise S3 copy triggers a 404
-            # because it creates an URL with '//'.
+    def as_signed_url(self, key_name, request):
         storage = get_default_storage(request, self.account)
-        if storage.__class__.__name__.endswith('3Storage'):
-            return storage.url(key_name)
-
-        base_url = settings.MEDIA_URL.lstrip(URL_PATH_SEP)
-        if key_name.startswith(base_url):
-            key_name = key_name[len(base_url):].lstrip(URL_PATH_SEP)
-        media_prefix = _get_media_prefix()
-        if not media_prefix.startswith(URL_PATH_SEP):
-            media_prefix = URL_PATH_SEP + media_prefix
-        if not media_prefix.endswith(URL_PATH_SEP):
-            media_prefix =  media_prefix + URL_PATH_SEP
-        media_location = urljoin(
-            media_prefix, storage.url(key_name).lstrip(URL_PATH_SEP))
-        return request.build_absolute_uri(media_location)
+        return storage.url(key_name)
 
 
     def get(self, request, *args, **kwargs):
@@ -93,21 +76,28 @@ class AssetAPIView(AccountMixin, RetrieveUpdateDestroyAPIView):
             }
         """
         #pylint:disable=unused-argument
+        storage = get_default_storage(request, self.account)
         key_name = kwargs.get('path')
+        parts = urlparse(storage.url(''))
+        base_storage_pat = urlunparse(
+            (parts.scheme, parts.netloc, parts.path, None, None, None))
+
+        # convert `/api/{profile}/assets/{path}` to a URL on S3.
+        permanent_location = resolve_permanent_location(key_name, storage)
+        if permanent_location.startswith(base_storage_pat):
+            key_name = permanent_location[len(base_storage_pat):]
+
         location = self.as_signed_url(key_name, request)
         http_accepts = [item.strip()
             for item in request.META.get('HTTP_ACCEPT', '*/*').split(',')]
         if 'text/html' in http_accepts:
             return HttpResponseRedirect(location)
 
-        parts = urlparse(location)
-        permanent_location = urlunparse(
-            (parts.scheme, parts.netloc, parts.path, None, None, None))
-        storage = get_default_storage(request, self.account)
+        updated_at = storage.get_modified_time(key_name)
         media_tags = MediaTag.objects.filter(location=permanent_location)
         return HttpResponse(self.get_serializer().to_representation({
             'location': location,
-            'updated_at': storage.get_modified_time(key_name),
+            'updated_at': updated_at,
             'tags': media_tags.values_list('tag', flat=True)
         }))
 
@@ -123,14 +113,18 @@ class AssetAPIView(AccountMixin, RetrieveUpdateDestroyAPIView):
 
         """
         #pylint: disable=unused-variable,unused-argument,too-many-locals
-        key_name = kwargs.get('path')
         storage = get_default_storage(request, self.account)
-        parts = urlparse(storage.url(key_name))
-        permanent_location = urlunparse(
+        key_name = kwargs.get('path')
+        parts = urlparse(storage.url(''))
+        base_storage_pat = urlunparse(
             (parts.scheme, parts.netloc, parts.path, None, None, None))
-        storage.delete(key_name)
-        media_tags = MediaTag.objects.filter(
-            location=permanent_location).delete()
+
+        # convert `/api/{profile}/assets/{path}` to a URL on S3.
+        permanent_location = resolve_permanent_location(key_name, storage)
+        if permanent_location.startswith(base_storage_pat):
+            key_name = permanent_location[len(base_storage_pat):]
+            storage.delete(key_name)
+        MediaTag.objects.filter(location=permanent_location).delete()
         return HttpResponse({
             'detail': _('Media correctly deleted.')},
             status=status.HTTP_200_OK)
@@ -168,12 +162,19 @@ class ListUploadAssetAPIView(AccountMixin, ListUploadAssetBaseAPIView):
         if not self.is_public_asset:
             media_prefix = _get_media_prefix()
             path = urlparse(location).path.lstrip(URL_PATH_SEP)
-            if path.startswith(media_prefix):
-                path = path[len(media_prefix):].lstrip(URL_PATH_SEP)
+            if path:
+                if path.startswith(media_prefix):
+                    path = path[len(media_prefix):].lstrip(URL_PATH_SEP)
+            else:
+                # We cannot use an empty path in the `reverse` calls,
+                # so we use a '/' that will then be removed (i.e.
+                # `.rstrip(URL_PATH_SEP)`).
+                path = URL_PATH_SEP
             try:
                 location = self.request.build_absolute_uri(
                     reverse('pages_api_asset', args=(self.account, path,)))
             except NoReverseMatch:
                 location = self.request.build_absolute_uri(
                     reverse('pages_api_asset', args=(path,)))
-        return location
+            location = location.rstrip(URL_PATH_SEP)
+        return location.rstrip()
