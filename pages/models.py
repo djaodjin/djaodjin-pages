@@ -258,10 +258,14 @@ class PageElement(models.Model):
 
     @property
     def nb_upvotes(self):
+        if not self.pk:
+            return 0
         return Vote.objects.filter(element=self, vote=Vote.UP_VOTE).count()
 
     @property
     def nb_followers(self):
+        if not self.pk:
+            return 0
         return Follow.objects.filter(element=self).count()
 
     def add_relationship(self, element, tag=None):
@@ -334,9 +338,9 @@ class PageElement(models.Model):
         if depth is not None and depth == 0:
             return [[self]]
         results = []
-        parents = PageElement.objects.filter(
-            pk__in=RelationShip.objects.filter(
-                dest_element=self).values('orig_element_id'))
+        parents = [] if not self.pk else PageElement.objects.filter(
+            pk__in=RelationShip.objects.filter(dest_element=self).values(
+            'orig_element_id'))
         if not parents:
             return [[self]]
         if hints:

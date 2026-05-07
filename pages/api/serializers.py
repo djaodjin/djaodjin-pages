@@ -247,6 +247,9 @@ class PageElementSerializer(serializers.ModelSerializer):
             if isinstance(data, PageElement):
                 if hasattr(data, 'vote'):
                     return data.vote
+                pk = getattr(data, 'pk')
+                if not pk:
+                    return 0
                 vote = Vote.objects.filter(
                     user=request.user, element=data).first()
                 return vote and vote.vote == Vote.UP_VOTE
@@ -258,6 +261,9 @@ class PageElementSerializer(serializers.ModelSerializer):
             if isinstance(data, PageElement):
                 if hasattr(data, 'follow'):
                     return data.follow
+                pk = getattr(data, 'pk')
+                if not pk:
+                    return 0
                 return Follow.objects.filter(
                     user=request.user, element=data).exists()
         return None
@@ -268,6 +274,9 @@ class PageElementSerializer(serializers.ModelSerializer):
             if isinstance(data, PageElement):
                 if hasattr(data, 'nb_comments_since_last_read'):
                     return data.nb_comments_since_last_read
+                pk = getattr(data, 'pk')
+                if not pk:
+                    return None
                 last_read_at = Follow.objects.filter(
                     user=request.user, element=data).values(
                     'last_read_at').first()
@@ -275,6 +284,7 @@ class PageElementSerializer(serializers.ModelSerializer):
         return None
 
     def get_nb_comments_since_last_read(self, data):
+        nb_comments = 0
         request = self.context.get('request')
         if request and is_authenticated(request):
             if isinstance(data, PageElement):
@@ -288,10 +298,11 @@ class PageElementSerializer(serializers.ModelSerializer):
                         comment_kwargs.update({
                             'element__text_updated_at__gt': last_read_at
                         })
-                nb_comments = Comment.objects.filter(
-                    user=request.user, element=data, **comment_kwargs).count()
-                return nb_comments
-        return None
+                pk = getattr(data, 'pk')
+                if pk:
+                    nb_comments = Comment.objects.filter(user=request.user,
+                        element=data, **comment_kwargs).count()
+        return nb_comments
 
 
 class PageElementDetailSerializer(PageElementSerializer):
