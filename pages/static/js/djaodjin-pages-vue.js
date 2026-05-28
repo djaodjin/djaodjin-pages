@@ -89,6 +89,7 @@ Vue.component('editables-detail', {
             }
             try {
                 vm.tagify = new Tagify(vm.$el.querySelector(".tags"));
+                vm.tagify.DOM.input.setAttribute('aria-label', 'Tags');
                 vm.tagify.addTags(vm.tags);
                 vm.tagify.on('blur', function(event) {
                     vm.tags = [];
