@@ -168,10 +168,21 @@ Vue.component('explainer', {
     mixins: [
         httpRequestMixin
     ],
+    props: [
+        'disabled',
+        'callbackArg',
+        'collectedByPicture',
+        'collectedByPrintableName',
+        'collectedAtTime',
+        'initText',
+        'uploads'
+    ],
     data: function() {
         return {
             upload_start_url: this.$urls.api_asset_upload_start,
             upload_complete_url: this.$urls.api_asset_upload_complete,
+            activeUpload: null,
+            activeTitle: "",
             editMode: true,
             uploadInProgress: false,
             text: "",
@@ -181,15 +192,35 @@ Vue.component('explainer', {
             }
         }
     },
-    props: [
-        'disabled',
-        'callbackArg',
-        'collectedByPicture',
-        'collectedByPrintableName',
-        'collectedAtTime',
-        'initText'
-    ],
     methods: {
+        _addLinkToText: function(upload) {
+            var vm = this;
+            vm.activeUpload = upload;
+            if( typeof upload.tags === 'undefined' ) {
+                upload.tags = [];
+            }
+            vm.activeTitle = upload.tags.join();
+            vm.modalShow('#' + vm.callbackArg.slug + '-upload')
+        },
+        setTitle: function(upload) {
+            var vm = this;
+            const title = upload.tags.join();
+            if( vm.activeTitle != title ) {
+                const tags = vm.activeTitle.split(",");
+                upload.tags = [];
+                for( var idx = 0; idx < tags.length; ++idx ) {
+                    upload.tags.push(tags[idx].trim());
+                }
+                vm.reqPut(vm.$urls.api_assets, {
+                    "items": [{
+                        "location": upload.location
+                    }],
+                    "tags": upload.tags}
+                );
+            }
+            vm.text += (vm.text ? " " : "") + upload.location;
+            vm.saveText();
+        },
         // upload files
         _uploaderror: function(files, status, xhr) {
             showErrorMessages("error uploading file");
@@ -208,12 +239,29 @@ Vue.component('explainer', {
             var dataCompleteUrl = vm.upload_complete_url;
             if( dataCompleteUrl && dataCompleteUrl != vm.upload_start_url ) {
                 vm.reqPost(dataCompleteUrl, resp, function(resp) {
-                    vm.text += resp.location;
-                    vm.saveText();
+                    vm._emitUploadfinished(resp);
                 })
             } else {
-                vm.text += resp.location;
-                vm.saveText();
+                vm._emitUploadfinished(resp);
+            }
+        },
+        _emitUploadfinished: function(resp) {
+            var vm = this;
+            if( typeof resp.tags === 'undefined' ) {
+                resp.tags = [];
+            }
+            var found = null;
+            for( var idx = 0; idx < vm.uploads.results.length; ++idx ) {
+                if( vm.uploads.results[idx].location == resp.location ) {
+                    found = vm.uploads.results[idx];
+                    break;
+                }
+            }
+            if( !found ) {
+                vm.$emit('uploaded', resp);
+                vm._addLinkToText(resp);
+            } else {
+                vm._addLinkToText(found);
             }
         },
         isTagged: function(tag) {
@@ -221,6 +269,34 @@ Vue.component('explainer', {
             return vm.callbackArg.extra &&
                 vm.callbackArg.extra.tags &&
                 vm.callbackArg.extra.tags.includes(tag);
+        },
+        modalShow: function(modalSelector) {
+            var vm = this;
+            var dialog = vm.$el.querySelector(modalSelector);
+            if( dialog ) {
+                if( typeof bootstrap != 'undefined' ) {
+                    var modal = bootstrap.Modal.getOrCreateInstance(dialog);
+                    var focusedElement = dialog.querySelector('.upload-title');
+                    if( !focusedElement ) {
+                       focusedElement = dialog.querySelector('[type="submit"]');
+                    }
+                    if( focusedElement ) {
+                        dialog.addEventListener('shown.bs.modal', function() {
+                            focusedElement.focus();
+                        }, { once: true });
+                    }
+                    modal.show();
+                }
+            }
+        },
+        modalShowUpload: function (modalSelector) {
+            var vm = this;
+            vm.activeTitle = "";
+            vm.activeUpload = null;
+            vm.modalShow(modalSelector);
+        },
+        selectUpload: function (upload) {
+            this._addLinkToText(upload);
         },
         startUpload: function(xhr, uploadUrl, formData) {
             xhr.open("POST", uploadUrl, true);
@@ -480,9 +556,10 @@ Vue.component('explainer', {
             }
         },
         uploadFile: function(evt) {
+            var vm = this;
             var files = evt.target.files;
             if( files.length ) {
-                this._handleFiles(files);
+                vm._handleFiles(files);
             }
         },
         // edit mode

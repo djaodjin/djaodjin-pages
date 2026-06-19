@@ -170,7 +170,8 @@ class PageElementEditableView(AccountMixin, PageElementView):
         url_kwargs = self.get_url_kwargs(**kwargs)
         path = url_kwargs.pop('path', None)
         update_context_urls(context, {
-            'pages_index': reverse('pages_editables_index', kwargs=url_kwargs)
+            'pages_editables_index': reverse('pages_editables_index',
+                kwargs=url_kwargs)
         })
         if self.is_prefix:
             if isinstance(path, six.string_types):

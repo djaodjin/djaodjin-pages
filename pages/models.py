@@ -126,8 +126,8 @@ class RelationShip(models.Model):
 @python_2_unicode_compatible
 class AbstractMediaTag(models.Model):
 
-    location = models.CharField(max_length=250)
-    tag = models.CharField(max_length=50)
+    location = models.URLField(max_length=1024)
+    tag = models.CharField(max_length=150)
 
     class Meta:
         abstract = True
