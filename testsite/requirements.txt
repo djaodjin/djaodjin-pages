@@ -2,7 +2,7 @@
 # py312-django5.2, and py314-django6.0 for djaodjin-pages
 
 beautifulsoup4==4.13.4               # extract first para of `PageElement.text`
-bleach==6.0.0
+bleach==6.4.0
 Django==3.2.25 ; python_version < "3.9"
 Django==4.2.30 ; python_version >= "3.9" and python_version < "3.12"
 Django==5.2.14 ; python_version >= "3.12" and python_version < "3.14"
