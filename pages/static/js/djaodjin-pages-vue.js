@@ -289,11 +289,18 @@ Vue.component('explainer', {
                 }
             }
         },
-        modalShowUpload: function (modalSelector) {
+        modalShowUpload: function(event) {
             var vm = this;
-            vm.activeTitle = "";
-            vm.activeUpload = null;
-            vm.modalShow(modalSelector);
+            const newValue = event.target.value;
+            event.target.selectedIndex = 0;
+            if( newValue.indexOf('#') === 0 ) {
+                const modalSelector = newValue;
+                vm.activeTitle = "";
+                vm.activeUpload = null;
+                vm.modalShow(modalSelector);
+            } else {
+                vm._addLinkToText(JSON.parse(newValue));
+            }
         },
         selectUpload: function (upload) {
             this._addLinkToText(upload);
@@ -648,6 +655,15 @@ Vue.component('explainer', {
         }
         this.text = this.initText;
     },
+    watch: {
+        initText: {
+            handler(newValue) {
+                this.text = newValue;
+            },
+            deep: true, // Forces Vue to watch nested objects/arrays
+            immediate: false // Runs immediately upon component creation
+        }
+    }
 });
 
 Vue.component('viewing-timer', {
