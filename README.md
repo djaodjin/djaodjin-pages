@@ -42,10 +42,9 @@ Tested with
 - **Python:** 3.10, **Django:** 4.2 (legacy)
 - **Python:** 3.9, **Django:** 3.2 (legacy)
 
-0.9.1
+0.9.2
 
-  * fixes support for Django5.2
-  * rationalizes usage of `resolve_permanent_location`
+  * adds `<select>` dropdown of uploads as supporting documents
 
 [previous release notes](changelog)
 
