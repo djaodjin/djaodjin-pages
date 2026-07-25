@@ -31,7 +31,8 @@ requests==2.34.2 ; python_version >= "3.12"
 # testsite-only
 coverage==6.3.2
 django-debug-toolbar==3.8.1 ; python_version < "3.9" # 3.4+ requires Django>=3.2
-django-debug-toolbar==6.2.0 ; python_version >= "3.9"
+django-debug-toolbar==6.1.0 ; python_version >= "3.9" and python_version < "3.12"
+django-debug-toolbar==6.2.0 ; python_version >= "3.12"
                                   # 3.8.1 fails with Django5.2+
                                   # 3.2.4 fails with SQLPanel is not scriptable
                                   # 2.2.1 is the last version for Django2.2
