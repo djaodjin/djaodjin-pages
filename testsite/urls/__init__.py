@@ -31,6 +31,7 @@ from pages.compat import include, path, re_path
 from pages.api.elements import PageElementIndexAPIView
 from pages.api.newsfeed import NewsFeedListAPIView
 
+from ..api.auth import LoginAPIView
 from ..views.app import IndexView
 
 if settings.DEBUG:
@@ -63,6 +64,11 @@ urlpatterns += [
     path('api/content/', include('pages.urls.api.noauth')),
     path('api/', include('pages.urls.api.noauth2')),
     path('api/', include('pages.urls.api.assets')),
+    path('api/auth', LoginAPIView.as_view(), name='api_login'),
+    # 3 next lines instead of`include('pages.urls.views')` so we get
+    # an 'info/' prefix.
+    path('sequences/', include('pages.urls.views.sequences')),
+    path('editables/', include('pages.urls.views.editables')),
+    path('app/info/', include('pages.urls.views.elements')),
     path('', IndexView.as_view()),
-    path('', include('pages.urls.views')),
 ]

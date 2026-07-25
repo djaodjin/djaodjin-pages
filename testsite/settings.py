@@ -155,22 +155,31 @@ MIDDLEWARE = (
     'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.middleware.locale.LocaleMiddleware',
+    'testsite.authentication.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware'
 )
 
+
 ROOT_URLCONF = 'testsite.urls'
 WSGI_APPLICATION = 'testsite.wsgi.application'
 
-
 REST_FRAMEWORK = {
-    'PAGE_SIZE': 25,
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'testsite.authentication.JWTAuthentication',
+        # `rest_framework.authentication.SessionAuthentication` is the last
+        # one in the list because it will raise a PermissionDenied if the CSRF
+        # is absent.
+        'rest_framework.authentication.SessionAuthentication',
+    ),
     'DEFAULT_PAGINATION_CLASS':
         'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 25,
     'ORDERING_PARAM': 'o',
     'SEARCH_PARAM': 'q'
 }
+
 
 # Static assets (CSS, JavaScript, Images)
 # --------------------------------------
