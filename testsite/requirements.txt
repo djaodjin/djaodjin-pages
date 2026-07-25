@@ -25,7 +25,8 @@ Markdown==3.9    ; python_version >= "3.9" and python_version < "3.12"
 Markdown==3.10.2 ; python_version >= "3.12"
                  # Markdown 3.4.4 is the last version to support py3.7
 python-dateutil==2.9.0.post0
-requests==2.34.2
+requests==2.32.5 ; python_version >= "3.9" and python_version < "3.12"
+requests==2.34.2 ; python_version >= "3.12"
 
 # testsite-only
 coverage==6.3.2
