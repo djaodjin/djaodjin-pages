@@ -1,4 +1,4 @@
-# Copyright (c) 2022, DjaoDjin inc.
+# Copyright (c) 2026, DjaoDjin inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -31,7 +31,7 @@ from rest_framework import exceptions, serializers
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.settings import api_settings
 
-from saas.compat import is_authenticated
+from pages.compat import is_authenticated
 
 
 class JWTAuthentication(TokenAuthentication):
