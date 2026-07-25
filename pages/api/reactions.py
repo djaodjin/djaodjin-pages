@@ -26,10 +26,12 @@ from __future__ import unicode_literals
 from deployutils.helpers import datetime_or_now
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
-from rest_framework import generics
+from rest_framework import generics, status
+from rest_framework.response import Response
 
 from .. import signals
 from ..compat import is_authenticated
+from ..docs import extend_schema
 from ..mixins import PageElementMixin
 from ..models import Comment, Follow, Vote
 from .serializers import CommentSerializer, PageElementDetailSerializer
@@ -59,17 +61,21 @@ class FollowAPIView(PageElementMixin, generics.CreateAPIView):
     .. code-block:: json
 
         {
-            "slug": "water-user",
-            "title": "How to reduce water usage?"
+            "slug": "adjust-air-fuel-ratio",
+            "title": "Adjust air/fuel ratio"
         }
     """
     serializer_class = PageElementDetailSerializer
 
-    def perform_create(self, serializer):
-        if not is_authenticated(self.request):
+    @extend_schema(request=None)
+    def post(self, request, *args, **kwargs):
+        if not is_authenticated(request):
             raise PermissionDenied()
-        Follow.objects.subscribe(self.element, user=self.request.user)
-        serializer.instance = self.element
+        Follow.objects.subscribe(self.element, user=request.user)
+        serializer = self.get_serializer(instance=self.element)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED,
+            headers=headers)
 
 
 class UnfollowAPIView(PageElementMixin, generics.CreateAPIView):
@@ -96,17 +102,21 @@ class UnfollowAPIView(PageElementMixin, generics.CreateAPIView):
     .. code-block:: json
 
         {
-            "slug": "water-user",
-            "title": "How to reduce water usage?"
+            "slug": "adjust-air-fuel-ratio",
+            "title": "Adjust air/fuel ratio"
         }
     """
     serializer_class = PageElementDetailSerializer
 
-    def perform_create(self, serializer):
-        if not is_authenticated(self.request):
+    @extend_schema(request=None)
+    def post(self, request, *args, **kwargs):
+        if not is_authenticated(request):
             raise PermissionDenied()
-        Follow.objects.unsubscribe(self.element, user=self.request.user)
-        serializer.instance = self.element
+        Follow.objects.unsubscribe(self.element, user=request.user)
+        serializer = self.get_serializer(instance=self.element)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED,
+            headers=headers)
 
 
 class UpvoteAPIView(PageElementMixin, generics.CreateAPIView):
@@ -133,17 +143,21 @@ class UpvoteAPIView(PageElementMixin, generics.CreateAPIView):
     .. code-block:: json
 
         {
-            "slug": "water-user",
-            "title": "How to reduce water usage?"
+            "slug": "adjust-air-fuel-ratio",
+            "title": "Adjust air/fuel ratio"
         }
     """
     serializer_class = PageElementDetailSerializer
 
-    def perform_create(self, serializer):
-        if not is_authenticated(self.request):
+    @extend_schema(request=None)
+    def post(self, request, *args, **kwargs):
+        if not is_authenticated(request):
             raise PermissionDenied()
-        Vote.objects.vote_up(self.element, user=self.request.user)
-        serializer.instance = self.element
+        Vote.objects.vote_up(self.element, user=request.user)
+        serializer = self.get_serializer(instance=self.element)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED,
+            headers=headers)
 
 
 class DownvoteAPIView(PageElementMixin, generics.CreateAPIView):
@@ -170,17 +184,21 @@ class DownvoteAPIView(PageElementMixin, generics.CreateAPIView):
     .. code-block:: json
 
         {
-            "slug": "water-user",
-            "title": "How to reduce water usage?"
+            "slug": "adjust-air-fuel-ratio",
+            "title": "Adjust air/fuel ratio"
         }
     """
     serializer_class = PageElementDetailSerializer
 
-    def perform_create(self, serializer):
-        if not is_authenticated(self.request):
+    @extend_schema(request=None)
+    def post(self, request, *args, **kwargs):
+        if not is_authenticated(request):
             raise PermissionDenied()
-        Vote.objects.vote_down(self.element, user=self.request.user)
-        serializer.instance = self.element
+        Vote.objects.vote_down(self.element, user=request.user)
+        serializer = self.get_serializer(instance=self.element)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED,
+            headers=headers)
 
 
 class CommentListCreateAPIView(PageElementMixin, generics.ListCreateAPIView):

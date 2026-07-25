@@ -1,4 +1,4 @@
-# Copyright (c) 2023, Djaodjin Inc.
+# Copyright (c) 2026, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -23,11 +23,11 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from ...compat import path
-from ...views.elements import PageElementView
+from ...views.elements import PageElementView, PageElementIndexView
 
 urlpatterns = [
     path('<path:path>',
         PageElementView.as_view(), name='pages_element'),
     path('',
-        PageElementView.as_view(), name='pages_index'),
+        PageElementIndexView.as_view(), name='pages_index'),
 ]

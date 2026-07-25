@@ -145,6 +145,22 @@ class PageElementView(TrailMixin, TemplateView):
         return context
 
 
+class PageElementIndexView(TrailMixin, TemplateView):
+
+    template_name = 'pages/index.html'
+
+    def get_context_data(self, **kwargs):
+        context = super(PageElementIndexView, self).get_context_data(**kwargs)
+        update_context_urls(context, {
+            # We cannot use `kwargs=url_kwargs` here otherwise
+            # it will pick up the overriden definition of
+            # `get_reverse_kwargs`  in PageElementEditableView.
+            'pages_index': reverse('pages_index'),
+            'api_content': reverse('api_content_index'),
+        })
+        return context
+
+
 class PageElementEditableView(AccountMixin, PageElementView):
     """
     When {path} points to an internal node in the content DAG, an index

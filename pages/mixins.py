@@ -1,4 +1,4 @@
-# Copyright (c) 2024 DjaoDjin inc.
+# Copyright (c) 2026 DjaoDjin inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -30,6 +30,7 @@ from django.contrib.auth import get_user_model
 from django.core.exceptions import ImproperlyConfigured
 from django.db import transaction
 from django.http import Http404
+from django.utils import translation
 from rest_framework.generics import get_object_or_404
 
 from . import settings
@@ -133,13 +134,23 @@ class PageElementMixin(object):
                 path = self.kwargs.get(self.path_url_kwarg, '').strip(
                     self.URL_PATH_SEP)
                 if not path:
-                    raise Http404()
+                    raise Http404(_("No path to extract element slug from"))
                 parts = path.split(self.URL_PATH_SEP)
                 element_value = parts[-1]
-            filter_kwargs = {self.element_field: element_value}
-            self._element = get_object_or_404(
-                PageElement.objects.all(), **filter_kwargs)
+            self._element = self.get_element(element_value)
+            if not self._element:
+                raise Http404(
+                    _("cannot find PageElement with slug='%s'") % element_value)
         return self._element
+
+    def get_element(self, slug):
+        filter_kwargs = {self.element_field: slug}
+        queryset = PageElement.objects.filter(**filter_kwargs)
+        candidates = {elem.lang: elem for elem in queryset}
+        element = candidates.get(translation.get_language())
+        if not element:
+            element = candidates.get(settings.LANGUAGE_CODE)
+        return element
 
 
 class SequenceMixin(object):
@@ -156,12 +167,10 @@ class SequenceMixin(object):
         return self._sequence
 
 
-class TrailMixin(object):
+class TrailMixin(PageElementMixin):
     """
     Generate a trail of PageElement based on a path.
     """
-    URL_PATH_SEP = '/'
-    path_url_kwarg = 'path'
     breadcrumb_url = 'pages_element'
     breadcrumb_url_index = None
 
@@ -171,9 +180,14 @@ class TrailMixin(object):
             self._breadcrumbs = []
             parts = self.path.strip(self.URL_PATH_SEP).split(self.URL_PATH_SEP)
             title_by_slug = dict(PageElement.objects.filter(
-                slug__in=parts).values_list('slug', 'title'))
+                slug__in=parts, lang=translation.get_language()).values_list(
+                'slug', 'title'))
             for idx, part in enumerate(parts):
                 title = title_by_slug.get(part)
+                if not title:
+                    title = PageElement.objects.filter(
+                        slug=part, lang=settings.LANGUAGE_CODE).values(
+                        'title').first()
                 if title:
                     url_kwargs = self.get_url_kwargs()
                     url_kwargs.update({
@@ -189,17 +203,6 @@ class TrailMixin(object):
                     kwargs=url_kwargs)))
         return self._breadcrumbs
 
-    @property
-    def element(self):
-        if not hasattr(self, '_element'):
-            path = self.path.strip(self.URL_PATH_SEP)
-            if not path:
-                self._element = None
-            else:
-                parts = path.split(self.URL_PATH_SEP)
-                self._element = get_object_or_404(
-                    PageElement.objects.all(), slug=parts[-1])
-        return self._element
 
     @property
     def path(self):
@@ -225,8 +228,7 @@ class TrailMixin(object):
         results = []
         parts = path.strip(self.URL_PATH_SEP).split(self.URL_PATH_SEP)
         if parts:
-            element = get_object_or_404(
-                PageElement.objects.all(), slug=parts[-1])
+            element = self.get_element(parts[-1])
             candidates = element.get_parent_paths(hints=parts[:-1])
             if not candidates:
                 raise Http404("%s could not be found." % path)

@@ -154,6 +154,19 @@
 },
 {
   "fields": {
+    "slug": "adjust-air-fuel-ratio",
+    "lang": "fr",
+    "title": "Ajuster Le Rapport Air-carburant",
+    "content_format": "MD",
+    "text": "## Contexte\n\nCertains procédés de fabrication peuvent impliquer des opérations de chauffage.",
+    "text_updated_at": "2026-01-01T00:00:00.000Z",
+    "extra": "{\"searchable\":true,\"visibility\":[\"public\"],\"tags\":[\"Energy & Emissions\"]}",
+    "account": 2
+  },
+  "model": "pages.PageElement", "pk": 206
+},
+{
+  "fields": {
     "title": "Webinar on Sustainability",
     "slug": "sustainability-webinar",
     "extra": "{\"searchable\":true,\"visibility\":[\"public\"]}",

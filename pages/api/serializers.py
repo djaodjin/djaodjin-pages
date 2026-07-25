@@ -386,7 +386,7 @@ class EnumeratedElementSerializer(serializers.ModelSerializer):
     """
 
     content = serializers.SlugRelatedField(
-        queryset=PageElement.objects.all(),
+        queryset=PageElement.objects.filter(lang=settings.LANGUAGE_CODE),
         slug_field="slug",
         help_text=_("Page element the enumerated element is for"),
         required=True)

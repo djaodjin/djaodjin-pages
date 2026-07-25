@@ -214,7 +214,7 @@ class PageElement(models.Model):
         ('MD', 'Markdown'),
     )
 
-    slug = models.SlugField(unique=True,
+    slug = models.SlugField(
         help_text=_("Unique identifier that can be used in URL paths"))
     title = models.CharField(max_length=1024, blank=True,
         help_text=_("Title of the page element"))
@@ -238,6 +238,9 @@ class PageElement(models.Model):
     extra = get_extra_field_class()(null=True, blank=True)
     relationships = models.ManyToManyField("self",
         related_name='related_to', through='RelationShip', symmetrical=False)
+
+    class Meta:
+        unique_together = ('slug', 'lang')
 
     def __str__(self):
         return self.slug

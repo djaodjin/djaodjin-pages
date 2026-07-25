@@ -1,4 +1,4 @@
-# Copyright (c) 2024, DjaoDjin inc.
+# Copyright (c) 2026, DjaoDjin inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -28,7 +28,7 @@ API URLs for editing content
 from ... import settings
 from ...compat import path, re_path
 from ...api.elements import (ImportDocxView, PageElementEditableDetail,
-    PageElementEditableListAPIView)
+    PageElementEditableIndexAPIView)
 from ...api.relationship import (PageElementAliasAPIView,
     PageElementMirrorAPIView, PageElementMoveAPIView)
 from ...api.sequences import (SequenceListCreateAPIView,
@@ -62,6 +62,6 @@ urlpatterns = [
          ImportDocxView.as_view(), name='import_docx'),
     path('content/<path:path>',
         PageElementEditableDetail.as_view(), name='pages_api_edit_element'),
-    path('content', PageElementEditableListAPIView.as_view(),
+    path('content', PageElementEditableIndexAPIView.as_view(),
         name='pages_api_editables_index'),
 ]
