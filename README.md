@@ -42,9 +42,9 @@ Tested with
 - **Python:** 3.10, **Django:** 4.2 (legacy)
 - **Python:** 3.9, **Django:** 3.2 (legacy)
 
-0.9.2
+0.10.0
 
-  * adds `<select>` dropdown of uploads as supporting documents
+  * supports multiple languages per `PageElement`
 
 [previous release notes](changelog)
 
