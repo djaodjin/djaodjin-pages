@@ -1,4 +1,4 @@
-# Copyright (c) 2024, Djaodjin Inc.
+# Copyright (c) 2026, Djaodjin Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -68,26 +68,30 @@ class PageElementView(TrailMixin, TemplateView):
         #pylint:disable=attribute-defined-outside-init
         if not hasattr(self, '_is_prefix'):
             try:
-                self._is_prefix = (not self.element or
-                    (RelationShip.objects.filter(
-                        orig_element=self.element).exists() and
-                     not self.element.text
-                    ))
+                element_url_kwarg = self.element_url_kwarg or self.element_field
+                if not (element_url_kwarg in self.kwargs or
+                    self.path_url_kwarg in self.kwargs):
+                    self._is_prefix = True
+                else:
+                    self._is_prefix = (not self.element or
+                        (RelationShip.objects.filter(
+                            orig_element=self.element).exists() and
+                         not self.element.text
+                         ))
             except Http404:
                 self._is_prefix = True
         return self._is_prefix
 
     def get_template_names(self):
         candidates = []
-        if self.element:
-            candidates += ["pages/%s.html" % layout
-                for layout in get_extra(self.element, 'layouts', [])]
         if self.is_prefix:
             # It is not a leaf, let's return the list view
             candidates += [os.path.join(os.path.dirname(
                 self.template_name), 'index.html')]
-        else:
-            candidates += super(PageElementView, self).get_template_names()
+        elif self.element:
+            candidates += ["pages/%s.html" % layout
+                for layout in get_extra(self.element, 'layouts', [])]
+        candidates += super(PageElementView, self).get_template_names()
         return candidates
 
     def get_context_data(self, **kwargs):
