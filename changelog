@@ -1,3 +1,9 @@
+0.10.1
+
+  * fixes HTTP 404 on root page for editables
+
+ -- Sebastien Mirolo <smirolo@djaodjin.com>  Sun,  9 Aug 2026 15:00:00 -0700
+
 0.10.0
 
   * supports multiple languages per `PageElement`

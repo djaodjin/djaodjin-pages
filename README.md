@@ -42,8 +42,9 @@ Tested with
 - **Python:** 3.10, **Django:** 4.2 (legacy)
 - **Python:** 3.9, **Django:** 3.2 (legacy)
 
-0.10.0
+0.10.1
 
+  * fixes HTTP 404 on root page for editables
   * supports multiple languages per `PageElement`
 
 [previous release notes](changelog)
