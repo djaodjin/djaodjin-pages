@@ -1,3 +1,9 @@
+0.10.2
+
+  * handles HTTP language code headers as 'fr' or 'fr-FR'
+
+ -- Sebastien Mirolo <smirolo@djaodjin.com>  Fri, 14 Aug 2026 14:20:00 -0700
+
 0.10.1
 
   * fixes HTTP 404 on root page for editables
