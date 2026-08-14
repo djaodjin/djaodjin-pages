@@ -25,6 +25,7 @@
 from __future__ import unicode_literals
 
 import logging
+from collections import defaultdict
 
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ImproperlyConfigured
@@ -147,10 +148,22 @@ class PageElementMixin(object):
         filter_kwargs = {self.element_field: slug}
         queryset = PageElement.objects.filter(**filter_kwargs)
         candidates = {elem.lang: elem for elem in queryset}
-        element = candidates.get(translation.get_language())
-        if not element:
-            element = candidates.get(settings.LANGUAGE_CODE)
+        for lang_code in self.get_lang_codes():
+            element = candidates.get(lang_code)
+            if element:
+                break
         return element
+
+    def get_lang_codes(self):
+        lang_code = translation.get_language()
+        lang_codes = [lang_code]
+        if '-' in lang_code:
+            lang_codes += [lang_code.split('-')[0]]
+        lang_code = settings.LANGUAGE_CODE
+        lang_codes += [lang_code]
+        if '-' in lang_code:
+            lang_codes += [lang_code.split('-')[0]]
+        return lang_codes
 
 
 class SequenceMixin(object):
@@ -179,15 +192,19 @@ class TrailMixin(PageElementMixin):
         if not hasattr(self, '_breadcrumbs'):
             self._breadcrumbs = []
             parts = self.path.strip(self.URL_PATH_SEP).split(self.URL_PATH_SEP)
-            title_by_slug = dict(PageElement.objects.filter(
-                slug__in=parts, lang=translation.get_language()).values_list(
-                'slug', 'title'))
+            lang_codes = self.get_lang_codes()
+            title_by_slug = defaultdict(dict)
+            for elem in PageElement.objects.filter(
+                    slug__in=parts, lang__in=lang_codes).values(
+                    'slug', 'lang', 'title'):
+                title_by_slug[elem.get('slug')].update({
+                    elem.get('lang'): elem.get('title')})
             for idx, part in enumerate(parts):
-                title = title_by_slug.get(part)
-                if not title:
-                    title = PageElement.objects.filter(
-                        slug=part, lang=settings.LANGUAGE_CODE).values(
-                        'title').first()
+                title = None
+                for lang_code in lang_codes:
+                    title = title_by_slug.get(part).get(lang_code)
+                    if title:
+                        break
                 if title:
                     url_kwargs = self.get_url_kwargs()
                     url_kwargs.update({
