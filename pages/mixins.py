@@ -202,7 +202,7 @@ class TrailMixin(PageElementMixin):
             for idx, part in enumerate(parts):
                 title = None
                 for lang_code in lang_codes:
-                    title = title_by_slug.get(part).get(lang_code)
+                    title = title_by_slug.get(part, {}).get(lang_code)
                     if title:
                         break
                 if title:
@@ -246,6 +246,8 @@ class TrailMixin(PageElementMixin):
         parts = path.strip(self.URL_PATH_SEP).split(self.URL_PATH_SEP)
         if parts:
             element = self.get_element(parts[-1])
+            if not element:
+                raise Http404("%s could not be found." % path)
             candidates = element.get_parent_paths(hints=parts[:-1])
             if not candidates:
                 raise Http404("%s could not be found." % path)
