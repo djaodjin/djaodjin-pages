@@ -1,7 +1,7 @@
 # djaodjin-pages
 bleach==2.0.0
 Django==1.11.29
-djangorestframework==3.9.4
+djangorestframework==3.17.2
 djaodjin-deployutils==0.10.6
 djaodjin-extended-templates==0.4.2
 mammoth==1.6.0
