@@ -4,7 +4,7 @@ Django==1.11.29
 djangorestframework==3.9.4
 djaodjin-deployutils==0.10.6
 djaodjin-extended-templates==0.4.2
-mammoth==1.6.0
+mammoth==1.11.0
 markdownify==0.11.6
 Markdown==3.1.1
 python-dateutil==2.8.1

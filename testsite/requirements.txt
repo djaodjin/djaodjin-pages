@@ -19,7 +19,7 @@ djangorestframework==3.16.1 ; python_version >= "3.9" # Breaking
 djaodjin-deployutils==0.14.5
 djaodjin-extended-templates==0.5.4
 html5lib==1.1                        # required dep not pulled by bs4
-mammoth==1.12.0                      # to upload .docx as HTML
+mammoth==1.11.0                      # to upload .docx as HTML
 markdownify==1.2.3                   # to upload .docx as markdown
 Markdown==3.9    ; python_version >= "3.9" and python_version < "3.12"
 Markdown==3.10.2 ; python_version >= "3.12"
