@@ -57,13 +57,33 @@ var paramsMixin = {
             var params = {};
             for( var key in vm.params ) {
                 if( vm.params.hasOwnProperty(key) && vm.params[key] ) {
-                    if( excludes && key in excludes ) continue;
+                    if( excludes && excludes.includes(key) ) continue;
                     params[key] = vm.params[key];
                 }
             }
             return params;
         },
+        appendQueryString: function(url, excludes) {
+            // Returns `url` with a URL encoded query string from the parameters
+            // defined in the component, excluding parameters in `excludes`.
+            var vm = this;
+            var sep = "";
+            var result = "";
+            var params = vm.getParams(excludes);
+            for( var key in params ) {
+                if( params.hasOwnProperty(key) ) {
+                    result += sep + key + '=' + encodeURIComponent(
+                        params[key].toString());
+                    sep = "&";
+                }
+            }
+            if( result ) {
+                result = (url.lastIndexOf('?') > 0 ? '&' : '?') + result;
+            }
+            return url + result;
+        },
         getQueryString: function(excludes){
+            console.warn("`getQueryString` will be deprecated soon.");
             var vm = this;
             var sep = "";
             var result = "";

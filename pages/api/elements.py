@@ -86,12 +86,14 @@ class PageElementAPIView(TrailMixin, generics.ListAPIView):
           "results": [
           {
             "slug": "metal",
+            "lang": "en",
             "path": null,
             "title": "Metal structures & equipment",
             "indent": 0
           },
           {
             "slug": "boxes-and-enclosures",
+            "lang": "en",
             "path": "/metal/boxes-and-enclosures",
             "title": "Boxes & enclosures",
             "indent": 1,
@@ -194,12 +196,14 @@ class PageElementIndexAPIView(PageElementAPIView):
           "results": [
           {
             "slug": "metal",
+            "lang": "en",
             "path": null,
             "title": "Metal structures & equipment",
             "indent": 0
           },
           {
             "slug": "boxes-and-enclosures",
+            "lang": "en",
             "path": "/metal/boxes-and-enclosures",
             "title": "Boxes & enclosures",
             "indent": 1,
@@ -270,6 +274,7 @@ class PageElementSearchAPIView(PageElementIndexAPIView):
           "previous": null,
           "results": [{
             "slug": "hello",
+            "lang": "en",
             "path": "/hello",
             "title": "Hello"
           }]
@@ -310,6 +315,7 @@ class PageElementDetailAPIView(TrailMixin, generics.RetrieveAPIView):
 
         {
             "slug": "adjust-air-fuel-ratio",
+            "lang": "en",
             "picture": null,
             "title": "Adjust air/fuel ratio",
             "text": "<h2>Background</h2><p>Some manufacturing processes may\
@@ -365,12 +371,16 @@ class PageElementEditableIndexAPIView(AccountMixin, CreateModelMixin,
             "results": [
                 {
                     "path": null,
+                    "slug": "construction",
+                    "lang": "en",
                     "title": "Construction",
                     "tags": ["public"],
                     "indent": 0
                 },
                 {
                     "path": null,
+                    "slug": "governance-management",
+                    "lang": "en",
                     "title": "Governance & management",
                     "picture": "https://assets.tspproject.org/management.png",
                     "indent": 1
@@ -378,6 +388,8 @@ class PageElementEditableIndexAPIView(AccountMixin, CreateModelMixin,
                 {
                     "path": "/construction/governance/the-assessment\
 -process-is-rigorous",
+                    "slug": "the-assessment-process-is-rigorous",
+                    "lang": "en",
                     "title": "The assessment process is rigorous",
                     "indent": 2,
                     "environmental_value": 1,
@@ -388,6 +400,8 @@ class PageElementEditableIndexAPIView(AccountMixin, CreateModelMixin,
                 },
                 {
                     "path": null,
+                    "slug": "production",
+                    "lang": "en",
                     "title": "Production",
                     "picture": "https://assets.tspproject.org/production.png",
                     "indent": 1
@@ -395,6 +409,8 @@ class PageElementEditableIndexAPIView(AccountMixin, CreateModelMixin,
                 {
                     "path": "/construction/production/adjust-air-fuel\
 -ratio",
+                    "slug": "adjust-air-fuel-ratio",
+                    "lang": "en",
                     "title": "Adjust Air fuel ratio",
                     "indent": 2,
                     "environmental_value": 2,
@@ -445,6 +461,12 @@ class PageElementEditableIndexAPIView(AccountMixin, CreateModelMixin,
             pass
         kwargs.pop(self.account_url_kwarg)
         return {'Location': reverse('pages_editables_element', kwargs=kwargs)}
+
+
+    @extend_schema(operation_id='editables_content_index')
+    def get(self, request, *args, **kwargs):
+        return super(PageElementEditableIndexAPIView, self).get(
+            request, *args, **kwargs)
 
 
     @extend_schema(operation_id='editables_content_create')
@@ -502,6 +524,7 @@ class PageElementEditableDetail(AccountMixin, TrailMixin, CreateModelMixin,
 
         {
             "slug": "boxes-enclosures",
+            "lang": "en",
             "path": "/boxes-enclosures",
             "text": "Hello"
         }
@@ -543,6 +566,7 @@ class PageElementEditableDetail(AccountMixin, TrailMixin, CreateModelMixin,
         .. code-block:: json
 
             {
+                "slug": "boxes-enclosures",
                 "title": "Boxes enclosures"
             }
 
@@ -552,6 +576,7 @@ class PageElementEditableDetail(AccountMixin, TrailMixin, CreateModelMixin,
 
             {
                 "slug": "boxes-enclosures",
+                "lang": "en",
                 "text": "Hello"
             }
 
@@ -575,6 +600,7 @@ class PageElementEditableDetail(AccountMixin, TrailMixin, CreateModelMixin,
         .. code-block:: json
 
             {
+                "slug": "boxes-enclosures",
                 "title": "Boxes and enclosures"
             }
 
@@ -584,6 +610,7 @@ class PageElementEditableDetail(AccountMixin, TrailMixin, CreateModelMixin,
 
             {
                 "slug": "boxes-enclosures",
+                "lang": "en",
                 "text": "Hello"
             }
         """

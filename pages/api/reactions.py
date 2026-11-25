@@ -62,6 +62,7 @@ class FollowAPIView(PageElementMixin, generics.CreateAPIView):
 
         {
             "slug": "adjust-air-fuel-ratio",
+            "lang": "en",
             "title": "Adjust air/fuel ratio"
         }
     """
@@ -103,6 +104,7 @@ class UnfollowAPIView(PageElementMixin, generics.CreateAPIView):
 
         {
             "slug": "adjust-air-fuel-ratio",
+            "lang": "en",
             "title": "Adjust air/fuel ratio"
         }
     """
@@ -144,6 +146,7 @@ class UpvoteAPIView(PageElementMixin, generics.CreateAPIView):
 
         {
             "slug": "adjust-air-fuel-ratio",
+            "lang": "en",
             "title": "Adjust air/fuel ratio"
         }
     """
@@ -185,6 +188,7 @@ class DownvoteAPIView(PageElementMixin, generics.CreateAPIView):
 
         {
             "slug": "adjust-air-fuel-ratio",
+            "lang": "en",
             "title": "Adjust air/fuel ratio"
         }
     """

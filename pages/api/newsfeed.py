@@ -54,6 +54,8 @@ class NewsFeedListAPIView(UserMixin, generics.ListAPIView):
           "results": [{
               "path": "/metal/boxes-and-enclosures/production/\
 energy-efficiency/process-heating/combustion/adjust-air-fuel-ratio",
+              "slug": "adjust-air-fuel-ratio",
+              "lang": "en",
               "text_updated_at": "2024-01-01T00:00:00Z",
               "last_read_at": "2023-12-01T00:00:00Z",
               "nb_comments_since_last_read": 5,
