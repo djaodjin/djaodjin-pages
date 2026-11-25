@@ -18,8 +18,8 @@ Vue.component('editables-list', {
         create: function() {
             var vm = this;
             vm.reqPost(vm.url,{title: vm.newItem.title},
-            function success(resp, textStatus, jqXHR) {
-                var location = jqXHR.getResponseHeader('Location');
+            function success(data, textStatus, resp) {
+                var location = resp.headers.get('Location');
                 if( location ) {
                     window.location = location;
                 }
